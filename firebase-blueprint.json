@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "Company": {
+      "title": "Company Tenant",
+      "description": "Multi-tenant company record",
+      "type": "object",
+      "properties": {
+        "companyId": { "type": "string" },
+        "companyName": { "type": "string" },
+        "code": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED", "PENDING"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["companyId", "companyName", "code", "status"]
+    },
+    "Employee": {
+      "title": "Employee Record",
+      "description": "Staff profile, KYC and assignment information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "email": { "type": "string" },
+        "contactNumber": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "PENDING_VERIFICATION", "SUSPENDED", "TERMINATED"] },
+        "assignedSiteId": { "type": "string" },
+        "joinedDate": { "type": "string" }
+      },
+      "required": ["id", "companyId", "firstName", "lastName", "contactNumber", "role", "status"]
+    },
+    "AttendanceLog": {
+      "title": "Attendance / Guard Duty Log",
+      "description": "Clock in/out records with geofence, selfie verification, and shift details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "employeeId": { "type": "string text" },
+        "siteId": { "type": "string" },
+        "type": { "type": "string", "enum": ["PUNCH_IN", "PUNCH_OUT"] },
+        "timestamp": { "type": "string" },
+        "location": { "type": "object" },
+        "status": { "type": "string", "enum": ["VERIFIED", "PENDING_REVIEW", "REJECTED"] }
+      },
+      "required": ["id", "companyId", "employeeId", "siteId", "type", "timestamp"]
+    },
+    "AuditLog": {
+      "title": "Audit Log",
+      "description": "Security and activity audit trail for compliance",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "action": { "type": "string" },
+        "performedBy": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "details": { "type": "object" }
+      },
+      "required": ["action", "performedBy", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/companies/{companyId}": {
+      "schema": { "$ref": "#/entities/Company" },
+      "description": "Company Tenant document"
+    },
+    "/companies/{companyId}/employees/{employeeId}": {
+      "schema": { "$ref": "#/entities/Employee" },
+      "description": "Employee records for company"
+    },
+    "/companies/{companyId}/attendance/{attendanceId}": {
+      "schema": { "$ref": "#/entities/AttendanceLog" },
+      "description": "Attendance log records for company"
+    },
+    "/companies/{companyId}/audit_logs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Audit log records"
+    }
+  }
+}

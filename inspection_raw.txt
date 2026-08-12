@@ -1,0 +1,2134 @@
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore, enableIndexedDbPersistence, doc, getDocFromServer } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
+import firebaseAppletConfig from '../firebase-applet-config.json';
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey || 'demo-api-key',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig.authDomain || 'log-sheet-muster.firebaseapp.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId || 'log-sheet-muster-demo',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig.storageBucket || 'log-sheet-muster.appspot.com',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId || '123456789',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId || '1:123456789:web:abcdef'
+};
+
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+export const db = firebaseAppletConfig.firestoreDatabaseId 
+  ? getFirestore(app, firebaseAppletConfig.firestoreDatabaseId) 
+  : getFirestore(app);
+export const auth = getAuth(app);
+export const storage = getStorage(app);
+
+// Enable Firestore offline persistence
+try {
+  enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('Firestore offline persistence: Multiple tabs active');
+    } else if (err.code === 'unimplemented') {
+      console.warn('Firestore offline persistence not supported in this browser environment');
+    }
+  });
+} catch (e) {
+  console.log('IndexedDB persistence init handled');
+}
+
+// Validate Connection to Firestore on boot
+async function validateFirestoreConnection() {
+  try {
+    await getDocFromServer(doc(db, '_health', 'check'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('offline')) {
+      console.warn('Firestore connection offline or restricted:', error.message);
+    }
+  }
+}
+validateFirestoreConnection();
+
+export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.apiKey !== 'demo-api-key');
+
+import { auth, db } from '../firebase';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { CompanyTenant, UserSession, UserRole } from '../types';
+import { MOCK_TENANTS, MOCK_USERS } from './mockData';
+
+export class FirebaseAuthService {
+  /**
+   * Validates and retrieves company tenant information by Company Code
+   */
+  static async verifyCompanyCode(companyCode: string): Promise<CompanyTenant> {
+    const cleanCode = companyCode.trim().toUpperCase();
+
+    // 1. Check local mock registry
+    if (MOCK_TENANTS[cleanCode]) {
+      return MOCK_TENANTS[cleanCode];
+    }
+
+    // 2. Query Firestore if configured
+    try {
+      const companyDocRef = doc(db, 'companies', cleanCode);
+      const companySnap = await getDoc(companyDocRef);
+
+      if (companySnap.exists()) {
+        const data = companySnap.data() as CompanyTenant;
+        if (data.status !== 'ACTIVE') {
+          throw new Error('This company account has been suspended. Please contact system administrator.');
+        }
+        return data;
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes('suspended')) {
+        throw err;
+      }
+      console.log('Firestore company verify fallback to mock');
+    }
+
+    throw new Error(`Company code '${cleanCode}' was not found. Please verify with your HR or Operations Manager.`);
+  }
+
+  /**
+   * Performs authentication using Email/Password or Employee ID + PIN
+   */
+  static async authenticateUser(params: {
+    companyId: string;
+    emailOrId: string;
+    passwordOrPin: string;
+    isPinMode: boolean;
+  }): Promise<UserSession> {
+    const { companyId, emailOrId, passwordOrPin, isPinMode } = params;
+    const cleanInput = emailOrId.trim();
+
+    // 1. Try mock users
+    const mockUser = MOCK_USERS.find(u => 
+      (u.companyId === companyId || u.role === 'SUPER_ADMIN') &&
+      (isPinMode 
+        ? (u.employeeId.toLowerCase() === cleanInput.toLowerCase() || u.email.toLowerCase() === cleanInput.toLowerCase()) && u.pin === passwordOrPin
+        : u.email.toLowerCase() === cleanInput.toLowerCase() && u.password === passwordOrPin
+      )
+    );
+
+    if (mockUser) {
+      const session: UserSession = {
+        userId: `USR-${mockUser.employeeId}`,
+        employeeId: mockUser.employeeId,
+        fullName: mockUser.fullName,
+        email: mockUser.email,
+        role: mockUser.role,
+        companyId: mockUser.companyId,
+        branchId: mockUser.branchId,
+        assignedSiteId: mockUser.assignedSiteId,
+        avatarUrl: mockUser.avatarUrl,
+        token: `JWT-TOKEN-${Date.now()}-${mockUser.employeeId}`,
+        tokenExpiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
+        isBiometricEnabled: true,
+        lastActiveAt: Date.now(),
+        loginMode: isPinMode ? 'PIN' : 'PASSWORD'
+      };
+      return session;
+    }
+
+    // 2. Try Firebase Auth if email/password mode
+    if (!isPinMode && cleanInput.includes('@')) {
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, cleanInput, passwordOrPin);
+        const fbUser = userCredential.user;
+
+        // Try to fetch profile from Firestore
+        const userDocRef = doc(db, 'companies', companyId, 'users', fbUser.uid);
+        const userSnap = await getDoc(userDocRef);
+
+        let role: UserRole = 'GUARD';
+        let employeeId = 'EMP-001';
+        let fullName = fbUser.displayName || 'Authenticated Guard';
+        let branchId = 'MAIN_BRANCH';
+
+        if (userSnap.exists()) {
+          const uData = userSnap.data();
+          role = uData.role || 'GUARD';
+          employeeId = uData.employeeId || 'EMP-001';
+          fullName = uData.fullName || fullName;
+          branchId = uData.branchId || branchId;
+        }
+
+        const session: UserSession = {
+          userId: fbUser.uid,
+          employeeId: employeeId,
+          fullName: fullName,
+          email: fbUser.email || cleanInput,
+          role: role,
+          companyId: companyId,
+          branchId: branchId,
+          token: await fbUser.getIdToken(),
+          tokenExpiresAt: Date.now() + (12 * 60 * 60 * 1000),
+          isBiometricEnabled: false,
+          lastActiveAt: Date.now(),
+          loginMode: 'PASSWORD'
+        };
+        return session;
+      } catch (err: unknown) {
+        const firebaseErr = err as { code?: string; message?: string };
+        if (firebaseErr.code === 'auth/wrong-password' || firebaseErr.code === 'auth/user-not-found' || firebaseErr.code === 'auth/invalid-credential') {
+          throw new Error('Invalid email or password. Please verify your login details.');
+        }
+      }
+    }
+
+    throw new Error('Invalid credentials or PIN entered. Please check your credentials and try again.');
+  }
+
+  /**
+   * Password Reset Request
+   */
+  static async requestPasswordReset(companyCode: string, emailOrId: string): Promise<string> {
+    const cleanInput = emailOrId.trim();
+
+    // Check mock or Firebase
+    if (cleanInput.includes('@')) {
+      try {
+        await sendPasswordResetEmail(auth, cleanInput);
+      } catch {
+        // Fallback gracefully
+      }
+    }
+
+    return `Password reset instruction email has been sent to ${cleanInput}. Please check your inbox.`;
+  }
+}
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  getDocs, 
+  onSnapshot, 
+  query, 
+  where, 
+  orderBy, 
+  limit 
+} from 'firebase/firestore';
+import { db } from '../firebase';
+import { AppNotification, UserProfileData, AppSettings, UserSession, EmployeeRecord } from '../types';
+import { MOCK_NOTIFICATIONS, MOCK_USER_PROFILE, MOCK_SETTINGS, MOCK_EMPLOYEES } from './mockData';
+
+export class FirestoreService {
+  /**
+   * Listen to real-time Employees list for a company
+   */
+  static subscribeToEmployees(
+    companyId: string,
+    onData: (employees: EmployeeRecord[]) => void
+  ): () => void {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'employees');
+      const unsubscribe = onSnapshot(colRef, (snapshot) => {
+        if (!snapshot.empty) {
+          const list: EmployeeRecord[] = snapshot.docs.map(docSnap => {
+            const data = docSnap.data();
+            return {
+              id: docSnap.id,
+              documents: [],
+              ...data
+            } as unknown as EmployeeRecord;
+          });
+          onData(list);
+        } else {
+          onData(MOCK_EMPLOYEES);
+        }
+      }, (err) => {
+        console.warn('[Firestore] Employee subscription fallback to mock:', err);
+        onData(MOCK_EMPLOYEES);
+      });
+      return unsubscribe;
+    } catch (e) {
+      console.warn('[Firestore] Employee subscription error:', e);
+      onData(MOCK_EMPLOYEES);
+      return () => {};
+    }
+  }
+
+  /**
+   * Create or update Employee document in Firestore
+   */
+  static async saveEmployee(companyId: string, employee: EmployeeRecord): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'employees', employee.id);
+      await setDoc(ref, {
+        ...employee,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      // Also create audit log entry
+      const auditRef = doc(db, 'companies', companyId, 'audit_logs', `AUDIT-${Date.now()}`);
+      await setDoc(auditRef, {
+        action: 'EMPLOYEE_SAVE',
+        employeeId: employee.id,
+        performedBy: employee.createdBy || 'SYSTEM',
+        timestamp: new Date().toISOString(),
+        details: { name: `${employee.firstName} ${employee.lastName}`, role: employee.role, status: employee.status }
+      });
+
+      return true;
+    } catch (err) {
+      console.warn('[Firestore] saveEmployee error:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Approve or update Employee status (Active / Suspended / Terminated)
+   */
+  static async updateEmployeeStatus(
+    companyId: string,
+    employeeId: string,
+    status: EmployeeRecord['status'],
+    approverId: string
+  ): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'employees', employeeId);
+      await setDoc(ref, {
+        status,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      // Create audit log entry
+      const auditRef = doc(db, 'companies', companyId, 'audit_logs', `AUDIT-${Date.now()}`);
+      await setDoc(auditRef, {
+        action: 'EMPLOYEE_STATUS_CHANGE',
+        employeeId,
+        newStatus: status,
+        performedBy: approverId,
+        timestamp: new Date().toISOString()
+      });
+
+      return true;
+    } catch (err) {
+      console.warn('[Firestore] updateEmployeeStatus error:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Verify an employee KYC document
+   */
+  static async verifyEmployeeDocument(
+    companyId: string,
+    employeeId: string,
+    documents: EmployeeRecord['documents'],
+    approverId: string
+  ): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'employees', employeeId);
+      await setDoc(ref, {
+        documents,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      return true;
+    } catch (err) {
+      console.warn('[Firestore] verifyEmployeeDocument error:', err);
+      return false;
+    }
+  }
+  /**
+   * Save or sync User Profile to Firestore
+   */
+  static async saveUserProfile(userId: string, profile: UserProfileData): Promise<boolean> {
+    try {
+      const ref = doc(db, 'users', userId, 'profile', 'data');
+      await setDoc(ref, { ...profile, updatedAt: new Date().toISOString() }, { merge: true });
+      return true;
+    } catch (err) {
+      console.warn('[Firestore] saveUserProfile fallback:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Fetch User Profile from Firestore or fallback to mock
+   */
+  static async getUserProfile(userId: string): Promise<UserProfileData> {
+    try {
+      const ref = doc(db, 'users', userId, 'profile', 'data');
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        return snap.data() as UserProfileData;
+      }
+    } catch (err) {
+      console.warn('[Firestore] getUserProfile fallback:', err);
+    }
+    return MOCK_USER_PROFILE;
+  }
+
+  /**
+   * Save or sync App Settings to Firestore
+   */
+  static async saveAppSettings(userId: string, settings: AppSettings): Promise<boolean> {
+    try {
+      const ref = doc(db, 'users', userId, 'settings', 'config');
+      await setDoc(ref, { ...settings, updatedAt: new Date().toISOString() }, { merge: true });
+      return true;
+    } catch (err) {
+      console.warn('[Firestore] saveAppSettings fallback:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Fetch App Settings from Firestore
+   */
+  static async getAppSettings(userId: string): Promise<AppSettings> {
+    try {
+      const ref = doc(db, 'users', userId, 'settings', 'config');
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        return snap.data() as AppSettings;
+      }
+    } catch (err) {
+      console.warn('[Firestore] getAppSettings fallback:', err);
+    }
+    return MOCK_SETTINGS;
+  }
+
+  /**
+   * Save Attendance Log to Firestore
+   */
+  static async logAttendance(session: UserSession, action: 'PUNCH_IN' | 'PUNCH_OUT', locationDetails?: string): Promise<boolean> {
+    try {
+      const logId = `ATT-${Date.now()}`;
+      const ref = doc(db, 'companies', session.companyId, 'attendance_logs', logId);
+      await setDoc(ref, {
+        logId,
+        userId: session.userId,
+        employeeId: session.employeeId,
+        userName: session.fullName,
+        role: session.role,
+        action,
+        timestamp: new Date().toISOString(),
+        siteId: session.assignedSiteId || 'SITE-DEFAULT',
+        locationDetails: locationDetails || 'GPS Verified (19.0760° N, 72.8777° E)'
+      });
+      return true;
+    } catch (err) {
+      console.warn('[Firestore] logAttendance fallback:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Listen to real-time Notifications for user role
+   */
+  static subscribeToNotifications(
+    role: string, 
+    onData: (notifications: AppNotification[]) => void
+  ): () => void {
+    try {
+      const q = query(
+        collection(db, 'notifications'),
+        orderBy('timestamp', 'desc'),
+        limit(20)
+      );
+      
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const notifs: AppNotification[] = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          } as AppNotification));
+          onData(notifs);
+        } else {
+          onData(MOCK_NOTIFICATIONS);
+        }
+      }, (err) => {
+        console.warn('[Firestore] Notifications subscription error, using cached mock:', err);
+        onData(MOCK_NOTIFICATIONS);
+      });
+
+      return unsubscribe;
+    } catch (e) {
+      console.warn('[Firestore] Notifications realtime failed:', e);
+      onData(MOCK_NOTIFICATIONS);
+      return () => {};
+    }
+  }
+}
+import React, { useState, useEffect } from 'react';
+import { CompanyTenant, UserSession, PhaseAScreen, UserRole } from './types';
+import { SessionManager } from './services/sessionManager';
+import { OfflineSyncService } from './services/offlineSyncService';
+import { FirestoreService } from './services/firestoreService';
+import { MOCK_TENANTS, MOCK_USERS, MOCK_NOTIFICATIONS } from './services/mockData';
+import { ThemeProvider } from './context/ThemeContext';
+import { Header } from './components/common/Header';
+import { AndroidFrame } from './components/common/AndroidFrame';
+import { NavigationDrawer } from './components/common/NavigationDrawer';
+import { BottomNavigationBar } from './components/common/BottomNavigationBar';
+import { TabletNavigationRail } from './components/common/TabletNavigationRail';
+import { SplashScreen } from './components/screens/SplashScreen';
+import { UpdateCheckerScreen } from './components/screens/UpdateCheckerScreen';
+import { CompanyCodeScreen } from './components/screens/CompanyCodeScreen';
+import { LoginScreen } from './components/screens/LoginScreen';
+import { ForgotPasswordScreen } from './components/screens/ForgotPasswordScreen';
+import { SessionLockScreen } from './components/screens/SessionLockScreen';
+import { RoleDashboardScreen } from './components/screens/RoleDashboardScreen';
+import { ProfileScreen } from './components/screens/ProfileScreen';
+import { SettingsScreen } from './components/screens/SettingsScreen';
+import { NotificationsScreen } from './components/screens/NotificationsScreen';
+import { EmployeeModuleScreen } from './components/screens/EmployeeModuleScreen';
+import { KotlinCodeViewer } from './components/screens/KotlinCodeViewer';
+
+export function App() {
+  const [currentScreen, setCurrentScreen] = useState<PhaseAScreen>('SPLASH');
+  const [activeCompany, setActiveCompany] = useState<CompanyTenant | null>(null);
+  const [userSession, setUserSession] = useState<UserSession | null>(null);
+  const [isOnline, setIsOnline] = useState<boolean>(OfflineSyncService.isOnline());
+  const [viewportMode, setViewportMode] = useState<'PHONE' | 'TABLET' | 'FULLSCREEN'>('PHONE');
+  const [offlineQueueCount, setOfflineQueueCount] = useState<number>(OfflineSyncService.getQueue().length);
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(2);
+
+  // Initialize network & storage sync
+  useEffect(() => {
+    const unsub = OfflineSyncService.subscribe((onlineStatus) => {
+      setIsOnline(onlineStatus);
+    });
+
+    const savedCompany = SessionManager.getActiveCompany() || MOCK_TENANTS['APEX-SEC-101'];
+    setActiveCompany(savedCompany);
+
+    const savedSession = SessionManager.getUserSession();
+    if (savedSession) {
+      setUserSession(savedSession);
+    }
+
+    return () => unsub();
+  }, []);
+
+  // Realtime notification monitor
+  useEffect(() => {
+    if (userSession) {
+      const unsub = FirestoreService.subscribeToNotifications(userSession.role, (notifs) => {
+        setUnreadNotifCount(notifs.filter(n => !n.isRead).length);
+      });
+      return () => unsub();
+    }
+  }, [userSession]);
+
+  // Sync queue count monitor
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setOfflineQueueCount(OfflineSyncService.getQueue().length);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleLogout = () => {
+    SessionManager.clearUserSession();
+    setUserSession(null);
+    setCurrentScreen('LOGIN');
+    setIsDrawerOpen(false);
+  };
+
+  const handleLockSession = () => {
+    if (userSession) {
+      setCurrentScreen('SESSION_LOCK');
+      setIsDrawerOpen(false);
+    }
+  };
+
+  const handleRoleSwitch = (newRole: UserRole) => {
+    if (!userSession) return;
+    const mockPreset = MOCK_USERS.find(u => u.role === newRole) || MOCK_USERS[0];
+    const updatedSession: UserSession = {
+      ...userSession,
+      role: newRole,
+      fullName: mockPreset.fullName,
+      employeeId: mockPreset.employeeId,
+      email: mockPreset.email,
+      assignedSiteId: mockPreset.assignedSiteId
+    };
+    setUserSession(updatedSession);
+    SessionManager.setUserSession(updatedSession);
+  };
+
+  const handleSyncOfflineQueue = async () => {
+    await OfflineSyncService.syncPendingQueue();
+    setOfflineQueueCount(OfflineSyncService.getQueue().length);
+  };
+
+  const isMainAppScreen = ['ROLE_DASHBOARD', 'PROFILE', 'SETTINGS', 'NOTIFICATIONS'].includes(currentScreen);
+
+  return (
+    <ThemeProvider>
+      <div className="min-h-screen flex flex-col font-sans transition-colors duration-200">
+        {/* Header */}
+        <Header
+          currentScreen={currentScreen}
+          onNavigate={setCurrentScreen}
+          activeCompany={activeCompany}
+          userSession={userSession}
+          isOnline={isOnline}
+          viewportMode={viewportMode}
+          onToggleViewport={setViewportMode}
+          onLogout={handleLogout}
+          onLockSession={handleLockSession}
+          offlineQueueCount={offlineQueueCount}
+          onOpenDrawer={() => setIsDrawerOpen(true)}
+          unreadNotifCount={unreadNotifCount}
+        />
+
+        {/* Slide-out Navigation Drawer */}
+        <NavigationDrawer
+          isOpen={isDrawerOpen}
+          onClose={() => setIsDrawerOpen(false)}
+          currentScreen={currentScreen}
+          onNavigate={(screen) => {
+            setCurrentScreen(screen);
+            setIsDrawerOpen(false);
+          }}
+          userSession={userSession}
+          activeCompany={activeCompany}
+          unreadNotifCount={unreadNotifCount}
+          onRoleSwitch={handleRoleSwitch}
+          onLockSession={handleLockSession}
+          onLogout={handleLogout}
+          isOnline={isOnline}
+        />
+
+        {/* Main Stage Area */}
+        <main className="flex-1 flex flex-col items-center justify-center p-2 sm:p-4">
+          {currentScreen === 'KOTLIN_CODE_VIEWER' ? (
+            <div className="w-full max-w-5xl my-4 px-2">
+              <KotlinCodeViewer onBack={() => setCurrentScreen(userSession ? 'ROLE_DASHBOARD' : 'LOGIN')} />
+            </div>
+          ) : (
+            <AndroidFrame
+              viewportMode={viewportMode}
+              isOnline={isOnline}
+              companyName={activeCompany?.brandName}
+              onBackClick={() => {
+                if (isMainAppScreen && currentScreen !== 'ROLE_DASHBOARD') {
+                  setCurrentScreen('ROLE_DASHBOARD');
+                } else if (currentScreen === 'ROLE_DASHBOARD') {
+                  handleLockSession();
+                } else if (currentScreen === 'LOGIN') {
+                  setCurrentScreen('COMPANY_CODE');
+                } else if (currentScreen === 'FORGOT_PASSWORD') {
+                  setCurrentScreen('LOGIN');
+                }
+              }}
+              onHomeClick={() => {
+                if (userSession) setCurrentScreen('ROLE_DASHBOARD');
+              }}
+            >
+              <div className="flex-1 flex flex-row overflow-hidden w-full h-full relative">
+                {/* Tablet Navigation Rail (inside device frame when in tablet mode) */}
+                {viewportMode === 'TABLET' && isMainAppScreen && (
+                  <TabletNavigationRail
+                    currentScreen={currentScreen}
+                    onNavigate={setCurrentScreen}
+                    onOpenDrawer={() => setIsDrawerOpen(true)}
+                    unreadNotifCount={unreadNotifCount}
+                    userSession={userSession}
+                    onRoleSwitch={handleRoleSwitch}
+                  />
+                )}
+
+                {/* Inner Screen Content View */}
+                <div className="flex-1 flex flex-col justify-between overflow-hidden relative w-full">
+                  <div className="flex-1 overflow-y-auto w-full">
+                    {currentScreen === 'SPLASH' && (
+                      <SplashScreen
+                        onComplete={(nextScreen) => setCurrentScreen(nextScreen)}
+                        isOnline={isOnline}
+                        activeCompany={activeCompany}
+                        userSession={userSession}
+                      />
+                    )}
+
+                    {currentScreen === 'UPDATE_CHECKER' && (
+                      <UpdateCheckerScreen
+                        onContinue={(nextScreen) => setCurrentScreen(nextScreen)}
+                      />
+                    )}
+
+                    {currentScreen === 'COMPANY_CODE' && (
+                      <CompanyCodeScreen
+                        onCompanyVerified={(company) => {
+                          setActiveCompany(company);
+                          SessionManager.setActiveCompany(company);
+                        }}
+                        onNavigate={setCurrentScreen}
+                        initialCode={activeCompany?.companyId || 'APEX-SEC-101'}
+                      />
+                    )}
+
+                    {currentScreen === 'LOGIN' && (
+                      <LoginScreen
+                        activeCompany={activeCompany || MOCK_TENANTS['APEX-SEC-101']}
+                        onLoginSuccess={(session) => {
+                          setUserSession(session);
+                          setCurrentScreen('ROLE_DASHBOARD');
+                        }}
+                        onNavigate={setCurrentScreen}
+                        onChangeCompany={() => setCurrentScreen('COMPANY_CODE')}
+                      />
+                    )}
+
+                    {currentScreen === 'FORGOT_PASSWORD' && (
+                      <ForgotPasswordScreen
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'SESSION_LOCK' && userSession && (
+                      <SessionLockScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onUnlockSuccess={() => setCurrentScreen('ROLE_DASHBOARD')}
+                        onSwitchAccount={handleLogout}
+                      />
+                    )}
+
+                    {currentScreen === 'ROLE_DASHBOARD' && userSession && (
+                      <RoleDashboardScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                        viewportMode={viewportMode}
+                        onNavigate={setCurrentScreen}
+                        onRoleSwitch={handleRoleSwitch}
+                        offlineQueueCount={offlineQueueCount}
+                        onSyncOfflineQueue={handleSyncOfflineQueue}
+                      />
+                    )}
+
+                    {currentScreen === 'EMPLOYEES' && userSession && (
+                      <EmployeeModuleScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'PROFILE' && userSession && (
+                      <ProfileScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                      />
+                    )}
+
+                    {currentScreen === 'SETTINGS' && (
+                      <SettingsScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                        onClearCache={() => {
+                          SessionManager.clearUserSession();
+                          setUserSession(null);
+                          setCurrentScreen('COMPANY_CODE');
+                        }}
+                      />
+                    )}
+
+                    {currentScreen === 'NOTIFICATIONS' && (
+                      <NotificationsScreen
+                        userSession={userSession}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+                  </div>
+
+                  {/* Mobile Bottom Navigation Bar (Phone Viewport) */}
+                  {viewportMode === 'PHONE' && isMainAppScreen && userSession && (
+                    <BottomNavigationBar
+                      currentScreen={currentScreen}
+                      onNavigate={setCurrentScreen}
+                      unreadNotifCount={unreadNotifCount}
+                    />
+                  )}
+                </div>
+              </div>
+            </AndroidFrame>
+          )}
+        </main>
+      </div>
+    </ThemeProvider>
+  );
+}
+import React, { useState } from 'react';
+import { 
+  Building2, 
+  Lock, 
+  Mail, 
+  KeyRound, 
+  Eye, 
+  EyeOff, 
+  Fingerprint, 
+  ArrowRight, 
+  Loader2, 
+  AlertCircle, 
+  User, 
+  ShieldCheck,
+  RefreshCw
+} from 'lucide-react';
+import { CompanyTenant, UserSession, UserRole, PhaseAScreen } from '../../types';
+import { FirebaseAuthService } from '../../services/firebaseAuthService';
+import { SessionManager } from '../../services/sessionManager';
+import { MOCK_USERS } from '../../services/mockData';
+import { BiometricPromptModal } from '../common/BiometricPromptModal';
+import { AppLogo } from '../common/AppLogo';
+
+interface LoginScreenProps {
+  activeCompany: CompanyTenant;
+  onLoginSuccess: (session: UserSession) => void;
+  onNavigate: (screen: PhaseAScreen) => void;
+  onChangeCompany: () => void;
+}
+
+export const LoginScreen: React.FC<LoginScreenProps> = ({
+  activeCompany,
+  onLoginSuccess,
+  onNavigate,
+  onChangeCompany
+}) => {
+  const [loginMode, setLoginMode] = useState<'PIN' | 'PASSWORD'>('PIN');
+  const [emailOrId, setEmailOrId] = useState('EMP-G-8821');
+  const [passwordOrPin, setPasswordOrPin] = useState('1234');
+  const [showSecret, setShowSecret] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isBiometricOpen, setIsBiometricOpen] = useState(false);
+
+  const handleLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!emailOrId.trim()) {
+      setError(loginMode === 'PIN' ? 'Please enter your Guard Employee ID.' : 'Please enter your Email address.');
+      return;
+    }
+    if (!passwordOrPin) {
+      setError(loginMode === 'PIN' ? 'Please enter your 4-digit PIN.' : 'Please enter your Password.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const session = await FirebaseAuthService.authenticateUser({
+        companyId: activeCompany.companyId,
+        emailOrId: emailOrId.trim(),
+        passwordOrPin: passwordOrPin,
+        isPinMode: loginMode === 'PIN'
+      });
+
+      SessionManager.setUserSession(session);
+      SessionManager.setSavedCredentials(emailOrId.trim(), rememberMe);
+      onLoginSuccess(session);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Authentication failed. Please verify your credentials and try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectRolePreset = (role: UserRole) => {
+    const preset = MOCK_USERS.find(u => u.role === role);
+    if (preset) {
+      if (loginMode === 'PIN') {
+        setEmailOrId(preset.employeeId);
+        setPasswordOrPin(preset.pin);
+      } else {
+        setEmailOrId(preset.email);
+        setPasswordOrPin(preset.password);
+      }
+      setError(null);
+    }
+  };
+
+  const handleBiometricSuccess = async () => {
+    setIsBiometricOpen(false);
+    // Find default guard or logged user
+    const defaultUser = MOCK_USERS[0];
+    const session: UserSession = {
+      userId: `USR-${defaultUser.employeeId}`,
+      employeeId: defaultUser.employeeId,
+      fullName: defaultUser.fullName,
+      email: defaultUser.email,
+      role: defaultUser.role,
+      companyId: activeCompany.companyId,
+      branchId: activeCompany.allowedBranches[0] || 'MAIN_BRANCH',
+      assignedSiteId: defaultUser.assignedSiteId,
+      avatarUrl: defaultUser.avatarUrl,
+      token: `BIOMETRIC-TOKEN-${Date.now()}`,
+      tokenExpiresAt: Date.now() + (24 * 60 * 60 * 1000),
+      isBiometricEnabled: true,
+      lastActiveAt: Date.now(),
+      loginMode: 'BIOMETRIC'
+    };
+    SessionManager.setUserSession(session);
+    onLoginSuccess(session);
+  };
+
+  return (
+    <div className="flex-1 bg-slate-950 text-slate-100 flex flex-col justify-between p-6">
+      <div className="space-y-5">
+        {/* Company Header Pill */}
+        <div className="flex items-center justify-between bg-slate-900 border border-slate-800 p-2.5 rounded-2xl">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-indigo-950 text-indigo-400 border border-indigo-800 flex items-center justify-center shrink-0">
+              <Building2 className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-white truncate">{activeCompany.brandName}</p>
+              <p className="text-[10px] text-slate-400 font-mono">Code: {activeCompany.companyId}</p>
+            </div>
+          </div>
+          <button
+            onClick={onChangeCompany}
+            className="text-[10px] font-semibold text-indigo-400 hover:text-indigo-300 bg-indigo-950/80 px-2.5 py-1 rounded-lg border border-indigo-800 shrink-0"
+          >
+            Change Code
+          </button>
+        </div>
+
+        {/* Title & Brand Logo */}
+        <div className="flex flex-col items-center text-center space-y-2 py-1">
+          <AppLogo size="xl" showSubtitle={true} variant="full" />
+          <p className="text-xs text-slate-400">Select your authentication mode below</p>
+        </div>
+
+        {/* Mode Selector Tabs (PIN vs Password) */}
+        <div className="bg-slate-900 p-1 rounded-xl border border-slate-800 grid grid-cols-2 gap-1 text-xs">
+          <button
+            onClick={() => {
+              setLoginMode('PIN');
+              setEmailOrId('EMP-G-8821');
+              setPasswordOrPin('1234');
+              setError(null);
+            }}
+            className={`py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition ${
+              loginMode === 'PIN'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>Guard ID & PIN</span>
+          </button>
+          <button
+            onClick={() => {
+              setLoginMode('PASSWORD');
+              setEmailOrId('guard@apexsecurity.com');
+              setPasswordOrPin('password123');
+              setError(null);
+            }}
+            className={`py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition ${
+              loginMode === 'PASSWORD'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Mail className="w-3.5 h-3.5" />
+            <span>Email Password</span>
+          </button>
+        </div>
+
+        {/* Role Presets Bar */}
+        <div className="bg-slate-900/60 border border-slate-800 p-2.5 rounded-2xl space-y-1.5">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            Fill Role Preset Credentials:
+          </p>
+          <div className="flex flex-wrap gap-1">
+            {(['GUARD', 'FIELD_OFFICER', 'OPS_MANAGER', 'HR_ADMIN', 'COMPANY_ADMIN'] as UserRole[]).map(role => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => handleSelectRolePreset(role)}
+                className="text-[10px] font-semibold px-2 py-1 rounded bg-slate-950 hover:bg-indigo-950 border border-slate-800 hover:border-indigo-700 text-slate-300 hover:text-indigo-200 transition"
+              >
+                {role.replace('_', ' ')}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Login Form */}
+        <form onSubmit={handleLogin} className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-slate-300 block mb-1">
+              {loginMode === 'PIN' ? 'Guard Employee ID / Badge No' : 'Registered Email Address'}
+            </label>
+            <div className="relative">
+              <input
+                type={loginMode === 'PIN' ? 'text' : 'email'}
+                value={emailOrId}
+                onChange={(e) => setEmailOrId(e.target.value)}
+                placeholder={loginMode === 'PIN' ? 'e.g. EMP-G-8821' : 'e.g. guard@apexsecurity.com'}
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono"
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
+                {loginMode === 'PIN' ? <User className="w-4 h-4" /> : <Mail className="w-4 h-4" />}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-slate-300">
+                {loginMode === 'PIN' ? '4-Digit Guard Security PIN' : 'Password'}
+              </label>
+              <button
+                type="button"
+                onClick={() => onNavigate('FORGOT_PASSWORD')}
+                className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300"
+              >
+                Forgot?
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type={showSecret ? 'text' : 'password'}
+                value={passwordOrPin}
+                onChange={(e) => setPasswordOrPin(e.target.value)}
+                maxLength={loginMode === 'PIN' ? 6 : 64}
+                placeholder={loginMode === 'PIN' ? '••••' : '••••••••'}
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono tracking-widest"
+              />
+              <button
+                type="button"
+                onClick={() => setShowSecret(!showSecret)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+              >
+                {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Remember Me & Biometric Button */}
+          <div className="flex items-center justify-between pt-1">
+            <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="rounded border-slate-800 bg-slate-900 text-indigo-600 focus:ring-0"
+              />
+              <span>Remember Device</span>
+            </label>
+
+            <button
+              type="button"
+              onClick={() => setIsBiometricOpen(true)}
+              className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 bg-indigo-950/60 border border-indigo-800/80 px-2.5 py-1 rounded-lg"
+            >
+              <Fingerprint className="w-3.5 h-3.5" />
+              <span>Biometric Login</span>
+            </button>
+          </div>
+
+          {error && (
+            <div className="p-3 bg-rose-950/80 border border-rose-800 rounded-xl text-xs text-rose-300 flex items-start gap-2 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition text-sm mt-4"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Authenticating Credentials...</span>
+              </>
+            ) : (
+              <>
+                <span>Sign In to Mobile Workstation</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+
+      <BiometricPromptModal
+        isOpen={isBiometricOpen}
+        onClose={() => setIsBiometricOpen(false)}
+        onSuccess={handleBiometricSuccess}
+        subtitle={`Fast Fingerprint login for ${activeCompany.brandName}`}
+      />
+    </div>
+  );
+};
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function claims() { return request.auth.token; }
+    function isSignedIn() { return request.auth != null; }
+    function isDeveloper() { return isSignedIn() && claims().isDeveloper == true; }
+    function companyId() { return claims().companyId; }
+    function role() { return claims().role; }
+    function status() { return claims().status; }
+    function isActive() { return status() == 'active'; }
+    function sameCompany(cid) { return isSignedIn() && companyId() == cid; }
+    function hasBranch(bid) { return bid in claims().branchIds; }
+    function hasSite(sid) { return sid in claims().siteIds; }
+
+    function isRole(r) { return role() == r; }
+    function roleAtLeast(list) { return role() in list; }
+
+    // Role tiers (top -> bottom authority for cross-branch scope)
+    function ownerTier()   { return roleAtLeast(['companyOwner','admin']); }
+    function hrTier()      { return roleAtLeast(['companyOwner','admin','hr']); }
+    function mgmtTier()    { return roleAtLeast(['companyOwner','admin','hr','manager']); }
+    function opsTier()     { return roleAtLeast(['companyOwner','admin','hr','manager','incharge','supervisor']); }
+
+    function isClientUser() { return isRole('clientUser'); }
+    function matchesClientId(cid, targetClientId) { return get(/databases/$(database)/documents/companies/$(cid)/users/$(request.auth.uid)).data.clientId == targetClientId; }
+
+    function isVendorUser() { return isRole('vendorUser'); }
+    function matchesVendorId(cid, targetVendorId) { return get(/databases/$(database)/documents/companies/$(cid)/users/$(request.auth.uid)).data.vendorId == targetVendorId; }
+
+    function isEmployeeUser() { return isRole('employee'); }
+    function matchesEmployeeId(cid, targetEmpId) { return get(/databases/$(database)/documents/companies/$(cid)/users/$(request.auth.uid)).data.employeeId == targetEmpId; }
+
+    function notDeleted() { return resource == null || resource.data.isDeleted == false; }
+
+    function validWrite(req) {
+      return req.resource.data.companyId == companyId()
+        && req.resource.data.updatedBy == request.auth.uid
+        && (resource == null || req.resource.data.version == resource.data.version + 1);
+    }
+
+    // ---- Developer: full cross-company access (support/ops) ----
+    match /{document=**} {
+      allow read, write: if isDeveloper();
+    }
+
+    match /companies/{cid} {
+      allow read: if sameCompany(cid) && isActive();
+      allow update: if sameCompany(cid) && ownerTier();
+      allow create, delete: if false; // company lifecycle only via Cloud Function
+
+      match /branches/{bid} {
+        allow read: if sameCompany(cid) && isActive() && (ownerTier() || hasBranch(bid));
+        allow write: if sameCompany(cid) && ownerTier();
+
+        match /sites/{sid} {
+          allow read: if sameCompany(cid) && isActive() && (ownerTier() || hasSite(sid));
+          allow write: if sameCompany(cid) && mgmtTier() && hasBranch(bid);
+        }
+      }
+
+      match /users/{uid} {
+        allow read: if sameCompany(cid) && (request.auth.uid == uid || hrTier());
+        allow create, update: if sameCompany(cid) && hrTier() && validWrite(request);
+        allow delete: if false; // deactivate, never hard-delete
+      }
+
+      match /employees/{eid} {
+        allow read: if sameCompany(cid) && isActive() &&
+          (mgmtTier() || (opsTier() && hasBranch(resource.data.branchId)) ||
+           (request.auth.uid == resource.data.linkedUserId));
+        allow create: if sameCompany(cid) && hrTier() && notDeleted();
+        allow update: if sameCompany(cid) && isActive() &&
+          ((hrTier()) || (opsTier() && hasBranch(resource.data.branchId))) &&
+          validWrite(request) && request.resource.data.isDeleted == resource.data.isDeleted;
+        allow delete: if false;
+
+        match /documents/{did} {
+          allow read: if sameCompany(cid) && isActive() &&
+            (hrTier() || request.auth.uid == get(/databases/(default)/documents/companies/$(cid)/employees/$(eid)).data.linkedUserId) &&
+            (!resource.data.confidential || hrTier() || request.auth.uid == get(/databases/(default)/documents/companies/$(cid)/employees/$(eid)).data.linkedUserId);
+          allow create: if sameCompany(cid) && isActive() &&
+            (hrTier() || request.auth.uid == get(/databases/(default)/documents/companies/$(cid)/employees/$(eid)).data.linkedUserId);
+          allow update: if sameCompany(cid) && hrTier() && validWrite(request);
+        }
+
+        match /timeline/{tid} {
+          allow read: if sameCompany(cid) && (hrTier() || (opsTier() && hasBranch(get(/databases/(default)/documents/companies/$(cid)/employees/$(eid)).data.branchId)) || request.auth.uid == get(/databases/(default)/documents/companies/$(cid)/employees/$(eid)).data.linkedUserId);
+          allow write: if false; // Cloud Functions only
+        }
+      }
+
+      match /transfers/{id}      { allow read: if sameCompany(cid) && mgmtTier(); allow write: if sameCompany(cid) && mgmtTier() && validWrite(request); }
+      match /promotions/{id}     { allow read: if sameCompany(cid) && mgmtTier(); allow write: if sameCompany(cid) && mgmtTier() && validWrite(request); }
+      match /resignations/{id}   { allow read: if sameCompany(cid) && (hrTier() || request.auth.uid == resource.data.requestedByUserId); allow write: if sameCompany(cid) && (hrTier() || request.auth.uid == request.resource.data.requestedByUserId) && validWrite(request); }
+      match /terminations/{id}   { allow read, write: if sameCompany(cid) && hrTier() && validWrite(request); }
+      match /rejoinings/{id}     { allow read, write: if sameCompany(cid) && hrTier() && validWrite(request); }
+
+      match /employeeHistory/{eid}/{sub=**} {
+        allow read: if sameCompany(cid) && (hrTier() || mgmtTier());
+        allow write: if false; // Cloud Functions only
+      }
+
+      // --- SHIFT & ROSTER MANAGEMENT MODULE COLLECTIONS ---
+      match /shifts/{shiftId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && hrTier();
+      }
+
+      match /shiftPatterns/{patternId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && hrTier();
+      }
+
+      match /rosters/{rosterId} {
+        allow read: if sameCompany(cid) && (
+          opsTier() || request.auth.uid == resource.data.employeeUserId || request.auth.uid == resource.data.linkedUserId
+        );
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /openShifts/{openShiftId} {
+        allow read: if sameCompany(cid);
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /shiftSwapRequests/{swapId} {
+        allow read: if sameCompany(cid) && (
+          opsTier() || 
+          request.auth.uid == resource.data.requesterEmployeeId || 
+          request.auth.uid == resource.data.targetEmployeeId
+        );
+        allow create: if sameCompany(cid) && (
+          request.auth.uid == request.resource.data.requesterEmployeeId || opsTier()
+        );
+        allow update: if sameCompany(cid) && (
+          opsTier() || 
+          request.auth.uid == resource.data.targetEmployeeId || 
+          request.auth.uid == resource.data.requesterEmployeeId
+        );
+        allow delete: if false;
+      }
+
+      match /replacementShifts/{replacementId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /rosterHistory/{histId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if false; // Cloud Functions only
+      }
+
+      match /attendancePunches/{punchId} {
+        allow read: if sameCompany(cid) && (opsTier() || request.auth.uid == resource.data.linkedUserId);
+        allow create: if sameCompany(cid) && (request.auth.uid == request.resource.data.linkedUserId || opsTier());
+        allow update, delete: if false; // Append-only
+      }
+
+      match /attendance/{aid} {
+        allow read: if sameCompany(cid) && isActive() &&
+          (mgmtTier() || hasBranch(resource.data.branchId) || request.auth.uid == resource.data.employeeUserId);
+        allow create: if sameCompany(cid) && isActive() &&
+          (request.auth.uid == request.resource.data.employeeUserId || opsTier());
+        allow update: if sameCompany(cid) && isActive() && opsTier() &&
+          hasBranch(resource.data.branchId) && resource.data.isLocked == false && validWrite(request);
+        allow delete: if false;
+      }
+
+      match /attendanceCorrections/{correctionId} {
+        allow read: if sameCompany(cid) && (opsTier() || request.auth.uid == resource.data.requestedByUserId);
+        allow create: if sameCompany(cid) && (request.auth.uid == request.resource.data.requestedByUserId || opsTier());
+        allow update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /musterRolls/{musterId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow create, update: if sameCompany(cid) && hrTier();
+        allow delete: if false;
+      }
+
+      match /attendanceHistory/{histId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if false; // Cloud Functions only
+      }
+
+      // --- LEAVE MANAGEMENT MODULE COLLECTIONS ---
+      match /leaveTypes/{typeId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && hrTier();
+      }
+
+      match /leavePolicies/{policyId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && hrTier();
+      }
+
+      match /leaveBalances/{balanceId} {
+        allow read: if sameCompany(cid) && (mgmtTier() || request.auth.uid == resource.data.employeeUserId);
+        allow write: if sameCompany(cid) && hrTier();
+      }
+
+      match /leaveRequests/{lid} {
+        allow read: if sameCompany(cid) && isActive() &&
+          (opsTier() || request.auth.uid == resource.data.employeeUserId);
+        allow create: if sameCompany(cid) && isActive() &&
+          (request.auth.uid == request.resource.data.employeeUserId || opsTier());
+        allow update: if sameCompany(cid) && isActive() &&
+          (opsTier() || (request.auth.uid == resource.data.employeeUserId && resource.data.status == 'SUBMITTED'));
+        allow delete: if false;
+      }
+
+      match /compOffGrants/{grantId} {
+        allow read: if sameCompany(cid) && (opsTier() || request.auth.uid == resource.data.employeeUserId);
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /leaveEncashments/{encashmentId} {
+        allow read: if sameCompany(cid) && (hrTier() || request.auth.uid == resource.data.employeeUserId);
+        allow create: if sameCompany(cid) && (request.auth.uid == request.resource.data.employeeUserId || hrTier());
+        allow update: if sameCompany(cid) && hrTier();
+        allow delete: if false;
+      }
+
+      match /leaveHistory/{histId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if false; // Cloud Functions only
+      }
+
+      // --- PAYROLL MANAGEMENT MODULE COLLECTIONS ---
+      match /salaryComponents/{compId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && hrTier();
+      }
+
+      match /salaryStructures/{strucId} {
+        allow read: if sameCompany(cid) && hrTier();
+        allow write: if sameCompany(cid) && hrTier();
+      }
+
+      match /employeePayrollProfiles/{profId} {
+        allow read: if sameCompany(cid) && (
+          hrTier() || 
+          request.auth.uid == resource.data.employeeUserId
+        );
+        allow write: if sameCompany(cid) && hrTier();
+      }
+
+      match /salaryAdvances/{advId} {
+        allow read: if sameCompany(cid) && (
+          hrTier() || 
+          request.auth.uid == resource.data.employeeUserId
+        );
+        allow create: if sameCompany(cid) && (
+          request.auth.uid == request.resource.data.employeeUserId || hrTier()
+        );
+        allow update: if sameCompany(cid) && hrTier();
+        allow delete: if false;
+      }
+
+      match /reimbursements/{reimbId} {
+        allow read: if sameCompany(cid) && (
+          hrTier() || 
+          request.auth.uid == resource.data.employeeUserId
+        );
+        allow create: if sameCompany(cid) && (
+          request.auth.uid == request.resource.data.employeeUserId || hrTier()
+        );
+        allow update: if sameCompany(cid) && hrTier();
+        allow delete: if false;
+      }
+
+      match /payrollRuns/{runId} {
+        allow read: if sameCompany(cid) && hrTier();
+        allow create, update: if sameCompany(cid) && hrTier();
+        allow delete: if false;
+      }
+
+      match /payslips/{payslipId} {
+        allow read: if sameCompany(cid) && (
+          hrTier() || 
+          (request.auth.uid == resource.data.employeeUserId && resource.data.isPublishedToEmployee == true)
+        );
+        allow create, update: if sameCompany(cid) && hrTier();
+        allow delete: if false;
+      }
+
+      match /payrollHistory/{histId} {
+        allow read: if sameCompany(cid) && ownerTier();
+        allow write: if false; // Cloud Functions only
+      }
+
+      match /payroll/{pid} {
+        allow read: if sameCompany(cid) && hrTier();
+        allow write: if sameCompany(cid) && hrTier() && validWrite(request);
+      }
+
+      // --- INVENTORY & PROCUREMENT MANAGEMENT MODULE COLLECTIONS ---
+      match /suppliers/{supplierId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /inventoryCategories/{catId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /inventoryItems/{itemId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /warehouses/{whId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /itemStockLevels/{levelId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && opsTier();
+      }
+
+      match /purchaseRequisitions/{prId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /purchaseOrders/{poId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /goodsReceipts/{grnId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /stockTransactions/{txnId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow write: if false; // Cloud Functions exclusively
+      }
+
+      match /materialRequests/{reqId} {
+        allow read: if sameCompany(cid);
+        allow create: if sameCompany(cid) && isSignedIn();
+        allow update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /materialIssues/{issueId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /stockTransfers/{stxId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /stockAudits/{auditId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow create, update: if sameCompany(cid) && mgmtTier();
+        allow delete: if false;
+      }
+
+      // --- ASSET MANAGEMENT MODULE COLLECTIONS ---
+      match /assetCategories/{catId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /assets/{assetId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && opsTier();
+      }
+
+      match /assetAllocations/{allocId} {
+        allow read: if sameCompany(cid) && (
+          opsTier() || request.auth.uid == resource.data.employeeUserId
+        );
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /assetMaintenances/{mntId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /assetDepreciations/{depId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if false; // Cloud Functions exclusively
+      }
+
+      match /assetDisposals/{dispId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow create, update: if sameCompany(cid) && mgmtTier();
+        allow delete: if false;
+      }
+
+      match /assetAudits/{auditId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      // --- BILLING & CLIENT MANAGEMENT MODULE COLLECTIONS ---
+      match /clients/{clientId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /clientContracts/{contractId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /billingRateCards/{rateCardId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /clientInvoices/{invoiceId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && mgmtTier();
+        allow delete: if false;
+      }
+
+      match /clientPayments/{paymentId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && mgmtTier();
+        allow delete: if false;
+      }
+
+      match /creditDebitNotes/{noteId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow create, update: if sameCompany(cid) && mgmtTier();
+        allow delete: if false;
+      }
+
+      match /clientBillingHistory/{histId} {
+        allow read: if sameCompany(cid) && ownerTier();
+        allow write: if false; // Cloud Functions exclusively
+      }
+
+      // --- OPERATIONS MANAGEMENT MODULE COLLECTIONS ---
+      match /siteOperations/{opId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /patrolRoutes/{routeId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && opsTier();
+      }
+
+      match /patrolLogs/{patrolLogId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && isSignedIn();
+        allow delete: if false;
+      }
+
+      match /incidentReports/{incidentId} {
+        allow read: if sameCompany(cid);
+        allow create: if sameCompany(cid) && isSignedIn();
+        allow update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /siteChecklists/{checklistId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && opsTier();
+      }
+
+      match /checklistSubmissions/{subId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /visitorLogs/{visitorId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      match /siteHandovers/{handoverId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if false;
+      }
+
+      // --- REPORTS ENGINE MODULE COLLECTIONS ---
+      match /reportTemplates/{templateId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /reportSchedules/{scheduleId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow create, update, delete: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /scheduledReports/{scheduledId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow create, update, delete: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /generatedReports/{reportId} {
+        allow read: if sameCompany(cid) && (
+          opsTier() || request.auth.uid == resource.data.requestedByUserId
+        );
+        allow create: if sameCompany(cid) && isSignedIn();
+        allow update: if sameCompany(cid) && mgmtTier();
+        allow delete: if sameCompany(cid) && ownerTier();
+      }
+
+      // --- DASHBOARD ENGINE MODULE COLLECTIONS ---
+      match /dashboardLayouts/{layoutId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /dashboardWidgets/{widgetId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /dashboardSnapshots/{snapId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow write: if false; // Cloud Functions exclusively
+      }
+
+      match /dashboardAlerts/{alertId} {
+        allow read: if sameCompany(cid) && opsTier();
+        allow create, update: if sameCompany(cid) && opsTier();
+        allow delete: if sameCompany(cid) && ownerTier();
+      }
+
+      // --- NOTIFICATION ENGINE MODULE COLLECTIONS ---
+      match /notificationTemplates/{templateId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /notifications/{notifId} {
+        allow read, update: if sameCompany(cid) && (
+          request.auth.uid == resource.data.recipientUserId || mgmtTier()
+        );
+        allow create: if sameCompany(cid) && isSignedIn();
+        allow delete: if sameCompany(cid) && ownerTier();
+      }
+
+      match /userNotificationPreferences/{prefId} {
+        allow read, write: if sameCompany(cid) && (
+          request.auth.uid == resource.data.userId || mgmtTier()
+        );
+      }
+
+      match /fcmTokens/{tokenId} {
+        allow read, write: if sameCompany(cid) && (
+          request.auth.uid == resource.data.userId || mgmtTier()
+        );
+      }
+
+      match /notificationLogs/{logId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if false; // Cloud Functions exclusively
+      }
+
+      // --- AUDIT & ACTIVITY LOGS MODULE COLLECTIONS ---
+      match /auditLogs/{logId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if false; // Cloud Functions exclusively
+      }
+
+      match /dataChangeHistory/{changeId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if false; // Cloud Functions exclusively
+      }
+
+      match /securityEventLogs/{eventId} {
+        allow read: if sameCompany(cid) && ownerTier();
+        allow write: if false; // Cloud Functions exclusively
+      }
+
+      match /userSessionLogs/{sessId} {
+        allow read: if sameCompany(cid) && (
+          request.auth.uid == resource.data.userId || mgmtTier()
+        );
+        allow write: if false; // Cloud Functions exclusively
+      }
+
+      // --- SYSTEM SETTINGS & FEATURE FLAGS MODULE COLLECTIONS ---
+      match /systemSettings/{settingId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && ownerTier();
+      }
+
+      match /featureFlags/{flagId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && ownerTier();
+      }
+
+      match /complianceSettings/{settingId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && mgmtTier(); // HR/Admin can update compliance
+      }
+
+      match /integrationSettings/{integrationId} {
+        allow read: if sameCompany(cid) && ownerTier(); // Strictly restricted
+        allow write: if sameCompany(cid) && ownerTier();
+      }
+
+      // --- SECURITY FOUNDATION MODULE COLLECTIONS ---
+      match /securityPolicies/{policyId} {
+        allow read: if sameCompany(cid);
+        allow write: if sameCompany(cid) && ownerTier();
+      }
+
+      match /ipAllowlists/{ipId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if sameCompany(cid) && ownerTier();
+      }
+
+      match /blockedDevices/{deviceId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if sameCompany(cid) && ownerTier();
+      }
+
+      match /apiKeys/{keyId} {
+        allow read: if sameCompany(cid) && ownerTier();
+        allow write: if sameCompany(cid) && ownerTier();
+      }
+
+      // --- FIREBASE STORAGE MANAGEMENT MODULE COLLECTIONS ---
+      match /storageFiles/{fileId} {
+        allow read: if sameCompany(cid) && isSignedIn();
+        allow create: if sameCompany(cid) && isSignedIn();
+        allow update: if sameCompany(cid) && mgmtTier();
+        allow delete: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /storageQuotas/{quotaId} {
+        allow read: if sameCompany(cid) && ownerTier();
+        allow write: if false; // Only updated by Cloud Functions
+      }
+
+      match /storageAccessLogs/{logId} {
+        allow read: if sameCompany(cid) && ownerTier();
+        allow write: if false; // Only updated by Cloud Functions
+      }
+
+      // --- SEARCH & FILTER ENGINE MODULE COLLECTIONS ---
+      match /savedFilters/{filterId} {
+        allow read: if sameCompany(cid) && (resource.data.userId == request.auth.uid || resource.data.isShared == true);
+        allow write: if sameCompany(cid) && request.auth.uid == request.resource.data.userId;
+      }
+
+      match /searchHistory/{searchId} {
+        allow read, write: if sameCompany(cid) && request.auth.uid == resource.data.userId;
+      }
+
+      match /globalSearchIndexes/{indexId} {
+        allow read: if sameCompany(cid) && isSignedIn();
+        allow write: if false; // Updated strictly via Cloud Functions matching core module changes
+      }
+
+      // --- ANALYTICS ENGINE MODULE COLLECTIONS ---
+      match /analyticsAggregations/{aggId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if false; // Computed strictly via Cloud Functions
+      }
+
+      match /analyticsGoals/{goalId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if sameCompany(cid) && ownerTier();
+      }
+
+      match /analyticsInsights/{insightId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow update: if sameCompany(cid) && mgmtTier(); // Allow marking as actioned
+        allow create, delete: if false; // System generated
+      }
+
+      // --- OFFLINE SYNC ENGINE MODULE COLLECTIONS ---
+      match /syncMutationQueues/{mutationId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow create: if sameCompany(cid) && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if false; // Processed exclusively by Cloud Functions
+      }
+
+      match /deviceSyncStates/{deviceId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if sameCompany(cid) && request.resource.data.assignedUserId == request.auth.uid;
+      }
+
+      match /syncConflictLogs/{conflictId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow update: if sameCompany(cid) && mgmtTier(); // To resolve manual conflicts
+        allow create, delete: if false; // System generated
+      }
+
+      // --- CLIENT PORTAL MODULE COLLECTIONS ---
+      match /clientServiceRequests/{requestId} {
+        allow read: if sameCompany(cid) && (opsTier() || (isClientUser() && matchesClientId(cid, resource.data.clientId)));
+        allow create: if sameCompany(cid) && isClientUser() && matchesClientId(cid, request.resource.data.clientId);
+        allow update: if sameCompany(cid) && opsTier(); // Only Ops can update status
+      }
+
+      match /clientComplaints/{complaintId} {
+        allow read: if sameCompany(cid) && (opsTier() || (isClientUser() && matchesClientId(cid, resource.data.clientId)));
+        allow create: if sameCompany(cid) && isClientUser() && matchesClientId(cid, request.resource.data.clientId);
+        allow update: if sameCompany(cid) && opsTier(); // Only Ops can resolve
+      }
+
+      // --- VENDOR PORTAL MODULE COLLECTIONS ---
+      match /vendorInvoices/{invoiceId} {
+        allow read: if sameCompany(cid) && (mgmtTier() || (isVendorUser() && matchesVendorId(cid, resource.data.vendorId)));
+        allow create: if sameCompany(cid) && isVendorUser() && matchesVendorId(cid, request.resource.data.vendorId);
+        allow update: if sameCompany(cid) && mgmtTier(); // Finance approves/pays
+      }
+
+      match /vendorPerformanceMetrics/{metricId} {
+        allow read: if sameCompany(cid) && (mgmtTier() || (isVendorUser() && matchesVendorId(cid, resource.data.vendorId)));
+        allow write: if false; // Computed automatically by Cloud Functions
+      }
+
+      // --- EMPLOYEE SELF SERVICE MODULE COLLECTIONS ---
+      match /salaryAdvanceRequests/{requestId} {
+        allow read: if sameCompany(cid) && (mgmtTier() || (isEmployeeUser() && matchesEmployeeId(cid, resource.data.employeeId)));
+        allow create: if sameCompany(cid) && isEmployeeUser() && matchesEmployeeId(cid, request.resource.data.employeeId);
+        allow update: if sameCompany(cid) && mgmtTier(); // Finance approves
+      }
+
+      match /expenseClaims/{claimId} {
+        allow read: if sameCompany(cid) && (mgmtTier() || (isEmployeeUser() && matchesEmployeeId(cid, resource.data.employeeId)));
+        allow create: if sameCompany(cid) && isEmployeeUser() && matchesEmployeeId(cid, request.resource.data.employeeId);
+        allow update: if sameCompany(cid) && mgmtTier(); // Finance approves
+      }
+
+      match /companyAnnouncements/{announcementId} {
+        allow read: if sameCompany(cid) && isSignedIn();
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /essProfileUpdateRequests/{requestId} {
+        allow read: if sameCompany(cid) && (mgmtTier() || (isEmployeeUser() && matchesEmployeeId(cid, resource.data.employeeId)));
+        allow create: if sameCompany(cid) && isEmployeeUser() && matchesEmployeeId(cid, request.resource.data.employeeId);
+        allow update: if sameCompany(cid) && mgmtTier(); // HR approves
+      }
+
+      // --- HR HELPDESK MODULE COLLECTIONS ---
+      match /hrTickets/{ticketId} {
+        allow read: if sameCompany(cid) && (roleAtLeast(['companyOwner','admin','hr']) || (isEmployeeUser() && matchesEmployeeId(cid, resource.data.employeeId)));
+        allow create: if sameCompany(cid) && isEmployeeUser() && matchesEmployeeId(cid, request.resource.data.employeeId);
+        allow update: if sameCompany(cid) && (roleAtLeast(['companyOwner','admin','hr']) || (isEmployeeUser() && matchesEmployeeId(cid, resource.data.employeeId)));
+      }
+
+      match /hrTicketComments/{commentId} {
+        allow read: if sameCompany(cid) && (
+          roleAtLeast(['companyOwner','admin','hr']) || 
+          (resource.data.isInternalNote == false && isEmployeeUser())
+        );
+        allow create: if sameCompany(cid) && (
+          roleAtLeast(['companyOwner','admin','hr']) || 
+          (request.resource.data.isInternalNote == false && isEmployeeUser())
+        );
+      }
+
+      match /hrSlaConfigs/{configId} {
+        allow read: if sameCompany(cid) && isSignedIn();
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      // --- TICKET MANAGEMENT SYSTEM MODULE COLLECTIONS ---
+      match /systemTickets/{ticketId} {
+        allow read: if sameCompany(cid) && (
+          opsTier() || 
+          resource.data.reportedByUserId == request.auth.uid ||
+          resource.data.assignedToUserId == request.auth.uid
+        );
+        allow create: if sameCompany(cid) && isSignedIn();
+        allow update: if sameCompany(cid) && (
+          opsTier() || 
+          resource.data.reportedByUserId == request.auth.uid ||
+          resource.data.assignedToUserId == request.auth.uid
+        );
+      }
+
+      match /systemTicketLogs/{logId} {
+        allow read: if sameCompany(cid) && isSignedIn();
+        allow create: if sameCompany(cid) && isSignedIn();
+        allow update, delete: if false; // Immutable audit log
+      }
+
+      match /ticketPriorityMatrix/{matrixId} {
+        allow read: if sameCompany(cid) && isSignedIn();
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      // --- TRAINING MANAGEMENT MODULE COLLECTIONS ---
+      match /trainingCourses/{courseId} {
+        allow read: if sameCompany(cid) && isSignedIn();
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /trainingSessions/{sessionId} {
+        allow read: if sameCompany(cid) && isSignedIn();
+        allow write: if sameCompany(cid) && (mgmtTier() || opsTier());
+      }
+
+      match /trainingAssessments/{assessmentId} {
+        allow read: if sameCompany(cid) && (mgmtTier() || opsTier() || (isEmployeeUser() && matchesEmployeeId(cid, resource.data.employeeId)));
+        allow write: if sameCompany(cid) && (mgmtTier() || opsTier());
+      }
+
+      match /employeeCertificates/{certificateId} {
+        allow read: if sameCompany(cid) && (mgmtTier() || opsTier() || (isEmployeeUser() && matchesEmployeeId(cid, resource.data.employeeId)));
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /employeeSkillMatrices/{employeeId} {
+        allow read: if sameCompany(cid) && (mgmtTier() || opsTier() || (isEmployeeUser() && matchesEmployeeId(cid, resource.data.employeeId)));
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      // --- DOCUMENT EXPIRY MANAGEMENT MODULE COLLECTIONS ---
+      match /complianceDocuments/{documentId} {
+        allow read: if sameCompany(cid) && (
+          mgmtTier() || opsTier() || 
+          (isEmployeeUser() && resource.data.entityId == get(/databases/$(database)/documents/companies/$(cid)/users/$(request.auth.uid)).data.employeeId) ||
+          (isVendorUser() && resource.data.entityId == get(/databases/$(database)/documents/companies/$(cid)/users/$(request.auth.uid)).data.vendorId)
+        );
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /documentRenewalRequests/{requestId} {
+        allow read: if sameCompany(cid) && (
+          mgmtTier() || opsTier() || 
+          request.auth.uid == resource.data.submittedByUserId
+        );
+        allow create: if sameCompany(cid) && isSignedIn();
+        allow update: if sameCompany(cid) && mgmtTier(); // Only HR/Legal Admin can approve
+      }
+
+      match /documentAlertConfigs/{configId} {
+        allow read: if sameCompany(cid) && isSignedIn();
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      // --- COMPLIANCE MANAGEMENT MODULE COLLECTIONS ---
+      match /complianceRegisters/{complianceId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /auditChecklists/{checklistId} {
+        allow read: if sameCompany(cid) && isSignedIn();
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /inspectionRecords/{inspectionId} {
+        allow read: if sameCompany(cid) && (mgmtTier() || opsTier());
+        allow create: if sameCompany(cid) && opsTier(); // Field Officers can submit
+        allow update: if sameCompany(cid) && mgmtTier();
+      }
+
+      match /complianceCalendarEvents/{eventId} {
+        allow read: if sameCompany(cid) && isSignedIn();
+        allow write: if sameCompany(cid) && mgmtTier();
+      }
+
+      // --- EXPANSION MODULES (PHASES 32 - 50) ---
+      match /vehicles/{vehicleId} { allow read: if sameCompany(cid) && isSignedIn(); allow write: if sameCompany(cid) && opsTier(); }
+      match /vehicleTrips/{tripId} { allow read: if sameCompany(cid) && isSignedIn(); allow write: if sameCompany(cid) && opsTier(); }
+      match /vehicleFuelLogs/{fuelLogId} { allow read: if sameCompany(cid) && (opsTier() || mgmtTier()); allow create: if sameCompany(cid) && opsTier(); }
+      match /uniformStock/{stockId} { allow read: if sameCompany(cid) && isSignedIn(); allow write: if sameCompany(cid) && mgmtTier(); }
+      match /uniformIssues/{issueId} { allow read: if sameCompany(cid) && (opsTier() || isEmployeeUser()); allow create: if sameCompany(cid) && opsTier(); }
+      match /uniformDamageRecoveries/{recoveryId} { allow read: if sameCompany(cid) && mgmtTier(); allow write: if sameCompany(cid) && mgmtTier(); }
+      match /consumablesMaster/{consumableId} { allow read: if sameCompany(cid) && isSignedIn(); allow write: if sameCompany(cid) && mgmtTier(); }
+      match /consumableIssues/{issueId} { allow read: if sameCompany(cid) && (opsTier() || mgmtTier()); allow create: if sameCompany(cid) && opsTier(); }
+      match /visitorPasses/{passId} { allow read, create, update: if sameCompany(cid) && isSignedIn(); }
+      match /visitorBlacklist/{blacklistId} { allow read: if sameCompany(cid) && isSignedIn(); allow write: if sameCompany(cid) && mgmtTier(); }
+      match /gatePasses/{passId} { allow read: if sameCompany(cid) && isSignedIn(); allow write: if sameCompany(cid) && (opsTier() || mgmtTier()); }
+      match /vehicleEntries/{entryId} { allow read, create, update: if sameCompany(cid) && opsTier(); }
+      match /aiCameraEvents/{eventId} { allow read, write: if sameCompany(cid) && (opsTier() || mgmtTier()); }
+      match /faceTemplates/{templateId} { allow read, write: if sameCompany(cid) && opsTier(); }
+      match /faceVerificationLogs/{logId} { allow read, create: if sameCompany(cid) && opsTier(); }
+      match /biometricDevices/{deviceId} { allow read: if sameCompany(cid) && (opsTier() || mgmtTier()); allow write: if sameCompany(cid) && mgmtTier(); }
+      match /biometricRawLogs/{logId} { allow read: if sameCompany(cid) && (opsTier() || mgmtTier()); allow write: if false; }
+      match /whatsappTemplates/{templateId} { allow read, write: if sameCompany(cid) && mgmtTier(); }
+      match /whatsappOutbox/{outboxId} { allow read: if sameCompany(cid) && mgmtTier(); allow create: if sameCompany(cid) && opsTier(); }
+      match /aiRosterPlans/{planId} { allow read, write: if sameCompany(cid) && (opsTier() || mgmtTier()); }
+      match /aiAttritionPredictions/{predId} { allow read, write: if sameCompany(cid) && mgmtTier(); }
+      match /iotDevices/{deviceId} { allow read: if sameCompany(cid) && (opsTier() || mgmtTier()); allow write: if sameCompany(cid) && mgmtTier(); }
+      match /erpConnectors/{connectorId} { allow read, write: if sameCompany(cid) && ownerTier(); }
+      match /apiClients/{clientId} { allow read, write: if sameCompany(cid) && ownerTier(); }
+      match /whiteLabel/{docId} { allow read: if sameCompany(cid) && isSignedIn(); allow write: if sameCompany(cid) && ownerTier(); }
+      match /installedPlugins/{pluginId} { allow read: if sameCompany(cid) && isSignedIn(); allow write: if sameCompany(cid) && ownerTier(); }
+
+      // --- BACKUP & DISASTER RECOVERY MODULE COLLECTIONS ---
+      match /backupSchedules/{scheduleId} {
+        allow read: if sameCompany(cid) && ownerTier();
+        allow write: if sameCompany(cid) && ownerTier();
+      }
+
+      match /backupLogs/{logId} {
+        allow read: if sameCompany(cid) && ownerTier();
+        allow write: if false; // System generated by Cloud Functions
+      }
+
+      match /dataRetentionPolicies/{policyId} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if sameCompany(cid) && ownerTier();
+      }
+
+      match /inventory/{iid} {
+        allow read: if sameCompany(cid) && isActive() && (mgmtTier() || hasBranch(resource.data.branchId));
+        allow write: if sameCompany(cid) && opsTier() && hasBranch(request.resource.data.branchId) && validWrite(request);
+      }
+
+      match /billing/{doc} {
+        allow read: if sameCompany(cid) && ownerTier();
+        allow write: if false; // billing writes only via Cloud Function (payment webhook)
+      }
+
+      match /auditLogs/{doc} {
+        allow read: if sameCompany(cid) && hrTier();
+        allow write: if false; // audit logs written only by Cloud Functions
+      }
+
+      match /activityLogs/{doc} {
+        allow read: if sameCompany(cid) && mgmtTier();
+        allow write: if false;
+      }
+
+      match /notifications/{nid} {
+        allow read, update: if sameCompany(cid) && request.auth.uid == resource.data.targetUserId;
+        allow create, delete: if false; // Cloud Function only
+      }
+
+      match /settings/{doc} {
+        allow read: if sameCompany(cid) && isActive();
+        allow write: if sameCompany(cid) && ownerTier();
+      }
+    }
+
+    match /globalConfig/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isDeveloper();
+    }
+  }
+}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}
+{
+  "name": "log-sheet-muster-architecture",
+  "version": "1.0.0",
+  "description": "Android Architecture Documents",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3000 --host",
+    "build": "vite build",
+    "preview": "vite preview --port 3000 --host",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/cli": "^8.4.2",
+    "@capacitor/core": "^8.4.2",
+    "express": "^4.18.2",
+    "firebase": "^12.16.0",
+    "lucide-react": "^1.27.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.1.5"
+  }
+}
+# GEMINI_API_KEY: Required for Gemini AI API calls.
+# AI Studio automatically injects this at runtime from user secrets.
+# Users configure this via the Secrets panel in the AI Studio UI.
+GEMINI_API_KEY="MY_GEMINI_API_KEY"
+
+# APP_URL: The URL where this applet is hosted.
+# AI Studio automatically injects this at runtime with the Cloud Run service URL.
+# Used for self-referential links, OAuth callbacks, and API endpoints.
+APP_URL="MY_APP_URL"
+
+# Firebase & Crashlytics Enterprise Production Config
+VITE_FIREBASE_PROJECT_ID="ai-studio-logsheetmuster-b178d539-43ea-4b4e-84ad-9359e6365fcd"
+VITE_CRASHLYTICS_ENABLED="true"
+VITE_APP_ENV="production"
+{
+  "projectId": "positive-ocean-dzp2g",
+  "appId": "1:96638188658:web:ae5e8682ce24ff35d496eb",
+  "apiKey": "AIzaSyCtXSZPHhF0dloXQiuyj4vVemFEX4NFvL8",
+  "authDomain": "positive-ocean-dzp2g.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-logsheetmuster-b178d539-43ea-4b4e-84ad-9359e6365fcd",
+  "storageBucket": "positive-ocean-dzp2g.firebasestorage.app",
+  "messagingSenderId": "96638188658",
+  "measurementId": "",
+  "oAuthClientId": "96638188658-hs1rnh2rgh621hmul3oalbpokr33o0f5.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
+}{
+  "project_info": {
+    "project_number": "885364646635",
+    "firebase_url": "https://log-sheet-af97a-default-rtdb.firebaseio.com",
+    "project_id": "log-sheet-af97a",
+    "storage_bucket": "log-sheet-af97a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:885364646635:android:3febfe2ca08113caf114ae",
+        "android_client_info": {
+          "package_name": "com.logsheet.muster"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBv9P5Xs67mtFth7SWGSRVi_gpoDohbKZ8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

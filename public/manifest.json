@@ -1,0 +1,29 @@
+{
+  "id": "com.logsheetmuster.app",
+  "name": "Log Sheet Muster - Workforce & Facility Management",
+  "short_name": "Log Sheet Muster",
+  "description": "Enterprise-grade HRMS, Guard Duty Muster, and Facility Management System with Role-Based Access Control and Offline Sync.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090d16",
+  "theme_color": "#0f172a",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

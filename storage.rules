@@ -1,0 +1,52 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function claims() { return request.auth.token; }
+    function isSignedIn() { return request.auth != null; }
+    function isDeveloper() { return isSignedIn() && claims().isDeveloper == true; }
+    function companyMatch(cid) { return isSignedIn() && claims().companyId == cid; }
+    function hrTier() { return claims().role in ['companyOwner','admin','hr']; }
+    function opsTier() { return claims().role in ['companyOwner','admin','hr','manager','incharge','supervisor']; }
+    function validImage() {
+      return request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+    function validDoc() {
+      return request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('application/pdf|image/(jpeg|png)');
+    }
+
+    match /companies/{cid}/{allPaths=**} {
+      allow read: if isDeveloper() || companyMatch(cid);
+    }
+
+    match /companies/{cid}/employees/{eid}/profile/{file} {
+      allow write: if companyMatch(cid) && (hrTier() || request.auth.uid == eid) && validImage();
+    }
+    match /companies/{cid}/employees/{eid}/documents/{docType}/{file} {
+      allow write: if companyMatch(cid) && hrTier() && validDoc();
+    }
+    match /companies/{cid}/employees/{eid}/selfie-verifications/{date}/{file} {
+      allow write: if companyMatch(cid) && request.auth.uid == eid && validImage();
+      allow delete: if false;
+    }
+    match /companies/{cid}/attendance/{branchId}/{month}/{aid}/{file} {
+      allow write: if companyMatch(cid) && opsTier() && validImage();
+    }
+    match /companies/{cid}/sites/{sid}/qr-codes/{file} {
+      allow write: if companyMatch(cid) && hrTier();
+    }
+    match /companies/{cid}/inventory/{iid}/images/{file} {
+      allow write: if companyMatch(cid) && opsTier() && validImage();
+    }
+    match /companies/{cid}/reports/exports/{uid}/{file} {
+      allow read, write: if companyMatch(cid) && request.auth.uid == uid;
+    }
+    match /companies/{cid}/branding/{file} {
+      allow write: if companyMatch(cid) && claims().role in ['companyOwner','admin'] && validImage();
+    }
+    match /system/backups/{cid}/{allPaths=**} {
+      allow read, write: if isDeveloper();
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "appId": "com.logsheetmuster.app",
+  "appName": "Log Sheet Muster",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
