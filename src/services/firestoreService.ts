@@ -1,4 +1,4 @@
-import { 
+import {
   collection, 
   doc, 
   setDoc, 
@@ -38,7 +38,8 @@ import {
   SystemConfigRecord,
   AccountStatus,
   ApprovalStatus,
-  MASTER_APP_MODULES
+  MASTER_APP_MODULES,
+  VendorRecord
 } from '../types';
 
 export enum OperationType {
@@ -103,6 +104,46 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 }
 
 export class FirestoreService {
+  /**
+   * ============================================================
+   * VENDOR MANAGEMENT
+   * ============================================================
+   */
+
+  static async getVendors(companyId: string): Promise<VendorRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'vendors');
+      const q = query(colRef, orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => d.data() as VendorRecord);
+    } catch (err) {
+      console.warn('[FirestoreService] getVendors error:', err);
+      return [];
+    }
+  }
+
+  static async saveVendor(companyId: string, vendor: VendorRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'vendors', vendor.id);
+      await setDoc(docRef, vendor, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] saveVendor error:', err);
+      return false;
+    }
+  }
+
+  static async deleteVendor(companyId: string, vendorId: string): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'vendors', vendorId);
+      await deleteDoc(docRef);
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] deleteVendor error:', err);
+      return false;
+    }
+  }
+
   /**
    * Listen to real-time Employees list for a company
    */
@@ -1979,8 +2020,19 @@ export class FirestoreService {
 
       // 1. Check if Company Code already exists
       const compRef = doc(db, 'companies', cleanCompanyId);
-      const existingSnap = await getDoc(compRef);
-      if (existingSnap.exists()) {
+      let existingSnap: any;
+      try {
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
+        existingSnap = await Promise.race([getDoc(compRef), timeoutPromise]);
+      } catch (err: any) {
+        if (err.message === 'timeout' || err.code === 'unavailable' || err.message?.includes('offline')) {
+          console.warn('[FirestoreService] Network timeout or offline, bypassing company code existence check.');
+        } else {
+          throw err;
+        }
+      }
+
+      if (existingSnap && existingSnap.exists()) {
         return { success: false, message: `Company Code "${cleanCompanyId}" is already registered.`, companyId: cleanCompanyId };
       }
 

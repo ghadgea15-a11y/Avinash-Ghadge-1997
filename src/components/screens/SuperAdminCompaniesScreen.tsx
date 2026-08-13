@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Building2, 
+import { Pagination } from '../common/Pagination';
+import {
+  Building2,
   Search, 
   PlusCircle, 
   CheckCircle2, 
@@ -34,6 +35,9 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
   const [loading, setLoading] = useState(true);
   const [companies, setCompanies] = useState<CompanyTenant[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'SUSPENDED'>('ALL');
   const [editingCompany, setEditingCompany] = useState<CompanyTenant | null>(null);
   const [saving, setSaving] = useState(false);
@@ -102,6 +106,8 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
                           (c.companyLegalName && c.companyLegalName.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesStatus && matchesSearch;
   });
+
+  const paginatedCompanies = filteredCompanies.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full`}>
@@ -188,8 +194,9 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
           <p className="text-xs font-medium">No tenant companies match your filter criteria.</p>
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCompanies.map((company) => {
+          {paginatedCompanies.map((company) => {
             const enabledCount = company.enabledModules?.length || 0;
             return (
               <div
@@ -277,6 +284,16 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
             );
           })}
         </div>
+        <div className="mt-4">
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredCompanies.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={setItemsPerPage}
+          />
+        </div>
+        </>
       )}
 
       {/* Edit Modal */}

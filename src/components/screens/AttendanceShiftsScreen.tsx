@@ -143,6 +143,23 @@ interface AttendanceShiftsScreenProps {
   onNavigate: (screen: PhaseAScreen) => void;
 }
 
+
+// Helper: Calculate distance between two coords in meters using Haversine formula
+function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371e3; // metres
+  const p1 = lat1 * Math.PI/180;
+  const p2 = lat2 * Math.PI/180;
+  const dp = (lat2-lat1) * Math.PI/180;
+  const dl = (lon2-lon1) * Math.PI/180;
+
+  const a = Math.sin(dp/2) * Math.sin(dp/2) +
+            Math.cos(p1) * Math.cos(p2) *
+            Math.sin(dl/2) * Math.sin(dl/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  return R * c;
+}
+
 export const AttendanceShiftsScreen: React.FC<AttendanceShiftsScreenProps> = ({
   userSession,
   activeCompany,
@@ -165,10 +182,14 @@ export const AttendanceShiftsScreen: React.FC<AttendanceShiftsScreenProps> = ({
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [selectedSiteId, setSelectedSiteId] = useState<string>('ALL');
   const [selectedShiftId, setSelectedShiftId] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, selectedDate, selectedSiteId, selectedShiftId, selectedStatus]);
 
   // GPS State
   const [currentGps, setCurrentGps] = useState<{ latitude: number; longitude: number; accuracy?: number } | null>(null);
@@ -309,9 +330,29 @@ export const AttendanceShiftsScreen: React.FC<AttendanceShiftsScreenProps> = ({
     setIsLoading(true);
     setStatusMsg(null);
 
-    // Find assigned shift
+    // Find assigned site & check geofence
     const myEmp = employees.find(e => e.employeeId === userSession.employeeId);
+    const assignedSiteId = userSession.assignedSiteId || sites[0]?.id || 'SITE-DEFAULT';
+    const assignedSite = sites.find(s => s.id === assignedSiteId);
+
+    if (assignedSite?.latitude && assignedSite?.longitude) {
+      if (!currentGps) {
+        setStatusMsg({ type: 'ERROR', text: 'GPS location is required for this site. Please enable GPS and try again.' });
+        setIsLoading(false);
+        return;
+      }
+      const dist = getDistance(currentGps.latitude, currentGps.longitude, assignedSite.latitude, assignedSite.longitude);
+      const allowedRadius = assignedSite.geofenceRadius || 100; // default 100m
+      if (dist > allowedRadius) {
+        setStatusMsg({ type: 'ERROR', text: `You are ${Math.round(dist)}m away from the site. Must be within ${allowedRadius}m to punch in.` });
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // Find assigned shift
     const assignedShift = shifts.find(s => s.id === myEmp?.assignedShiftId) || shifts[0];
+
 
     const newLog: Omit<AttendanceLogRecord, 'id' | 'createdAt'> = {
       companyId,
@@ -355,6 +396,25 @@ export const AttendanceShiftsScreen: React.FC<AttendanceShiftsScreenProps> = ({
     if (!companyId || !myTodayRecord) return;
     setIsLoading(true);
     setStatusMsg(null);
+
+    // Find assigned site & check geofence
+    const assignedSiteId = userSession.assignedSiteId || sites[0]?.id || 'SITE-DEFAULT';
+    const assignedSite = sites.find(s => s.id === assignedSiteId);
+
+    if (assignedSite?.latitude && assignedSite?.longitude) {
+      if (!currentGps) {
+        setStatusMsg({ type: 'ERROR', text: 'GPS location is required to punch out. Please enable GPS and try again.' });
+        setIsLoading(false);
+        return;
+      }
+      const dist = getDistance(currentGps.latitude, currentGps.longitude, assignedSite.latitude, assignedSite.longitude);
+      const allowedRadius = assignedSite.geofenceRadius || 100;
+      if (dist > allowedRadius) {
+        setStatusMsg({ type: 'ERROR', text: `You are ${Math.round(dist)}m away from the site. Must be within ${allowedRadius}m to punch out.` });
+        setIsLoading(false);
+        return;
+      }
+    }
 
     const assignedShift = shifts.find(s => s.id === myTodayRecord.shiftId) || shifts[0];
     const checkOutTimeISO = new Date().toISOString();
@@ -676,6 +736,11 @@ export const AttendanceShiftsScreen: React.FC<AttendanceShiftsScreenProps> = ({
 
     return true;
   });
+
+  const paginatedLogs = filteredLogs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   // KPI Calculations for Dashboard
   const todayLogs = attendanceLogs.filter(l => l.date === selectedDate);
@@ -1036,7 +1101,7 @@ export const AttendanceShiftsScreen: React.FC<AttendanceShiftsScreenProps> = ({
                       <TableRowSkeleton />
                     </>
                   ) : filteredLogs.length > 0 ? (
-                    filteredLogs.map(log => (
+                    paginatedLogs.map(log => (
                       <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
                         <td className="py-3 px-4">
                           <p className="font-bold text-slate-900 dark:text-slate-100">{log.employeeName}</p>

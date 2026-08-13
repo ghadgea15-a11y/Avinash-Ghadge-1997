@@ -49,7 +49,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     if (e) e.preventDefault();
 
     if (loginMode === 'SUPER_ADMIN') {
-      const adminEmail = emailOrId.trim() || 'ghadgea15@gmail.com';
+      const adminEmail = emailOrId.trim();
+      if (!adminEmail) {
+        setError('Please enter your Super Admin email.');
+        return;
+      }
       if (!passwordOrPin) {
         setError('Please enter your Super Admin password.');
         return;

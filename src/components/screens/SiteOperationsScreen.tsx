@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { Pagination } from '../common/Pagination';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   ShieldAlert, 
   QrCode, 
@@ -45,6 +46,7 @@ import {
   EmployeeRecord 
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { OfflineSyncService } from '../../services/offlineSyncService';
 import { useTheme } from '../../context/ThemeContext';
 
 interface SiteOperationsScreenProps {
@@ -82,7 +84,11 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   // Filters
   const [selectedSiteId, setSelectedSiteId] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  useEffect(() => { setCurrentPage(1); }, [activeTab, searchQuery, selectedSiteId, selectedDate]);
 
   // Modals & Form States
   // 1. Checkpoint Modal
@@ -163,7 +169,8 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
     setIsLoading(false);
 
-    return () => {
+  
+  return () => {
       unsubPatrols();
       unsubIncidents();
       unsubVisitors();
@@ -203,6 +210,13 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     };
 
     setIsLoading(true);
+    if (!isOnline) {
+      OfflineSyncService.queueAction('PATROL_CHECK', { companyId, data: newCp });
+      setCheckpoints(prev => [...prev, newCp]);
+      setIsCheckpointModalOpen(false);
+      setStatusMsg({ type: 'INFO', text: 'Offline: Checkpoint creation queued.' });
+      return;
+    }
     const ok = await FirestoreService.savePatrolCheckpoint(companyId, newCp);
     setIsLoading(false);
 
@@ -296,6 +310,12 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     };
 
     setIsLoading(true);
+    if (!isOnline) {
+      OfflineSyncService.queueAction('INCIDENT_REPORT', { companyId, data: newInc });
+      setIsIncidentModalOpen(false);
+      setStatusMsg({ type: 'INFO', text: 'Offline: Incident Report queued for sync.' });
+      return;
+    }
     const ok = await FirestoreService.saveIncidentReport(companyId, newInc);
     setIsLoading(false);
 
@@ -360,7 +380,14 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     };
 
     setIsLoading(true);
-    const ok = await FirestoreService.checkInVisitor(companyId, newVis);
+    let ok = false;
+    if (!isOnline) {
+      OfflineSyncService.queueAction('VISITOR_LOG', { companyId, data: newVis });
+      ok = true;
+      setStatusMsg({ type: 'INFO', text: 'Offline: Visitor check-in queued.' });
+    } else {
+      ok = await FirestoreService.checkInVisitor(companyId, newVis);
+    }
     setIsLoading(false);
 
     if (ok) {
@@ -375,7 +402,14 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   const handleCheckOutVisitor = async (visitorId: string) => {
     if (!companyId) return;
     setIsLoading(true);
-    const ok = await FirestoreService.checkOutVisitor(companyId, visitorId);
+    let ok = false;
+    if (!isOnline) {
+      OfflineSyncService.queueAction('VISITOR_CHECK_OUT', { companyId, visitorId, checkOutTime: new Date().toISOString() });
+      ok = true;
+      setStatusMsg({ type: 'INFO', text: 'Offline: Visitor check-out queued.' });
+    } else {
+      ok = await FirestoreService.checkOutVisitor(companyId, visitorId);
+    }
     setIsLoading(false);
 
     if (ok) {
@@ -467,6 +501,72 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
     setStatusMsg({ type: 'SUCCESS', text: 'Site Operations CSV report downloaded.' });
   };
+
+
+  // --- PAGINATION & FILTER LOGIC ---
+  const filteredCheckpoints = useMemo(() => {
+    return checkpoints.filter(cp => {
+      const matchSearch = cp.checkpointName.toLowerCase().includes(searchQuery.toLowerCase()) || cp.code.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchSearch;
+    }).sort((a, b) => a.sequenceOrder - b.sequenceOrder);
+  }, [checkpoints, searchQuery]);
+
+  const paginatedCheckpoints = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredCheckpoints.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCheckpoints, currentPage, itemsPerPage]);
+
+  const filteredPatrolLogs = useMemo(() => {
+    return patrolLogs.filter(p => {
+      const matchSearch = p.patrolName.toLowerCase().includes(searchQuery.toLowerCase()) || p.guardName.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchSite = selectedSiteId === 'ALL' || p.siteId === selectedSiteId;
+      return matchSearch && matchSite;
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [patrolLogs, searchQuery, selectedSiteId]);
+
+  const paginatedPatrolLogs = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredPatrolLogs.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredPatrolLogs, currentPage, itemsPerPage]);
+
+  const filteredIncidents = useMemo(() => {
+    return incidents.filter(inc => {
+      const matchSearch = inc.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchSite = selectedSiteId === 'ALL' || inc.siteId === selectedSiteId;
+      return matchSearch && matchSite;
+    }).sort((a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime());
+  }, [incidents, searchQuery, selectedSiteId]);
+
+  const paginatedIncidents = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredIncidents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredIncidents, currentPage, itemsPerPage]);
+
+  const filteredVisitors = useMemo(() => {
+    return visitors.filter(v => {
+      const matchSearch = v.visitorName.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchSite = selectedSiteId === 'ALL' || v.siteId === selectedSiteId;
+      return matchSearch && matchSite;
+    }).sort((a, b) => new Date(b.checkInTime || 0).getTime() - new Date(a.checkInTime || 0).getTime());
+  }, [visitors, searchQuery, selectedSiteId]);
+
+  const paginatedVisitors = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredVisitors.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredVisitors, currentPage, itemsPerPage]);
+
+  const filteredMaterials = useMemo(() => {
+    return materials.filter(m => {
+      const matchSearch = m.materialDescription.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchSite = selectedSiteId === 'ALL' || m.siteId === selectedSiteId;
+      return matchSearch && matchSite;
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [materials, searchQuery, selectedSiteId]);
+
+  const paginatedMaterials = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredMaterials.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredMaterials, currentPage, itemsPerPage]);
 
   return (
     <div className="flex-1 flex flex-col w-full h-full overflow-y-auto p-4 md:p-6 space-y-6">
@@ -582,6 +682,21 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
       {/* ============================================================ */}
       {/* TAB 1: GUARD PATROL TOUR & CHECKPOINTS */}
       {/* ============================================================ */}
+      
+      {/* Search Input for Tabs */}
+      <div className="relative mb-6">
+        <Search className="w-5 h-5 absolute left-3 top-3 text-slate-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search by name, ID, code or description..."
+          className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+            isDark ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-500' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'
+          }`}
+        />
+      </div>
+
       {activeTab === 'PATROLS' && (
         <div className="space-y-6">
           {/* Active Patrol Runner Widget */}
@@ -628,8 +743,9 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
             {/* Checkpoints Sequence Tracker */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
-              {checkpoints.length > 0 ? (
-                checkpoints.map((cp, idx) => {
+              {filteredCheckpoints.length > 0 ? (
+                <>
+                {paginatedCheckpoints.map((cp, idx) => {
                   const isScanned = activePatrolCheckpointsVisited.includes(cp.id);
                   return (
                     <div 
@@ -662,7 +778,11 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                       )}
                     </div>
                   );
-                })
+                })}
+                <div className="col-span-full">
+                  <Pagination currentPage={currentPage} totalItems={filteredCheckpoints.length} itemsPerPage={itemsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={setItemsPerPage} />
+                </div>
+                </>
               ) : (
                 <div className="col-span-full py-6 text-center text-xs text-slate-400 italic">
                   No patrol checkpoints configured for this site. Click "Add Checkpoint" to define site rounds.
@@ -690,8 +810,9 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {patrolLogs.length > 0 ? (
-                    patrolLogs.map(p => (
+                  {filteredPatrolLogs.length > 0 ? (
+                    <>
+                    {paginatedPatrolLogs.map(p => (
                       <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
                         <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">{p.patrolName}</td>
                         <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{p.guardName}</td>
@@ -705,7 +826,19 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                         </td>
                         <td className="py-3 px-4 text-slate-500">{new Date(p.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
                       </tr>
-                    ))
+                    ))}
+                    <tr>
+                      <td colSpan={5} className="p-0">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalItems={filteredPatrolLogs.length}
+                      itemsPerPage={itemsPerPage}
+                      onPageChange={setCurrentPage}
+                      onItemsPerPageChange={setItemsPerPage}
+                    />
+                      </td>
+                    </tr>
+                    </>
                   ) : (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-slate-400">No patrol tour logs recorded today.</td>
@@ -739,8 +872,9 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {incidents.length > 0 ? (
-              incidents.map(inc => (
+            {filteredIncidents.length > 0 ? (
+              <>
+              {paginatedIncidents.map(inc => (
                 <div key={inc.id} className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-3`}>
                   <div className="flex items-center justify-between">
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
@@ -776,7 +910,17 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     </div>
                   )}
                 </div>
-              ))
+              ))}
+                <div className="col-span-full">
+                  <Pagination
+                  currentPage={currentPage}
+                  totalItems={filteredIncidents.length}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                  />
+                </div>
+                </>
             ) : (
               <div className="col-span-full py-12 text-center text-slate-400">
                 No incidents reported for this site.
@@ -822,8 +966,9 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {visitors.length > 0 ? (
-                    visitors.map(v => (
+                  {filteredVisitors.length > 0 ? (
+                    <>
+                    {paginatedVisitors.map(v => (
                       <tr key={v.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
                         <td className="py-3 px-4 font-bold font-mono text-indigo-500">{v.badgeNumber}</td>
                         <td className="py-3 px-4">
@@ -853,7 +998,19 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                           )}
                         </td>
                       </tr>
-                    ))
+                    ))}
+                    <tr>
+                      <td colSpan={6} className="p-0">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalItems={filteredVisitors.length}
+                      itemsPerPage={itemsPerPage}
+                      onPageChange={setCurrentPage}
+                      onItemsPerPageChange={setItemsPerPage}
+                    />
+                      </td>
+                    </tr>
+                    </>
                   ) : (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-slate-400">No visitors logged today.</td>
@@ -887,8 +1044,9 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {materials.length > 0 ? (
-              materials.map(m => (
+            {filteredMaterials.length > 0 ? (
+              <>
+              {paginatedMaterials.map(m => (
                 <div key={m.id} className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-3`}>
                   <div className="flex items-center justify-between">
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
@@ -919,7 +1077,17 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     </div>
                   )}
                 </div>
-              ))
+              ))}
+                <div className="col-span-full">
+                  <Pagination
+                  currentPage={currentPage}
+                  totalItems={filteredMaterials.length}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                  />
+                </div>
+                </>
             ) : (
               <div className="col-span-full py-12 text-center text-slate-400">No material gate passes issued today.</div>
             )}

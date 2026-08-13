@@ -42,6 +42,10 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const [companies, setCompanies] = useState<CompanyTenant[]>([]);
   const [pendingRequests, setPendingRequests] = useState<ApprovalRequestRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  useEffect(() => { setCurrentPage(1); }, [searchTerm]);
   const [stats, setStats] = useState({
     totalCompanies: 0,
     activeCompanies: 0,
@@ -76,11 +80,15 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     loadData();
   }, []);
 
+
   const filteredCompanies = companies.filter(c => 
     c.brandName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.companyId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (c.companyLegalName && c.companyLegalName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const paginatedCompanies = filteredCompanies.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
 
   return (
     <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full`}>
@@ -293,7 +301,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDark ? 'divide-slate-800/60' : 'divide-slate-100'}`}>
-                {filteredCompanies.map((company) => {
+                {paginatedCompanies.map((company) => {
                   const enabledCount = company.enabledModules?.length || 0;
                   return (
                     <tr key={company.companyId} className={`hover:${isDark ? 'bg-slate-800/40' : 'bg-slate-50'} transition`}>

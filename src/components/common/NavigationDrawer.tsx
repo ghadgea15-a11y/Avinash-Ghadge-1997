@@ -95,7 +95,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
               isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
             }`}>
               <img
-                src={userSession.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+                src={userSession.avatarUrl || undefined}
                 alt="Avatar"
                 className="w-11 h-11 rounded-full object-cover border-2 border-indigo-500 shadow"
               />

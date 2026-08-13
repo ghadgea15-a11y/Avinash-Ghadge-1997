@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Users, 
+import { Pagination } from '../common/Pagination';
+import {
+  Users,
   UserPlus, 
   Search, 
   Filter, 
@@ -15,7 +16,7 @@ import {
   Building2, 
   Building, 
   BadgeCheck, 
-  Upload, 
+  Upload, X, 
   AlertTriangle, 
   ArrowUpDown, 
   Download, 
@@ -48,6 +49,7 @@ import {
 } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { FirestoreService } from '../../services/firestoreService';
+import { StorageService } from '../../services/storageService';
 import { OfflineSyncService } from '../../services/offlineSyncService';
 
 interface EmployeeModuleScreenProps {
@@ -74,12 +76,19 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   const [sites, setSites] = useState<SiteRecord[]>([]);
   const [departments, setDepartments] = useState<DepartmentRecord[]>([]);
   const [designations, setDesignations] = useState<DesignationRecord[]>([]);
+  const [vendors, setVendors] = useState<{id: string; vendorName: string; vendorCode: string}[]>([]);
 
   const [activeTab, setActiveTab] = useState<'DIRECTORY' | 'REGISTER' | 'APPROVALS'>('DIRECTORY');
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeRecord | null>(null);
   const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
   const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(null);
   
+
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
+  const [aadharFile, setAadharFile] = useState<File | null>(null);
+  const [addDocFile, setAddDocFile] = useState<File | null>(null);
+  const [uploadingFile, setUploadingFile] = useState<boolean>(false);
+
   // Document upload modal state
   const [showAddDocModal, setShowAddDocModal] = useState<boolean>(false);
   const [newDocData, setNewDocData] = useState<{
@@ -99,6 +108,9 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'NAME' | 'JOIN_DATE' | 'ID'>('NAME');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter, branchFilter, siteFilter, departmentFilter, roleFilter, employmentTypeFilter, sortBy]);
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string; type: 'SUCCESS' | 'ERROR' | 'INFO' } | null>(null);
 
   // Form state for registration / edit
@@ -122,6 +134,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     supervisorId: '',
     shiftId: 'SHIFT-DAY-0800-2000',
     employmentType: 'PERMANENT' as 'PERMANENT' | 'CONTRACT' | 'TEMPORARY',
+    vendorId: '',
     role: 'GUARD' as UserRole,
     aadharNumber: ''
   });
@@ -134,23 +147,25 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   const canApproveOnboarding = ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER'].includes(userSession.role);
   const isCompanyAdmin = ['SUPER_ADMIN', 'COMPANY_ADMIN'].includes(userSession.role);
 
-  const currentCompanyId = activeCompany?.companyId || userSession.companyId || 'APEX-SEC-101';
+  const currentCompanyId = activeCompany?.companyId || userSession.companyId;
 
   // Load organizational structure
   useEffect(() => {
     const loadOrgStructure = async () => {
       try {
-        const [bList, sList, dList, desigList] = await Promise.all([
+        const [bList, sList, dList, desigList, vList] = await Promise.all([
           FirestoreService.getBranches(currentCompanyId),
           FirestoreService.getSites(currentCompanyId),
           FirestoreService.getDepartments(currentCompanyId),
-          FirestoreService.getDesignations(currentCompanyId)
+          FirestoreService.getDesignations(currentCompanyId),
+          FirestoreService.getVendors(currentCompanyId)
         ]);
 
         setBranches(bList);
         setSites(sList);
         setDepartments(dList);
         setDesignations(desigList);
+        setVendors(vList);
 
         // Pre-populate form options if available
         if (bList.length > 0 && !formData.assignedBranchId) {
@@ -223,6 +238,11 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       });
   }, [employees, searchQuery, statusFilter, branchFilter, siteFilter, departmentFilter, roleFilter, employmentTypeFilter, sortBy]);
 
+  const paginatedEmployees = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredEmployees.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredEmployees, currentPage, itemsPerPage]);
+
   // Form Validation
   const validateForm = async () => {
     const errors: Record<string, string> = {};
@@ -266,6 +286,10 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       }
     }
 
+    if (formData.employmentType === 'CONTRACT' && !formData.vendorId) {
+      errors.vendorId = 'Vendor selection is required for Contract employees';
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -298,6 +322,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       supervisorId: emp.supervisorId || '',
       shiftId: emp.shiftId || 'SHIFT-DAY-0800-2000',
       employmentType: emp.employmentType || 'PERMANENT',
+      vendorId: emp.vendorId || '',
       role: emp.role || 'GUARD',
       aadharNumber: emp.documents?.[0]?.documentNumber || ''
     });
@@ -323,6 +348,30 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
     const empId = editingEmployeeId || formData.employeeCode.trim();
 
+    setUploadingFile(true);
+    let finalProfileUrl = editingEmployeeId 
+        ? (employees.find(e => e.id === empId)?.profilePictureUrl || ``)
+        : ``;
+
+    if (profilePictureFile) {
+      try {
+        finalProfileUrl = await StorageService.uploadFile(`companies/${currentCompanyId}/employees/${empId}/profile/profile_${Date.now()}`, profilePictureFile);
+      } catch (err) {
+        console.error('Failed to upload profile picture', err);
+      }
+    }
+
+    let aadharDocUrl = '';
+    if (!editingEmployeeId && aadharFile) {
+      try {
+        aadharDocUrl = await StorageService.uploadFile(`companies/${currentCompanyId}/employees/${empId}/documents/AADHAR/aadhar_${Date.now()}`, aadharFile);
+      } catch (err) {
+        console.error('Failed to upload aadhar', err);
+      }
+    }
+    setUploadingFile(false);
+
+
     const existingDocs = editingEmployeeId 
       ? (employees.find(e => e.id === empId)?.documents || [])
       : [
@@ -330,7 +379,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             id: `DOC-${Date.now()}`,
             type: 'AADHAR' as const,
             documentNumber: formData.aadharNumber.trim(),
-            fileUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=300',
+            fileUrl: aadharDocUrl,
             status: 'PENDING' as const,
             uploadedAt: new Date().toISOString().split('T')[0]
           }
@@ -359,6 +408,8 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       supervisorId: formData.supervisorId || undefined,
       shiftId: formData.shiftId,
       employmentType: formData.employmentType,
+      vendorId: formData.vendorId || undefined,
+      vendorName: formData.vendorId ? vendors.find(v => v.id === formData.vendorId)?.vendorName : undefined,
       status: editingEmployeeId 
         ? (employees.find(e => e.id === empId)?.status || 'ACTIVE')
         : 'ACTIVE',
@@ -366,13 +417,11 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
         ? (employees.find(e => e.id === empId)?.joinedDate || new Date().toISOString().split('T')[0])
         : new Date().toISOString().split('T')[0],
       role: formData.role,
-      profilePictureUrl: editingEmployeeId 
-        ? (employees.find(e => e.id === empId)?.profilePictureUrl || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150`)
-        : `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150`,
-      documents: existingDocs,
-      createdBy: editingEmployeeId ? (employees.find(e => e.id === empId)?.createdBy || userSession.employeeId) : userSession.employeeId,
+      profilePictureUrl: finalProfileUrl,
       createdAt: editingEmployeeId ? (employees.find(e => e.id === empId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      documents: existingDocs,
+      createdBy: employees.find(e => e.id === empId)?.createdBy || userSession?.userId || 'SYSTEM'
     };
 
     if (isOnline) {
@@ -398,6 +447,8 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
   const resetForm = () => {
     setEditingEmployeeId(null);
+    setProfilePictureFile(null);
+    setAadharFile(null);
     setFormData({
       employeeCode: '',
       firstName: '',
@@ -418,6 +469,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       supervisorId: '',
       shiftId: 'SHIFT-DAY-0800-2000',
       employmentType: 'PERMANENT',
+      vendorId: '',
       role: 'GUARD',
       aadharNumber: ''
     });
@@ -480,11 +532,24 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       return;
     }
 
+    
+    setUploadingFile(true);
+    let finalDocUrl = '';
+    if (addDocFile) {
+      try {
+        finalDocUrl = await StorageService.uploadFile(`companies/${currentCompanyId}/employees/${selectedEmployee.id}/documents/${newDocData.type}/${newDocData.type}_${Date.now()}`, addDocFile);
+      } catch (err) {
+        console.error('Failed to upload document', err);
+      }
+    }
+    setUploadingFile(false);
+
     const newDoc: EmployeeDocument = {
+
       id: `DOC-${Date.now()}`,
       type: newDocData.type,
       documentNumber: newDocData.documentNumber.trim(),
-      fileUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=300',
+      fileUrl: finalDocUrl,
       status: 'VERIFIED',
       uploadedAt: new Date().toISOString().split('T')[0]
     };
@@ -503,6 +568,33 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     setShowAddDocModal(false);
     setNewDocData({ type: 'AADHAR', documentNumber: '' });
     setTimeout(() => setFeedbackMessage(null), 4000);
+  };
+
+
+
+  const handleDeleteDocument = async (docId: string, fileUrl: string) => {
+    if (!selectedEmployee || !canManageEmployees) return;
+    if (!window.confirm('Are you sure you want to delete this document?')) return;
+
+    setUploadingFile(true);
+    if (fileUrl) {
+      try {
+        await StorageService.deleteFile(fileUrl);
+      } catch (err) {
+        console.error('Failed to delete file from storage', err);
+      }
+    }
+
+    const updatedDocs = (selectedEmployee.documents || []).filter(d => d.id !== docId);
+    const updatedEmployee = { ...selectedEmployee, documents: updatedDocs };
+    setEmployees(prev => prev.map(e => e.id === selectedEmployee.id ? updatedEmployee : e));
+    setSelectedEmployee(updatedEmployee);
+
+    if (isOnline) {
+      await FirestoreService.verifyEmployeeDocument(currentCompanyId, selectedEmployee.id, updatedDocs, userSession.employeeId);
+      setFeedbackMessage({ text: 'Document deleted successfully.', type: 'SUCCESS' });
+    }
+    setUploadingFile(false);
   };
 
   // Verify Document Workflow
@@ -535,7 +627,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   const handleExportCSV = () => {
     const headers = 'Employee ID,First Name,Last Name,Role,Department,Branch,Site,Status,Contact,Email,Employment Type,Joined Date\n';
     const rows = filteredEmployees.map(e => 
-      `"${e.id}","${e.firstName}","${e.lastName}","${e.role}","${e.departmentId}","${e.assignedBranchId}","${e.assignedSiteId}","${e.status}","${e.contactNumber}","${e.email || ''}","${e.employmentType || 'PERMANENT'}","${e.joinedDate}"`
+      `"${e.id}","${e.firstName}","${e.lastName}","${e.role}","${e.departmentId}","${e.assignedBranchId}","${e.assignedSiteId}","${e.status}","${e.contactNumber}","${e.email || undefined}","${e.employmentType || 'PERMANENT'}","${e.joinedDate}"`
     ).join('\n');
     
     const blob = new Blob([headers + rows], { type: 'text/csv' });
@@ -865,8 +957,9 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               </button>
             </div>
           ) : (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {filteredEmployees.map(emp => (
+              {paginatedEmployees.map(emp => (
                 <div
                   key={emp.id}
                   className={`p-4 rounded-2xl border transition-all hover:shadow-md ${
@@ -876,7 +969,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <img
-                        src={emp.profilePictureUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+                        src={emp.profilePictureUrl || undefined}
                         alt={emp.firstName}
                         className="w-12 h-12 rounded-2xl object-cover border-2 border-indigo-500/30 shrink-0"
                       />
@@ -942,6 +1035,16 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 </div>
               ))}
             </div>
+            <div className="mt-4">
+              <Pagination
+                currentPage={currentPage}
+                totalItems={filteredEmployees.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+              />
+            </div>
+            </>
           )}
         </div>
       )}
@@ -982,6 +1085,17 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               {formErrors.employeeCode && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.employeeCode}</p>}
             </div>
 
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">Profile Picture (Optional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setProfilePictureFile(e.target.files?.[0] || null)}
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200'
+                }`}
+              />
+            </div>
             {/* First Name */}
             <div>
               <label className="block text-[11px] font-bold text-slate-400 mb-1">First Name *</label>
@@ -1146,7 +1260,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               <label className="block text-[11px] font-bold text-slate-400 mb-1">Employment Type *</label>
               <select
                 value={formData.employmentType}
-                onChange={(e) => setFormData(prev => ({ ...prev, employmentType: e.target.value as any }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, employmentType: e.target.value as any, vendorId: e.target.value === 'CONTRACT' ? (vendors[0]?.id || '') : '' }))}
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
                   isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
                 }`}
@@ -1156,6 +1270,25 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 <option value="TEMPORARY">TEMPORARY (Casual Duty)</option>
               </select>
             </div>
+
+            {formData.employmentType === 'CONTRACT' && (
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Select Vendor / Agency *</label>
+                <select
+                  value={formData.vendorId}
+                  onChange={(e) => setFormData(prev => ({ ...prev, vendorId: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                    formErrors.vendorId ? 'border-rose-500 bg-rose-50' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <option value="">-- Select Vendor --</option>
+                  {vendors.map(v => (
+                    <option key={v.id} value={v.id}>{v.vendorName} ({v.vendorCode})</option>
+                  ))}
+                </select>
+                {formErrors.vendorId && <p className="text-[10px] text-rose-500 mt-1">{formErrors.vendorId}</p>}
+              </div>
+            )}
 
             {/* Role Scope */}
             <div>
@@ -1207,8 +1340,9 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Aadhaar / ID Number (New onboarding only) */}
             {!editingEmployeeId && (
+              <>
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Aadhaar Card Number *</label>
+                                <label className="block text-[11px] font-bold text-slate-400 mb-1">Aadhaar Card Number *</label>
                 <input
                   type="text"
                   value={formData.aadharNumber}
@@ -1220,6 +1354,17 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 />
                 {formErrors.aadharNumber && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.aadharNumber}</p>}
               </div>
+              <div className="mt-3">
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Aadhaar File / Scan (Optional)</label>
+                <input
+                  type="file"
+                  onChange={(e) => setAadharFile(e.target.files?.[0] || null)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                    isDark ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+              </>
             )}
           </div>
 
@@ -1277,7 +1422,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <img
-                        src={emp.profilePictureUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+                        src={emp.profilePictureUrl || undefined}
                         alt={emp.firstName}
                         className="w-10 h-10 rounded-xl object-cover border border-amber-500/50"
                       />
@@ -1353,7 +1498,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             <div className="flex items-start justify-between border-b pb-3 border-slate-800">
               <div className="flex items-center gap-3">
                 <img
-                  src={selectedEmployee.profilePictureUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+                  src={selectedEmployee.profilePictureUrl || undefined}
                   alt="Avatar"
                   className="w-14 h-14 rounded-2xl object-cover border-2 border-indigo-500 shadow"
                 />
@@ -1393,6 +1538,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   <span className="text-slate-500 text-[10px]">Employment Type:</span>
                   <p className="font-bold text-amber-400">{selectedEmployee.employmentType || 'PERMANENT'}</p>
                 </div>
+                {selectedEmployee.employmentType === 'CONTRACT' && (
+                  <div className="col-span-2">
+                    <span className="text-slate-500 text-[10px]">Vendor / Agency Name:</span>
+                    <p className="font-bold text-amber-400">{selectedEmployee.vendorName || selectedEmployee.vendorId || 'N/A'}</p>
+                  </div>
+                )}
                 <div>
                   <span className="text-slate-500 text-[10px]">Assigned Duty Site:</span>
                   <p className="font-semibold text-slate-200">{selectedEmployee.assignedSiteId}</p>
@@ -1442,7 +1593,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                       className="text-[10px] font-bold text-indigo-400 hover:underline flex items-center gap-1"
                     >
                       <Plus className="w-3 h-3" />
-                      <span>Attach Document</span>
+                      <span>{uploadingFile ? 'Uploading...' : 'Attach Document'}</span>
                     </button>
                   )}
                 </div>
@@ -1457,9 +1608,22 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                         <span className="font-mono font-bold text-indigo-300">{d.type}:</span>
                         <span>{maskDocumentNumber(d.documentNumber)}</span>
                       </div>
-                      <span className={`text-[10px] font-bold ${d.status === 'VERIFIED' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {d.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {d.fileUrl && (
+                          <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-indigo-300">
+                            <Eye className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        <span className={`text-[10px] font-bold ${d.status === 'VERIFIED' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                          {d.status}
+                        </span>
+
+                        {canManageEmployees && (
+                          <button onClick={() => handleDeleteDocument(d.id, d.fileUrl)} className="p-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400" title="Delete">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}
@@ -1554,11 +1718,25 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   }`}
                 />
               </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Upload File (Optional)</label>
+                <input
+                  type="file"
+                  onChange={(e) => setAddDocFile(e.target.files ? e.target.files[0] : null)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
             </div>
 
             <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
               <button
-                onClick={() => setShowAddDocModal(false)}
+                onClick={() => {
+                  setShowAddDocModal(false);
+                  setAddDocFile(null);
+                }}
                 className="px-4 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold"
               >
                 Cancel

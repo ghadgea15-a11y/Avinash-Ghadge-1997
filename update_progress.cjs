@@ -1,0 +1,11 @@
+const fs = require('fs');
+let code = fs.readFileSync('AI_STUDIO_RECOVERY_PROGRESS.md', 'utf8');
+code = code.replace(
+  /BATCH 11 — REALTIME & OFFLINE BEHAVIOR\nSTATUS: NOT STARTED/,
+  `BATCH 11 — REALTIME & OFFLINE BEHAVIOR\nSTATUS: COMPLETE`
+);
+code = code.replace(
+  /BATCH 10 — SEARCH \/ FILTER \/ SORT \/ PAGINATION\nSTATUS: NOT STARTED/,
+  `BATCH 10 — SEARCH / FILTER / SORT / PAGINATION\nSTATUS: COMPLETE`
+);
+fs.writeFileSync('AI_STUDIO_RECOVERY_PROGRESS.md', code);

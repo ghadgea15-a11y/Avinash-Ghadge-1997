@@ -1,0 +1,19 @@
+--- src/services/firestoreService.ts
++++ src/services/firestoreService.ts
+@@ -2020,9 +2020,13 @@
+ 
+       // 1. Check if Company Code already exists
+       const compRef = doc(db, 'companies', cleanCompanyId);
+-      const existingSnap = await getDoc(compRef);
+-      if (existingSnap.exists()) {
+-        return { success: false, message: `Company Code "${cleanCompanyId}" is already registered.`, companyId: cleanCompanyId };
++      try {
++        const existingSnap = await getDoc(compRef);
++        if (existingSnap.exists()) {
++          return { success: false, message: `Company Code "${cleanCompanyId}" is already registered.`, companyId: cleanCompanyId };
++        }
++      } catch (err: any) {
++        if (err.code === 'unavailable' || err.message?.includes('offline')) {
++           // Just proceed to create, it will sync when online. Or return error.
++        }
++      }

@@ -24,6 +24,7 @@ import { SessionManager } from '../../services/sessionManager';
 import { OfflineSyncService } from '../../services/offlineSyncService';
 
 
+import { runPhase4VerificationTests } from '../../tests/verifyPhase4';
 import { runPhase5Verification, TestResult } from '../../tests/verifyPhase5';
 
 interface SettingsScreenProps {
@@ -56,9 +57,29 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   const handleRunDiagnostics = async () => {
     setIsTesting(true);
-    const report = await runPhase5Verification();
-    setTestSuiteReport(report);
-    setIsTesting(false);
+    try {
+      const report4 = await runPhase4VerificationTests(activeCompany?.companyId || 'MUSTER-TEST-CORP');
+      const report5 = await runPhase5Verification();
+
+      const mappedPhase4: TestResult[] = report4.results.map(r => ({
+        name: `[Phase 4 Attendance] ${r.name}`,
+        passed: r.passed,
+        message: r.details
+      }));
+
+      const consolidatedResults = [...mappedPhase4, ...report5.results];
+      const passedCount = consolidatedResults.filter(r => r.passed).length;
+
+      setTestSuiteReport({
+        passedCount,
+        failedCount: consolidatedResults.length - passedCount,
+        results: consolidatedResults
+      });
+    } catch (err) {
+      console.error('Diagnostics failed:', err);
+    } finally {
+      setIsTesting(false);
+    }
   };
 
 
@@ -248,7 +269,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       <div className={`p-4 rounded-3xl border space-y-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b pb-2 border-slate-800">
           <Shield className="w-4 h-4 text-emerald-400" />
-          Phase 5 Enterprise Suite Verification
+          Consolidated System Diagnostics (Phases 4 & 5)
         </h3>
 
         <button
@@ -257,7 +278,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           className="w-full py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm"
         >
           <RefreshCw className={`w-4 h-4 ${isTesting ? 'animate-spin' : ''}`} />
-          <span>{isTesting ? 'Running 10-Point Operations Suite Tests...' : 'Run Phase 5 Verification Diagnostics'}</span>
+          <span>{isTesting ? 'Running 15-Point Core Integrated Suite Tests...' : 'Run Consolidated Verification Diagnostics'}</span>
         </button>
 
         {testSuiteReport && (

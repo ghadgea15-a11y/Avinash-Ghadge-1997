@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Lock, Fingerprint, ShieldCheck, KeyRound, AlertCircle, ArrowRight } from 'lucide-react';
 import { UserSession, CompanyTenant } from '../../types';
 import { SessionManager } from '../../services/sessionManager';
+import { FirebaseAuthService } from '../../services/firebaseAuthService';
 import { BiometricPromptModal } from '../common/BiometricPromptModal';
 
 interface SessionLockScreenProps {
@@ -21,19 +22,28 @@ export const SessionLockScreen: React.FC<SessionLockScreenProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isBiometricOpen, setIsBiometricOpen] = useState(false);
 
-  const handleUnlockWithPin = (e: React.FormEvent) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleUnlockWithPin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pin) {
       setError('Please enter your 4-digit PIN');
       return;
     }
 
-    // Default mock pin is 1234 or match last 4
-    if (pin === '1234' || pin.length === 4) {
-      SessionManager.updateLastActive();
-      onUnlockSuccess();
-    } else {
-      setError('Incorrect security PIN. Please try again.');
+    setIsLoading(true);
+    try {
+      const isValid = await FirebaseAuthService.verifyPin(activeCompany?.companyId || userSession.companyId, userSession.employeeId, pin);
+      if (isValid) {
+        SessionManager.updateLastActive();
+        onUnlockSuccess();
+      } else {
+        setError('Incorrect security PIN. Please try again.');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -43,7 +53,7 @@ export const SessionLockScreen: React.FC<SessionLockScreenProps> = ({
         {/* Lock Icon Banner */}
         <div className="relative w-20 h-20 mx-auto">
           <img
-            src={userSession.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+            src={userSession.avatarUrl || undefined}
             alt="User Avatar"
             className="w-20 h-20 rounded-full border-2 border-indigo-500 object-cover shadow-2xl"
           />
@@ -104,10 +114,10 @@ export const SessionLockScreen: React.FC<SessionLockScreenProps> = ({
             </button>
 
             <button
-              type="submit"
+              type="submit" disabled={isLoading}
               className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs shadow-lg shadow-indigo-600/30 transition"
             >
-              <span>Unlock</span>
+              {isLoading ? <span>Verifying...</span> : <span>Unlock</span>}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

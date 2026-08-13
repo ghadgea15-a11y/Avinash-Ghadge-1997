@@ -26,15 +26,15 @@ interface ProfileScreenProps {
   activeCompany: CompanyTenant | null;
 }
 
-const DEFAULT_PROFILE: UserProfileData = {
-  phoneNumber: '+91 98765 43210',
-  emergencyContact: '+91 91234 56789',
-  bloodGroup: 'O+',
-  address: 'Mumbai Central Security Quarters, Sector 4',
-  kycStatus: 'VERIFIED',
-  certifications: ['Fire Safety Patrol Level 1', 'First Aid Certified'],
-  joinedDate: '2024-01-15',
-  shiftSchedule: 'Day Shift (08:00 - 20:00)'
+const EMPTY_PROFILE: UserProfileData = {
+  phoneNumber: '',
+  emergencyContact: '',
+  bloodGroup: '',
+  address: '',
+  kycStatus: 'PENDING',
+  certifications: [],
+  joinedDate: '',
+  shiftSchedule: ''
 };
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
@@ -42,7 +42,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   activeCompany
 }) => {
   const { isDark } = useTheme();
-  const [profile, setProfile] = useState<UserProfileData>(DEFAULT_PROFILE);
+  const [profile, setProfile] = useState<UserProfileData>(EMPTY_PROFILE);
   const [isEditing, setIsEditing] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -82,7 +82,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
           <div className="relative">
             <img
-              src={userSession.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+              src={userSession.avatarUrl || undefined}
               alt="Avatar"
               className="w-20 h-20 rounded-full object-cover border-4 border-indigo-600 shadow-lg"
             />

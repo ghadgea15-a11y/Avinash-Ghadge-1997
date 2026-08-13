@@ -63,7 +63,38 @@ export class OfflineSyncService {
 
     for (const item of queue) {
       try {
-        if (item.actionType === 'CREATE_EMPLOYEE') {
+                if (item.actionType === 'PUNCH_IN') {
+          const { companyId, data } = item.payload as any;
+          if (companyId && data) {
+            await FirestoreService.checkInEmployee(companyId, data);
+          }
+        } else if (item.actionType === 'PUNCH_OUT') {
+          const { companyId, data } = item.payload as any;
+          if (companyId && data && data.attendanceId && data.checkOutTime) {
+            await FirestoreService.checkOutEmployee(companyId, data.attendanceId, data.checkOutTime, data.checkOutGps, data.shift);
+          }
+        } else if (item.actionType === 'PATROL_CHECK') {
+          const { companyId, data } = item.payload as any;
+          if (companyId && data) await FirestoreService.savePatrolCheckpoint(companyId, data);
+        } else if (item.actionType === 'PATROL_TOUR_LOG') {
+          const { companyId, data } = item.payload as any;
+          if (companyId && data) await FirestoreService.savePatrolLog(companyId, data);
+        } else if (item.actionType === 'INCIDENT_REPORT') {
+          const { companyId, data } = item.payload as any;
+          if (companyId && data) await FirestoreService.saveIncidentReport(companyId, data);
+        } else if (item.actionType === 'VISITOR_LOG') {
+          const { companyId, data } = item.payload as any;
+          if (companyId && data) await FirestoreService.checkInVisitor(companyId, data);
+        } else if (item.actionType === 'VISITOR_CHECK_OUT') {
+          const { companyId, visitorId, checkOutTime } = item.payload as any;
+          if (companyId && visitorId) await FirestoreService.checkOutVisitor(companyId, visitorId, checkOutTime);
+        } else if (item.actionType === 'MATERIAL_PASS') {
+          const { companyId, data } = item.payload as any;
+          if (companyId && data) await FirestoreService.saveMaterialMovementLog(companyId, data);
+        } else if (item.actionType === 'MATERIAL_APPROVE') {
+          const { companyId, passId, approvedBy, approvedAt } = item.payload as any;
+          if (companyId && passId) await FirestoreService.updateMaterialStatus(companyId, passId, 'APPROVED', approvedBy);
+        } else if (item.actionType === 'CREATE_EMPLOYEE') {
           const emp = item.payload as any;
           if (emp && emp.companyId && emp.id) {
             await FirestoreService.saveEmployee(emp.companyId, emp);
@@ -71,7 +102,8 @@ export class OfflineSyncService {
         } else if (item.actionType === 'UPDATE_EMPLOYEE_STATUS') {
           const { empId, status, approverId, companyId } = item.payload as any;
           if (empId && status) {
-            await FirestoreService.updateEmployeeStatus(companyId || 'APEX-SEC-101', empId, status, approverId || 'SYSTEM');
+            if (!companyId) throw new Error('Missing companyId in queue payload');
+            await FirestoreService.updateEmployeeStatus(companyId, empId, status, approverId || 'SYSTEM');
           }
         }
         syncedCount++;

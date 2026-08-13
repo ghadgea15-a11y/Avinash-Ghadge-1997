@@ -122,7 +122,7 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
             title={`${userSession.fullName} (${userSession.role})`}
           >
             <img
-              src={userSession.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+              src={userSession.avatarUrl || undefined}
               alt="Avatar"
               className="w-9 h-9 rounded-full object-cover border-2 border-indigo-500 shadow"
             />

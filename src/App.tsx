@@ -1,3 +1,5 @@
+import { auth } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import React, { useState, useEffect } from 'react';
 import { CompanyTenant, UserSession, PhaseAScreen, UserRole } from './types';
 import { SessionManager } from './services/sessionManager';
@@ -52,12 +54,27 @@ export function App() {
       setActiveCompany(savedCompany);
     }
 
+    
     const savedSession = SessionManager.getUserSession();
     if (savedSession) {
       setUserSession(savedSession);
     }
 
-    return () => unsub();
+    const unsubAuth = onAuthStateChanged(auth, (fbUser) => {
+      const currentSession = SessionManager.getUserSession();
+      if (!fbUser && currentSession && currentSession.loginMode !== 'PIN') {
+        // Firebase session expired or user logged out remotely
+        SessionManager.clearUserSession();
+        setUserSession(null);
+        setCurrentScreen('LOGIN');
+      }
+    });
+
+
+    return () => {
+      unsub();
+      unsubAuth();
+    };
   }, []);
 
   // Auto-detect screen size and set responsive viewport layout dynamically

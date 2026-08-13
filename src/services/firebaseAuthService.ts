@@ -783,5 +783,29 @@ export class FirebaseAuthService {
 
     throw new Error('Please enter a valid registered email address for password reset.');
   }
+
+  /**
+   * Verify PIN for session unlock
+   */
+  static async verifyPin(companyId: string, employeeId: string, pinToVerify: string): Promise<boolean> {
+    try {
+      const empColRef = collection(db, 'companies', companyId, 'employees');
+      const empQuery = query(empColRef, where('employeeId', '==', employeeId));
+      const querySnap = await getDocs(empQuery);
+      
+      if (!querySnap.empty) {
+        const empData = querySnap.docs[0].data();
+        if (empData.pin === pinToVerify || empData.password === pinToVerify) {
+          return true;
+        }
+      }
+      return false;
+    } catch (err) {
+      console.error('[FirebaseAuthService] verifyPin error:', err);
+      return false;
+    }
+  }
 }
 
+  
+  

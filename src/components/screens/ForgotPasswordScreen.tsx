@@ -45,7 +45,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
 
     try {
       const result = await FirebaseAuthService.requestPasswordReset(
-        activeCompany?.companyId || 'APEX-SEC-101',
+        activeCompany?.companyId || '',
         emailOrId.trim()
       );
       setMessage(result);

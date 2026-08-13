@@ -66,6 +66,7 @@ export const MASTER_APP_MODULES: AppModule[] = [
   { key: 'VISITOR_GATE_PASS', name: 'Visitor Gate Pass', description: 'Visitor check-in/out and digital badges', category: 'SECURITY', icon: 'UserCheck' },
   { key: 'MATERIAL_GATE_PASS', name: 'Material Gate Pass', description: 'Inward/outward material movement gate passes', category: 'SECURITY', icon: 'Truck' },
   { key: 'DAILY_SITE_MUSTER', name: 'Daily Site Muster', description: 'Daily site logs, weather, and guard counts', category: 'SECURITY', icon: 'ClipboardList' },
+  { key: 'VENDOR_MANAGEMENT', name: 'Vendor & Contractor Management', description: 'Multi-vendor agency master, contract staff allocation, and contractor billing', category: 'HRMS', icon: 'Building' },
   { key: 'COMPLIANCE', name: 'Compliance & Audit', description: 'Regulatory compliance and statutory documents', category: 'SYSTEM', icon: 'CheckSquare' },
   { key: 'AUDIT_LOGS', name: 'System Audit Logs', description: 'Immutable trail of user and system actions', category: 'SYSTEM', icon: 'History' },
   { key: 'WORKFLOWS', name: 'Automated Workflows', description: 'Triggered notifications and automated tasks', category: 'SYSTEM', icon: 'Workflow' },
@@ -151,7 +152,7 @@ export interface SystemConfigRecord {
 
 export interface OfflineQueueItem {
   id: string;
-  actionType: 'PUNCH_IN' | 'PUNCH_OUT' | 'PATROL_CHECK' | 'INCIDENT_REPORT' | 'VISITOR_LOG' | 'CREATE_EMPLOYEE' | 'UPDATE_EMPLOYEE_STATUS';
+  actionType: 'PUNCH_IN' | 'PUNCH_OUT' | 'PATROL_CHECK' | 'PATROL_TOUR_LOG' | 'INCIDENT_REPORT' | 'VISITOR_LOG' | 'VISITOR_CHECK_OUT' | 'MATERIAL_PASS' | 'MATERIAL_APPROVE' | 'CREATE_EMPLOYEE' | 'UPDATE_EMPLOYEE_STATUS';
   payload: Record<string, unknown>;
   timestamp: number;
   status: 'PENDING' | 'SYNCED' | 'FAILED';
@@ -194,6 +195,8 @@ export interface EmployeeRecord {
   shiftId?: string;
   assignedShiftId?: string;
   employmentType?: 'PERMANENT' | 'CONTRACT' | 'TEMPORARY';
+  vendorId?: string;
+  vendorName?: string;
   profilePictureUrl?: string;
   role: UserRole;
   documents: EmployeeDocument[];
@@ -212,6 +215,27 @@ export interface BranchRecord {
   createdAt?: string;
 }
 
+export interface VendorRecord {
+  id: string;
+  companyId: string;
+  vendorName: string;
+  vendorCode: string;
+  serviceType: 'SECURITY_AGENCY' | 'HOUSEKEEPING' | 'MANPOWER' | 'TECHNICAL' | 'CATERING' | 'FACILITY_MANAGEMENT' | 'OTHER';
+  gstinNumber?: string;
+  panNumber?: string;
+  contactPerson: string;
+  contactPhone: string;
+  contactEmail?: string;
+  address?: string;
+  contractStartDate?: string;
+  contractEndDate?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  deployedStaffCount?: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface SiteRecord {
   id: string;
   name: string;
@@ -219,6 +243,9 @@ export interface SiteRecord {
   clientName: string;
   address: string;
   status: 'ACTIVE' | 'INACTIVE';
+  latitude?: number;
+  longitude?: number;
+  geofenceRadius?: number;
   createdAt?: string;
 }
 

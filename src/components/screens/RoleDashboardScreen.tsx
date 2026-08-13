@@ -269,7 +269,7 @@ export const RoleDashboardScreen: React.FC<RoleDashboardScreenProps> = ({
         <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-3">
             <img
-              src={userSession.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+              src={userSession.avatarUrl || undefined}
               alt="Avatar"
               className="w-12 h-12 rounded-full border-2 border-indigo-500 object-cover shadow"
             />

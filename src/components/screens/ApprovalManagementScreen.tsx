@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  CheckCircle2, 
+import { Pagination } from '../common/Pagination';
+import {
+  CheckCircle2,
   XCircle, 
   Clock, 
   UserCheck, 
@@ -37,6 +38,10 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'PENDING' | 'APPROVED' | 'REJECTED' | 'ALL'>('PENDING');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, activeTab]);
   
   // Rejection modal state
   const [rejectingRequest, setRejectingRequest] = useState<ApprovalRequestRecord | null>(null);
@@ -167,6 +172,11 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
     }
     return true;
   });
+
+  const paginatedRequests = filteredRequests.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} p-4 md:p-6 space-y-6 max-w-6xl mx-auto w-full`}>

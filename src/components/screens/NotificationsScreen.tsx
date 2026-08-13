@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Bell, 
+import { Pagination } from '../common/Pagination';
+import {
+  Bell,
   AlertTriangle, 
   Info, 
   CheckCircle2, 
@@ -29,6 +30,10 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
   const { isDark } = useTheme();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'ALERT' | 'INFO' | 'UNREAD'>('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  useEffect(() => { setCurrentPage(1); }, [activeFilter]);
 
 
   useEffect(() => {
@@ -59,6 +64,8 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
   });
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const paginatedNotifs = filteredNotifs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className={`p-4 space-y-4 overflow-y-auto max-h-full ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -124,7 +131,8 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
             <p className="text-xs font-bold text-slate-400">No notifications found in this category.</p>
           </div>
         ) : (
-          filteredNotifs.map(item => (
+          <>
+          {paginatedNotifs.map(item => (
             <div
               key={item.id}
               className={`p-4 rounded-2xl border transition relative group ${
@@ -199,7 +207,19 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
                 </div>
               </div>
             </div>
-          ))
+          ))}
+          {filteredNotifs.length > 0 && (
+            <div className="mt-4">
+              <Pagination
+                currentPage={currentPage}
+                totalItems={filteredNotifs.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+              />
+            </div>
+          )}
+          </>
         )}
       </div>
     </div>
