@@ -6,7 +6,6 @@ import { FirestoreService } from './services/firestoreService';
 import { MOCK_TENANTS, MOCK_USERS, MOCK_NOTIFICATIONS } from './services/mockData';
 import { ThemeProvider } from './context/ThemeContext';
 import { Header } from './components/common/Header';
-import { AndroidFrame } from './components/common/AndroidFrame';
 import { NavigationDrawer } from './components/common/NavigationDrawer';
 import { BottomNavigationBar } from './components/common/BottomNavigationBar';
 import { TabletNavigationRail } from './components/common/TabletNavigationRail';
@@ -162,31 +161,13 @@ export function App() {
         />
 
         {/* Main Stage Area */}
-        <main className="flex-1 flex flex-col items-center justify-center p-2 sm:p-4">
+        <main className="flex-1 flex flex-col w-full h-full bg-slate-50 dark:bg-slate-900">
           {currentScreen === 'KOTLIN_CODE_VIEWER' ? (
-            <div className="w-full max-w-5xl my-4 px-2">
+            <div className="w-full max-w-5xl mx-auto my-4 px-2">
               <KotlinCodeViewer onBack={() => setCurrentScreen(userSession ? 'ROLE_DASHBOARD' : 'LOGIN')} />
             </div>
           ) : (
-            <AndroidFrame
-              viewportMode={viewportMode}
-              isOnline={isOnline}
-              companyName={activeCompany?.brandName}
-              onBackClick={() => {
-                if (isMainAppScreen && currentScreen !== 'ROLE_DASHBOARD') {
-                  setCurrentScreen('ROLE_DASHBOARD');
-                } else if (currentScreen === 'ROLE_DASHBOARD') {
-                  handleLockSession();
-                } else if (currentScreen === 'LOGIN') {
-                  setCurrentScreen('COMPANY_CODE');
-                } else if (currentScreen === 'FORGOT_PASSWORD') {
-                  setCurrentScreen('LOGIN');
-                }
-              }}
-              onHomeClick={() => {
-                if (userSession) setCurrentScreen('ROLE_DASHBOARD');
-              }}
-            >
+            <div className="flex-1 w-full flex flex-col overflow-hidden relative">
               <div className="flex-1 flex flex-row overflow-hidden w-full h-full relative">
                 {/* Tablet or Desktop Navigation Rail (for larger viewports) */}
                 {(viewportMode === 'TABLET' || viewportMode === 'FULLSCREEN') && isMainAppScreen && (
@@ -317,7 +298,7 @@ export function App() {
                   )}
                 </div>
               </div>
-            </AndroidFrame>
+            </div>
           )}
         </main>
       </div>
