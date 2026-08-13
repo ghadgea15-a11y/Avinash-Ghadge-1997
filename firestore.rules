@@ -370,6 +370,23 @@ service cloud.firestore {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow write: if isSuperAdmin() || isManager(companyId);
       }
+
+      match /approval_requests/{requestId} {
+        allow read: if signedIn() && (
+          isSuperAdmin() ||
+          sameCompany(companyId) ||
+          (resource != null && resource.data.uid == request.auth.uid)
+        );
+        allow create: if signedIn();
+        allow update: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow delete: if isSuperAdmin();
+      }
+
+      match /audit_logs/{logId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow create: if signedIn();
+        allow update, delete: if isSuperAdmin();
+      }
     }
 
 
@@ -410,6 +427,27 @@ service cloud.firestore {
     // ============================================================
     // GLOBAL TOP-LEVEL COLLECTIONS
     // ============================================================
+
+    match /approval_requests/{requestId} {
+      allow read: if signedIn() && (
+        isSuperAdmin() ||
+        resource == null ||
+        resource.data.uid == request.auth.uid ||
+        isCompanyAdmin(resource.data.companyId)
+      );
+      allow create: if signedIn();
+      allow update: if signedIn() && (
+        isSuperAdmin() ||
+        isCompanyAdmin(resource.data.companyId)
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isSuperAdmin() || (signedIn() && userExists() && isCompanyAdmin(userData().companyId));
+      allow create: if signedIn();
+      allow update, delete: if isSuperAdmin();
+    }
 
     match /notifications/{notificationId} {
       allow read: if signedIn();

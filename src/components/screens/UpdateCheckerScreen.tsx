@@ -1,17 +1,26 @@
 import React, { useState } from 'react';
 import { Download, CheckCircle2, ShieldAlert, Sparkles, ArrowRight, RefreshCw } from 'lucide-react';
 import { AppUpdateInfo, PhaseAScreen } from '../../types';
-import { MOCK_APP_UPDATE } from '../../services/mockData';
 
 interface UpdateCheckerScreenProps {
   onContinue: (nextScreen: PhaseAScreen) => void;
   updateInfo?: AppUpdateInfo;
 }
 
+const DEFAULT_UPDATE_INFO: AppUpdateInfo = {
+  currentVersion: '1.0.0',
+  latestVersion: '1.0.0',
+  isMandatory: false,
+  releaseNotes: ['Production Release Build v1.0.0', 'Firebase Multi-Tenant Engine Active'],
+  downloadUrl: 'https://ai.studio',
+  releasedAt: '2026-08-12'
+};
+
 export const UpdateCheckerScreen: React.FC<UpdateCheckerScreenProps> = ({
   onContinue,
-  updateInfo = MOCK_APP_UPDATE
+  updateInfo = DEFAULT_UPDATE_INFO
 }) => {
+
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadComplete, setDownloadComplete] = useState(false);

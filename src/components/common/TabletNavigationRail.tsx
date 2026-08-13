@@ -3,6 +3,7 @@ import {
   LayoutDashboard, 
   User, 
   Users,
+  Building2,
   Bell, 
   Settings, 
   Code, 
@@ -10,7 +11,8 @@ import {
   Lock, 
   Sun, 
   Moon,
-  Shield
+  ShieldCheck,
+  Clock
 } from 'lucide-react';
 import { PhaseAScreen, UserSession, UserRole } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -37,7 +39,10 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
 
   const destinations = [
     { screen: 'ROLE_DASHBOARD' as PhaseAScreen, label: 'Dashboard', icon: LayoutDashboard },
+    { screen: 'COMPANY_MANAGEMENT' as PhaseAScreen, label: 'Company', icon: Building2 },
     { screen: 'EMPLOYEES' as PhaseAScreen, label: 'Staff', icon: Users },
+    { screen: 'ATTENDANCE_SHIFTS' as PhaseAScreen, label: 'Attendance', icon: Clock },
+    { screen: 'SITE_OPERATIONS' as PhaseAScreen, label: 'Operations', icon: ShieldCheck },
     { screen: 'PROFILE' as PhaseAScreen, label: 'Profile', icon: User },
     { screen: 'NOTIFICATIONS' as PhaseAScreen, label: 'Alerts', icon: Bell, badge: unreadNotifCount },
     { screen: 'SETTINGS' as PhaseAScreen, label: 'Settings', icon: Settings },

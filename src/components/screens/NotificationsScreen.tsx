@@ -15,7 +15,7 @@ import {
 import { AppNotification, PhaseAScreen, UserSession } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { FirestoreService } from '../../services/firestoreService';
-import { MOCK_NOTIFICATIONS } from '../../services/mockData';
+
 
 interface NotificationsScreenProps {
   userSession: UserSession | null;
@@ -27,8 +27,9 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
   onNavigate
 }) => {
   const { isDark } = useTheme();
-  const [notifications, setNotifications] = useState<AppNotification[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'ALERT' | 'INFO' | 'UNREAD'>('ALL');
+
 
   useEffect(() => {
     if (!userSession) return;

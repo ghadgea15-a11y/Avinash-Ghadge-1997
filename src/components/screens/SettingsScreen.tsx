@@ -22,7 +22,9 @@ import { useTheme } from '../../context/ThemeContext';
 import { FirestoreService } from '../../services/firestoreService';
 import { SessionManager } from '../../services/sessionManager';
 import { OfflineSyncService } from '../../services/offlineSyncService';
-import { MOCK_SETTINGS } from '../../services/mockData';
+
+
+import { runPhase5Verification, TestResult } from '../../tests/verifyPhase5';
 
 interface SettingsScreenProps {
   userSession: UserSession | null;
@@ -38,16 +40,38 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onClearCache
 }) => {
   const { themeMode, setThemeMode, isDark } = useTheme();
-  const [settings, setSettings] = useState<AppSettings>(MOCK_SETTINGS);
+  const [settings, setSettings] = useState<AppSettings>({
+    themeMode: themeMode,
+    notificationsEnabled: true,
+    biometricUnlock: true,
+    hapticFeedback: true,
+    offlineAutoSync: true,
+    defaultView: 'AUTO',
+    language: 'EN',
+    gpsTrackingHighAccuracy: true
+  });
   const [saveToast, setSaveToast] = useState<string | null>(null);
+  const [testSuiteReport, setTestSuiteReport] = useState<{ passedCount: number; failedCount: number; results: TestResult[] } | null>(null);
+  const [isTesting, setIsTesting] = useState<boolean>(false);
+
+  const handleRunDiagnostics = async () => {
+    setIsTesting(true);
+    const report = await runPhase5Verification();
+    setTestSuiteReport(report);
+    setIsTesting(false);
+  };
+
 
   useEffect(() => {
     if (userSession) {
       FirestoreService.getAppSettings(userSession.userId).then((s) => {
-        setSettings(s);
+        if (s) {
+          setSettings(s);
+        }
       });
     }
   }, [userSession]);
+
 
   const updateSetting = async <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     const updated = { ...settings, [key]: value };
@@ -218,6 +242,42 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* System Information & Clear Cache */}
+      <div className={`p-4 rounded-3xl border space-y-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b pb-2 border-slate-800">
+          <Shield className="w-4 h-4 text-emerald-400" />
+          Phase 5 Enterprise Suite Verification
+        </h3>
+
+        <button
+          onClick={handleRunDiagnostics}
+          disabled={isTesting}
+          className="w-full py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm"
+        >
+          <RefreshCw className={`w-4 h-4 ${isTesting ? 'animate-spin' : ''}`} />
+          <span>{isTesting ? 'Running 10-Point Operations Suite Tests...' : 'Run Phase 5 Verification Diagnostics'}</span>
+        </button>
+
+        {testSuiteReport && (
+          <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs space-y-2 animate-in fade-in">
+            <div className="flex items-center justify-between font-bold border-b border-slate-800 pb-2">
+              <span>Automated Operations Tests Passed:</span>
+              <span className="text-emerald-400 font-mono">{testSuiteReport.passedCount} / {testSuiteReport.results.length} PASSED</span>
+            </div>
+            <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+              {testSuiteReport.results.map((r, idx) => (
+                <div key={idx} className="flex items-center justify-between text-[11px] py-0.5 border-b border-slate-900">
+                  <span className="text-slate-300">{r.name}</span>
+                  <span className={`font-mono font-bold ${r.passed ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {r.passed ? '✓ PASS' : '✗ FAIL'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* System Information & Clear Cache */}

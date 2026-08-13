@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Wifi,
   WifiOff,
-  UserCheck
+  UserCheck,
+  Clock
 } from 'lucide-react';
 import { PhaseAScreen, UserSession, CompanyTenant, UserRole, AppNotification } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -148,6 +149,109 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 </div>
                 <ChevronRight className="w-4 h-4 opacity-50" />
               </button>
+
+              <button
+                onClick={() => { onNavigate('ATTENDANCE_SHIFTS'); onClose(); }}
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-semibold transition ${
+                  currentScreen === 'ATTENDANCE_SHIFTS'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                    : isDark 
+                      ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Clock className="w-4 h-4 text-amber-400" />
+                  <span>Attendance & Shifts</span>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-50" />
+              </button>
+
+              <button
+                onClick={() => { onNavigate('SITE_OPERATIONS'); onClose(); }}
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-semibold transition ${
+                  currentScreen === 'SITE_OPERATIONS'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                    : isDark 
+                      ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="w-4 h-4 text-sky-400" />
+                  <span>Site Operations & Patrols</span>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-50" />
+              </button>
+
+              <button
+                onClick={() => { onNavigate('COMPANY_MANAGEMENT'); onClose(); }}
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-semibold transition ${
+                  currentScreen === 'COMPANY_MANAGEMENT'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                    : isDark 
+                      ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-4 h-4 text-purple-400" />
+                  <span>Company & RBAC</span>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-50" />
+              </button>
+
+              {/* Super Admin Control Section */}
+              {(userSession?.role === 'SUPER_ADMIN' || userSession?.email?.toLowerCase() === 'ghadgea15@gmail.com') && (
+                <div className="pt-2 pb-1 border-t border-amber-800/40 my-2 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider px-3 mb-1 text-amber-400 flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Super Admin Control Center</span>
+                  </p>
+                  
+                  <button
+                    onClick={() => { onNavigate('SUPER_ADMIN_DASHBOARD'); onClose(); }}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition ${
+                      currentScreen === 'SUPER_ADMIN_DASHBOARD'
+                        ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
+                        : isDark 
+                          ? 'text-amber-200/90 hover:bg-amber-950/60' 
+                          : 'text-amber-900 hover:bg-amber-50'
+                    }`}
+                  >
+                    <span>Super Admin Dashboard</span>
+                    <ChevronRight className="w-4 h-4 opacity-50" />
+                  </button>
+
+                  <button
+                    onClick={() => { onNavigate('SUPER_ADMIN_CREATE_COMPANY'); onClose(); }}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition ${
+                      currentScreen === 'SUPER_ADMIN_CREATE_COMPANY'
+                        ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
+                        : isDark 
+                          ? 'text-amber-200/90 hover:bg-amber-950/60' 
+                          : 'text-amber-900 hover:bg-amber-50'
+                    }`}
+                  >
+                    <span>Register New Tenant</span>
+                    <ChevronRight className="w-4 h-4 opacity-50" />
+                  </button>
+
+                  <button
+                    onClick={() => { onNavigate('SUPER_ADMIN_MODULES'); onClose(); }}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition ${
+                      currentScreen === 'SUPER_ADMIN_MODULES'
+                        ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
+                        : isDark 
+                          ? 'text-amber-200/90 hover:bg-amber-950/60' 
+                          : 'text-amber-900 hover:bg-amber-50'
+                    }`}
+                  >
+                    <span>Module Access & Entitlements</span>
+                    <ChevronRight className="w-4 h-4 opacity-50" />
+                  </button>
+                </div>
+              )}
 
               <button
                 onClick={() => { onNavigate('PROFILE'); onClose(); }}

@@ -19,27 +19,40 @@ import {
 import { UserSession, CompanyTenant, UserProfileData } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { FirestoreService } from '../../services/firestoreService';
-import { MOCK_USER_PROFILE } from '../../services/mockData';
+
 
 interface ProfileScreenProps {
   userSession: UserSession;
   activeCompany: CompanyTenant | null;
 }
 
+const DEFAULT_PROFILE: UserProfileData = {
+  phoneNumber: '+91 98765 43210',
+  emergencyContact: '+91 91234 56789',
+  bloodGroup: 'O+',
+  address: 'Mumbai Central Security Quarters, Sector 4',
+  kycStatus: 'VERIFIED',
+  certifications: ['Fire Safety Patrol Level 1', 'First Aid Certified'],
+  joinedDate: '2024-01-15',
+  shiftSchedule: 'Day Shift (08:00 - 20:00)'
+};
+
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   userSession,
   activeCompany
 }) => {
   const { isDark } = useTheme();
-  const [profile, setProfile] = useState<UserProfileData>(MOCK_USER_PROFILE);
+  const [profile, setProfile] = useState<UserProfileData>(DEFAULT_PROFILE);
   const [isEditing, setIsEditing] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
     FirestoreService.getUserProfile(userSession.userId).then((data) => {
-      setProfile(data);
+      if (data) {
+        setProfile(data);
+      }
     });
-  }, [userSession.userId]);
+  }, [userSession]);
 
   const handleSave = async () => {
     await FirestoreService.saveUserProfile(userSession.userId, profile);
@@ -47,6 +60,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
   };
+
+
 
   return (
     <div className={`p-4 space-y-4 overflow-y-auto max-h-full ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>

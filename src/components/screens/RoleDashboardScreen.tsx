@@ -214,6 +214,30 @@ export const RoleDashboardScreen: React.FC<RoleDashboardScreenProps> = ({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col justify-between p-4 overflow-y-auto space-y-4">
+        {/* Account Approval Quick Action Banner for Admins */}
+        {(userSession.role === 'COMPANY_ADMIN' || userSession.role === 'HR_ADMIN' || userSession.role === 'SUPER_ADMIN') && (
+          <div className="p-4 bg-gradient-to-r from-indigo-950/80 to-purple-950/80 border border-indigo-800/80 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-md">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                <UserCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-white">Pending Account Approval Requests</h3>
+                <p className="text-[11px] text-slate-300 mt-0.5">
+                  Review new employee sign-up applications and grant company workstation access.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => onNavigate('APPROVAL_MANAGEMENT')}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-indigo-600/30 transition shrink-0"
+            >
+              <span>Manage Approvals</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
         {/* Offline Queue Bar */}
         {!isOnline && (
           <div className="bg-amber-950/80 border border-amber-800 p-2.5 rounded-xl text-xs text-amber-300 flex items-center justify-between animate-pulse">

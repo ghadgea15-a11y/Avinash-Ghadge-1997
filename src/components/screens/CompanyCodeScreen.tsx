@@ -14,13 +14,14 @@ interface CompanyCodeScreenProps {
 export const CompanyCodeScreen: React.FC<CompanyCodeScreenProps> = ({
   onCompanyVerified,
   onNavigate,
-  initialCode = 'APEX-SEC-101'
+  initialCode = ''
 }) => {
   const { isDark } = useTheme();
   const [companyCode, setCompanyCode] = useState(initialCode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verifiedCompany, setVerifiedCompany] = useState<CompanyTenant | null>(null);
+
 
   const handleVerify = async (codeToTest?: string) => {
     const code = (codeToTest || companyCode).trim().toUpperCase();

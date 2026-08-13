@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { ShieldCheck, CheckCircle2, Loader2, AlertCircle, Building2, Smartphone } from 'lucide-react';
 import { InitStep, PhaseAScreen, CompanyTenant, UserSession } from '../../types';
 import { SessionManager } from '../../services/sessionManager';
-import { MOCK_APP_UPDATE } from '../../services/mockData';
 import { AppLogo } from '../common/AppLogo';
+
 
 interface SplashScreenProps {
   onComplete: (nextScreen: PhaseAScreen) => void;
@@ -51,7 +51,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       await new Promise(r => setTimeout(r, 500));
       if (!isSubscribed) return;
 
-      const hasMandatoryUpdate = MOCK_APP_UPDATE.isMandatory;
+      const hasMandatoryUpdate = false;
+
       setSteps(prev => prev.map((s, i) => i === 2 ? { ...s, status: 'COMPLETED', detail: 'App Up to Date (v1.0.0)' } : s));
       setCurrentStepIndex(3);
 

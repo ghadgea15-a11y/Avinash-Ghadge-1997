@@ -3,7 +3,6 @@ import { CompanyTenant, UserSession, PhaseAScreen, UserRole } from './types';
 import { SessionManager } from './services/sessionManager';
 import { OfflineSyncService } from './services/offlineSyncService';
 import { FirestoreService } from './services/firestoreService';
-import { MOCK_TENANTS, MOCK_USERS, MOCK_NOTIFICATIONS } from './services/mockData';
 import { ThemeProvider } from './context/ThemeContext';
 import { Header } from './components/common/Header';
 import { NavigationDrawer } from './components/common/NavigationDrawer';
@@ -20,7 +19,17 @@ import { ProfileScreen } from './components/screens/ProfileScreen';
 import { SettingsScreen } from './components/screens/SettingsScreen';
 import { NotificationsScreen } from './components/screens/NotificationsScreen';
 import { EmployeeModuleScreen } from './components/screens/EmployeeModuleScreen';
+import { CompanyManagementScreen } from './components/screens/CompanyManagementScreen';
+import { AttendanceShiftsScreen } from './components/screens/AttendanceShiftsScreen';
+import { SiteOperationsScreen } from './components/screens/SiteOperationsScreen';
 import { KotlinCodeViewer } from './components/screens/KotlinCodeViewer';
+import { SignUpScreen } from './components/screens/SignUpScreen';
+import { ApprovalPendingScreen } from './components/screens/ApprovalPendingScreen';
+import { ApprovalManagementScreen } from './components/screens/ApprovalManagementScreen';
+import { SuperAdminDashboard } from './components/screens/SuperAdminDashboard';
+import { SuperAdminCreateCompany } from './components/screens/SuperAdminCreateCompany';
+import { SuperAdminModulesScreen } from './components/screens/SuperAdminModulesScreen';
+import { SuperAdminCompaniesScreen } from './components/screens/SuperAdminCompaniesScreen';
 
 export function App() {
   const [currentScreen, setCurrentScreen] = useState<PhaseAScreen>('SPLASH');
@@ -30,7 +39,7 @@ export function App() {
   const [viewportMode, setViewportMode] = useState<'PHONE' | 'TABLET' | 'FULLSCREEN'>('PHONE');
   const [offlineQueueCount, setOfflineQueueCount] = useState<number>(OfflineSyncService.getQueue().length);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
-  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(2);
+  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
 
   // Initialize network & storage sync
   useEffect(() => {
@@ -38,8 +47,10 @@ export function App() {
       setIsOnline(onlineStatus);
     });
 
-    const savedCompany = SessionManager.getActiveCompany() || MOCK_TENANTS['APEX-SEC-101'];
-    setActiveCompany(savedCompany);
+    const savedCompany = SessionManager.getActiveCompany();
+    if (savedCompany) {
+      setActiveCompany(savedCompany);
+    }
 
     const savedSession = SessionManager.getUserSession();
     if (savedSession) {
@@ -62,9 +73,7 @@ export function App() {
       }
     };
     
-    // Set initial size immediately
     handleResize();
-    
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -103,14 +112,9 @@ export function App() {
 
   const handleRoleSwitch = (newRole: UserRole) => {
     if (!userSession) return;
-    const mockPreset = MOCK_USERS.find(u => u.role === newRole) || MOCK_USERS[0];
     const updatedSession: UserSession = {
       ...userSession,
-      role: newRole,
-      fullName: mockPreset.fullName,
-      employeeId: mockPreset.employeeId,
-      email: mockPreset.email,
-      assignedSiteId: mockPreset.assignedSiteId
+      role: newRole
     };
     setUserSession(updatedSession);
     SessionManager.setUserSession(updatedSession);
@@ -121,7 +125,20 @@ export function App() {
     setOfflineQueueCount(OfflineSyncService.getQueue().length);
   };
 
-  const isMainAppScreen = ['ROLE_DASHBOARD', 'PROFILE', 'SETTINGS', 'NOTIFICATIONS'].includes(currentScreen);
+  const isMainAppScreen = [
+    'ROLE_DASHBOARD', 
+    'EMPLOYEES', 
+    'ATTENDANCE_SHIFTS', 
+    'SITE_OPERATIONS', 
+    'PROFILE', 
+    'SETTINGS', 
+    'NOTIFICATIONS',
+    'SUPER_ADMIN_DASHBOARD',
+    'SUPER_ADMIN_COMPANIES',
+    'SUPER_ADMIN_CREATE_COMPANY',
+    'SUPER_ADMIN_MODULES',
+    'SUPER_ADMIN_PENDING_APPROVALS'
+  ].includes(currentScreen);
 
   return (
     <ThemeProvider>
@@ -206,19 +223,109 @@ export function App() {
                           SessionManager.setActiveCompany(company);
                         }}
                         onNavigate={setCurrentScreen}
-                        initialCode={activeCompany?.companyId || 'APEX-SEC-101'}
+                        initialCode={activeCompany?.companyId || ''}
                       />
                     )}
 
                     {currentScreen === 'LOGIN' && (
                       <LoginScreen
-                        activeCompany={activeCompany || MOCK_TENANTS['APEX-SEC-101']}
+                        activeCompany={activeCompany || {
+                          companyId: 'SYSTEM',
+                          companyLegalName: 'Log Sheet Muster System',
+                          brandName: 'Log Sheet Muster',
+                          licenseTier: 'ENTERPRISE',
+                          status: 'ACTIVE',
+                          primaryColorHex: '#4f46e5',
+                          secondaryColorHex: '#06b6d4',
+                          allowedBranches: ['MAIN'],
+                          maxEmployeesAllowed: 10000,
+                          maxSitesAllowed: 1000
+                        }}
                         onLoginSuccess={(session) => {
                           setUserSession(session);
-                          setCurrentScreen('ROLE_DASHBOARD');
+                          if (session.accountStatus === 'ACTIVE') {
+                            if (session.email.toLowerCase() === 'ghadgea15@gmail.com' || session.role === 'SUPER_ADMIN') {
+                              setCurrentScreen('SUPER_ADMIN_DASHBOARD');
+                            } else {
+                              setCurrentScreen('ROLE_DASHBOARD');
+                            }
+                          } else {
+                            setCurrentScreen('APPROVAL_PENDING');
+                          }
                         }}
                         onNavigate={setCurrentScreen}
                         onChangeCompany={() => setCurrentScreen('COMPANY_CODE')}
+                      />
+                    )}
+
+                    {currentScreen === 'SUPER_ADMIN_DASHBOARD' && userSession && (
+                      <SuperAdminDashboard
+                        currentSession={userSession}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'SUPER_ADMIN_CREATE_COMPANY' && userSession && (
+                      <SuperAdminCreateCompany
+                        currentSession={userSession}
+                        onNavigate={setCurrentScreen}
+                        onCompanyCreated={(companyId) => {
+                          setCurrentScreen('SUPER_ADMIN_DASHBOARD');
+                        }}
+                      />
+                    )}
+
+                    {currentScreen === 'SUPER_ADMIN_MODULES' && userSession && (
+                      <SuperAdminModulesScreen
+                        currentSession={userSession}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'SUPER_ADMIN_COMPANIES' && userSession && (
+                      <SuperAdminCompaniesScreen
+                        currentSession={userSession}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'SUPER_ADMIN_PENDING_APPROVALS' && userSession && (
+                      <ApprovalManagementScreen
+                        session={userSession}
+                        onNavigateBack={() => setCurrentScreen('SUPER_ADMIN_DASHBOARD')}
+                      />
+                    )}
+
+                    {currentScreen === 'SIGN_UP' && (
+                      <SignUpScreen
+                        initialCompany={activeCompany}
+                        onSignUpSuccess={(session) => {
+                          setUserSession(session);
+                          if (session.accountStatus === 'ACTIVE') {
+                            setCurrentScreen('ROLE_DASHBOARD');
+                          } else {
+                            setCurrentScreen('APPROVAL_PENDING');
+                          }
+                        }}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'APPROVAL_PENDING' && userSession && (
+                      <ApprovalPendingScreen
+                        session={userSession}
+                        onApprovalComplete={(updatedSession) => {
+                          setUserSession(updatedSession);
+                          setCurrentScreen('ROLE_DASHBOARD');
+                        }}
+                        onSignOut={handleLogout}
+                      />
+                    )}
+
+                    {currentScreen === 'APPROVAL_MANAGEMENT' && userSession && (
+                      <ApprovalManagementScreen
+                        session={userSession}
+                        onNavigateBack={() => setCurrentScreen('ROLE_DASHBOARD')}
                       />
                     )}
 
@@ -257,6 +364,35 @@ export function App() {
                         activeCompany={activeCompany}
                         isOnline={isOnline}
                         onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'ATTENDANCE_SHIFTS' && userSession && (
+                      <AttendanceShiftsScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'SITE_OPERATIONS' && userSession && (
+                      <SiteOperationsScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'COMPANY_MANAGEMENT' && userSession && (
+                      <CompanyManagementScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onCompanyUpdated={(updated) => {
+                          setActiveCompany(updated);
+                          SessionManager.setActiveCompany(updated);
+                        }}
                       />
                     )}
 
@@ -305,3 +441,4 @@ export function App() {
     </ThemeProvider>
   );
 }
+
