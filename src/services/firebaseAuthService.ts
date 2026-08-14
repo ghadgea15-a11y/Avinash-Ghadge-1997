@@ -8,7 +8,7 @@ import {
   signInWithPopup,
   User as FirebaseUser
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { 
   CompanyTenant, 
   UserSession, 
@@ -35,7 +35,17 @@ export class FirebaseAuthService {
     try {
       // 1. Direct document lookup in 'companies' collection
       const companyDocRef = doc(db, 'companies', cleanCode);
-      const companySnap = await getDoc(companyDocRef);
+      let companySnap;
+      try {
+        companySnap = await getDoc(companyDocRef);
+      } catch (err: any) {
+        if (err.message && err.message.toLowerCase().includes('offline')) {
+          console.warn('[FirebaseAuthService] Retrying company lookup from server due to offline cache miss');
+          companySnap = await getDocFromServer(companyDocRef);
+        } else {
+          throw err;
+        }
+      }
 
       if (companySnap.exists()) {
         const data = companySnap.data() as CompanyTenant;
@@ -58,11 +68,31 @@ export class FirebaseAuthService {
 
       // 2. Lookup in 'company_codes' or 'companyCodes' collection mapping
       const codeMappingRef = doc(db, 'company_codes', cleanCode);
-      const codeMappingSnap = await getDoc(codeMappingRef);
+      let codeMappingSnap;
+      try {
+        codeMappingSnap = await getDoc(codeMappingRef);
+      } catch (err: any) {
+        if (err.message && err.message.toLowerCase().includes('offline')) {
+          codeMappingSnap = await getDocFromServer(codeMappingRef);
+        } else {
+          throw err;
+        }
+      }
+      
       if (codeMappingSnap.exists()) {
         const mappedCompanyId = codeMappingSnap.data().companyId || cleanCode;
         const targetDocRef = doc(db, 'companies', mappedCompanyId);
-        const targetSnap = await getDoc(targetDocRef);
+        
+        let targetSnap;
+        try {
+          targetSnap = await getDoc(targetDocRef);
+        } catch (err: any) {
+          if (err.message && err.message.toLowerCase().includes('offline')) {
+            targetSnap = await getDocFromServer(targetDocRef);
+          } else {
+            throw err;
+          }
+        }
         if (targetSnap.exists()) {
           const data = targetSnap.data() as CompanyTenant;
           if (data.status && data.status !== 'ACTIVE') {
@@ -770,7 +800,7 @@ export class FirebaseAuthService {
       // Add timeout to prevent hanging when offline
       const querySnap = await Promise.race([
         getDocs(empQuery),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Network Timeout: Unable to reach database')), 5000))
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Network Timeout: Unable to reach database')), 15000))
       ]);
 
 
