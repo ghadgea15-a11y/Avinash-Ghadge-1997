@@ -78,60 +78,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     setLoading(true);
     setError(null);
 
-
-    // Temporary testing backdoor
-    const testUsername = emailOrId.trim().toLowerCase();
-    const isTestPassword = passwordOrPin === '123';
-    const testRoles: Record<string, import('../../types').UserRole> = {
-      'guard': 'GUARD',
-      'officer': 'FIELD_OFFICER',
-      'manager': 'OPS_MANAGER',
-      'hr': 'HR_ADMIN',
-      'company': 'COMPANY_ADMIN',
-      'super': 'SUPER_ADMIN',
-      'superadmin': 'SUPER_ADMIN',
-      'admin': 'COMPANY_ADMIN'
-    };
-
-    if (testRoles[testUsername] && isTestPassword) {
-      const mockCompany = {
-        companyId: 'TEST-COMP',
-        companyLegalName: 'Test Company Ltd',
-        brandName: 'Test Co',
-        licenseTier: 'ENTERPRISE',
-        status: 'ACTIVE',
-        primaryColorHex: '#4f46e5',
-        secondaryColorHex: '#3730a3',
-        allowedBranches: ['HQ'],
-        maxEmployeesAllowed: 1000,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        subscriptionExpiresAt: new Date(Date.now() + 8640000000).toISOString()
-      };
-      
-      const mockSession = {
-        userId: 'test-' + testUsername,
-        employeeId: 'EMP-' + testUsername.toUpperCase(),
-        fullName: 'Test ' + testUsername,
-        email: testUsername + '@test.com',
-        role: testRoles[testUsername],
-        companyId: 'TEST-COMP',
-        branchId: 'B-TEST',
-        token: 'mock-token-123',
-        accountStatus: 'ACTIVE',
-        requirePasswordChange: false,
-        lastLoginAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      // Ensure company code logic is bypassed correctly by feeding these objects in
-            SessionManager.setActiveCompany(mockCompany as any);
-      SessionManager.setUserSession(mockSession as any);
-      onLoginSuccess(mockSession as any, mockCompany as any);
-      setLoading(false);
-      return;
-    }
     try {
       // First verify the company code
       const company = await FirebaseAuthService.verifyCompanyCode(companyCode.trim().toUpperCase());
