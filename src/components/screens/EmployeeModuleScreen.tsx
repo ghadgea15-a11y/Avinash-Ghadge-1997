@@ -1050,7 +1050,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       )}
 
       {/* TAB 2: REGISTER / EDIT EMPLOYEE FORM */}
-      {activeTab === 'REGISTER' && (
+      {activeTab === 'REGISTER' && canManageEmployees && (
         <form onSubmit={handleRegisterOrUpdateEmployee} className={`p-4 sm:p-5 rounded-3xl border space-y-4 ${
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
@@ -1394,7 +1394,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       )}
 
       {/* TAB 3: APPROVALS & KYC VERIFICATION QUEUE */}
-      {activeTab === 'APPROVALS' && (
+      {activeTab === 'APPROVALS' && canApproveOnboarding && (
         <div className="space-y-3">
           <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
             <h3 className="text-sm font-bold flex items-center gap-2 mb-1">

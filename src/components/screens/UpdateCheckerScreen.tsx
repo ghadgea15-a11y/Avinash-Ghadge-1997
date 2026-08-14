@@ -145,7 +145,7 @@ export const UpdateCheckerScreen: React.FC<UpdateCheckerScreenProps> = ({
           </button>
         ) : (
           <button
-            onClick={() => onContinue('COMPANY_CODE')}
+            onClick={() => onContinue('LOGIN')}
             className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition text-sm"
           >
             <span>Restart & Apply Update</span>
@@ -155,7 +155,7 @@ export const UpdateCheckerScreen: React.FC<UpdateCheckerScreenProps> = ({
 
         {!updateInfo.isMandatory && !downloading && (
           <button
-            onClick={() => onContinue('COMPANY_CODE')}
+            onClick={() => onContinue('LOGIN')}
             className="w-full text-xs text-slate-400 hover:text-slate-200 py-2.5 transition text-center font-medium"
           >
             Skip for Now & Continue to App

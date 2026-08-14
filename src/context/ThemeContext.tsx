@@ -8,21 +8,26 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  themeMode: 'DARK',
+  themeMode: 'LIGHT',
   setThemeMode: () => {},
-  isDark: true
+  isDark: false
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themeMode, setThemeModeState] = useState<AppThemeMode>(() => {
     const saved = localStorage.getItem('lsm_app_theme');
-    return (saved as AppThemeMode) || 'DARK';
+    if (saved === 'DARK' && !localStorage.getItem('user_chose_theme')) {
+      localStorage.setItem('lsm_app_theme', 'LIGHT');
+      return 'LIGHT';
+    }
+    return (saved as AppThemeMode) || 'LIGHT';
   });
 
-  const [isDark, setIsDark] = useState<boolean>(true);
+  const [isDark, setIsDark] = useState<boolean>(false);
 
   useEffect(() => {
     localStorage.setItem('lsm_app_theme', themeMode);
+    localStorage.setItem('user_chose_theme', 'true');
     if (themeMode === 'SYSTEM') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setIsDark(prefersDark);

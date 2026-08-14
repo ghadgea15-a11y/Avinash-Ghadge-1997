@@ -116,23 +116,9 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
               Main Navigation
             </p>
             <div className="space-y-1">
-              <button
-                onClick={() => { onNavigate('ROLE_DASHBOARD'); onClose(); }}
-                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-semibold transition ${
-                  currentScreen === 'ROLE_DASHBOARD'
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                    : isDark 
-                      ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                      : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <LayoutDashboard className="w-4 h-4" />
-                  <span>Dashboard</span>
-                </div>
-                <ChevronRight className="w-4 h-4 opacity-50" />
-              </button>
+              
 
+              {(userSession?.role !== 'GUARD' && userSession?.role !== 'FIELD_OFFICER') && (
               <button
                 onClick={() => { onNavigate('EMPLOYEES'); onClose(); }}
                 className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-semibold transition ${
@@ -149,6 +135,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 </div>
                 <ChevronRight className="w-4 h-4 opacity-50" />
               </button>
+              )}
 
               <button
                 onClick={() => { onNavigate('ATTENDANCE_SHIFTS'); onClose(); }}
@@ -202,7 +189,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
               </button>
 
               {/* Super Admin Control Section */}
-              {(userSession?.role === 'SUPER_ADMIN' || userSession?.email?.toLowerCase() === 'ghadgea15@gmail.com') && (
+              {(userSession?.role === 'SUPER_ADMIN') && (
                 <div className="pt-2 pb-1 border-t border-amber-800/40 my-2 space-y-1">
                   <p className="text-[10px] font-bold uppercase tracking-wider px-3 mb-1 text-amber-400 flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />

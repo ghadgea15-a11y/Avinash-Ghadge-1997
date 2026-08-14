@@ -17,7 +17,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { CompanyTenant, DepartmentRecord, UserSession, PhaseAScreen, AccountStatus } from '../../types';
-import { FirebaseAuthService, RESERVED_SUPER_ADMIN_EMAIL } from '../../services/firebaseAuthService';
+import { FirebaseAuthService } from '../../services/firebaseAuthService';
 import { SessionManager } from '../../services/sessionManager';
 import { AppLogo } from '../common/AppLogo';
 import { useTheme } from '../../context/ThemeContext';
@@ -100,7 +100,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
     }
   };
 
-  const isSuperAdminEmail = email.trim().toLowerCase() === RESERVED_SUPER_ADMIN_EMAIL;
+  const isSuperAdminEmail = false;
 
   // Handle Email & Password Signup
   const handleSubmit = async (e: React.FormEvent) => {
@@ -273,7 +273,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             <div>
               <p className="font-bold">Reserved System Identity Detected</p>
               <p className="text-[11px] text-amber-200 mt-0.5">
-                You are initializing the primary Super Administrator identity ({RESERVED_SUPER_ADMIN_EMAIL}). Global system access will be provisioned.
+                You are initializing a Super Administrator identity.
               </p>
             </div>
           </div>

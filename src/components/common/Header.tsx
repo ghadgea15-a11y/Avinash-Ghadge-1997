@@ -70,7 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate(userSession ? 'ROLE_DASHBOARD' : 'LOGIN')}>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate(userSession ? 'EMPLOYEES' : 'LOGIN')}>
           <AppLogo size="sm" showSubtitle={false} />
         </div>
 
@@ -159,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         <button
-          onClick={() => onNavigate(currentScreen === 'KOTLIN_CODE_VIEWER' ? (userSession ? 'ROLE_DASHBOARD' : 'LOGIN') : 'KOTLIN_CODE_VIEWER')}
+          onClick={() => onNavigate(currentScreen === 'KOTLIN_CODE_VIEWER' ? (userSession ? 'EMPLOYEES' : 'LOGIN') : 'KOTLIN_CODE_VIEWER')}
           className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-all ${
             currentScreen === 'KOTLIN_CODE_VIEWER'
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 font-semibold'
@@ -222,7 +222,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         ) : (
           <button
-            onClick={() => onNavigate('COMPANY_CODE')}
+            onClick={() => onNavigate('LOGIN')}
             className="text-xs text-indigo-300 hover:text-white bg-indigo-950/80 border border-indigo-800 px-2.5 py-1 rounded-full flex items-center gap-1"
           >
             <RefreshCw className="w-3 h-3" />

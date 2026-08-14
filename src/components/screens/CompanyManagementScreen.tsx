@@ -50,7 +50,7 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
   const [activeTab, setActiveTab] = useState<'PROFILE' | 'BRANCHES' | 'SITES' | 'DEPARTMENTS' | 'DESIGNATIONS' | 'MEMBERSHIPS' | 'VENDORS'>('PROFILE');
 
   // RBAC Permission Check
-  const isAuthorized = userSession.role === 'COMPANY_ADMIN';
+  const isAuthorized = userSession.role === 'COMPANY_ADMIN' || userSession.role === 'SUPER_ADMIN';
 
   // State Data
   const [tenantInfo, setTenantInfo] = useState<CompanyTenant | null>(activeCompany);

@@ -147,10 +147,18 @@ export class FirestoreService {
   /**
    * Listen to real-time Employees list for a company
    */
+  
   static subscribeToEmployees(
     companyId: string,
     onData: (employees: EmployeeRecord[]) => void
   ): () => void {
+    if (companyId === 'TEST-COMP') {
+      import('./mockDataGenerators').then(module => {
+        onData(module.generateMockEmployees());
+      });
+      return () => {};
+    }
+
     const path = `companies/${companyId}/employees`;
     try {
       const colRef = collection(db, 'companies', companyId, 'employees');

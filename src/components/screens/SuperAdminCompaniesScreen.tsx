@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { CompanyTenant, UserSession, PhaseAScreen, MASTER_APP_MODULES } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { seedTataMotorsData } from '../../utils/tataMotorsSeeder';
 import { useTheme } from '../../context/ThemeContext';
 
 interface SuperAdminCompaniesScreenProps {
@@ -42,6 +43,7 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
   const [editingCompany, setEditingCompany] = useState<CompanyTenant | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   useEffect(() => {
     loadCompanies();

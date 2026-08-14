@@ -6,9 +6,8 @@ import { SessionManager } from './services/sessionManager';
 import { OfflineSyncService } from './services/offlineSyncService';
 import { FirestoreService } from './services/firestoreService';
 import { ThemeProvider } from './context/ThemeContext';
-import { Header } from './components/common/Header';
 import { NavigationDrawer } from './components/common/NavigationDrawer';
-import { BottomNavigationBar } from './components/common/BottomNavigationBar';
+import { MobileTopHeader } from './components/common/MobileTopHeader';
 import { TabletNavigationRail } from './components/common/TabletNavigationRail';
 import { SplashScreen } from './components/screens/SplashScreen';
 import { UpdateCheckerScreen } from './components/screens/UpdateCheckerScreen';
@@ -16,7 +15,6 @@ import { CompanyCodeScreen } from './components/screens/CompanyCodeScreen';
 import { LoginScreen } from './components/screens/LoginScreen';
 import { ForgotPasswordScreen } from './components/screens/ForgotPasswordScreen';
 import { SessionLockScreen } from './components/screens/SessionLockScreen';
-import { RoleDashboardScreen } from './components/screens/RoleDashboardScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
 import { SettingsScreen } from './components/screens/SettingsScreen';
 import { NotificationsScreen } from './components/screens/NotificationsScreen';
@@ -55,7 +53,9 @@ export function App() {
     }
 
     
-    const savedSession = SessionManager.getUserSession();
+    // User requested to never auto-login on app start
+    SessionManager.clearUserSession();
+    const savedSession = null;
     if (savedSession) {
       setUserSession(savedSession);
     }
@@ -135,6 +135,13 @@ export function App() {
     };
     setUserSession(updatedSession);
     SessionManager.setUserSession(updatedSession);
+    if (newRole === "SUPER_ADMIN") {
+      setCurrentScreen("SUPER_ADMIN_DASHBOARD");
+    } else if (newRole === "GUARD" || newRole === "FIELD_OFFICER") {
+      setCurrentScreen("ATTENDANCE_SHIFTS");
+    } else {
+      setCurrentScreen("EMPLOYEES");
+    }
   };
 
   const handleSyncOfflineQueue = async () => {
@@ -143,7 +150,7 @@ export function App() {
   };
 
   const isMainAppScreen = [
-    'ROLE_DASHBOARD', 
+    'EMPLOYEES', 
     'EMPLOYEES', 
     'ATTENDANCE_SHIFTS', 
     'SITE_OPERATIONS', 
@@ -160,21 +167,7 @@ export function App() {
   return (
     <ThemeProvider>
       <div className="min-h-screen flex flex-col font-sans transition-colors duration-200">
-        {/* Header */}
-        <Header
-          currentScreen={currentScreen}
-          onNavigate={setCurrentScreen}
-          activeCompany={activeCompany}
-          userSession={userSession}
-          isOnline={isOnline}
-          viewportMode={viewportMode}
-          onToggleViewport={setViewportMode}
-          onLogout={handleLogout}
-          onLockSession={handleLockSession}
-          offlineQueueCount={offlineQueueCount}
-          onOpenDrawer={() => setIsDrawerOpen(true)}
-          unreadNotifCount={unreadNotifCount}
-        />
+        {/* Header removed based on user request */}
 
         {/* Slide-out Navigation Drawer */}
         <NavigationDrawer
@@ -198,11 +191,19 @@ export function App() {
         <main className="flex-1 flex flex-col w-full h-full bg-slate-50 dark:bg-slate-900">
           {currentScreen === 'KOTLIN_CODE_VIEWER' ? (
             <div className="w-full max-w-5xl mx-auto my-4 px-2">
-              <KotlinCodeViewer onBack={() => setCurrentScreen(userSession ? 'ROLE_DASHBOARD' : 'LOGIN')} />
+              <KotlinCodeViewer onBack={() => setCurrentScreen(userSession ? 'EMPLOYEES' : 'LOGIN')} />
             </div>
           ) : (
             <div className="flex-1 w-full flex flex-col overflow-hidden relative">
-              <div className="flex-1 flex flex-row overflow-hidden w-full h-full relative">
+              {/* Mobile Top Header */}
+                {viewportMode === 'PHONE' && isMainAppScreen && userSession && (
+                  <MobileTopHeader
+                    onOpenDrawer={() => setIsDrawerOpen(true)}
+                    unreadNotifCount={unreadNotifCount}
+                    onNavigateNotifications={() => setCurrentScreen('NOTIFICATIONS')}
+                  />
+                )}
+                <div className="flex-1 flex flex-row overflow-hidden w-full h-full relative">
                 {/* Tablet or Desktop Navigation Rail (for larger viewports) */}
                 {(viewportMode === 'TABLET' || viewportMode === 'FULLSCREEN') && isMainAppScreen && (
                   <TabletNavigationRail
@@ -233,45 +234,25 @@ export function App() {
                       />
                     )}
 
-                    {currentScreen === 'COMPANY_CODE' && (
-                      <CompanyCodeScreen
-                        onCompanyVerified={(company) => {
-                          setActiveCompany(company);
-                          SessionManager.setActiveCompany(company);
-                        }}
-                        onNavigate={setCurrentScreen}
-                        initialCode={activeCompany?.companyId || ''}
-                      />
-                    )}
-
                     {currentScreen === 'LOGIN' && (
                       <LoginScreen
-                        activeCompany={activeCompany || {
-                          companyId: 'SYSTEM',
-                          companyLegalName: 'Log Sheet Muster System',
-                          brandName: 'Log Sheet Muster',
-                          licenseTier: 'ENTERPRISE',
-                          status: 'ACTIVE',
-                          primaryColorHex: '#4f46e5',
-                          secondaryColorHex: '#06b6d4',
-                          allowedBranches: ['MAIN'],
-                          maxEmployeesAllowed: 10000,
-                          maxSitesAllowed: 1000
-                        }}
-                        onLoginSuccess={(session) => {
+                        onLoginSuccess={(session, company) => {
+                          setActiveCompany(company);
                           setUserSession(session);
                           if (session.accountStatus === 'ACTIVE') {
-                            if (session.email.toLowerCase() === 'ghadgea15@gmail.com' || session.role === 'SUPER_ADMIN') {
+                            if (session.role === 'SUPER_ADMIN') {
                               setCurrentScreen('SUPER_ADMIN_DASHBOARD');
+                            } else if (session.role === 'GUARD' || session.role === 'FIELD_OFFICER') {
+                              setCurrentScreen('ATTENDANCE_SHIFTS');
                             } else {
-                              setCurrentScreen('ROLE_DASHBOARD');
+                              setCurrentScreen('EMPLOYEES');
                             }
                           } else {
                             setCurrentScreen('APPROVAL_PENDING');
                           }
                         }}
                         onNavigate={setCurrentScreen}
-                        onChangeCompany={() => setCurrentScreen('COMPANY_CODE')}
+                        
                       />
                     )}
 
@@ -319,7 +300,7 @@ export function App() {
                         onSignUpSuccess={(session) => {
                           setUserSession(session);
                           if (session.accountStatus === 'ACTIVE') {
-                            setCurrentScreen('ROLE_DASHBOARD');
+                            setCurrentScreen('EMPLOYEES');
                           } else {
                             setCurrentScreen('APPROVAL_PENDING');
                           }
@@ -333,7 +314,7 @@ export function App() {
                         session={userSession}
                         onApprovalComplete={(updatedSession) => {
                           setUserSession(updatedSession);
-                          setCurrentScreen('ROLE_DASHBOARD');
+                          setCurrentScreen('EMPLOYEES');
                         }}
                         onSignOut={handleLogout}
                       />
@@ -342,7 +323,7 @@ export function App() {
                     {currentScreen === 'APPROVAL_MANAGEMENT' && userSession && (
                       <ApprovalManagementScreen
                         session={userSession}
-                        onNavigateBack={() => setCurrentScreen('ROLE_DASHBOARD')}
+                        onNavigateBack={() => setCurrentScreen('EMPLOYEES')}
                       />
                     )}
 
@@ -357,23 +338,12 @@ export function App() {
                       <SessionLockScreen
                         userSession={userSession}
                         activeCompany={activeCompany}
-                        onUnlockSuccess={() => setCurrentScreen('ROLE_DASHBOARD')}
+                        onUnlockSuccess={() => setCurrentScreen('EMPLOYEES')}
                         onSwitchAccount={handleLogout}
                       />
                     )}
 
-                    {currentScreen === 'ROLE_DASHBOARD' && userSession && (
-                      <RoleDashboardScreen
-                        userSession={userSession}
-                        activeCompany={activeCompany}
-                        isOnline={isOnline}
-                        viewportMode={viewportMode}
-                        onNavigate={setCurrentScreen}
-                        onRoleSwitch={handleRoleSwitch}
-                        offlineQueueCount={offlineQueueCount}
-                        onSyncOfflineQueue={handleSyncOfflineQueue}
-                      />
-                    )}
+                    
 
                     {currentScreen === 'EMPLOYEES' && userSession && (
                       <EmployeeModuleScreen
@@ -425,11 +395,17 @@ export function App() {
                         userSession={userSession}
                         activeCompany={activeCompany}
                         isOnline={isOnline}
+                        onNavigate={setCurrentScreen}
                         onClearCache={() => {
                           SessionManager.clearUserSession();
                           setUserSession(null);
-                          setCurrentScreen('COMPANY_CODE');
+                          setCurrentScreen('LOGIN');
                         }}
+                        viewportMode={viewportMode}
+                        onToggleViewport={setViewportMode}
+                        onLogout={handleLogout}
+                        onLockSession={handleLockSession}
+                        onOpenDrawer={() => setIsDrawerOpen(true)}
                       />
                     )}
 
@@ -441,14 +417,7 @@ export function App() {
                     )}
                   </div>
 
-                  {/* Mobile Bottom Navigation Bar (Phone Viewport) */}
-                  {viewportMode === 'PHONE' && isMainAppScreen && userSession && (
-                    <BottomNavigationBar
-                      currentScreen={currentScreen}
-                      onNavigate={setCurrentScreen}
-                      unreadNotifCount={unreadNotifCount}
-                    />
-                  )}
+                  
                 </div>
               </div>
             </div>

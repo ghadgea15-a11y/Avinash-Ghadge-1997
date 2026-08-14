@@ -15,9 +15,18 @@ import {
   Shield, 
   Trash2, 
   HelpCircle,
-  Smartphone
+  Smartphone,
+  Tablet,
+  LogOut,
+  Lock,
+  Menu,
+  Building2,
+  Sliders,
+  FileText,
+  Award,
+  ShieldCheck
 } from 'lucide-react';
-import { AppSettings, UserSession, CompanyTenant } from '../../types';
+import { AppSettings, UserSession, CompanyTenant, PhaseAScreen } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { FirestoreService } from '../../services/firestoreService';
 import { SessionManager } from '../../services/sessionManager';
@@ -32,13 +41,25 @@ interface SettingsScreenProps {
   activeCompany: CompanyTenant | null;
   isOnline: boolean;
   onClearCache: () => void;
+  viewportMode: 'PHONE' | 'TABLET' | 'FULLSCREEN';
+  onToggleViewport: (mode: 'PHONE' | 'TABLET' | 'FULLSCREEN') => void;
+  onNavigate: (screen: PhaseAScreen) => void;
+  onLogout: () => void;
+  onLockSession: () => void;
+  onOpenDrawer: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   userSession,
   activeCompany,
   isOnline,
-  onClearCache
+  onClearCache,
+  viewportMode,
+  onToggleViewport,
+  onNavigate,
+  onLogout,
+  onLockSession,
+  onOpenDrawer
 }) => {
   const { themeMode, setThemeMode, isDark } = useTheme();
   const [settings, setSettings] = useState<AppSettings>({
@@ -125,7 +146,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
       }`}>
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-indigo-600/20 text-indigo-400">
+          <button onClick={onOpenDrawer} className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">
+            <Menu className="w-6 h-6" />
+          </button>
+          <div className="p-2.5 rounded-2xl bg-indigo-600/20 text-indigo-400 hidden sm:block">
             <Settings className="w-6 h-6" />
           </div>
           <div>
@@ -180,6 +204,136 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Viewport & Layout */}
+      <div className={`p-4 rounded-3xl border space-y-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b pb-2 border-slate-800">
+          <Monitor className="w-4 h-4 text-sky-400" />
+          Preview Layout Mode
+        </h3>
+
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            onClick={() => onToggleViewport('PHONE')}
+            className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-2 transition ${
+              viewportMode === 'PHONE'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
+                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+            }`}
+          >
+            <Smartphone className="w-5 h-5 text-sky-400" />
+            <span>Phone</span>
+          </button>
+
+          <button
+            onClick={() => onToggleViewport('TABLET')}
+            className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-2 transition ${
+              viewportMode === 'TABLET'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
+                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+            }`}
+          >
+            <Tablet className="w-5 h-5 text-indigo-400" />
+            <span>Tablet</span>
+          </button>
+
+          <button
+            onClick={() => onToggleViewport('FULLSCREEN')}
+            className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-2 transition ${
+              viewportMode === 'FULLSCREEN'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
+                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+            }`}
+          >
+            <Monitor className="w-5 h-5 text-emerald-400" />
+            <span>Desktop</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Account Session Actions */}
+      <div className={`p-4 rounded-3xl border space-y-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b pb-2 border-slate-800">
+          <Shield className="w-4 h-4 text-emerald-400" />
+          Account & Session
+        </h3>
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={onLockSession}
+            className="w-full p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold flex items-center justify-center gap-2 transition"
+          >
+            <Lock className="w-4 h-4" />
+            <span>Lock Screen</span>
+          </button>
+          <button
+            onClick={onLogout}
+            className="w-full p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center justify-center gap-2 transition"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+
+      {userSession?.role === 'COMPANY_ADMIN' && (
+        <div className={`p-4 rounded-3xl border space-y-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b pb-2 border-slate-800">
+            <Building2 className="w-4 h-4 text-indigo-400" />
+            Company Administration
+          </h3>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+              <Building2 className="w-5 h-5 text-indigo-400" />
+              <span>Agency Profile</span>
+            </button>
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+              <Sliders className="w-5 h-5 text-indigo-400" />
+              <span>Branding Setup</span>
+            </button>
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+              <Database className="w-5 h-5 text-indigo-400" />
+              <span>Firebase Rules</span>
+            </button>
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+              <FileText className="w-5 h-5 text-indigo-400" />
+              <span>Security Audit Log</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {userSession?.role === 'SUPER_ADMIN' && (
+        <div className={`p-4 rounded-3xl border space-y-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b pb-2 border-slate-800">
+            <Globe className="w-4 h-4 text-emerald-400" />
+            Global Super Admin Configuration
+          </h3>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => onNavigate('SUPER_ADMIN_COMPANIES')}
+              className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300"
+            >
+              <Globe className="w-5 h-5 text-emerald-400" />
+              <span>Global Tenants</span>
+            </button>
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+              <Award className="w-5 h-5 text-emerald-400" />
+              <span>License Tiers</span>
+            </button>
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+              <Database className="w-5 h-5 text-emerald-400" />
+              <span>Database Health</span>
+            </button>
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+              <ShieldCheck className="w-5 h-5 text-emerald-400" />
+              <span>Platform Go-Live Audit</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Security & Biometrics */}
       <div className={`p-4 rounded-3xl border space-y-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>

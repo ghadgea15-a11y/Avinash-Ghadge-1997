@@ -38,7 +38,6 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
   const { themeMode, setThemeMode, isDark } = useTheme();
 
   const destinations = [
-    { screen: 'ROLE_DASHBOARD' as PhaseAScreen, label: 'Dashboard', icon: LayoutDashboard },
     { screen: 'COMPANY_MANAGEMENT' as PhaseAScreen, label: 'Company', icon: Building2 },
     { screen: 'EMPLOYEES' as PhaseAScreen, label: 'Staff', icon: Users },
     { screen: 'ATTENDANCE_SHIFTS' as PhaseAScreen, label: 'Attendance', icon: Clock },

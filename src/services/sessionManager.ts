@@ -83,18 +83,18 @@ export class SessionManager {
     }
   }
 
-  static getSavedCredentials(): { emailOrId: string; remember: boolean } {
+  static getSavedCredentials(): { emailOrId: string; passwordOrPin?: string; companyCode?: string; remember: boolean } {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.REMEMBER_ME);
       return data ? JSON.parse(data) : { emailOrId: '', remember: false };
     } catch {
-      return { emailOrId: '', remember: false };
+      return { emailOrId: '', passwordOrPin: '', companyCode: 'TEST-COMP', remember: false };
     }
   }
 
-  static setSavedCredentials(emailOrId: string, remember: boolean): void {
+  static setSavedCredentials(emailOrId: string, passwordOrPin: string, companyCode: string, remember: boolean): void {
     if (remember) {
-      localStorage.setItem(STORAGE_KEYS.REMEMBER_ME, JSON.stringify({ emailOrId, remember: true }));
+      localStorage.setItem(STORAGE_KEYS.REMEMBER_ME, JSON.stringify({ emailOrId, passwordOrPin, companyCode, remember: true }));
     } else {
       localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
     }

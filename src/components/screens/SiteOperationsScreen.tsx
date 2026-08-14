@@ -81,6 +81,13 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [statusMsg, setStatusMsg] = useState<{ type: 'SUCCESS' | 'ERROR' | 'INFO'; text: string } | null>(null);
 
+  useEffect(() => {
+    if (statusMsg) {
+      const timer = setTimeout(() => setStatusMsg(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusMsg]);
+
   // Filters
   const [selectedSiteId, setSelectedSiteId] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -190,7 +197,9 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   // ----------------------------------------------------
   const handleSaveCheckpoint = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyId || !checkpointForm.checkpointName || !checkpointForm.siteId) {
+    if (isLoading) return;
+    const finalSiteId = checkpointForm.siteId || (selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""));
+    if (!companyId || !checkpointForm.checkpointName || !finalSiteId) {
       setStatusMsg({ type: 'ERROR', text: 'Checkpoint name and Site selection required.' });
       return;
     }
@@ -199,7 +208,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     const newCp: PatrolCheckpointRecord = {
       id: `CP-${Date.now()}`,
       companyId,
-      siteId: checkpointForm.siteId,
+      siteId: finalSiteId,
       checkpointName: checkpointForm.checkpointName.trim(),
       code,
       qrCode: `LSM-QR-${code}`,
@@ -223,7 +232,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     if (ok) {
       setStatusMsg({ type: 'SUCCESS', text: `Checkpoint '${newCp.checkpointName}' added successfully.` });
       setIsCheckpointModalOpen(false);
-      setCheckpointForm({ siteId: selectedSiteId, checkpointName: '', code: '', locationDescription: '', sequenceOrder: checkpoints.length + 1 });
+      setCheckpointForm({ siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""), checkpointName: '', code: '', locationDescription: '', sequenceOrder: checkpoints.length + 1 });
       FirestoreService.getPatrolCheckpoints(companyId, selectedSiteId).then(setCheckpoints);
     } else {
       setStatusMsg({ type: 'ERROR', text: 'Failed to save checkpoint.' });
@@ -231,6 +240,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   };
 
   const handleStartPatrol = () => {
+    if (isLoading) return;
     if (checkpoints.length === 0) {
       setStatusMsg({ type: 'INFO', text: 'Please add at least one checkpoint before starting patrol tour.' });
       return;
@@ -248,6 +258,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   };
 
   const handleCompletePatrol = async () => {
+    if (isLoading) return;
     if (!companyId) return;
 
     const siteObj = sites.find(s => s.id === selectedSiteId);
@@ -256,7 +267,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     const patrolLog: PatrolLogRecord = {
       id: `PATROL-${Date.now()}`,
       companyId,
-      siteId: selectedSiteId,
+      siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""),
       siteName: siteObj?.name || 'Main Site',
       patrolName: `Routine Patrol #${patrolLogs.length + 1}`,
       guardId: userSession.employeeId,
@@ -288,6 +299,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   // ----------------------------------------------------
   const handleSaveIncident = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     if (!companyId || !incidentForm.title || !incidentForm.description) {
       setStatusMsg({ type: 'ERROR', text: 'Incident Title and Description are required.' });
       return;
@@ -297,7 +309,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     const newInc: IncidentReportRecord = {
       id: `INC-${Date.now()}`,
       companyId,
-      siteId: incidentForm.siteId || selectedSiteId,
+      siteId: incidentForm.siteId || (selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "")),
       siteName: siteObj?.name || 'Main Site',
       reportedById: userSession.employeeId,
       reportedByName: userSession.fullName,
@@ -353,6 +365,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   // ----------------------------------------------------
   const handleCheckInVisitor = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     if (!companyId || !visitorForm.visitorName || !visitorForm.visitorPhone) {
       setStatusMsg({ type: 'ERROR', text: 'Visitor Name and Phone Number are required.' });
       return;
@@ -364,7 +377,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     const newVis: VisitorLogRecord = {
       id: `VISLOG-${Date.now()}`,
       companyId,
-      siteId: visitorForm.siteId || selectedSiteId,
+      siteId: visitorForm.siteId || (selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "")),
       siteName: siteObj?.name || 'Main Site',
       visitorName: visitorForm.visitorName.trim(),
       visitorPhone: visitorForm.visitorPhone.trim(),
@@ -424,18 +437,21 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   // ----------------------------------------------------
   const handleSaveMaterialPass = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyId || !materialForm.materialDescription || !materialForm.supplierVendorName) {
-      setStatusMsg({ type: 'ERROR', text: 'Material Description and Vendor Name required.' });
+    if (isLoading) return;
+
+    const finalSiteId = materialForm.siteId || (selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""));
+    if (!companyId || !materialForm.materialDescription || !materialForm.supplierVendorName || !finalSiteId) {
+      setStatusMsg({ type: 'ERROR', text: 'Site, Material Description, and Vendor Name required.' });
       return;
     }
 
-    const siteObj = sites.find(s => s.id === materialForm.siteId);
+    const siteObj = sites.find(s => s.id === finalSiteId);
     const gatePassNumber = materialForm.gatePassNumber || `GP-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const newMat: MaterialMovementRecord = {
       id: `MAT-${Date.now()}`,
       companyId,
-      siteId: materialForm.siteId || selectedSiteId,
+      siteId: finalSiteId,
       siteName: siteObj?.name || 'Main Site',
       movementType: materialForm.movementType,
       gatePassNumber,
@@ -451,13 +467,22 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     };
 
     setIsLoading(true);
-    const ok = await FirestoreService.saveMaterialMovementLog(companyId, newMat);
+
+    let ok = false;
+    if (!isOnline) {
+      OfflineSyncService.queueAction('MATERIAL_LOG', { companyId, data: newMat });
+      ok = true;
+      setStatusMsg({ type: 'INFO', text: 'Offline: Material Gate Pass queued.' });
+    } else {
+      ok = await FirestoreService.saveMaterialMovementLog(companyId, newMat);
+    }
+
     setIsLoading(false);
 
     if (ok) {
       setStatusMsg({ type: 'SUCCESS', text: `Gate Pass ${gatePassNumber} created.` });
       setIsMaterialModalOpen(false);
-      setMaterialForm({ siteId: selectedSiteId, movementType: 'INWARD', gatePassNumber: '', materialDescription: '', quantity: '1 Unit', supplierVendorName: '', vehicleNumber: '', driverName: '', driverPhone: '' });
+      setMaterialForm({ siteId: finalSiteId, movementType: 'INWARD', gatePassNumber: '', materialDescription: '', quantity: '1 Unit', supplierVendorName: '', vehicleNumber: '', driverName: '', driverPhone: '' });
     } else {
       setStatusMsg({ type: 'ERROR', text: 'Failed to create material pass.' });
     }
@@ -611,7 +636,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
       {/* Global Status Banner */}
       {statusMsg && (
-        <div className={`p-3.5 rounded-2xl border text-xs font-medium flex items-center justify-between shadow-sm animate-in fade-in ${
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md p-4 rounded-2xl border text-xs font-bold flex items-center justify-between shadow-2xl animate-in slide-in-from-top-4 ${
           statusMsg.type === 'SUCCESS' ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300' :
           statusMsg.type === 'ERROR' ? 'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300' :
           'bg-indigo-50 border-indigo-200 text-indigo-800 dark:bg-indigo-950/40 dark:border-indigo-800 dark:text-indigo-300'
@@ -732,7 +757,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                 )}
 
                 <button
-                  onClick={() => setIsCheckpointModalOpen(true)}
+                  onClick={() => { setCheckpointForm(prev => ({ ...prev, siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "") })); setIsCheckpointModalOpen(true); }}
                   className="px-3.5 py-2.5 rounded-2xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
@@ -863,7 +888,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
             </div>
 
             <button
-              onClick={() => setIsIncidentModalOpen(true)}
+              onClick={() => { setIncidentForm(prev => ({ ...prev, siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "") })); setIsIncidentModalOpen(true); }}
               className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
@@ -942,7 +967,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
             </div>
 
             <button
-              onClick={() => setIsVisitorModalOpen(true)}
+              onClick={() => { setVisitorForm(prev => ({ ...prev, siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "") })); setIsVisitorModalOpen(true); }}
               className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
@@ -1035,7 +1060,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
             </div>
 
             <button
-              onClick={() => setIsMaterialModalOpen(true)}
+              onClick={() => { setMaterialForm(prev => ({ ...prev, siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "") })); setIsMaterialModalOpen(true); }}
               className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
@@ -1114,7 +1139,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   onChange={e => setCheckpointForm({ ...checkpointForm, siteId: e.target.value })}
                   className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
                 >
-                  {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  <option value="">-- Select a Site --</option>{sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
 
@@ -1143,7 +1168,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setIsCheckpointModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-500">Cancel</button>
-                <button type="submit" className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow">Save Checkpoint</button>
+                <button type="submit" disabled={isLoading} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow disabled:opacity-50">{isLoading ? "Saving..." : "Save Checkpoint"}</button>
               </div>
             </form>
           </div>
@@ -1216,7 +1241,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setIsIncidentModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-500">Cancel</button>
-                <button type="submit" className="px-5 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold shadow">Submit Incident</button>
+                <button type="submit" disabled={isLoading} className="px-5 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold shadow disabled:opacity-50">{isLoading ? "Submitting..." : "Submit Incident"}</button>
               </div>
             </form>
           </div>
@@ -1270,7 +1295,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setIsVisitorModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-500">Cancel</button>
-                <button type="submit" className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow">Check In Visitor</button>
+                <button type="submit" disabled={isLoading} className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow disabled:opacity-50">{isLoading ? "Checking In..." : "Check In Visitor"}</button>
               </div>
             </form>
           </div>
@@ -1287,6 +1312,17 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
             </div>
 
             <form onSubmit={handleSaveMaterialPass} className="space-y-3">
+              <div>
+                <label className="text-[10px] font-bold uppercase text-slate-500">Site</label>
+                <select
+                  value={materialForm.siteId || ''}
+                  onChange={e => setMaterialForm({ ...materialForm, siteId: e.target.value })}
+                  className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                >
+                  <option value="">-- Select a Site --</option>
+                  {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
               <div>
                 <label className="text-[10px] font-bold uppercase text-slate-500">Movement Type</label>
                 <select
@@ -1324,7 +1360,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setIsMaterialModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-500">Cancel</button>
-                <button type="submit" className="px-5 py-2 rounded-xl bg-amber-600 text-white text-xs font-bold shadow">Create Pass</button>
+                <button type="submit" disabled={isLoading} className="px-5 py-2 rounded-xl bg-amber-600 text-white text-xs font-bold shadow disabled:opacity-50">{isLoading ? "Creating..." : "Create Pass"}</button>
               </div>
             </form>
           </div>
