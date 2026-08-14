@@ -247,14 +247,24 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
     <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} p-4 md:p-6 flex flex-col justify-between max-w-xl mx-auto w-full`}>
       <div className="space-y-5">
         {/* Navigation & Header */}
+        {/* Header with Back to Home & Back to Sign In */}
         <div className="flex items-center justify-between">
-          <button
-            onClick={() => onNavigate('LOGIN')}
-            className={`flex items-center gap-1.5 text-xs font-semibold ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Sign In</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => onNavigate('LANDING')}
+              className={`flex items-center gap-1 text-xs font-semibold ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              <span>← Back to Website</span>
+            </button>
+            <span className="text-slate-500 text-xs">•</span>
+            <button
+              onClick={() => onNavigate('LOGIN')}
+              className={`flex items-center gap-1 text-xs font-semibold ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </button>
+          </div>
           <AppLogo size="sm" showSubtitle={false} />
         </div>
 
@@ -292,16 +302,17 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
 
             {/* Company Code Input */}
             <div>
-              <label className="text-xs font-medium text-slate-300 block mb-1">Company Code *</label>
+              <label className="text-xs font-medium text-slate-300 block mb-1">Company Secret Key *</label>
               <div className="flex gap-2">
                 <input
-                  type="text"
+                  type="password"
                   value={companyCode}
                   onChange={(e) => {
                     setCompanyCode(e.target.value.toUpperCase());
                     setVerifiedCompany(null);
                   }}
-                  placeholder="e.g. APEX-SEC-101"
+                  placeholder="Enter Secret Key"
+                  autoComplete="off"
                   className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white uppercase font-mono focus:border-indigo-500 focus:outline-none"
                 />
                 <button
@@ -310,7 +321,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   disabled={verifyingCode || !companyCode.trim()}
                   className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-xs px-4 rounded-xl flex items-center gap-1.5"
                 >
-                  {verifyingCode ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Verify Code'}
+                  {verifyingCode ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Verify Key'}
                 </button>
               </div>
 
@@ -390,26 +401,26 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               {!isSuperAdminEmail && (
                 <div>
                   <label className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'} block mb-1`}>
-                    Company Code *
+                    Company Secret Key *
                   </label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <input
-                        type="text"
+                        type="password"
                         value={companyCode}
                         onChange={(e) => {
                           setCompanyCode(e.target.value.toUpperCase());
                           setVerifiedCompany(null);
                           setCodeError(null);
                         }}
-                        placeholder="e.g. APEX-SEC-101"
+                        placeholder="Enter Company Secret Key"
+                        autoComplete="off"
                         className={`w-full transition-colors duration-300 ${
                           isDark 
                             ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500' 
                             : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'
                         } rounded-xl px-4 py-2.5 text-xs focus:outline-none uppercase font-mono`}
                       />
-                      <Building2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
                     </div>
                     <button
                       type="button"

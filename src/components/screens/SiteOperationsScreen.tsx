@@ -470,7 +470,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
     let ok = false;
     if (!isOnline) {
-      OfflineSyncService.queueAction('MATERIAL_LOG', { companyId, data: newMat });
+      OfflineSyncService.queueAction('MATERIAL_PASS', { companyId, data: newMat });
       ok = true;
       setStatusMsg({ type: 'INFO', text: 'Offline: Material Gate Pass queued.' });
     } else {

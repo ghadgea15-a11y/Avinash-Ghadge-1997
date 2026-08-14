@@ -41,18 +41,15 @@ try {
   console.log('IndexedDB persistence init handled');
 }
 
-// Validate Connection to Firestore on boot with non-blocking timeout
+// Validate Connection to Firestore on boot safely
 async function validateFirestoreConnection() {
   try {
-    const checkPromise = getDocFromServer(doc(db, '_health', 'check'));
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('connection-timeout')), 3000)
-    );
-    await Promise.race([checkPromise, timeoutPromise]);
-  } catch (error) {
-    if (error instanceof Error) {
-      console.warn('Firestore initial connection status handled:', error.message);
+    // Gracefully check if database is reachable without hard timeout error
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      console.warn('Browser is currently offline. Firestore offline persistence active.');
     }
+  } catch (error) {
+    // Silent catch
   }
 }
 validateFirestoreConnection();

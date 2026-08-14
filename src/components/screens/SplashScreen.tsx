@@ -68,9 +68,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
       const company = activeCompany || SessionManager.getActiveCompany();
       if (!company) {
-        setSteps(prev => prev.map((s, i) => i === 3 ? { ...s, status: 'COMPLETED', detail: 'No Tenant Configured' } : s));
+        setSteps(prev => prev.map((s, i) => i === 3 ? { ...s, status: 'COMPLETED', detail: 'Ready for Public Access' } : s));
         await new Promise(r => setTimeout(r, 400));
-        onComplete('LOGIN');
+        onComplete('LANDING');
         return;
       }
 
@@ -84,7 +84,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
       // Always force login screen on app load as requested by user
       SessionManager.clearUserSession();
-      const session = null;
+      const session = SessionManager.getUserSession();
       if (session) {
         setSteps(prev => prev.map((s, i) => i === 4 ? { ...s, status: 'COMPLETED', detail: `Authenticated as ${session.role}` } : s));
         await new Promise(r => setTimeout(r, 400));
@@ -96,9 +96,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           onComplete('EMPLOYEES');
         }
       } else {
-        setSteps(prev => prev.map((s, i) => i === 4 ? { ...s, status: 'COMPLETED', detail: 'Session Expired / Logged Out' } : s));
+        setSteps(prev => prev.map((s, i) => i === 4 ? { ...s, status: 'COMPLETED', detail: 'System Ready' } : s));
         await new Promise(r => setTimeout(r, 400));
-        onComplete('LOGIN');
+        onComplete('LANDING');
       }
     };
 

@@ -86,15 +86,41 @@ export class SessionManager {
   static getSavedCredentials(): { emailOrId: string; passwordOrPin?: string; companyCode?: string; remember: boolean } {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.REMEMBER_ME);
-      return data ? JSON.parse(data) : { emailOrId: '', remember: false };
+      if (!data) return { emailOrId: '', remember: false };
+
+      const parsed = JSON.parse(data);
+      const savedAt = parsed.savedAt || 0;
+      const MAX_REMEMBER_DURATION_MS = 5 * 60 * 1000; // 5 minutes validity
+
+      // If expired (older than 5 minutes), clear storage immediately
+      if (!savedAt || (Date.now() - savedAt > MAX_REMEMBER_DURATION_MS)) {
+        localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
+        return { emailOrId: '', passwordOrPin: '', companyCode: parsed.companyCode || '', remember: false };
+      }
+
+      return {
+        emailOrId: parsed.emailOrId || '',
+        passwordOrPin: parsed.passwordOrPin || '',
+        companyCode: parsed.companyCode || '',
+        remember: true
+      };
     } catch {
-      return { emailOrId: '', passwordOrPin: '', companyCode: 'TEST-COMP', remember: false };
+      return { emailOrId: '', remember: false };
     }
   }
 
   static setSavedCredentials(emailOrId: string, passwordOrPin: string, companyCode: string, remember: boolean): void {
     if (remember) {
-      localStorage.setItem(STORAGE_KEYS.REMEMBER_ME, JSON.stringify({ emailOrId, passwordOrPin, companyCode, remember: true }));
+      localStorage.setItem(
+        STORAGE_KEYS.REMEMBER_ME,
+        JSON.stringify({
+          emailOrId,
+          passwordOrPin,
+          companyCode,
+          remember: true,
+          savedAt: Date.now()
+        })
+      );
     } else {
       localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
     }

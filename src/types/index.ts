@@ -438,6 +438,7 @@ export interface DailySiteLogRecord {
 
 export type PhaseAScreen = 
   | 'SPLASH'
+  | 'LANDING'
   | 'UPDATE_CHECKER'
   | 'COMPANY_CODE'
   | 'LOGIN'

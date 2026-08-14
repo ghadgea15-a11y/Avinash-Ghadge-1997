@@ -30,9 +30,10 @@ import { SuperAdminDashboard } from './components/screens/SuperAdminDashboard';
 import { SuperAdminCreateCompany } from './components/screens/SuperAdminCreateCompany';
 import { SuperAdminModulesScreen } from './components/screens/SuperAdminModulesScreen';
 import { SuperAdminCompaniesScreen } from './components/screens/SuperAdminCompaniesScreen';
+import { LandingPageScreen } from './components/screens/LandingPageScreen';
 
 export function App() {
-  const [currentScreen, setCurrentScreen] = useState<PhaseAScreen>('SPLASH');
+  const [currentScreen, setCurrentScreen] = useState<PhaseAScreen>('LANDING');
   const [activeCompany, setActiveCompany] = useState<CompanyTenant | null>(null);
   const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(OfflineSyncService.isOnline());
@@ -52,13 +53,9 @@ export function App() {
       setActiveCompany(savedCompany);
     }
 
-    
-    // User requested to never auto-login on app start
+    // Never auto-login on public app start - always protect application
     SessionManager.clearUserSession();
-    const savedSession = null;
-    if (savedSession) {
-      setUserSession(savedSession);
-    }
+    setUserSession(null);
 
     const unsubAuth = onAuthStateChanged(auth, (fbUser) => {
       const currentSession = SessionManager.getUserSession();
@@ -66,10 +63,9 @@ export function App() {
         // Firebase session expired or user logged out remotely
         SessionManager.clearUserSession();
         setUserSession(null);
-        setCurrentScreen('LOGIN');
+        setCurrentScreen('LANDING');
       }
     });
-
 
     return () => {
       unsub();
@@ -95,7 +91,7 @@ export function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Realtime notification monitor
+  // Realtime notification monitor (authenticated only)
   useEffect(() => {
     if (userSession) {
       const unsub = FirestoreService.subscribeToNotifications(userSession.role, (notifs) => {
@@ -116,7 +112,7 @@ export function App() {
   const handleLogout = () => {
     SessionManager.clearUserSession();
     setUserSession(null);
-    setCurrentScreen('LOGIN');
+    setCurrentScreen('LANDING');
     setIsDrawerOpen(false);
   };
 
@@ -151,9 +147,9 @@ export function App() {
 
   const isMainAppScreen = [
     'EMPLOYEES', 
-    'EMPLOYEES', 
     'ATTENDANCE_SHIFTS', 
     'SITE_OPERATIONS', 
+    'COMPANY_MANAGEMENT',
     'PROFILE', 
     'SETTINGS', 
     'NOTIFICATIONS',
@@ -161,49 +157,128 @@ export function App() {
     'SUPER_ADMIN_COMPANIES',
     'SUPER_ADMIN_CREATE_COMPANY',
     'SUPER_ADMIN_MODULES',
-    'SUPER_ADMIN_PENDING_APPROVALS'
+    'SUPER_ADMIN_PENDING_APPROVALS',
+    'APPROVAL_MANAGEMENT'
   ].includes(currentScreen);
+
+  // Security guard: If unauthenticated and attempting to access protected screens, redirect to LANDING
+  useEffect(() => {
+    if (!userSession && isMainAppScreen) {
+      setCurrentScreen('LANDING');
+    }
+  }, [userSession, isMainAppScreen]);
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen flex flex-col font-sans transition-colors duration-200">
-        {/* Header removed based on user request */}
+      {/* 1. PUBLIC MARKETING WEBSITE: Rendered directly as a standalone full-width website */}
+      {currentScreen === 'LANDING' ? (
+        <div className="min-h-screen w-full font-sans transition-colors duration-200">
+          <LandingPageScreen onNavigate={setCurrentScreen} />
+        </div>
+      ) : currentScreen === 'KOTLIN_CODE_VIEWER' ? (
+        /* Standalone Kotlin Code Viewer */
+        <div className="min-h-screen w-full bg-slate-950 text-white p-4">
+          <div className="max-w-5xl mx-auto">
+            <KotlinCodeViewer onBack={() => setCurrentScreen(userSession ? 'EMPLOYEES' : 'LANDING')} />
+          </div>
+        </div>
+      ) : !userSession ? (
+        /* 2. PUBLIC AUTHENTICATION SCREENS (Login, SignUp, ForgotPassword, Splash) */
+        <div className="min-h-screen w-full flex flex-col justify-center items-center font-sans bg-slate-50 dark:bg-slate-950 transition-colors duration-200 p-4">
+          <div className="w-full max-w-xl">
+            {currentScreen === 'LOGIN' && (
+              <LoginScreen
+                onLoginSuccess={(session, company) => {
+                  setActiveCompany(company);
+                  setUserSession(session);
+                  if (session.accountStatus === 'ACTIVE') {
+                    if (session.role === 'SUPER_ADMIN') {
+                      setCurrentScreen('SUPER_ADMIN_DASHBOARD');
+                    } else if (session.role === 'GUARD' || session.role === 'FIELD_OFFICER') {
+                      setCurrentScreen('ATTENDANCE_SHIFTS');
+                    } else {
+                      setCurrentScreen('EMPLOYEES');
+                    }
+                  } else {
+                    setCurrentScreen('APPROVAL_PENDING');
+                  }
+                }}
+                onNavigate={setCurrentScreen}
+              />
+            )}
 
-        {/* Slide-out Navigation Drawer */}
-        <NavigationDrawer
-          isOpen={isDrawerOpen}
-          onClose={() => setIsDrawerOpen(false)}
-          currentScreen={currentScreen}
-          onNavigate={(screen) => {
-            setCurrentScreen(screen);
-            setIsDrawerOpen(false);
-          }}
-          userSession={userSession}
-          activeCompany={activeCompany}
-          unreadNotifCount={unreadNotifCount}
-          onRoleSwitch={handleRoleSwitch}
-          onLockSession={handleLockSession}
-          onLogout={handleLogout}
-          isOnline={isOnline}
-        />
+            {currentScreen === 'SIGN_UP' && (
+              <SignUpScreen
+                initialCompany={activeCompany}
+                onSignUpSuccess={(session) => {
+                  setUserSession(session);
+                  if (session.accountStatus === 'ACTIVE') {
+                    setCurrentScreen('EMPLOYEES');
+                  } else {
+                    setCurrentScreen('APPROVAL_PENDING');
+                  }
+                }}
+                onNavigate={setCurrentScreen}
+              />
+            )}
 
-        {/* Main Stage Area */}
-        <main className="flex-1 flex flex-col w-full h-full bg-slate-50 dark:bg-slate-900">
-          {currentScreen === 'KOTLIN_CODE_VIEWER' ? (
-            <div className="w-full max-w-5xl mx-auto my-4 px-2">
-              <KotlinCodeViewer onBack={() => setCurrentScreen(userSession ? 'EMPLOYEES' : 'LOGIN')} />
-            </div>
-          ) : (
+            {currentScreen === 'FORGOT_PASSWORD' && (
+              <ForgotPasswordScreen
+                activeCompany={activeCompany}
+                onNavigate={setCurrentScreen}
+              />
+            )}
+
+            {currentScreen === 'SPLASH' && (
+              <SplashScreen
+                onComplete={(nextScreen) => setCurrentScreen(nextScreen)}
+                isOnline={isOnline}
+                activeCompany={activeCompany}
+                userSession={userSession}
+              />
+            )}
+
+            {currentScreen === 'UPDATE_CHECKER' && (
+              <UpdateCheckerScreen
+                onContinue={(nextScreen) => setCurrentScreen(nextScreen)}
+              />
+            )}
+          </div>
+        </div>
+      ) : (
+        /* 3. AUTHENTICATED WEB APPLICATION: Protected Enterprise Workstation */
+        <div className="min-h-screen flex flex-col font-sans transition-colors duration-200">
+          {/* Slide-out Navigation Drawer for Authenticated Users */}
+          <NavigationDrawer
+            isOpen={isDrawerOpen}
+            onClose={() => setIsDrawerOpen(false)}
+            currentScreen={currentScreen}
+            onNavigate={(screen) => {
+              setCurrentScreen(screen);
+              setIsDrawerOpen(false);
+            }}
+            userSession={userSession}
+            activeCompany={activeCompany}
+            unreadNotifCount={unreadNotifCount}
+            onRoleSwitch={handleRoleSwitch}
+            onLockSession={handleLockSession}
+            onLogout={handleLogout}
+            isOnline={isOnline}
+          />
+
+          {/* Main Stage Area */}
+          <main className="flex-1 flex flex-col w-full h-full bg-slate-50 dark:bg-slate-900">
             <div className="flex-1 w-full flex flex-col overflow-hidden relative">
               {/* Mobile Top Header */}
-                {viewportMode === 'PHONE' && isMainAppScreen && userSession && (
-                  <MobileTopHeader
-                    onOpenDrawer={() => setIsDrawerOpen(true)}
-                    unreadNotifCount={unreadNotifCount}
-                    onNavigateNotifications={() => setCurrentScreen('NOTIFICATIONS')}
-                  />
-                )}
-                <div className="flex-1 flex flex-row overflow-hidden w-full h-full relative">
+              {viewportMode === 'PHONE' && isMainAppScreen && (
+                <MobileTopHeader
+                  onOpenDrawer={() => setIsDrawerOpen(true)}
+                  unreadNotifCount={unreadNotifCount}
+                  onNavigateNotifications={() => setCurrentScreen('NOTIFICATIONS')}
+                />
+              )}
+
+              <div className="flex-1 flex flex-row overflow-hidden w-full h-full relative">
                 {/* Tablet or Desktop Navigation Rail (for larger viewports) */}
                 {(viewportMode === 'TABLET' || viewportMode === 'FULLSCREEN') && isMainAppScreen && (
                   <TabletNavigationRail
@@ -219,51 +294,14 @@ export function App() {
                 {/* Inner Screen Content View */}
                 <div className="flex-1 flex flex-col justify-between overflow-hidden relative w-full">
                   <div className="flex-1 overflow-y-auto w-full">
-                    {currentScreen === 'SPLASH' && (
-                      <SplashScreen
-                        onComplete={(nextScreen) => setCurrentScreen(nextScreen)}
-                        isOnline={isOnline}
-                        activeCompany={activeCompany}
-                        userSession={userSession}
-                      />
-                    )}
-
-                    {currentScreen === 'UPDATE_CHECKER' && (
-                      <UpdateCheckerScreen
-                        onContinue={(nextScreen) => setCurrentScreen(nextScreen)}
-                      />
-                    )}
-
-                    {currentScreen === 'LOGIN' && (
-                      <LoginScreen
-                        onLoginSuccess={(session, company) => {
-                          setActiveCompany(company);
-                          setUserSession(session);
-                          if (session.accountStatus === 'ACTIVE') {
-                            if (session.role === 'SUPER_ADMIN') {
-                              setCurrentScreen('SUPER_ADMIN_DASHBOARD');
-                            } else if (session.role === 'GUARD' || session.role === 'FIELD_OFFICER') {
-                              setCurrentScreen('ATTENDANCE_SHIFTS');
-                            } else {
-                              setCurrentScreen('EMPLOYEES');
-                            }
-                          } else {
-                            setCurrentScreen('APPROVAL_PENDING');
-                          }
-                        }}
-                        onNavigate={setCurrentScreen}
-                        
-                      />
-                    )}
-
-                    {currentScreen === 'SUPER_ADMIN_DASHBOARD' && userSession && (
+                    {currentScreen === 'SUPER_ADMIN_DASHBOARD' && (
                       <SuperAdminDashboard
                         currentSession={userSession}
                         onNavigate={setCurrentScreen}
                       />
                     )}
 
-                    {currentScreen === 'SUPER_ADMIN_CREATE_COMPANY' && userSession && (
+                    {currentScreen === 'SUPER_ADMIN_CREATE_COMPANY' && (
                       <SuperAdminCreateCompany
                         currentSession={userSession}
                         onNavigate={setCurrentScreen}
@@ -273,43 +311,28 @@ export function App() {
                       />
                     )}
 
-                    {currentScreen === 'SUPER_ADMIN_MODULES' && userSession && (
+                    {currentScreen === 'SUPER_ADMIN_MODULES' && (
                       <SuperAdminModulesScreen
                         currentSession={userSession}
                         onNavigate={setCurrentScreen}
                       />
                     )}
 
-                    {currentScreen === 'SUPER_ADMIN_COMPANIES' && userSession && (
+                    {currentScreen === 'SUPER_ADMIN_COMPANIES' && (
                       <SuperAdminCompaniesScreen
                         currentSession={userSession}
                         onNavigate={setCurrentScreen}
                       />
                     )}
 
-                    {currentScreen === 'SUPER_ADMIN_PENDING_APPROVALS' && userSession && (
+                    {currentScreen === 'SUPER_ADMIN_PENDING_APPROVALS' && (
                       <ApprovalManagementScreen
                         session={userSession}
                         onNavigateBack={() => setCurrentScreen('SUPER_ADMIN_DASHBOARD')}
                       />
                     )}
 
-                    {currentScreen === 'SIGN_UP' && (
-                      <SignUpScreen
-                        initialCompany={activeCompany}
-                        onSignUpSuccess={(session) => {
-                          setUserSession(session);
-                          if (session.accountStatus === 'ACTIVE') {
-                            setCurrentScreen('EMPLOYEES');
-                          } else {
-                            setCurrentScreen('APPROVAL_PENDING');
-                          }
-                        }}
-                        onNavigate={setCurrentScreen}
-                      />
-                    )}
-
-                    {currentScreen === 'APPROVAL_PENDING' && userSession && (
+                    {currentScreen === 'APPROVAL_PENDING' && (
                       <ApprovalPendingScreen
                         session={userSession}
                         onApprovalComplete={(updatedSession) => {
@@ -320,21 +343,14 @@ export function App() {
                       />
                     )}
 
-                    {currentScreen === 'APPROVAL_MANAGEMENT' && userSession && (
+                    {currentScreen === 'APPROVAL_MANAGEMENT' && (
                       <ApprovalManagementScreen
                         session={userSession}
                         onNavigateBack={() => setCurrentScreen('EMPLOYEES')}
                       />
                     )}
 
-                    {currentScreen === 'FORGOT_PASSWORD' && (
-                      <ForgotPasswordScreen
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
-                      />
-                    )}
-
-                    {currentScreen === 'SESSION_LOCK' && userSession && (
+                    {currentScreen === 'SESSION_LOCK' && (
                       <SessionLockScreen
                         userSession={userSession}
                         activeCompany={activeCompany}
@@ -343,9 +359,7 @@ export function App() {
                       />
                     )}
 
-                    
-
-                    {currentScreen === 'EMPLOYEES' && userSession && (
+                    {currentScreen === 'EMPLOYEES' && (
                       <EmployeeModuleScreen
                         userSession={userSession}
                         activeCompany={activeCompany}
@@ -354,7 +368,7 @@ export function App() {
                       />
                     )}
 
-                    {currentScreen === 'ATTENDANCE_SHIFTS' && userSession && (
+                    {currentScreen === 'ATTENDANCE_SHIFTS' && (
                       <AttendanceShiftsScreen
                         userSession={userSession}
                         activeCompany={activeCompany}
@@ -363,7 +377,7 @@ export function App() {
                       />
                     )}
 
-                    {currentScreen === 'SITE_OPERATIONS' && userSession && (
+                    {currentScreen === 'SITE_OPERATIONS' && (
                       <SiteOperationsScreen
                         userSession={userSession}
                         activeCompany={activeCompany}
@@ -372,7 +386,7 @@ export function App() {
                       />
                     )}
 
-                    {currentScreen === 'COMPANY_MANAGEMENT' && userSession && (
+                    {currentScreen === 'COMPANY_MANAGEMENT' && (
                       <CompanyManagementScreen
                         userSession={userSession}
                         activeCompany={activeCompany}
@@ -383,7 +397,7 @@ export function App() {
                       />
                     )}
 
-                    {currentScreen === 'PROFILE' && userSession && (
+                    {currentScreen === 'PROFILE' && (
                       <ProfileScreen
                         userSession={userSession}
                         activeCompany={activeCompany}
@@ -399,7 +413,7 @@ export function App() {
                         onClearCache={() => {
                           SessionManager.clearUserSession();
                           setUserSession(null);
-                          setCurrentScreen('LOGIN');
+                          setCurrentScreen('LANDING');
                         }}
                         viewportMode={viewportMode}
                         onToggleViewport={setViewportMode}
@@ -416,14 +430,12 @@ export function App() {
                       />
                     )}
                   </div>
-
-                  
                 </div>
               </div>
             </div>
-          )}
-        </main>
-      </div>
+          </main>
+        </div>
+      )}
     </ThemeProvider>
   );
 }

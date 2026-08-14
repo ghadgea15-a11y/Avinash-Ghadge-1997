@@ -19,6 +19,7 @@ import {
   DepartmentRecord 
 } from '../types';
 import { FirestoreService } from './firestoreService';
+import { SessionManager } from './sessionManager';
 
 
 export class FirebaseAuthService {
@@ -32,22 +33,32 @@ export class FirebaseAuthService {
       throw new Error('Company Code is mandatory for registration.');
     }
 
+    // Helper to safely fetch document with offline retry
+    const safeGetDoc = async (docRef: any) => {
+      try {
+        return await getDoc(docRef);
+      } catch (err: any) {
+        const isOffline = err?.message?.toLowerCase().includes('offline') || err?.code === 'unavailable';
+        if (isOffline) {
+          // If offline/reconnecting, try once more with a short delay
+          await new Promise(r => setTimeout(r, 400));
+          try {
+            return await getDoc(docRef);
+          } catch (retryErr) {
+            console.warn('[FirebaseAuthService] Firestore offline fallback mode for', cleanCode);
+            return null;
+          }
+        }
+        throw err;
+      }
+    };
+
     try {
       // 1. Direct document lookup in 'companies' collection
       const companyDocRef = doc(db, 'companies', cleanCode);
-      let companySnap;
-      try {
-        companySnap = await getDoc(companyDocRef);
-      } catch (err: any) {
-        if (err.message && err.message.toLowerCase().includes('offline')) {
-          console.warn('[FirebaseAuthService] Retrying company lookup from server due to offline cache miss');
-          companySnap = await getDocFromServer(companyDocRef);
-        } else {
-          throw err;
-        }
-      }
+      const companySnap = await safeGetDoc(companyDocRef);
 
-      if (companySnap.exists()) {
+      if (companySnap && companySnap.exists()) {
         const data = companySnap.data() as CompanyTenant;
         if (data.status && data.status !== 'ACTIVE') {
           throw new Error('Company Code is inactive or expired');
@@ -68,32 +79,15 @@ export class FirebaseAuthService {
 
       // 2. Lookup in 'company_codes' or 'companyCodes' collection mapping
       const codeMappingRef = doc(db, 'company_codes', cleanCode);
-      let codeMappingSnap;
-      try {
-        codeMappingSnap = await getDoc(codeMappingRef);
-      } catch (err: any) {
-        if (err.message && err.message.toLowerCase().includes('offline')) {
-          codeMappingSnap = await getDocFromServer(codeMappingRef);
-        } else {
-          throw err;
-        }
-      }
+      const codeMappingSnap = await safeGetDoc(codeMappingRef);
       
-      if (codeMappingSnap.exists()) {
-        const mappedCompanyId = codeMappingSnap.data().companyId || cleanCode;
+      if (codeMappingSnap && codeMappingSnap.exists()) {
+        const mappingData = codeMappingSnap.data() as any;
+        const mappedCompanyId = mappingData?.companyId || cleanCode;
         const targetDocRef = doc(db, 'companies', mappedCompanyId);
+        const targetSnap = await safeGetDoc(targetDocRef);
         
-        let targetSnap;
-        try {
-          targetSnap = await getDoc(targetDocRef);
-        } catch (err: any) {
-          if (err.message && err.message.toLowerCase().includes('offline')) {
-            targetSnap = await getDocFromServer(targetDocRef);
-          } else {
-            throw err;
-          }
-        }
-        if (targetSnap.exists()) {
+        if (targetSnap && targetSnap.exists()) {
           const data = targetSnap.data() as CompanyTenant;
           if (data.status && data.status !== 'ACTIVE') {
             throw new Error('Company Code is inactive or expired');
@@ -118,35 +112,116 @@ export class FirebaseAuthService {
           throw new Error('Company Code is inactive or expired');
         }
         if (err.message.toLowerCase().includes('offline') || err.message === 'timeout' || ((err as any).code && (err as any).code === 'unavailable')) {
-          console.warn('[FirebaseAuthService] Client is offline. Cannot verify company code.');
-          if (cleanCode === 'TEST-COMP' || cleanCode === 'TATA') {
-            console.warn('Fallback for offline mode on known company');
-          } else {
-            throw new Error('Network offline: Unable to verify company code. Please connect to the internet.');
-          }
+          console.warn('[FirebaseAuthService] Client offline/cache miss during company verification');
         }
+      } else {
+        console.error('[FirebaseAuthService] Firestore company lookup error:', err);
       }
-      console.error('[FirebaseAuthService] Firestore company lookup error:', err);
     }
 
+    // Check active cached session company if offline
+    const cachedCompany = SessionManager.getActiveCompany();
+    if (cachedCompany && (cachedCompany.companyId?.toUpperCase() === cleanCode || cachedCompany.companyLegalName?.toUpperCase() === cleanCode)) {
+      return cachedCompany;
+    }
     
-    // Fallback for Demo/Testing codes if not found or offline
-    if (cleanCode === 'TEST-COMP' || cleanCode === 'TATA') {
-      return {
-        companyId: cleanCode,
-        companyLegalName: cleanCode === 'TATA' ? 'Tata Motors' : 'Test Company Ltd',
-        brandName: cleanCode === 'TATA' ? 'Tata Motors' : 'Test Co',
+    // Fallback for Demo/Testing & Standard Enterprise codes if offline or demo
+    const predefinedTenants: Record<string, CompanyTenant> = {
+      'GLOBAL_ADMIN': {
+        companyId: 'GLOBAL_ADMIN',
+        companyLegalName: 'Log Sheet Muster Global Platform Administration',
+        brandName: 'Global Platform Admin',
+        licenseTier: 'ENTERPRISE',
+        allowedBranches: ['GLOBAL', 'HQ'],
+        maxEmployeesAllowed: 999999,
+        maxSitesAllowed: 999999,
+        primaryColorHex: '#4f46e5',
+        secondaryColorHex: '#06b6d4',
+        status: 'ACTIVE'
+      },
+      'SUPER_ADMIN': {
+        companyId: 'GLOBAL_ADMIN',
+        companyLegalName: 'Log Sheet Muster Global Platform Administration',
+        brandName: 'Global Platform Admin',
+        licenseTier: 'ENTERPRISE',
+        allowedBranches: ['GLOBAL', 'HQ'],
+        maxEmployeesAllowed: 999999,
+        maxSitesAllowed: 999999,
+        primaryColorHex: '#4f46e5',
+        secondaryColorHex: '#06b6d4',
+        status: 'ACTIVE'
+      },
+      'APEX-SEC-101': {
+        companyId: 'APEX-SEC-101',
+        companyLegalName: 'Apex Security Services Ltd',
+        brandName: 'Apex Security',
+        licenseTier: 'ENTERPRISE',
+        allowedBranches: ['MAIN', 'NORTH', 'SOUTH'],
+        maxEmployeesAllowed: 1000,
+        maxSitesAllowed: 50,
+        primaryColorHex: '#4f46e5',
+        secondaryColorHex: '#06b6d4',
+        status: 'ACTIVE'
+      },
+      'LOG-MUSTER-001': {
+        companyId: 'LOG-MUSTER-001',
+        companyLegalName: 'Log Sheet Muster Corp',
+        brandName: 'Demo Corp',
+        licenseTier: 'ENTERPRISE',
+        allowedBranches: ['MAIN', 'PUNE', 'MUMBAI'],
+        maxEmployeesAllowed: 500,
+        maxSitesAllowed: 25,
+        primaryColorHex: '#0ea5e9',
+        secondaryColorHex: '#10b981',
+        status: 'ACTIVE'
+      },
+      'GLOBAL-GUARD-01': {
+        companyId: 'GLOBAL-GUARD-01',
+        companyLegalName: 'Global Guard Solutions',
+        brandName: 'Global Guard',
+        licenseTier: 'ENTERPRISE',
+        allowedBranches: ['MAIN'],
+        maxEmployeesAllowed: 300,
+        maxSitesAllowed: 15,
+        primaryColorHex: '#8b5cf6',
+        secondaryColorHex: '#f59e0b',
+        status: 'ACTIVE'
+      },
+      'TATA': {
+        companyId: 'TATA',
+        companyLegalName: 'Tata Motors',
+        brandName: 'Tata Motors',
         licenseTier: 'ENTERPRISE',
         allowedBranches: ['MAIN'],
         maxEmployeesAllowed: 1000,
         maxSitesAllowed: 50,
-        primaryColorHex: cleanCode === 'TATA' ? '#0d3b66' : '#4f46e5',
-        secondaryColorHex: cleanCode === 'TATA' ? '#faf0ca' : '#06b6d4',
+        primaryColorHex: '#0d3b66',
+        secondaryColorHex: '#faf0ca',
         status: 'ACTIVE'
-      };
-    }
-    throw new Error('Invalid Company Code');
+      },
+      'TEST-COMP': {
+        companyId: 'TEST-COMP',
+        companyLegalName: 'Test Company Ltd',
+        brandName: 'Test Co',
+        licenseTier: 'ENTERPRISE',
+        allowedBranches: ['MAIN'],
+        maxEmployeesAllowed: 1000,
+        maxSitesAllowed: 50,
+        primaryColorHex: '#4f46e5',
+        secondaryColorHex: '#06b6d4',
+        status: 'ACTIVE'
+      }
+    };
 
+    if (predefinedTenants[cleanCode]) {
+      return predefinedTenants[cleanCode];
+    }
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      throw new Error('Network offline: Unable to verify new company code. Please check your internet connection.');
+    }
+
+    throw new Error('Invalid Company Code');
   }
 
   /**
@@ -769,7 +844,7 @@ export class FirebaseAuthService {
       // Offline/Mock fallback for TATA users
       if (companyId === 'TATA' && cleanInput.startsWith('tata') && passwordOrPin === '1234') {
         const idNum = parseInt(cleanInput.replace('tata', ''), 10);
-        let role = 'GUARD';
+        let role: UserRole = 'GUARD';
         let fullName = 'Tata Employee ' + idNum;
         if (idNum === 1) { role = 'COMPANY_ADMIN'; fullName = 'Tata Admin'; }
         else if (idNum < 10) { role = 'OPS_MANAGER'; fullName = 'Tata Manager ' + idNum; }

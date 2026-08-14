@@ -70,72 +70,27 @@ export const CompanyCodeScreen: React.FC<CompanyCodeScreenProps> = ({
           </p>
         </div>
 
-        {/* Quick Select Demo Tenants */}
-        <div className={`transition-colors duration-300 ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-slate-100 border-slate-200'} border rounded-2xl p-3 space-y-2`}>
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Quick Select Enterprise Tenant:
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
-            {[
-              { code: 'APEX-SEC-101', label: 'Apex Security' },
-              { code: 'LOG-MUSTER-001', label: 'Demo Corp' },
-              { code: 'GLOBAL-GUARD-01', label: 'Global Guard' }
-            ].map(item => (
-              <button
-                key={item.code}
-                onClick={() => {
-                  setCompanyCode(item.code);
-                  handleVerify(item.code);
-                }}
-                className={`text-left px-2.5 py-1.5 rounded-lg border text-xs transition flex flex-col ${
-                  companyCode === item.code
-                    ? isDark
-                      ? 'bg-indigo-950/80 border-indigo-600 text-indigo-200'
-                      : 'bg-indigo-50 border-indigo-400 text-indigo-700'
-                    : isDark
-                      ? 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
-                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                }`}
-              >
-                <span className="font-bold font-mono">{item.code}</span>
-                <span className="text-[10px] text-slate-400">{item.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Form Input */}
         <div className="space-y-3">
           <label className={`text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'} block`}>
-            Company Code / Agency Identifier
+            Confidential Company Security Code
           </label>
           <div className="relative">
             <input
-              type="text"
+              type="password"
               value={companyCode}
               onChange={(e) => {
                 setCompanyCode(e.target.value.toUpperCase());
                 setError(null);
               }}
-              placeholder="e.g. APEX-SEC-101"
+              placeholder="Enter your confidential company code"
+              autoComplete="off"
               className={`w-full transition-colors duration-300 ${
                 isDark 
                   ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500' 
                   : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'
               } rounded-xl px-4 py-3 text-sm font-mono focus:outline-none uppercase tracking-wider`}
             />
-            <button
-              type="button"
-              onClick={() => {
-                const sample = 'APEX-SEC-101';
-                setCompanyCode(sample);
-                handleVerify(sample);
-              }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-indigo-400 transition"
-              title="Scan QR Code / Barcode"
-            >
-              <QrCode className="w-5 h-5" />
-            </button>
           </div>
 
           {error && (
