@@ -67,12 +67,12 @@ service cloud.firestore {
     }
 
     function isCompanyAdmin(companyId) {
-      return isSuperAdmin() || hasCompanyRole(companyId, ["COMPANY_ADMIN", "ADMIN", "HR_ADMIN", "super_admin", "admin", "hr_admin"]);
+      return isSuperAdmin() || hasCompanyRole(companyId, ["COMPANY_ADMIN", "ADMIN", "HR_ADMIN", "super_admin", "admin", "hr_admin", "OWNER_PROMOTER", "DIRECTOR_CEO", "GENERAL_MANAGER"]);
     }
 
     function isManager(companyId) {
       return isSuperAdmin() || hasCompanyRole(companyId, [
-        "COMPANY_ADMIN", "ADMIN", "HR_ADMIN", "OPS_MANAGER", "FIELD_OFFICER", "MANAGER", "SUPERVISOR",
+        "COMPANY_ADMIN", "ADMIN", "HR_ADMIN", "OPS_MANAGER", "FIELD_OFFICER", "MANAGER", "SUPERVISOR", "OWNER_PROMOTER", "DIRECTOR_CEO", "GENERAL_MANAGER", "REGIONAL_MANAGER", "AREA_MANAGER", "SITE_IN_CHARGE", "HR", "FINANCE", "PROCUREMENT", "EHS", "QUALITY", "COMMERCIAL", "MIS", "CLIENT_MANAGEMENT", "IT", "OPERATIONS_OFFICE",
         "super_admin", "admin", "hr_admin", "ops_manager", "field_officer", "manager", "supervisor"
       ]);
     }

@@ -1,12 +1,67 @@
 export type UserRole = 
+  // --- Legacy Roles (Do Not Remove) ---
   | 'EMPLOYEE'
   | 'SUPERVISOR'
   | 'GUARD'
   | 'FIELD_OFFICER'
   | 'OPS_MANAGER'
   | 'HR_ADMIN'
+  | 'FINANCE_MANAGER'
+  | 'SAFETY_OFFICER'
+  | 'TECHNICIAN'
   | 'COMPANY_ADMIN'
-  | 'SUPER_ADMIN';
+  | 'SUPER_ADMIN'
+  // --- New Locked Hierarchy Roles ---
+  | 'OWNER_PROMOTER'
+  | 'DIRECTOR_CEO'
+  | 'GENERAL_MANAGER'
+  | 'REGIONAL_MANAGER'
+  | 'AREA_MANAGER'
+  | 'SITE_IN_CHARGE'
+  | 'SKILLED'
+  | 'SEMI_SKILLED'
+  | 'SUPPORT'
+  | 'HR'
+  | 'FINANCE'
+  | 'ADMIN'
+  | 'PROCUREMENT'
+  | 'EHS'
+  | 'QUALITY'
+  | 'COMMERCIAL'
+  | 'MIS'
+  | 'CLIENT_MANAGEMENT'
+  | 'IT'
+  | 'OPERATIONS_OFFICE';
+
+export type WorkforceCategory = 
+  | 'OFFICIAL_STAFF'
+  | 'OPERATIONS';
+
+export type SkillGrade = 
+  | 'SKILLED'
+  | 'SEMI_SKILLED'
+  | 'SUPPORT';
+
+export type DataScope = 
+  | 'GLOBAL'
+  | 'COMPANY'
+  | 'REGION'
+  | 'AREA'
+  | 'BRANCH'
+  | 'SITE'
+  | 'SELF';
+
+export type AuthorityLevel = 
+  | 'A0_OWNER'
+  | 'A1_DIRECTOR_CEO'
+  | 'A2_GENERAL_MANAGER'
+  | 'A3_OFFICIAL_STAFF'
+  | 'A4_REGIONAL_AREA_MANAGER'
+  | 'A5_SITE_IN_CHARGE'
+  | 'A6_SUPERVISOR'
+  | 'A7_SKILLED'
+  | 'A8_SEMI_SKILLED'
+  | 'A9_SUPPORT';
 
 export type AccountStatus = 
   | 'ACTIVE'
@@ -159,6 +214,8 @@ export interface CompanyTenant {
   brandName: string;
   licenseTier: 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
   logoUrl?: string;
+  websiteUrl?: string;
+  portalSubdomain?: string;
   status: 'ACTIVE' | 'SUSPENDED' | 'TRIAL_EXPIRED';
   primaryColorHex: string;
   secondaryColorHex: string;
@@ -220,19 +277,30 @@ export interface AppUpdateInfo {
 
 export interface UserSession {
   userId: string;
+  firebaseUid?: string;
   employeeId: string;
   fullName: string;
   email: string;
   role: UserRole;
   companyId: string;
+  regionId?: string;
+  assignedRegionId?: string;
+  areaId?: string;
+  assignedAreaId?: string;
   branchId: string;
+  assignedBranchId?: string;
   assignedSiteId?: string;
+  workforceCategory?: WorkforceCategory;
+  authorityLevel?: AuthorityLevel;
+  dataScope?: DataScope;
   avatarUrl?: string;
   token: string;
   tokenExpiresAt: number;
   isBiometricEnabled: boolean;
   lastActiveAt: number;
   loginMode: 'PASSWORD' | 'PIN' | 'BIOMETRIC' | 'GOOGLE';
+  authMode?: 'FIREBASE_AUTH' | 'CUSTOM_TOKEN' | 'LEGACY_TRANSITIONAL';
+  permissionsVersion?: number;
   accountStatus?: AccountStatus;
   emailVerified?: boolean;
   departmentId?: string;
@@ -261,6 +329,7 @@ export interface ApprovalRequestRecord {
   hrApprovedBy?: string;
   hrApprovedAt?: string;
   accountStatus: AccountStatus;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
   rejectionReason?: string;
   rejectedBy?: string;
   rejectedAt?: string;
@@ -321,10 +390,21 @@ export interface EmployeeRecord {
     phone: string;
   };
   assignedRegionId: string;
+  assignedAreaId?: string;
   assignedBranchId: string;
   assignedSiteId: string;
   departmentId: string;
   designation: string;
+  
+  workforceCategory?: WorkforceCategory;
+  organizationalGrade?: string;
+  skillGrade?: SkillGrade;
+  authorityLevel?: AuthorityLevel;
+  reportingManagerId?: string;
+  functionalManagerId?: string;
+  approvalAuthorityId?: string;
+  dataScope?: DataScope;
+
   status: 'ACTIVE' | 'PENDING_VERIFICATION' | 'SUSPENDED' | 'TERMINATED';
   joinedDate: string;
   supervisorId?: string;
@@ -339,6 +419,27 @@ export interface EmployeeRecord {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RegionRecord {
+  id: string;
+  companyId: string;
+  name: string;
+  code: string;
+  managerId?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt?: string;
+}
+
+export interface AreaRecord {
+  id: string;
+  companyId: string;
+  regionId: string;
+  name: string;
+  code: string;
+  managerId?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt?: string;
 }
 
 export interface BranchRecord {
@@ -406,7 +507,13 @@ export interface UserMembershipRecord {
   fullName: string;
   role: UserRole;
   companyId: string;
+  assignedRegionId?: string;
+  assignedAreaId?: string;
   assignedBranchId?: string;
+  assignedSiteId?: string;
+  workforceCategory?: WorkforceCategory;
+  authorityLevel?: AuthorityLevel;
+  dataScope?: DataScope;
   status: 'ACTIVE' | 'SUSPENDED';
   updatedAt?: string;
 }
@@ -1005,6 +1112,10 @@ export interface InitStep {
 
 
 export const APP_MODULES = {
+  COMPANY_MANAGEMENT: 'COMPANY_MANAGEMENT',
+  APPROVAL_MANAGEMENT: 'APPROVAL_MANAGEMENT',
+  SITE_OPERATIONS: 'SITE_OPERATIONS',
+  COMPANY_BILLING: 'COMPANY_BILLING',
   EMPLOYEES: 'EMPLOYEES',
   ATTENDANCE: 'ATTENDANCE',
   SHIFTS: 'SHIFTS',

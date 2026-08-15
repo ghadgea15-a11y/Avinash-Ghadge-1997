@@ -124,22 +124,22 @@ export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps>
     if (!companyId) return;
     setLoading(true);
 
-    const unsubCycles = FirestoreService.subscribeToPayrollCycles(companyId, (data) => {
+    const unsubCycles = FirestoreService.subscribeToPayrollCycles(userSession, companyId, (data) => {
       setPayrollCycles(data);
       if (data.length > 0 && !selectedCycleId) {
         setSelectedCycleId(data[0].id);
       }
     });
 
-    const unsubStructures = FirestoreService.subscribeToSalaryStructures(companyId, (data) => {
+    const unsubStructures = FirestoreService.subscribeToSalaryStructures(userSession, companyId, (data) => {
       setSalaryStructures(data);
     });
 
-    const unsubProfiles = FirestoreService.subscribeToSalaryProfiles(companyId, (data) => {
+    const unsubProfiles = FirestoreService.subscribeToSalaryProfiles(userSession, companyId, (data) => {
       setSalaryProfiles(data);
     });
 
-    const unsubAdvances = FirestoreService.subscribeToSalaryAdvances(companyId, (data) => {
+    const unsubAdvances = FirestoreService.subscribeToSalaryAdvances(userSession, companyId, (data) => {
       setAdvances(data);
     });
 

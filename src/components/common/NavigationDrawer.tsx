@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { PhaseAScreen, UserSession, CompanyTenant, UserRole } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
+import { RbacService } from '../../services/rbacService';
 import { AppLogo } from './AppLogo';
 
 interface NavigationDrawerProps {
@@ -310,7 +311,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                   <ChevronRight className="w-3.5 h-3.5 opacity-50" />
                 </button>
 
-                {(userSession?.role === 'COMPANY_ADMIN' || userSession?.role === 'HR_ADMIN' || userSession?.role === 'OPS_MANAGER') && (
+                {RbacService.hasModuleAccess(userSession, 'COMPANY_MANAGEMENT') && (
                   <button
                     onClick={() => { onNavigate('COMPANY_MANAGEMENT'); onClose(); }}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
@@ -329,7 +330,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                   </button>
                 )}
 
-                {(userSession?.role === 'COMPANY_ADMIN' || userSession?.role === 'HR_ADMIN') && (
+                {RbacService.hasModuleAccess(userSession, 'APPROVAL_MANAGEMENT') && (
                   <button
                     onClick={() => { onNavigate('APPROVAL_MANAGEMENT'); onClose(); }}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
@@ -348,7 +349,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                   </button>
                 )}
 
-                {(userSession?.role !== 'GUARD' && userSession?.role !== 'FIELD_OFFICER') && (
+                {RbacService.hasModuleAccess(userSession, 'EMPLOYEES') && (
                   <button
                     onClick={() => { onNavigate('EMPLOYEES'); onClose(); }}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
@@ -401,73 +402,81 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                   <ChevronRight className="w-3.5 h-3.5 opacity-50" />
                 </button>
 
-                <button
-                  onClick={() => { onNavigate('PAYROLL_COMPENSATION'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'PAYROLL_COMPENSATION'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <DollarSign className="w-4 h-4 text-emerald-400" />
-                    <span>Payroll & Compensation</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
+                {RbacService.hasModuleAccess(userSession, 'PAYROLL') && (
+                  <button
+                    onClick={() => { onNavigate('PAYROLL_COMPENSATION'); onClose(); }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                      currentScreen === 'PAYROLL_COMPENSATION'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                        : isDark 
+                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
+                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <DollarSign className="w-4 h-4 text-emerald-400" />
+                      <span>Payroll & Compensation</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+                  </button>
+                )}
 
-                <button
-                  onClick={() => { onNavigate('INVENTORY_STOCK'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'INVENTORY_STOCK'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Boxes className="w-4 h-4 text-amber-400" />
-                    <span>Inventory & Stock</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
+                {RbacService.hasModuleAccess(userSession, 'INVENTORY') && (
+                  <button
+                    onClick={() => { onNavigate('INVENTORY_STOCK'); onClose(); }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                      currentScreen === 'INVENTORY_STOCK'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                        : isDark 
+                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
+                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Boxes className="w-4 h-4 text-amber-400" />
+                      <span>Inventory & Stock</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+                  </button>
+                )}
 
-                <button
-                  onClick={() => { onNavigate('ASSET_TRACKING'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'ASSET_TRACKING'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <QrCode className="w-4 h-4 text-purple-400" />
-                    <span>Asset Tracking & Gear</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
+                {RbacService.hasModuleAccess(userSession, 'ASSETS') && (
+                  <button
+                    onClick={() => { onNavigate('ASSET_TRACKING'); onClose(); }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                      currentScreen === 'ASSET_TRACKING'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                        : isDark 
+                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
+                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <QrCode className="w-4 h-4 text-purple-400" />
+                      <span>Asset Tracking & Gear</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+                  </button>
+                )}
 
-                <button
-                  onClick={() => { onNavigate('SITE_OPERATIONS'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'SITE_OPERATIONS'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <ShieldCheck className="w-4 h-4 text-sky-400" />
-                    <span>Site Operations & Patrols</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
+                {RbacService.hasModuleAccess(userSession, 'SITE_OPERATIONS') && (
+                  <button
+                    onClick={() => { onNavigate('SITE_OPERATIONS'); onClose(); }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                      currentScreen === 'SITE_OPERATIONS'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                        : isDark 
+                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
+                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-sky-400" />
+                      <span>Site Operations & Patrols</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+                  </button>
+                )}
 
                 <button
                   onClick={() => { onNavigate('REPORTS_ANALYTICS'); onClose(); }}
@@ -486,7 +495,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                   <ChevronRight className="w-3.5 h-3.5 opacity-50" />
                 </button>
 
-                {userSession?.role === 'COMPANY_ADMIN' && (
+                {RbacService.hasModuleAccess(userSession, 'COMPANY_BILLING') && (
                   <button
                     onClick={() => { onNavigate('COMPANY_BILLING'); onClose(); }}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${

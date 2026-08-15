@@ -1,0 +1,145 @@
+import React, { useState, useEffect } from 'react';
+import { Users, Clock, AlertTriangle, UserCheck, ShieldCheck, CheckSquare } from 'lucide-react';
+import { 
+  CompanyTenant, UserSession, PhaseAScreen, AttendanceLogRecord, 
+  EmployeeRecord, IncidentReportRecord 
+} from '../../../types';
+import { FirestoreService } from '../../../services/firestoreService';
+import { RbacService } from '../../../services/rbacService';
+
+interface DashboardProps {
+  userSession: UserSession;
+  company: CompanyTenant;
+  onNavigate: (screen: PhaseAScreen) => void;
+}
+
+export const SupervisorDashboard: React.FC<DashboardProps> = ({ userSession, company, onNavigate }) => {
+  const [attendance, setAttendance] = useState<AttendanceLogRecord[]>([]);
+  const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
+  const [incidents, setIncidents] = useState<IncidentReportRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userSession.assignedSiteId) {
+      setLoading(false);
+      return;
+    }
+
+    const siteId = userSession.assignedSiteId;
+    
+    // A Supervisor's team is typically employees assigned to their site OR directly reporting to them.
+    // For this dashboard, we pull site employees and then filter.
+    const unsubs = [
+      FirestoreService.subscribeToEmployees(userSession, company.companyId, (data) => {
+        // Filter employees belonging to the same site and where this user is the supervisor
+        setEmployees(data.filter(e => 
+          e.assignedSiteId === siteId && 
+          (e.supervisorId === userSession.employeeId || e.reportingManagerId === userSession.employeeId)
+        ));
+      }),
+      FirestoreService.subscribeToAttendanceLogs(userSession, company.companyId, (data) => {
+        setAttendance(data.filter(a => a.siteId === siteId));
+      }),
+      FirestoreService.subscribeToIncidentReports(userSession, company.companyId, (data) => {
+        // Supervisor only sees incidents at their site reported by their team or themselves
+        setIncidents(data.filter(i => i.siteId === siteId));
+      })
+    ];
+    
+    setTimeout(() => setLoading(false), 800);
+    return () => unsubs.forEach(unsub => unsub());
+  }, [company.companyId, userSession.assignedSiteId, userSession.employeeId]);
+
+  if (!userSession.assignedSiteId) {
+    return (
+      <div className="p-8 text-center text-slate-500 bg-white dark:bg-slate-800 rounded-2xl">
+        <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-4" />
+        <p>You are not assigned to a specific site.</p>
+        <p className="text-xs mt-2">Supervisors require an assigned site to view operational rosters.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <div className="p-8 text-center text-slate-500">Loading Supervisor Roster...</div>;
+  }
+
+  const teamSize = employees.length;
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Cross reference today's attendance with the supervisor's team
+  const teamAttendanceToday = attendance.filter(a => 
+    a.date === today && 
+    employees.some(e => e.id === a.employeeId)
+  );
+  
+  // Guards punched IN but not OUT
+  const activeOnDuty = teamAttendanceToday.filter(a => a.status === 'PRESENT' && !a.checkOutTime).length;
+  
+  // Calculate absent
+  const presentSet = new Set(teamAttendanceToday.map(a => a.employeeId));
+  const absentCount = Math.max(0, teamSize - presentSet.size);
+
+  const openIncidents = incidents.filter(i => i.status === 'OPEN' || i.status === 'UNDER_INVESTIGATION').length;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Active Team */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-500">My Team On Duty</h3>
+            <UserCheck className="w-5 h-5 text-indigo-500" />
+          </div>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">{activeOnDuty}</p>
+          <p className="text-xs text-slate-500 mt-2">Active now (out of {teamSize} assigned)</p>
+          {RbacService.hasModuleAccess(userSession, 'ATTENDANCE') && (
+            <button onClick={() => onNavigate('ATTENDANCE_SHIFTS')} className="text-xs text-indigo-600 mt-2 font-semibold flex items-center">
+              View Live Roster &rarr;
+            </button>
+          )}
+        </div>
+
+        {/* Missing/Absent */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-500">Absent / Missing</h3>
+            <Clock className="w-5 h-5 text-amber-500" />
+          </div>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">{absentCount}</p>
+          <p className="text-xs text-slate-500 mt-2">Team members missing punch-in</p>
+        </div>
+
+        {/* Incidents */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-red-100 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-500">Site Incidents</h3>
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+          </div>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">{openIncidents}</p>
+          {RbacService.hasModuleAccess(userSession, 'SITE_OPERATIONS') && (
+            <button onClick={() => onNavigate('SITE_OPERATIONS')} className="text-xs text-red-600 mt-2 font-semibold flex items-center">
+              Report/View Incidents &rarr;
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Missing Logic Scaffold for Ground Supervisors */}
+      <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+          <CheckSquare className="w-5 h-5 text-slate-400" /> Tactical Control (Missing Dependencies)
+        </h3>
+        <p className="text-sm text-slate-500">
+          Supervisors require granular task management. The following workflows are not implemented in the Phase A Firestore database layer:
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Daily Task Allocation</span>
+          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Shift Handover Register</span>
+          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Safety Observations (BBS)</span>
+          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Team Productivity Tracker</span>
+        </div>
+      </div>
+    </div>
+  );
+};

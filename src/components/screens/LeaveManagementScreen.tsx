@@ -31,6 +31,8 @@ import {
   EmployeeRecord 
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { WorkflowEngine, WorkflowContext } from '../../services/workflowEngine';
+import { RbacService } from '../../services/rbacService';
 
 interface LeaveManagementScreenProps {
   userSession: UserSession;
@@ -76,7 +78,8 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
     handoverEmployeeId: ''
   });
 
-  const canApprove = ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER'].includes(userSession.role);
+  // Using WorkflowEngine to check if the user has baseline authority to see the Approval queue
+  const canApprove = WorkflowEngine.resolveApprovalAuthority(userSession, 'LEAVE_REQUEST', { companyId: activeCompany?.companyId || userSession.companyId }).canApprove;
   const companyId = activeCompany?.companyId || userSession.companyId;
 
   // Realtime Subscriptions
@@ -84,7 +87,7 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
     if (!companyId) return;
     setLoading(true);
 
-    const unsubLeaves = FirestoreService.subscribeToLeaveRequests(companyId, (data) => {
+    const unsubLeaves = FirestoreService.subscribeToLeaveRequests(userSession, companyId, (data) => {
       setLeaveRequests(data);
       setLoading(false);
     });
@@ -189,6 +192,18 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
   // Approve Request
   const handleApprove = async (request: LeaveRequestRecord) => {
     if (!companyId) return;
+
+    const resolution = WorkflowEngine.resolveApprovalAuthority(userSession, 'LEAVE_REQUEST', {
+      companyId,
+      daysCount: request.daysCount,
+      targetDepartmentId: request.departmentId
+    });
+
+    if (!resolution.canApprove) {
+      alert(`Approval Denied: ${resolution.reason}`);
+      return;
+    }
+
     setActionLoading(true);
     try {
       const ok = await FirestoreService.updateLeaveRequestStatus(
@@ -233,6 +248,18 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
   // Reject Request
   const handleRejectSubmit = async () => {
     if (!companyId || !selectedRequestForAction) return;
+    
+    const resolution = WorkflowEngine.resolveApprovalAuthority(userSession, 'LEAVE_REQUEST', {
+      companyId,
+      daysCount: selectedRequestForAction.daysCount,
+      targetDepartmentId: selectedRequestForAction.departmentId
+    });
+
+    if (!resolution.canApprove) {
+      alert(`Rejection Denied: ${resolution.reason}`);
+      return;
+    }
+
     if (!rejectionReason.trim()) {
       alert('Please specify the reason for rejection.');
       return;

@@ -80,15 +80,15 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
     if (!companyId) return;
     setLoading(true);
 
-    const unsubEmp = FirestoreService.subscribeToEmployees(companyId, setEmployees);
-    const unsubAtt = FirestoreService.subscribeToAttendanceLogs(companyId, setAttendanceLogs);
-    const unsubInv = FirestoreService.subscribeToInventoryItems(companyId, setInventoryItems);
-    const unsubAst = FirestoreService.subscribeToAssets(companyId, setAssets);
+    const unsubEmp = FirestoreService.subscribeToEmployees(userSession, companyId, setEmployees);
+    const unsubAtt = FirestoreService.subscribeToAttendanceLogs(userSession, companyId, setAttendanceLogs);
+    const unsubInv = FirestoreService.subscribeToInventoryItems(userSession, companyId, setInventoryItems);
+    const unsubAst = FirestoreService.subscribeToAssets(userSession, companyId, setAssets);
     const unsubSit = FirestoreService.subscribeToSites(companyId, setSites);
-    const unsubInc = FirestoreService.subscribeToIncidentReports(companyId, setIncidents);
-    const unsubPat = FirestoreService.subscribeToPatrolLogs(companyId, setPatrolLogs);
-    const unsubVis = FirestoreService.subscribeToVisitorLogs(companyId, setVisitorLogs);
-    const unsubMat = FirestoreService.subscribeToMaterialLogs(companyId, setMaterialLogs);
+    const unsubInc = FirestoreService.subscribeToIncidentReports(userSession, companyId, setIncidents);
+    const unsubPat = FirestoreService.subscribeToPatrolLogs(userSession, companyId, setPatrolLogs);
+    const unsubVis = FirestoreService.subscribeToVisitorLogs(userSession, companyId, setVisitorLogs);
+    const unsubMat = FirestoreService.subscribeToMaterialLogs(userSession, companyId, setMaterialLogs);
 
     FirestoreService.getBranches(companyId).then(setBranches).catch(() => {});
 

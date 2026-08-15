@@ -265,19 +265,19 @@ export const AttendanceShiftsScreen: React.FC<AttendanceShiftsScreenProps> = ({
     setIsLoading(true);
 
     // 1. Subscribe to Attendance Logs
-    const unsubLogs = FirestoreService.subscribeToAttendanceLogs(companyId, (logs) => {
+    const unsubLogs = FirestoreService.subscribeToAttendanceLogs(userSession, companyId, (logs) => {
       setAttendanceLogs(logs);
       setIsLoading(false);
     });
 
     // 2. Subscribe to Shifts
-    const unsubShifts = FirestoreService.subscribeToShifts(companyId, (shiftList) => {
+    const unsubShifts = FirestoreService.subscribeToShifts(userSession, companyId, (shiftList) => {
       setShifts(shiftList);
     });
 
     // 3. Fetch Sites & Employees
     FirestoreService.getSites(companyId).then(setSites);
-    FirestoreService.subscribeToEmployees(companyId, setEmployees);
+    FirestoreService.subscribeToEmployees(userSession, companyId, setEmployees);
 
     return () => {
       unsubLogs();

@@ -190,7 +190,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   useEffect(() => {
     setLoading(true);
     
-    const unsubscribe = FirestoreService.subscribeToEmployees(currentCompanyId, (records) => {
+    const unsubscribe = FirestoreService.subscribeToEmployees(userSession, currentCompanyId, (records) => {
       setEmployees(records);
       setLoading(false);
     });

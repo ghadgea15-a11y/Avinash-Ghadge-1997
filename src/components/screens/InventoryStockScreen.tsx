@@ -179,16 +179,16 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
     if (!companyId) return;
     setLoading(true);
 
-    const unsubItems = FirestoreService.subscribeToInventoryItems(companyId, (data) => {
+    const unsubItems = FirestoreService.subscribeToInventoryItems(userSession, companyId, (data) => {
       setItems(data);
       setLoading(false);
     });
 
-    const unsubTxs = FirestoreService.subscribeToStockTransactions(companyId, (data) => {
+    const unsubTxs = FirestoreService.subscribeToStockTransactions(userSession, companyId, (data) => {
       setTransactions(data);
     });
 
-    const unsubVendors = FirestoreService.subscribeToInventoryVendors(companyId, (data) => {
+    const unsubVendors = FirestoreService.subscribeToInventoryVendors(userSession, companyId, (data) => {
       setVendors(data);
     });
 

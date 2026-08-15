@@ -15,7 +15,11 @@ import {
   CheckCircle2, 
   Palette, 
   Layers, 
-  SlidersHorizontal 
+  SlidersHorizontal,
+  Globe,
+  Image as ImageIcon,
+  UploadCloud,
+  Link
 } from 'lucide-react';
 import { CompanyTenant, UserSession, PhaseAScreen, MASTER_APP_MODULES, AppModule } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
@@ -56,6 +60,11 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
   const [adminFullName, setAdminFullName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPhone, setAdminPhone] = useState('');
+
+  // Branding & Portal
+  const [logoUrl, setLogoUrl] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [portalSubdomain, setPortalSubdomain] = useState('');
 
   // Module Entitlements (Default all enabled)
   const [selectedModules, setSelectedModules] = useState<string[]>(MASTER_APP_MODULES.map(m => m.key));
@@ -128,6 +137,9 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
         maxEmployeesAllowed: parseInt(maxEmployees) || 1000,
         maxSitesAllowed: parseInt(maxSites) || 50,
         enabledModules: selectedModules,
+        logoUrl: logoUrl.trim(),
+        websiteUrl: websiteUrl.trim(),
+        portalSubdomain: portalSubdomain.trim().toLowerCase(),
         email: email.trim(),
         phone: phone.trim(),
         address: address.trim(),
@@ -344,11 +356,77 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
             </div>
           </div>
 
-          {/* Section 2: Primary Company Admin */}
+          {/* Section 2: Branding & Portal Configuration */}
+          <div className={`p-5 rounded-2xl border transition-colors duration-300 ${isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-4`}>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+              <Globe className="w-4 h-4" />
+              <span>2. Branding & Web Portal</span>
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs font-medium text-slate-300 block mb-1">Company Logo URL</label>
+                <div className="flex gap-2">
+                  <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
+                    {logoUrl ? (
+                      <img src={logoUrl} alt="Logo" className="w-full h-full object-contain rounded-lg" />
+                    ) : (
+                      <ImageIcon className="w-4 h-4 text-slate-400" />
+                    )}
+                  </div>
+                  <input
+                    type="url"
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="https://example.com/logo.png"
+                    className={`flex-1 px-3 py-2 text-xs rounded-xl border ${
+                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    } focus:outline-none focus:border-amber-500 font-mono`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-300 block mb-1">Corporate Website</label>
+                <div className="relative">
+                  <Link className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                  <input
+                    type="url"
+                    value={websiteUrl}
+                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                    placeholder="https://www.apexsecurity.com"
+                    className={`w-full pl-9 pr-3 py-2 text-xs rounded-xl border ${
+                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    } focus:outline-none focus:border-amber-500 font-mono`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-300 block mb-1">Dedicated Portal Subdomain</label>
+                <div className="flex items-center relative">
+                  <input
+                    type="text"
+                    value={portalSubdomain}
+                    onChange={(e) => setPortalSubdomain(e.target.value.replace(/[^a-zA-Z0-9-]/g, '').toLowerCase())}
+                    placeholder="apex"
+                    className={`w-full pr-32 pl-3 py-2 text-xs rounded-xl border ${
+                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    } focus:outline-none focus:border-amber-500 font-mono`}
+                  />
+                  <span className="absolute right-3 text-[10px] text-slate-400 pointer-events-none">
+                    .logsheetmuster.online
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Primary Company Admin */}
           <div className={`p-5 rounded-2xl border transition-colors duration-300 ${isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-4`}>
             <h2 className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
               <UserPlus className="w-4 h-4" />
-              <span>2. Assign Primary Company Administrator</span>
+              <span>3. Assign Primary Company Administrator</span>
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -393,13 +471,13 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
             </div>
           </div>
 
-          {/* Section 3: Module Access & Entitlements */}
+          {/* Section 4: Module Access & Entitlements */}
           <div className={`p-5 rounded-2xl border transition-colors duration-300 ${isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-4`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h2 className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
                   <SlidersHorizontal className="w-4 h-4" />
-                  <span>3. Module Access Entitlements ({selectedModules.length} / {MASTER_APP_MODULES.length} Enabled)</span>
+                  <span>4. Module Access Entitlements ({selectedModules.length} / {MASTER_APP_MODULES.length} Enabled)</span>
                 </h2>
                 <p className="text-xs text-slate-400">Select which operational modules this company tenant is allowed to access.</p>
               </div>

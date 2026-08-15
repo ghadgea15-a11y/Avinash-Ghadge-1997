@@ -176,7 +176,7 @@ export const AssetTrackingScreen: React.FC<AssetTrackingScreenProps> = ({
     if (!companyId) return;
     setLoading(true);
 
-    const unsubAssets = FirestoreService.subscribeToAssets(companyId, (data) => {
+    const unsubAssets = FirestoreService.subscribeToAssets(userSession, companyId, (data) => {
       setAssets(data);
       setLoading(false);
     });
@@ -193,7 +193,7 @@ export const AssetTrackingScreen: React.FC<AssetTrackingScreenProps> = ({
       setSites(data);
     });
 
-    const unsubEmployees = FirestoreService.subscribeToEmployees(companyId, (data) => {
+    const unsubEmployees = FirestoreService.subscribeToEmployees(userSession, companyId, (data) => {
       setEmployees(data);
     });
 

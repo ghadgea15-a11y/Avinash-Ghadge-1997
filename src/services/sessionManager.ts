@@ -51,6 +51,11 @@ export class SessionManager {
     localStorage.removeItem(STORAGE_KEYS.USER_SESSION);
   }
 
+  static clearSession(): void {
+    this.clearUserSession();
+    this.clearActiveCompany();
+  }
+
   static updateLastActive(): void {
     const session = this.getUserSession();
     if (session) {

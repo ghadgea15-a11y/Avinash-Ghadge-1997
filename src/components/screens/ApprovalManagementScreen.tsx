@@ -54,7 +54,7 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
   useEffect(() => {
     setLoading(true);
     const companyId = session.companyId || 'GLOBAL';
-    const unsubscribe = FirestoreService.subscribeToApprovalRequests(companyId, (data) => {
+    const unsubscribe = FirestoreService.subscribeToApprovalRequests(session, companyId, (data) => {
       setRequests(data);
       setLoading(false);
     });

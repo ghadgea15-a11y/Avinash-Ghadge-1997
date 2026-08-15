@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================================
+    // ZERO-TRUST DEFAULT DENY
+    // ============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ============================================================
+    // CLAIM-BASED HELPERS (Phase 2C-G)
+    // ============================================================
+    function signedIn() {
+      return request.auth != null && request.auth.token != null;
+    }
+
+    function companyId() {
+      return request.auth.token.cId;
+    }
+
+    function authorityLevel() {
+      return request.auth.token.aLvl;
+    }
+
+    function regionId() {
+      return request.auth.token.rId;
+    }
+
+    function siteId() {
+      return request.auth.token.sId;
+    }
+
+    function departmentId() {
+      return request.auth.token.dId;
+    }
+
+    function isTerminatedOrSuspended() {
+      return request.auth.token.status == 'TERMINATED' || request.auth.token.status == 'SUSPENDED';
+    }
+
+    function isActiveUser() {
+      return signedIn() && !isTerminatedOrSuspended() && companyId() != null && authorityLevel() != null;
+    }
+
+    function sameCompany(cId) {
+      return isActiveUser() && companyId() == cId;
+    }
+
+    function isOwnerOrDirector() {
+      return isActiveUser() && authorityLevel() in ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER'];
+    }
+
+    function isOfficialStaff() {
+      return isActiveUser() && authorityLevel() == 'A3_OFFICIAL_STAFF';
+    }
+
+    function isRegionalManager(rId) {
+      return isActiveUser() && authorityLevel() == 'A4_REGIONAL_AREA_MANAGER' && regionId() == rId;
+    }
+
+    function isSiteManager(sId) {
+      return isActiveUser() && (authorityLevel() == 'A5_SITE_IN_CHARGE' || authorityLevel() == 'A6_SUPERVISOR') && siteId() == sId;
+    }
+
+    function isGroundWorker(empId) {
+      return isActiveUser() && authorityLevel() in ['A7_SKILLED', 'A8_SEMI_SKILLED', 'A9_SUPPORT'] && request.auth.token.employeeId == empId;
+    }
+
+    // ============================================================
+    // COMPANIES & TENANT SUBCOLLECTIONS
+    // ============================================================
+    match /companies/{companyId} {
+      allow get: if sameCompany(companyId) || request.auth.token.companyId == companyId;
+      allow list: if isOwnerOrDirector() || isOfficialStaff();
+      allow write: if isOwnerOrDirector();
+
+      match /employees/{employeeId} {
+        allow read: if sameCompany(companyId) && (
+          isOwnerOrDirector() || isOfficialStaff() || isRegionalManager(resource.data.assignedRegionId) || isSiteManager(resource.data.assignedSiteId) || resource.data.employeeId == request.auth.token.employeeId
+        );
+        allow write: if isOwnerOrDirector() || isOfficialStaff();
+      }
+
+      match /attendance_logs/{logId} {
+        allow read: if sameCompany(companyId) && (
+          isOwnerOrDirector() || isOfficialStaff() || isRegionalManager(resource.data.assignedRegionId) || isSiteManager(resource.data.assignedSiteId) || resource.data.employeeId == request.auth.token.employeeId
+        );
+        allow create: if sameCompany(companyId) && (
+          isOwnerOrDirector() || isOfficialStaff() || isSiteManager(request.resource.data.siteId)
+        );
+        allow update, delete: if isOwnerOrDirector() || isOfficialStaff() || isSiteManager(resource.data.siteId);
+      }
+
+      match /payroll/{payrollId} {
+        allow read: if sameCompany(companyId) && (
+          isOwnerOrDirector() || isOfficialStaff() || resource.data.employeeId == request.auth.token.employeeId
+        );
+        allow write: if isOwnerOrDirector() || (isOfficialStaff() && departmentId() == 'FINANCE');
+      }
+
+      match /leave_requests/{leaveId} {
+        allow read: if sameCompany(companyId) && (
+          isOwnerOrDirector() || isOfficialStaff() || isSiteManager(resource.data.siteId) || resource.data.employeeId == request.auth.token.employeeId
+        );
+        allow create: if sameCompany(companyId) && signedIn();
+        allow update: if isOwnerOrDirector() || isOfficialStaff() || isSiteManager(resource.data.siteId);
+      }
+    }
+  }
+}

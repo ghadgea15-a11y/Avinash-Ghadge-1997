@@ -166,13 +166,13 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
       }
     });
 
-    FirestoreService.subscribeToEmployees(companyId, setEmployees);
+    FirestoreService.subscribeToEmployees(userSession, companyId, setEmployees);
 
-    const unsubPatrols = FirestoreService.subscribeToPatrolLogs(companyId, logs => setPatrolLogs(logs));
-    const unsubIncidents = FirestoreService.subscribeToIncidentReports(companyId, reps => setIncidents(reps));
-    const unsubVisitors = FirestoreService.subscribeToVisitorLogs(companyId, vList => setVisitors(vList));
-    const unsubMaterials = FirestoreService.subscribeToMaterialLogs(companyId, mList => setMaterials(mList));
-    const unsubDaily = FirestoreService.subscribeToDailySiteLogs(companyId, dList => setDailySiteLogs(dList));
+    const unsubPatrols = FirestoreService.subscribeToPatrolLogs(userSession, companyId, logs => setPatrolLogs(logs));
+    const unsubIncidents = FirestoreService.subscribeToIncidentReports(userSession, companyId, reps => setIncidents(reps));
+    const unsubVisitors = FirestoreService.subscribeToVisitorLogs(userSession, companyId, vList => setVisitors(vList));
+    const unsubMaterials = FirestoreService.subscribeToMaterialLogs(userSession, companyId, mList => setMaterials(mList));
+    const unsubDaily = FirestoreService.subscribeToDailySiteLogs(userSession, companyId, dList => setDailySiteLogs(dList));
 
     setIsLoading(false);
 

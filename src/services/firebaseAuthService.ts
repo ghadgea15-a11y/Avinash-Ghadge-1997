@@ -1,4 +1,4 @@
-import { auth, db } from '../firebase';
+import { auth, db, functions } from '../firebase';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
@@ -6,8 +6,11 @@ import {
   sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithCustomToken,
+  signOut,
   User as FirebaseUser
 } from 'firebase/auth';
+import { httpsCallable } from 'firebase/functions';
 import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { 
   CompanyTenant, 
@@ -943,78 +946,128 @@ export class FirebaseAuthService {
     }
 
     
-    // 2. PIN / Employee ID Mode - Query Firestore employees collection
+    // 2. PIN / Employee ID Mode - Strict Custom Token Flow via generatePinToken Cloud Function
     try {
-      // Offline/Mock fallback for TATA users
-      if (companyId === 'TATA' && cleanInput.startsWith('tata') && passwordOrPin === '1234') {
-        const idNum = parseInt(cleanInput.replace('tata', ''), 10);
-        let role: UserRole = 'GUARD';
-        let fullName = 'Tata Employee ' + idNum;
-        if (idNum === 1) { role = 'COMPANY_ADMIN'; fullName = 'Tata Admin'; }
-        else if (idNum < 10) { role = 'OPS_MANAGER'; fullName = 'Tata Manager ' + idNum; }
-        else if (idNum < 30) { role = 'FIELD_OFFICER'; fullName = 'Tata Supervisor ' + idNum; }
-        
-        return {
-            userId: 'mock-tata-' + idNum,
-            employeeId: cleanInput.toUpperCase(),
-            fullName: fullName,
-            email: cleanInput.toLowerCase() + '@tatamotors.com',
-            role: role,
-            companyId: 'TATA',
-            branchId: 'MAIN_BRANCH',
-            token: 'mock-token',
-            tokenExpiresAt: Date.now() + 86400000,
-            isBiometricEnabled: true,
-            lastActiveAt: Date.now(),
-            loginMode: 'PIN',
-            accountStatus: 'ACTIVE',
-            emailVerified: true
-        };
+      const generatePinTokenFn = httpsCallable(functions, 'generatePinToken');
+      const res: any = await generatePinTokenFn({
+        companyId,
+        employeeId: cleanInput,
+        pin: passwordOrPin
+      });
+
+      const data = res.data || {};
+      const customToken = data.token;
+      if (!customToken) {
+        throw new Error('Secure PIN authentication is currently unavailable. Please try again.');
       }
 
+      // Sign in with Firebase Custom Token
+      const userCred = await signInWithCustomToken(auth, customToken);
+      const fbUser = userCred.user;
+
+      // Obtain ID token result with claims
+      const idTokenResult = await fbUser.getIdTokenResult(true);
+      const claims = idTokenResult.claims || {};
+
+      if (claims.status === 'TERMINATED' || claims.status === 'SUSPENDED') {
+        await signOut(auth);
+        throw new Error(`Account is ${claims.status}. Login denied.`);
+      }
+
+      // Fetch employee record for profile details
       const empColRef = collection(db, 'companies', companyId, 'employees');
-
       const empQuery = query(empColRef, where('employeeId', '==', cleanInput));
-      
-      // Add timeout to prevent hanging when offline
-      const querySnap = await Promise.race([
-        getDocs(empQuery),
-        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Network Timeout: Unable to reach database')), 15000))
-      ]);
+      const querySnap = await getDocs(empQuery);
 
-
+      let empData: any = {};
+      let empDocId = fbUser.uid;
       if (!querySnap.empty) {
-        const empDoc = querySnap.docs[0];
-        const empData = empDoc.data();
-
-        // Verify PIN or password stored on employee record
-        if (empData.pin === passwordOrPin || empData.password === passwordOrPin) {
-          const session: UserSession = {
-            userId: empDoc.id,
-            employeeId: empData.employeeId || cleanInput,
-            fullName: `${empData.firstName || ''} ${empData.lastName || ''}`.trim() || 'Employee',
-            email: empData.email || `${cleanInput.toLowerCase()}@company.com`,
-            role: (empData.role as UserRole) || 'GUARD',
-            companyId,
-            branchId: empData.branchId || 'MAIN_BRANCH',
-            assignedSiteId: empData.assignedSiteId,
-            avatarUrl: empData.photoUrl,
-            token: `SESSION-${Date.now()}-${empDoc.id}`,
-            tokenExpiresAt: Date.now() + (24 * 60 * 60 * 1000),
-            isBiometricEnabled: true,
-            lastActiveAt: Date.now(),
-            loginMode: 'PIN',
-            accountStatus: 'ACTIVE',
-            emailVerified: true
-          };
-          return session;
-        }
+        empDocId = querySnap.docs[0].id;
+        empData = querySnap.docs[0].data();
       }
-    } catch (err) {
-      console.error('[FirebaseAuthService] Firestore PIN auth query error:', err);
+
+      console.log('[Auth] Login mode: CUSTOM_TOKEN successful for employee:', cleanInput);
+
+      const session: UserSession = {
+        userId: empDocId,
+        firebaseUid: fbUser.uid,
+        employeeId: empData.employeeId || cleanInput,
+        fullName: `${empData.firstName || ''} ${empData.lastName || ''}`.trim() || fbUser.displayName || 'Employee',
+        email: empData.email || fbUser.email || `${cleanInput.toLowerCase()}@company.com`,
+        role: (empData.role as UserRole) || 'GUARD',
+        authorityLevel: (claims.aLvl as any) || empData.authorityLevel || 'A9_SUPPORT',
+        regionId: (claims.rId as string) || empData.assignedRegionId,
+        assignedSiteId: (claims.sId as string) || empData.assignedSiteId,
+        departmentId: (claims.dId as string) || empData.departmentId,
+        companyId,
+        branchId: empData.branchId || 'MAIN_BRANCH',
+        avatarUrl: empData.photoUrl || fbUser.photoURL || undefined,
+        token: await fbUser.getIdToken(),
+        tokenExpiresAt: idTokenResult.expirationTime ? new Date(idTokenResult.expirationTime).getTime() : Date.now() + (24 * 60 * 60 * 1000),
+        isBiometricEnabled: true,
+        lastActiveAt: Date.now(),
+        loginMode: 'PIN',
+        authMode: 'CUSTOM_TOKEN',
+        permissionsVersion: (claims.pV as number) || 1,
+        accountStatus: 'ACTIVE',
+        emailVerified: true
+      };
+      return session;
+
+    } catch (err: any) {
+      console.error('[FirebaseAuthService] PIN auth error:', err);
+      if (err instanceof Error) {
+        throw err;
+      }
+      throw new Error('Invalid credentials or PIN entered. Please check your details and try again.');
     }
 
     throw new Error('Invalid credentials or PIN entered. Please check your details and try again.');
+  }
+
+  /**
+   * Safely logs out user from Firebase Auth and clears session
+   */
+  static async logoutUser(): Promise<void> {
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.warn('[FirebaseAuthService] SignOut warning:', e);
+    }
+    SessionManager.clearSession();
+  }
+
+  /**
+   * Refreshes the user session token and claims
+   */
+  static async refreshSession(currentSession: UserSession): Promise<UserSession> {
+    if (!auth.currentUser) {
+      return currentSession;
+    }
+    try {
+      const idTokenResult = await auth.currentUser.getIdTokenResult(true);
+      const claims = idTokenResult.claims || {};
+
+      if (claims.status === 'TERMINATED' || claims.status === 'SUSPENDED') {
+        await signOut(auth);
+        throw new Error(`Account is ${claims.status}. Session terminated.`);
+      }
+
+      return {
+        ...currentSession,
+        token: await auth.currentUser.getIdToken(),
+        tokenExpiresAt: idTokenResult.expirationTime ? new Date(idTokenResult.expirationTime).getTime() : currentSession.tokenExpiresAt,
+        authorityLevel: (claims.aLvl as any) || currentSession.authorityLevel,
+        regionId: (claims.rId as string) || currentSession.regionId,
+        assignedSiteId: (claims.sId as string) || currentSession.assignedSiteId,
+        departmentId: (claims.dId as string) || currentSession.departmentId,
+        permissionsVersion: (claims.pV as number) || currentSession.permissionsVersion,
+        lastActiveAt: Date.now()
+      };
+    } catch (err) {
+      console.error('[FirebaseAuthService] Session refresh error:', err);
+      return currentSession;
+    }
   }
 
   /**

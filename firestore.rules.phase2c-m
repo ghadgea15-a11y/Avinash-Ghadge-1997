@@ -1,0 +1,612 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================================
+    // 1. DEFAULT: DENY EVERYTHING (ZERO-TRUST SECURITY BY DEFAULT)
+    // ============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ============================================================
+    // 2. TRUSTED FIREBASE AUTH CUSTOM CLAIM HELPERS
+    // ============================================================
+
+    function signedIn() {
+      return request.auth != null && request.auth.token != null;
+    }
+
+    function companyId() {
+      return request.auth.token.cId;
+    }
+
+    function authorityLevel() {
+      return request.auth.token.aLvl;
+    }
+
+    function regionId() {
+      return request.auth.token.rId;
+    }
+
+    function siteId() {
+      return request.auth.token.sId;
+    }
+
+    function departmentId() {
+      return request.auth.token.dId;
+    }
+
+    function permissionsVersion() {
+      return request.auth.token.pV;
+    }
+
+    function isTerminatedOrSuspended() {
+      return request.auth.token.status == "TERMINATED" || request.auth.token.status == "SUSPENDED";
+    }
+
+    function isActiveUser() {
+      return signedIn() 
+        && !isTerminatedOrSuspended() 
+        && companyId() != null 
+        && authorityLevel() != null;
+    }
+
+    function sameCompany(cId) {
+      return isActiveUser() && companyId() == cId;
+    }
+
+    function isSuperAdmin() {
+      return signedIn() && (authorityLevel() == "SUPER_ADMIN" || request.auth.token.role == "SUPER_ADMIN");
+    }
+
+    function isOwnerOrExecutive() {
+      return isActiveUser() && authorityLevel() in ["A0_OWNER", "A1_DIRECTOR_CEO", "A2_GENERAL_MANAGER"];
+    }
+
+    function isOfficialStaff() {
+      return isActiveUser() && authorityLevel() == "A3_OFFICIAL_STAFF";
+    }
+
+    function isOfficialStaffDept(dept) {
+      return isOfficialStaff() && departmentId() == dept;
+    }
+
+    function isRegionalManager(rId) {
+      return isActiveUser() && authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && regionId() == rId;
+    }
+
+    function isSiteManager(sId) {
+      return isActiveUser() 
+        && (authorityLevel() == "A5_SITE_IN_CHARGE" || authorityLevel() == "A6_SUPERVISOR") 
+        && siteId() == sId;
+    }
+
+    function isGroundWorker() {
+      return isActiveUser() && authorityLevel() in ["A7_SKILLED", "A8_SEMI_SKILLED", "A9_SUPPORT"];
+    }
+
+    function isSelfEmployee(empId) {
+      return signedIn() && request.auth.token.employeeId == empId;
+    }
+
+    function isSelfUser(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+
+    // ============================================================
+    // 3. GLOBAL ROOT LEVEL COLLECTIONS
+    // ============================================================
+
+    // A. User Profiles & Tenant Memberships
+    match /users/{uid} {
+      allow read: if isSelfUser(uid) 
+        || isSuperAdmin() 
+        || (isActiveUser() && resource.data != null && (companyId() == resource.data.companyId || companyId() == resource.data.default_company_id));
+
+      allow create: if isSuperAdmin()
+        || isSelfUser(uid)
+        || (isActiveUser() && isOwnerOrExecutive());
+
+      allow update: if isSuperAdmin()
+        || (isActiveUser() && isOwnerOrExecutive() && companyId() == resource.data.companyId)
+        || (isSelfUser(uid) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['authorityLevel', 'companyId', 'role', 'status']));
+
+      allow delete: if isSuperAdmin();
+
+      match /memberships/{cId} {
+        allow read: if isSuperAdmin() || isSelfUser(uid) || sameCompany(cId);
+        allow create, update, delete: if isSuperAdmin() || (sameCompany(cId) && isOwnerOrExecutive());
+      }
+    }
+
+    // B. Company Codes (Unauthenticated Lookup for Login Screen Discovery)
+    match /company_codes/{codeId} {
+      allow get: if true; // Unauthenticated GET allowed to verify company code on login screen
+      allow list: if isSuperAdmin(); // Public LIST forbidden to prevent tenant harvesting
+      allow write: if isSuperAdmin();
+    }
+
+    match /companyCodes/{codeId} {
+      allow get: if true; // Unauthenticated GET allowed for legacy company code lookup
+      allow list: if isSuperAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    // C. System Dictionaries & Configurations
+    match /plans/{planId} {
+      allow read: if signedIn();
+      allow write: if isSuperAdmin();
+    }
+
+    match /modules/{moduleId} {
+      allow read: if signedIn();
+      allow write: if isSuperAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if signedIn();
+      allow write: if isSuperAdmin();
+    }
+
+    match /userRoles/{roleId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    // D. Global Infrastructure Mappings
+    match /regions/{regionId} {
+      allow read: if isActiveUser();
+      allow write: if isSuperAdmin() || isOwnerOrExecutive();
+    }
+
+    match /branches/{branchId} {
+      allow read: if isActiveUser();
+      allow write: if isSuperAdmin() || isOwnerOrExecutive();
+    }
+
+    match /sites/{siteId} {
+      allow read: if isActiveUser();
+      allow write: if isSuperAdmin() || isOwnerOrExecutive();
+    }
+
+    match /departments/{departmentId} {
+      allow read: if isActiveUser();
+      allow write: if isSuperAdmin() || isOwnerOrExecutive();
+    }
+
+    match /designations/{designationId} {
+      allow read: if isActiveUser();
+      allow write: if isSuperAdmin() || isOwnerOrExecutive();
+    }
+
+    match /shifts/{shiftId} {
+      allow read: if isActiveUser();
+      allow write: if isSuperAdmin() || isOwnerOrExecutive();
+    }
+
+    // E. Global Approval Requests & Applications
+    match /approval_requests/{requestId} {
+      allow read: if signedIn() && (
+        isSuperAdmin() ||
+        resource == null ||
+        resource.data.uid == request.auth.uid ||
+        (isActiveUser() && companyId() == resource.data.companyId)
+      );
+      allow create: if signedIn();
+      allow update: if isSuperAdmin() || (isActiveUser() && companyId() == resource.data.companyId && (isOwnerOrExecutive() || isOfficialStaff()));
+      allow delete: if isSuperAdmin();
+    }
+
+    // F. Global Audit Trails & System Notifications
+    match /audit_logs/{logId} {
+      allow read: if isSuperAdmin() || (isActiveUser() && isOwnerOrExecutive());
+      allow create: if signedIn();
+      allow update, delete: if isSuperAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isSuperAdmin() || (isActiveUser() && isOwnerOrExecutive());
+      allow create: if signedIn();
+      allow update, delete: if isSuperAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if signedIn();
+      allow create: if isSuperAdmin() || (isActiveUser() && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"]));
+      allow update, delete: if isSuperAdmin() || (isActiveUser() && isOwnerOrExecutive());
+    }
+
+
+    // ============================================================
+    // 4. HIERARCHICAL MULTI-TENANT COMPANY COLLECTIONS
+    // ============================================================
+
+    match /companies/{cId} {
+      // Unauthenticated GET allowed to fetch basic company metadata for tenant validation
+      allow get: if true;
+      allow list: if isSuperAdmin() || sameCompany(cId);
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() || (sameCompany(cId) && isOwnerOrExecutive());
+      allow delete: if isSuperAdmin();
+
+      // ----------------------------------------------------------
+      // Subcollection: Subscriptions, Entitlements & Billing
+      // ----------------------------------------------------------
+      match /subscriptions/{subId} {
+        allow read: if isSuperAdmin() || sameCompany(cId);
+        allow write: if isSuperAdmin();
+      }
+
+      match /entitlements/{moduleId} {
+        allow read: if isSuperAdmin() || sameCompany(cId);
+        allow write: if isSuperAdmin();
+      }
+
+      match /payments/{paymentId} {
+        allow read: if isSuperAdmin() || (sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE")));
+        allow write: if isSuperAdmin();
+      }
+
+      match /invoices/{invoiceId} {
+        allow read: if isSuperAdmin() || (sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE")));
+        allow write: if isSuperAdmin();
+      }
+
+      match /subscriptionHistory/{historyId} {
+        allow read: if isSuperAdmin() || (sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE")));
+        allow write: if isSuperAdmin();
+      }
+
+      // ----------------------------------------------------------
+      // Subcollection: Employee Management (HRMS)
+      // ----------------------------------------------------------
+      match /employees/{employeeId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() ||
+          isOfficialStaff() ||
+          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.assignedRegionId == regionId() || resource.data.assignedRegionId == null)) ||
+          isSiteManager(resource.data.assignedSiteId) ||
+          resource.data.assignedSiteId == null ||
+          isSelfEmployee(resource.data.employeeId) ||
+          isSelfUser(resource.data.userId)
+        );
+
+        allow create, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+
+        allow update: if sameCompany(cId) && (
+          isOwnerOrExecutive() ||
+          isOfficialStaff() ||
+          (isSiteManager(resource.data.assignedSiteId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['authorityLevel', 'companyId', 'salary', 'bankDetails']))
+        );
+      }
+
+      match /role_assignments/{roleId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /documents/{docId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /leave_requests/{leaveId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() ||
+          isOfficialStaff() ||
+          isSiteManager(resource.data.siteId) ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create: if sameCompany(cId) && signedIn();
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId));
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /leave/{leaveId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() ||
+          isOfficialStaff() ||
+          isSiteManager(resource.data.siteId) ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create: if sameCompany(cId) && signedIn();
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId));
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      // ----------------------------------------------------------
+      // Subcollection: Attendance & Supervisor Muster Roll
+      // ----------------------------------------------------------
+      match /attendance_logs/{attendanceId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() ||
+          isOfficialStaff() ||
+          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.assignedRegionId == regionId() || resource.data.assignedRegionId == null)) ||
+          isSiteManager(resource.data.siteId) ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+
+        // Supervisor Muster Creation: Actor (request.auth.token.sId) separates from Subject (request.resource.data.employeeId)
+        allow create: if sameCompany(cId) && (
+          isOwnerOrExecutive() ||
+          isOfficialStaff() ||
+          (authorityLevel() in ["A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] && request.resource.data.siteId == siteId()) ||
+          isSelfEmployee(request.resource.data.employeeId)
+        );
+
+        allow update: if sameCompany(cId) && (
+          isOwnerOrExecutive() ||
+          isOfficialStaff() ||
+          isSiteManager(resource.data.siteId)
+        );
+
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /attendance/{attendanceId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() ||
+          isOfficialStaff() ||
+          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.assignedRegionId == regionId() || resource.data.assignedRegionId == null)) ||
+          isSiteManager(resource.data.siteId) ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+
+        allow create: if sameCompany(cId) && (
+          isOwnerOrExecutive() ||
+          isOfficialStaff() ||
+          (authorityLevel() in ["A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] && request.resource.data.siteId == siteId()) ||
+          isSelfEmployee(request.resource.data.employeeId)
+        );
+
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId));
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /attendance_summaries/{summaryId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId) || isSiteManager(request.resource.data.siteId));
+      }
+
+      match /site_muster_rolls/{rollId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId) || isSiteManager(request.resource.data.siteId));
+      }
+
+      match /attendance_devices/{deviceId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      // ----------------------------------------------------------
+      // Subcollection: Payroll, Compensation & Financial Data
+      // ----------------------------------------------------------
+      match /payroll/{payrollId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() ||
+          isOfficialStaffDept("FINANCE") ||
+          isOfficialStaffDept("HR") ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create, update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+        allow delete: if isSuperAdmin() || (sameCompany(cId) && isOwnerOrExecutive());
+      }
+
+      match /payroll_cycles/{cycleId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("HR"));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      match /payroll_profiles/{profileId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      match /employee_salary_profiles/{profileId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isSelfEmployee(resource.data.employeeId));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      match /salary_structures/{structureId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      match /salary_slips/{slipId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isSelfEmployee(resource.data.employeeId));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      match /salary_advances/{advanceId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("HR") || isSelfEmployee(resource.data.employeeId));
+        allow create: if sameCompany(cId) && signedIn();
+        allow update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      match /advances_and_deductions/{deductionId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      // ----------------------------------------------------------
+      // Subcollection: Inventory, Supply & Stock
+      // ----------------------------------------------------------
+      match /inventory/{inventoryId} {
+        allow read: if sameCompany(cId);
+        allow create, update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /inventory_items/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /site_inventory/{inventoryId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+      }
+
+      match /inventory_transactions/{txId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+      }
+
+      // ----------------------------------------------------------
+      // Subcollection: Assets, Vendors, Clients & Billing
+      // ----------------------------------------------------------
+      match /assets/{assetId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+      }
+
+      match /vendors/{vendorId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /clients/{clientId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /contracts/{contractId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /billing/{billingId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      // ----------------------------------------------------------
+      // Subcollection: Site Operations Logs, EHS, Safety & Visitors
+      // ----------------------------------------------------------
+      match /daily_site_logs/{logId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+      }
+
+      match /incident_reports/{reportId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId) || isSelfEmployee(resource.data.reportedById));
+        allow create: if sameCompany(cId) && signedIn();
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId));
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /visitor_logs/{visitorId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+      }
+
+      match /material_movement_logs/{movementId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+      }
+
+      // ----------------------------------------------------------
+      // Subcollection: Communication, Tasks & Settings
+      // ----------------------------------------------------------
+      match /tasks/{taskId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+      }
+
+      match /notifications/{notificationId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+      }
+
+      match /announcements/{announcementId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /system_settings/{settingId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && isOwnerOrExecutive();
+      }
+
+      match /audit_logs/{logId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+        allow create: if sameCompany(cId) && signedIn();
+        allow update, delete: if false;
+      }
+
+      match /auditLogs/{logId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+        allow create: if sameCompany(cId) && signedIn();
+        allow update, delete: if false;
+      }
+
+      // ----------------------------------------------------------
+      // Subcollection: Tenant Infrastructure Mappings
+      // ----------------------------------------------------------
+      match /regions/{regionId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /branches/{branchId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /sites/{siteId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /departments/{departmentId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /designations/{designationId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /shifts/{shiftId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /approval_requests/{requestId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId) || isSelfUser(resource.data.uid));
+        allow create: if sameCompany(cId) && signedIn();
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId));
+        allow delete: if sameCompany(cId) && isOwnerOrExecutive();
+      }
+    }
+
+
+    // ============================================================
+    // 5. DYNAMIC COMPANY ATTENDANCE COLLECTIONS
+    // (e.g., /attendance_MUSTER-CORP-101)
+    // ============================================================
+
+    match /{collectionId}/{attendanceId} {
+      function isAttendanceCollection() {
+        return collectionId.startsWith("attendance_");
+      }
+
+      function getCompanyCodeFromCollection() {
+        return collectionId.split("attendance_")[1];
+      }
+
+      allow read: if isAttendanceCollection() && (
+        isSuperAdmin() || sameCompany(getCompanyCodeFromCollection())
+      );
+
+      allow create: if isAttendanceCollection() && (
+        isSuperAdmin() || sameCompany(getCompanyCodeFromCollection())
+      );
+
+      allow update: if isAttendanceCollection() && (
+        isSuperAdmin() || (sameCompany(getCompanyCodeFromCollection()) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId)))
+      );
+
+      allow delete: if isAttendanceCollection() && (
+        isSuperAdmin() || (sameCompany(getCompanyCodeFromCollection()) && isOwnerOrExecutive())
+      );
+    }
+  }
+}

@@ -1,0 +1,5 @@
+SECURITY AUDIT FINDINGS
+1. Firestore Company Isolation: ACTIVE (Users cannot access other companies).
+2. Firestore Site/Region Isolation: MISSING (Supervisors can read/write Site B's data).
+3. Firestore Ground Privacy: MISSING (A7-A9 can read all company attendance).
+4. Storage Rules: BROKEN (Relies on legacy role strings, missing A0-A9 mappings).

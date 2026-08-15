@@ -49,9 +49,6 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
   // Tab State
   const [activeTab, setActiveTab] = useState<'PROFILE' | 'BRANCHES' | 'SITES' | 'DEPARTMENTS' | 'DESIGNATIONS' | 'MEMBERSHIPS' | 'VENDORS'>('PROFILE');
 
-  // RBAC Permission Check
-  const isAuthorized = userSession.role === 'COMPANY_ADMIN' || userSession.role === 'SUPER_ADMIN';
-
   // State Data
   const [tenantInfo, setTenantInfo] = useState<CompanyTenant | null>(activeCompany);
   const [branches, setBranches] = useState<BranchRecord[]>([]);
@@ -298,6 +295,11 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
   };
 
   // Unauthorized Screen Guard
+  const isAuthorized = userSession.role === 'SUPER_ADMIN' || 
+                       userSession.role === 'COMPANY_ADMIN' ||
+                       userSession.role === 'HR_ADMIN' ||
+                       userSession.role === 'OPS_MANAGER';
+                       
   if (!isAuthorized) {
     return (
       <div className={`flex-1 p-6 flex flex-col items-center justify-center text-center ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
@@ -486,9 +488,11 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
                           member.role === 'COMPANY_ADMIN' 
                             ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
-                            : member.role === 'HR_ADMIN' || member.role === 'OPS_MANAGER'
+                            : member.role === 'HR_ADMIN' || member.role === 'OPS_MANAGER' || member.role === 'FINANCE_MANAGER'
                               ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                              : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                              : member.role === 'SAFETY_OFFICER' || member.role === 'TECHNICIAN'
+                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
                         }`}>
                           {member.role}
                         </span>
@@ -508,10 +512,15 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
                           onChange={e => handleUpdateRole(member, e.target.value as UserRole)}
                           className={`p-1.5 rounded-lg border text-xs ${isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
                         >
+                          <option value="EMPLOYEE">EMPLOYEE</option>
                           <option value="GUARD">GUARD</option>
+                          <option value="SUPERVISOR">SUPERVISOR</option>
                           <option value="FIELD_OFFICER">FIELD_OFFICER</option>
+                          <option value="TECHNICIAN">TECHNICIAN</option>
+                          <option value="SAFETY_OFFICER">SAFETY_OFFICER</option>
                           <option value="OPS_MANAGER">OPS_MANAGER</option>
                           <option value="HR_ADMIN">HR_ADMIN</option>
+                          <option value="FINANCE_MANAGER">FINANCE_MANAGER</option>
                           <option value="COMPANY_ADMIN">COMPANY_ADMIN</option>
                           {userSession.role === 'SUPER_ADMIN' && <option value="SUPER_ADMIN">SUPER_ADMIN</option>}
                         </select>
