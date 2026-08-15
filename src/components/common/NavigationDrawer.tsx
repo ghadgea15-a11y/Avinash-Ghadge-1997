@@ -116,6 +116,22 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
               Main Navigation
             </p>
             <div className="space-y-1">
+              <button
+                onClick={() => { onNavigate('ENTERPRISE_DASHBOARD'); onClose(); }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                  currentScreen === 'ENTERPRISE_DASHBOARD'
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                    : isDark 
+                      ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <LayoutDashboard className="w-4 h-4 text-indigo-400" />
+                  <span>Dashboard</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+              </button>
               
 
               {(userSession?.role !== 'GUARD' && userSession?.role !== 'FIELD_OFFICER') && (
@@ -171,7 +187,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                 <ChevronRight className="w-3.5 h-3.5 opacity-50" />
               </button>
 
-              <button
+              {(userSession?.role === 'SUPER_ADMIN' || userSession?.role === 'COMPANY_ADMIN' || userSession?.role === 'HR_ADMIN' || userSession?.role === 'OPS_MANAGER') && (<button
                 onClick={() => { onNavigate('COMPANY_MANAGEMENT'); onClose(); }}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
                   currentScreen === 'COMPANY_MANAGEMENT'
@@ -186,7 +202,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                   <span>Company & RBAC</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-              </button>
+              </button>)}
 
               {/* Super Admin Control Section */}
               {(userSession?.role === 'SUPER_ADMIN') && (

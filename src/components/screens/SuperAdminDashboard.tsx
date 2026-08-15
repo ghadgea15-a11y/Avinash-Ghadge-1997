@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Building2, 
+  Building2, CreditCard, 
   Users, 
   ShieldCheck, 
   PlusCircle, 
@@ -23,6 +23,9 @@ import {
 } from 'lucide-react';
 import { CompanyTenant, UserSession, PhaseAScreen, MASTER_APP_MODULES, ApprovalRequestRecord } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { SubscriptionService } from '../../services/subscriptionService';
+import { SubscriptionPlan, CompanySubscription } from '../../types';
+
 import { useTheme } from '../../context/ThemeContext';
 
 interface SuperAdminDashboardProps {

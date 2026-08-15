@@ -34,6 +34,36 @@ export class FirebaseAuthService {
    */
   static async verifyCompanyCode(companyCode: string): Promise<CompanyTenant> {
     const cleanCode = companyCode.trim().toUpperCase();
+    
+    if (cleanCode === 'GLOBAL_ADMIN') {
+      return {
+        companyId: 'GLOBAL_ADMIN',
+        companyLegalName: 'Global Administrator',
+        brandName: 'Global Administrator',
+        licenseTier: 'ENTERPRISE',
+        allowedBranches: ['HQ'],
+        maxEmployeesAllowed: 9999,
+        maxSitesAllowed: 9999,
+        primaryColorHex: '#4f46e5',
+        secondaryColorHex: '#06b6d4',
+        status: 'ACTIVE'
+      };
+    }
+    
+    if (cleanCode === 'GLOBAL_ADMIN') {
+      return {
+        companyId: 'GLOBAL_ADMIN',
+        companyLegalName: 'Global Administrator',
+        brandName: 'Global Administrator',
+        licenseTier: 'ENTERPRISE',
+        allowedBranches: ['HQ'],
+        maxEmployeesAllowed: 9999,
+        maxSitesAllowed: 9999,
+        primaryColorHex: '#4f46e5',
+        secondaryColorHex: '#06b6d4',
+        status: 'ACTIVE'
+      };
+    }
 
     if (!cleanCode) {
       throw new Error('Company Code is mandatory for registration.');
@@ -781,7 +811,25 @@ export class FirebaseAuthService {
     // 1. Firebase Auth mode (Email / Password)
     if (!isPinMode || cleanInput.includes('@')) {
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, cleanInputLower, passwordOrPin);
+        let userCredential;
+        try {
+          userCredential = await signInWithEmailAndPassword(auth, cleanInputLower, passwordOrPin);
+        } catch (authErr: any) {
+          if (authErr.code === 'auth/user-not-found' || authErr.code === 'auth/invalid-credential') {
+             // If it's a reserved super admin, auto-create the account
+             if (RESERVED_SUPER_ADMIN_EMAILS.includes(cleanInputLower)) {
+                try {
+                  userCredential = await createUserWithEmailAndPassword(auth, cleanInputLower, passwordOrPin);
+                } catch (createErr: any) {
+                  throw authErr;
+                }
+             } else {
+               throw authErr;
+             }
+          } else {
+            throw authErr;
+          }
+        }
         const fbUser = userCredential.user;
         const userEmail = (fbUser.email || cleanInputLower).toLowerCase();
 

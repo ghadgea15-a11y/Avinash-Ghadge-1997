@@ -12,7 +12,7 @@ import {
   Sun, 
   Moon,
   ShieldCheck,
-  Clock
+  Clock, UserCheck
 } from 'lucide-react';
 import { PhaseAScreen, UserSession, UserRole } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -38,9 +38,11 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
   const { themeMode, setThemeMode, isDark } = useTheme();
 
   const destinations = [
+    { screen: 'ENTERPRISE_DASHBOARD' as PhaseAScreen, label: 'Dashboard', icon: LayoutDashboard },
     { screen: 'COMPANY_MANAGEMENT' as PhaseAScreen, label: 'Company', icon: Building2 },
+    { screen: 'APPROVAL_MANAGEMENT' as PhaseAScreen, label: 'Approvals', icon: UserCheck },
     { screen: 'EMPLOYEES' as PhaseAScreen, label: 'Staff', icon: Users },
-    { screen: 'ATTENDANCE_SHIFTS' as PhaseAScreen, label: 'Attendance', icon: Clock },
+    { screen: 'ATTENDANCE_SHIFTS' as PhaseAScreen, label: 'Attendance', icon: Clock, UserCheck },
     { screen: 'SITE_OPERATIONS' as PhaseAScreen, label: 'Operations', icon: ShieldCheck },
     { screen: 'PROFILE' as PhaseAScreen, label: 'Profile', icon: User },
     { screen: 'NOTIFICATIONS' as PhaseAScreen, label: 'Alerts', icon: Bell, badge: unreadNotifCount },
@@ -68,7 +70,14 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
 
         {/* Primary Rail Destinations (Top Aligned in One Line) */}
         <div className="flex flex-col items-center gap-1.5 w-full mt-2">
-          {destinations.map(item => {
+          {destinations
+            .filter(item => {
+              if (item.screen === 'COMPANY_MANAGEMENT') return ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER'].includes(userSession?.role || '');
+              if (item.screen === 'APPROVAL_MANAGEMENT') return ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN'].includes(userSession?.role || '');
+              if (item.screen === 'EMPLOYEES') return !['GUARD', 'FIELD_OFFICER'].includes(userSession?.role || '');
+              return true;
+            })
+            .map(item => {
             const Icon = item.icon;
             const isActive = currentScreen === item.screen;
 

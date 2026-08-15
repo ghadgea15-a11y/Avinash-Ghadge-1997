@@ -49,6 +49,7 @@ import {
 } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { FirestoreService } from '../../services/firestoreService';
+import { SubscriptionService } from '../../services/subscriptionService';
 import { StorageService } from '../../services/storageService';
 import { OfflineSyncService } from '../../services/offlineSyncService';
 
@@ -345,6 +346,21 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       setSubmitting(false);
       return;
     }
+
+    // Check Subscription Limit for NEW employees
+    if (!editingEmployeeId) {
+      try {
+        const isLimitReached = await SubscriptionService.checkEmployeeLimitReached(currentCompanyId, employees.length);
+        if (isLimitReached) {
+          setFeedbackMessage({ text: 'Employee limit reached on your current plan. Please upgrade your subscription to add more.', type: 'ERROR' });
+          setSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        console.error('Limit check failed', err);
+      }
+    }
+
 
     const empId = editingEmployeeId || formData.employeeCode.trim();
 

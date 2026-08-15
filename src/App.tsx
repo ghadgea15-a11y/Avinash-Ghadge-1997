@@ -27,9 +27,12 @@ import { SignUpScreen } from './components/screens/SignUpScreen';
 import { ApprovalPendingScreen } from './components/screens/ApprovalPendingScreen';
 import { ApprovalManagementScreen } from './components/screens/ApprovalManagementScreen';
 import { SuperAdminDashboard } from './components/screens/SuperAdminDashboard';
+import { EnterpriseDashboardScreen } from './components/screens/EnterpriseDashboardScreen';
+import { CompanyBillingScreen } from './components/screens/CompanyBillingScreen';
 import { SuperAdminCreateCompany } from './components/screens/SuperAdminCreateCompany';
 import { SuperAdminModulesScreen } from './components/screens/SuperAdminModulesScreen';
 import { SuperAdminCompaniesScreen } from './components/screens/SuperAdminCompaniesScreen';
+import { SuperAdminSubscriptionsScreen } from './components/screens/SuperAdminSubscriptionsScreen';
 import { LandingPageScreen } from './components/screens/LandingPageScreen';
 import { LegalPoliciesScreen } from './components/screens/LegalPoliciesScreen';
 
@@ -147,6 +150,7 @@ export function App() {
   };
 
   const isMainAppScreen = [
+    'ENTERPRISE_DASHBOARD',
     'EMPLOYEES', 
     'ATTENDANCE_SHIFTS', 
     'SITE_OPERATIONS', 
@@ -159,6 +163,7 @@ export function App() {
     'SUPER_ADMIN_CREATE_COMPANY',
     'SUPER_ADMIN_MODULES',
     'SUPER_ADMIN_PENDING_APPROVALS',
+    'SUPER_ADMIN_SUBSCRIPTIONS',
     'APPROVAL_MANAGEMENT'
   ].includes(currentScreen);
 
@@ -200,10 +205,8 @@ export function App() {
                   if (session.accountStatus === 'ACTIVE') {
                     if (session.role === 'SUPER_ADMIN') {
                       setCurrentScreen('SUPER_ADMIN_DASHBOARD');
-                    } else if (session.role === 'GUARD' || session.role === 'FIELD_OFFICER') {
-                      setCurrentScreen('ATTENDANCE_SHIFTS');
                     } else {
-                      setCurrentScreen('EMPLOYEES');
+                      setCurrentScreen('ENTERPRISE_DASHBOARD');
                     }
                   } else {
                     setCurrentScreen('APPROVAL_PENDING');
@@ -219,7 +222,7 @@ export function App() {
                 onSignUpSuccess={(session) => {
                   setUserSession(session);
                   if (session.accountStatus === 'ACTIVE') {
-                    setCurrentScreen('EMPLOYEES');
+                    setCurrentScreen('ENTERPRISE_DASHBOARD');
                   } else {
                     setCurrentScreen('APPROVAL_PENDING');
                   }
@@ -331,7 +334,15 @@ export function App() {
                       />
                     )}
 
-                    {currentScreen === 'SUPER_ADMIN_PENDING_APPROVALS' && (
+                    
+            {currentScreen === 'SUPER_ADMIN_SUBSCRIPTIONS' && (
+              <SuperAdminSubscriptionsScreen 
+                userSession={userSession!} 
+                onNavigate={setCurrentScreen} 
+              />
+            )}
+
+            {currentScreen === 'SUPER_ADMIN_PENDING_APPROVALS' && (
                       <ApprovalManagementScreen
                         session={userSession}
                         onNavigateBack={() => setCurrentScreen('SUPER_ADMIN_DASHBOARD')}
@@ -343,9 +354,17 @@ export function App() {
                         session={userSession}
                         onApprovalComplete={(updatedSession) => {
                           setUserSession(updatedSession);
-                          setCurrentScreen('EMPLOYEES');
+                          setCurrentScreen('ENTERPRISE_DASHBOARD');
                         }}
                         onSignOut={handleLogout}
+                      />
+                    )}
+                    {currentScreen === 'ENTERPRISE_DASHBOARD' && activeCompany && (
+                      <EnterpriseDashboardScreen
+                        userSession={userSession}
+                        company={activeCompany}
+                        onNavigate={setCurrentScreen}
+                        onLogout={handleLogout}
                       />
                     )}
 
