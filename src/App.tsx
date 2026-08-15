@@ -161,7 +161,9 @@ export function App() {
     'LEAVE_MANAGEMENT',
     'PAYROLL_COMPENSATION',
     'INVENTORY_STOCK',
+    'ASSET_TRACKING',
     'SITE_OPERATIONS', 
+    'REPORTS_ANALYTICS',
     'COMPANY_MANAGEMENT',
     'COMPANY_BILLING',
     'PROFILE', 
@@ -169,6 +171,8 @@ export function App() {
     'NOTIFICATIONS',
     'SUPER_ADMIN_DASHBOARD',
     'SUPER_ADMIN_COMPANIES',
+    'SUPER_ADMIN_COMPANY_DETAILS',
+    'SUPER_ADMIN_USERS',
     'SUPER_ADMIN_CREATE_COMPANY',
     'SUPER_ADMIN_MODULES',
     'SUPER_ADMIN_PENDING_APPROVALS',
@@ -253,6 +257,17 @@ export function App() {
                 isOnline={isOnline}
                 activeCompany={activeCompany}
                 userSession={userSession}
+              />
+            )}
+
+            {currentScreen === 'COMPANY_CODE' && (
+              <CompanyCodeScreen
+                onCompanyVerified={(company) => {
+                  setActiveCompany(company);
+                  SessionManager.setActiveCompany(company);
+                  setCurrentScreen('LOGIN');
+                }}
+                onNavigate={setCurrentScreen}
               />
             )}
 
