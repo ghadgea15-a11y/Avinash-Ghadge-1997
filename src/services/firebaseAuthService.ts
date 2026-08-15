@@ -21,6 +21,12 @@ import {
 import { FirestoreService } from './firestoreService';
 import { SessionManager } from './sessionManager';
 
+export const RESERVED_SUPER_ADMIN_EMAILS = [
+  'admin@logsheetmuster.com',
+  'superadmin@logsheetmuster.com',
+  'ghadgea15@gmail.com',
+  'sysadmin@logsheetmuster.com'
+];
 
 export class FirebaseAuthService {
   /**
@@ -140,6 +146,42 @@ export class FirebaseAuthService {
         status: 'ACTIVE'
       },
       'SUPER_ADMIN': {
+        companyId: 'GLOBAL_ADMIN',
+        companyLegalName: 'Log Sheet Muster Global Platform Administration',
+        brandName: 'Global Platform Admin',
+        licenseTier: 'ENTERPRISE',
+        allowedBranches: ['GLOBAL', 'HQ'],
+        maxEmployeesAllowed: 999999,
+        maxSitesAllowed: 999999,
+        primaryColorHex: '#4f46e5',
+        secondaryColorHex: '#06b6d4',
+        status: 'ACTIVE'
+      },
+      'GLOBAL': {
+        companyId: 'GLOBAL_ADMIN',
+        companyLegalName: 'Log Sheet Muster Global Platform Administration',
+        brandName: 'Global Platform Admin',
+        licenseTier: 'ENTERPRISE',
+        allowedBranches: ['GLOBAL', 'HQ'],
+        maxEmployeesAllowed: 999999,
+        maxSitesAllowed: 999999,
+        primaryColorHex: '#4f46e5',
+        secondaryColorHex: '#06b6d4',
+        status: 'ACTIVE'
+      },
+      'ADMIN': {
+        companyId: 'GLOBAL_ADMIN',
+        companyLegalName: 'Log Sheet Muster Global Platform Administration',
+        brandName: 'Global Platform Admin',
+        licenseTier: 'ENTERPRISE',
+        allowedBranches: ['GLOBAL', 'HQ'],
+        maxEmployeesAllowed: 999999,
+        maxSitesAllowed: 999999,
+        primaryColorHex: '#4f46e5',
+        secondaryColorHex: '#06b6d4',
+        status: 'ACTIVE'
+      },
+      'SUPER': {
         companyId: 'GLOBAL_ADMIN',
         companyLegalName: 'Log Sheet Muster Global Platform Administration',
         brandName: 'Global Platform Admin',
@@ -280,12 +322,8 @@ export class FirebaseAuthService {
     const timestamp = new Date().toISOString();
 
     // 3. Super Admin Reserved Initialization
-    if (false) {
-      const sysConfig = await FirestoreService.getSystemConfig();
-      if (false) {
-        throw new Error('Super Admin account has already been initialized on this system.');
-      }
-
+    const isReservedSuperAdmin = RESERVED_SUPER_ADMIN_EMAILS.includes(cleanEmail);
+    if (isReservedSuperAdmin) {
       await FirestoreService.initializeSuperAdminConfig(fbUser.uid, cleanEmail);
 
       const superUserDoc = {
@@ -507,12 +545,8 @@ export class FirebaseAuthService {
     }
 
     // Check if user is reserved Super Admin email
-    if (false) {
-      const sysConfig = await FirestoreService.getSystemConfig();
-      if (false) {
-        throw new Error('Super Admin account has already been initialized on this system.');
-      }
-
+    const isReservedSuperAdmin = RESERVED_SUPER_ADMIN_EMAILS.includes(cleanEmail);
+    if (isReservedSuperAdmin) {
       await FirestoreService.initializeSuperAdminConfig(fbUser.uid, cleanEmail);
 
       const timestamp = new Date().toISOString();
@@ -751,20 +785,20 @@ export class FirebaseAuthService {
         const fbUser = userCredential.user;
         const userEmail = (fbUser.email || cleanInputLower).toLowerCase();
 
-        const isReservedSuperAdmin = false;
+        const isReservedSuperAdmin = RESERVED_SUPER_ADMIN_EMAILS.includes(userEmail);
 
         // Default session values
-        let role: UserRole = 'COMPANY_ADMIN';
-        let employeeId = `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`;
+        let role: UserRole = isReservedSuperAdmin ? 'SUPER_ADMIN' : 'COMPANY_ADMIN';
+        let employeeId = isReservedSuperAdmin ? 'SA-001' : `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`;
         let fullName = fbUser.displayName || userEmail.split('@')[0] || (isReservedSuperAdmin ? 'Super Administrator' : 'Authenticated User');
-        let branchId = 'MAIN_BRANCH';
+        let branchId = isReservedSuperAdmin ? 'HQ' : 'MAIN_BRANCH';
         let assignedSiteId: string | undefined = undefined;
         let accountStatus: AccountStatus = 'ACTIVE';
-        let departmentId: string | undefined = undefined;
-        let departmentName: string | undefined = undefined;
+        let departmentId: string | undefined = isReservedSuperAdmin ? 'DEPT-SUPER-ADMIN' : undefined;
+        let departmentName: string | undefined = isReservedSuperAdmin ? 'Super Admin' : undefined;
         let companyAdminApproval: ApprovalStatus = 'APPROVED';
         let hrApproval: ApprovalStatus = 'APPROVED';
-        let userCompanyId = companyId;
+        let userCompanyId = isReservedSuperAdmin ? 'GLOBAL_ADMIN' : companyId;
 
         // Safely fetch user profile from Firestore root 'users' collection with offline resilience
         try {
@@ -773,10 +807,13 @@ export class FirebaseAuthService {
 
           if (userSnap.exists()) {
             const uData = userSnap.data();
-            if (uData.companyId && uData.companyId !== companyId && uData.role !== 'SUPER_ADMIN' && !isReservedSuperAdmin) {
+            const isUserSuperAdmin = isReservedSuperAdmin || uData.role === 'SUPER_ADMIN';
+            
+            if (uData.companyId && uData.companyId !== companyId && !isUserSuperAdmin) {
               throw new Error(`User is not authorized for company: ${companyId}`);
             }
-            role = (uData.role || role);
+            
+            role = isUserSuperAdmin ? 'SUPER_ADMIN' : (uData.role || role);
             employeeId = uData.employeeId || employeeId;
             fullName = uData.fullName || fullName;
             branchId = uData.branchId || branchId;
@@ -786,10 +823,12 @@ export class FirebaseAuthService {
             departmentName = uData.departmentName || departmentName;
             companyAdminApproval = uData.companyAdminApproval || companyAdminApproval;
             hrApproval = uData.hrApproval || hrApproval;
-            if (uData.companyId && uData.companyId !== 'PENDING') {
+            if (isUserSuperAdmin) {
+              userCompanyId = 'GLOBAL_ADMIN';
+            } else if (uData.companyId && uData.companyId !== 'PENDING') {
               userCompanyId = uData.companyId;
             }
-          } else if (false) {
+          } else if (isReservedSuperAdmin) {
             // Ensure super admin doc exists in Firestore root collection
             const timestamp = new Date().toISOString();
             const superUserDoc = {

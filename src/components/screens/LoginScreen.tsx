@@ -17,7 +17,7 @@ import {
   X
 } from 'lucide-react';
 import { CompanyTenant, UserSession, UserRole, PhaseAScreen } from '../../types';
-import { FirebaseAuthService } from '../../services/firebaseAuthService';
+import { FirebaseAuthService, RESERVED_SUPER_ADMIN_EMAILS } from '../../services/firebaseAuthService';
 import { SessionManager } from '../../services/sessionManager';
 import { BiometricPromptModal } from '../common/BiometricPromptModal';
 import { AppLogo } from '../common/AppLogo';
@@ -76,7 +76,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       return;
     }
 
-    if (!companyCode.trim()) {
+    const isSuperAdminEmail = RESERVED_SUPER_ADMIN_EMAILS.includes(emailOrId.trim().toLowerCase());
+    const effectiveCompanyCode = companyCode.trim() 
+      ? companyCode.trim().toUpperCase() 
+      : (isSuperAdminEmail ? 'GLOBAL_ADMIN' : '');
+
+    if (!effectiveCompanyCode) {
       setError('Please enter your Company Code.');
       return;
     }
@@ -86,7 +91,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
     try {
       // First verify the company code
-      const company = await FirebaseAuthService.verifyCompanyCode(companyCode.trim().toUpperCase());
+      const company = await FirebaseAuthService.verifyCompanyCode(effectiveCompanyCode);
       SessionManager.setActiveCompany(company);
 
       // Then authenticate the user
@@ -98,7 +103,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       });
       
       SessionManager.setUserSession(session);
-      SessionManager.setSavedCredentials(emailOrId.trim(), passwordOrPin, companyCode.trim().toUpperCase(), rememberMe);
+      SessionManager.setSavedCredentials(emailOrId.trim(), passwordOrPin, effectiveCompanyCode, rememberMe);
 
       onLoginSuccess(session, company);
     } catch (err: unknown) {
