@@ -572,6 +572,360 @@ export interface DailySiteLogRecord {
   createdAt: string;
 }
 
+export interface LeaveRequestRecord {
+  id: string;
+  companyId: string;
+  employeeId: string;
+  employeeName: string;
+  departmentId?: string;
+  leaveType: 'CASUAL' | 'SICK' | 'EARNED' | 'MATERNITY' | 'PATERNITY' | 'UNPAID' | 'COMP_OFF' | 'EMERGENCY';
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  daysCount: number;
+  reason: string;
+  contactDuringLeave?: string;
+  handoverEmployeeId?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  appliedAt: string;
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  rejectedBy?: string;
+  rejectedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface LeaveBalanceRecord {
+  id: string;
+  companyId: string;
+  employeeId: string;
+  employeeName: string;
+  year: number;
+  casualLeave: { total: number; used: number; remaining: number };
+  sickLeave: { total: number; used: number; remaining: number };
+  earnedLeave: { total: number; used: number; remaining: number };
+  unpaidLeave: { used: number };
+  updatedAt: string;
+}
+
+export interface SalaryStructureRecord {
+  id: string;
+  companyId: string;
+  name: string;
+  code: string;
+  basicPercentage: number;
+  hraPercentage: number;
+  daPercentage: number;
+  conveyanceAllowance: number;
+  medicalAllowance: number;
+  specialAllowance: number;
+  pfApplicable: boolean;
+  esicApplicable: boolean;
+  ptApplicable: boolean;
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: string;
+}
+
+export interface EmployeeSalaryProfileRecord {
+  id: string;
+  companyId: string;
+  employeeId: string;
+  employeeName: string;
+  structureId: string;
+  monthlyCtc: number;
+  baseMonthlySalary: number;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  panNumber: string;
+  uanNumber?: string;
+  esicNumber?: string;
+  paymentMode: 'BANK_TRANSFER' | 'CHEQUE' | 'CASH';
+  updatedAt: string;
+}
+
+export interface SalaryAdvanceRecord {
+  id: string;
+  companyId: string;
+  employeeId: string;
+  employeeName: string;
+  amount: number;
+  reason: string;
+  requestedDate: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'RECOVERED';
+  approvedBy?: string;
+  approvedByName?: string;
+  monthlyDeductionAmount: number;
+  remainingAmount: number;
+  createdAt: string;
+}
+
+export type InventoryCategory = 
+  | 'UNIFORM' 
+  | 'SAFETY_GEAR' 
+  | 'SURVEILLANCE_EQUIPMENT' 
+  | 'FIRE_SAFETY' 
+  | 'COMMUNICATION' 
+  | 'FIRST_AID' 
+  | 'OFFICE_SUPPLIES' 
+  | 'ACCESS_CARDS'
+  | 'OTHER';
+
+export type InventoryUnit = 'PCS' | 'PAIRS' | 'SETS' | 'BOXES' | 'METERS' | 'KG' | 'LITERS' | 'ROLLS';
+
+export interface InventoryItemRecord {
+  id: string;
+  companyId: string;
+  itemCode: string;
+  itemName: string;
+  category: InventoryCategory;
+  description?: string;
+  unit: InventoryUnit;
+  currentStock: number;
+  minStockThreshold: number;
+  maxStockLimit?: number;
+  unitCost: number;
+  warehouseLocation?: string;
+  siteId?: string;
+  siteName?: string;
+  supplierVendorId?: string;
+  supplierVendorName?: string;
+  status: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'DISCONTINUED';
+  barcode?: string;
+  isAssetTracked?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type StockTransactionType = 
+  | 'PURCHASE_INWARD' 
+  | 'ISSUE_TO_EMPLOYEE' 
+  | 'SITE_TRANSFER' 
+  | 'RETURN_FROM_EMPLOYEE' 
+  | 'DAMAGE_SCRAP' 
+  | 'AUDIT_ADJUSTMENT';
+
+export interface StockTransactionRecord {
+  id: string;
+  companyId: string;
+  itemId: string;
+  itemName: string;
+  itemCode: string;
+  transactionType: StockTransactionType;
+  quantity: number;
+  previousStock: number;
+  newStock: number;
+  unitCost?: number;
+  totalValue?: number;
+  referenceNumber?: string; // PO / Gate Pass / Issue Note #
+  employeeId?: string;
+  employeeName?: string;
+  fromSiteId?: string;
+  toSiteId?: string;
+  siteName?: string;
+  vendorSupplier?: string;
+  remarks?: string;
+  performedByUid: string;
+  performedByName: string;
+  createdAt: string;
+}
+
+export interface InventoryVendorRecord {
+  id: string;
+  companyId: string;
+  vendorCode: string;
+  vendorName: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  address?: string;
+  gstin?: string;
+  categoriesSupplied?: InventoryCategory[];
+  paymentTerms?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AssetCategory = 
+  | 'SECURITY_EQUIPMENT' 
+  | 'ELECTRONICS_IT' 
+  | 'VEHICLES' 
+  | 'COMMUNICATION_RADIO' 
+  | 'WEAPONS_TACTICAL' 
+  | 'FACILITY_SAFETY' 
+  | 'FURNITURE_FIXTURES' 
+  | 'OFFICE_EQUIPMENT' 
+  | 'OTHER';
+
+export type AssetStatus = 
+  | 'AVAILABLE' 
+  | 'ASSIGNED' 
+  | 'UNDER_MAINTENANCE' 
+  | 'DAMAGED' 
+  | 'DISPOSED' 
+  | 'LOST';
+
+export type AssetCondition = 
+  | 'NEW' 
+  | 'EXCELLENT' 
+  | 'GOOD' 
+  | 'FAIR' 
+  | 'POOR';
+
+export interface AssetRecord {
+  id: string;
+  companyId: string;
+  assetCode: string; // AST-2026-001
+  assetName: string;
+  category: AssetCategory;
+  brand: string;
+  model: string;
+  serialNumber: string;
+  barcodeOrQr: string;
+  purchaseDate: string; // YYYY-MM-DD
+  purchaseCost: number;
+  currentValue: number;
+  warrantyExpiryDate?: string;
+  status: AssetStatus;
+  condition: AssetCondition;
+  assignedEmployeeId?: string;
+  assignedEmployeeName?: string;
+  assignedDate?: string;
+  expectedReturnDate?: string;
+  siteId?: string;
+  siteName?: string;
+  warehouseLocation?: string;
+  lastAuditDate?: string;
+  lastAuditedBy?: string;
+  nextMaintenanceDate?: string;
+  specifications?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AssetMovementAction = 
+  | 'CHECK_OUT' 
+  | 'CHECK_IN' 
+  | 'MAINTENANCE_OUT' 
+  | 'MAINTENANCE_IN' 
+  | 'SITE_TRANSFER' 
+  | 'AUDIT_VERIFIED' 
+  | 'DISPOSAL';
+
+export interface AssetMovementHistoryRecord {
+  id: string;
+  companyId: string;
+  assetId: string;
+  assetCode: string;
+  assetName: string;
+  action: AssetMovementAction;
+  employeeId?: string;
+  employeeName?: string;
+  siteId?: string;
+  siteName?: string;
+  conditionAtAction: AssetCondition;
+  performedByUid: string;
+  performedByName: string;
+  remarks?: string;
+  timestamp: string;
+}
+
+export type AssetMaintenanceType = 
+  | 'PREVENTIVE_CALIBRATION' 
+  | 'REPAIR' 
+  | 'ANNUAL_AMC' 
+  | 'PARTS_REPLACEMENT';
+
+export interface AssetMaintenanceRecord {
+  id: string;
+  companyId: string;
+  assetId: string;
+  assetCode: string;
+  assetName: string;
+  serviceVendor: string;
+  serviceDate: string;
+  serviceCost: number;
+  serviceType: AssetMaintenanceType;
+  issueDescription: string;
+  actionTaken: string;
+  nextServiceDate?: string;
+  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  loggedByUid: string;
+  loggedByName: string;
+  createdAt: string;
+}
+
+export interface PayrollCycleRecord {
+  id: string; // e.g. "2026-08"
+  companyId: string;
+  month: number;
+  year: number;
+  cycleLabel: string;
+  totalEmployees: number;
+  totalGrossPay: number;
+  totalDeductions: number;
+  totalNetPay: number;
+  status: 'DRAFT' | 'CALCULATED' | 'APPROVED' | 'DISBURSED';
+  processedAt?: string;
+  processedBy?: string;
+  processedByName?: string;
+  approvedAt?: string;
+  disbursedAt?: string;
+  createdAt: string;
+}
+
+export interface SalarySlipRecord {
+  id: string;
+  companyId: string;
+  payrollCycleId: string;
+  month: number;
+  year: number;
+  employeeId: string;
+  employeeName: string;
+  departmentName?: string;
+  designation?: string;
+  bankName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  panNumber?: string;
+  uanNumber?: string;
+  totalMonthDays: number;
+  workedDays: number;
+  paidLeaveDays: number;
+  lopDays: number;
+  payableDays: number;
+  earnings: {
+    basic: number;
+    hra: number;
+    da: number;
+    conveyance: number;
+    medical: number;
+    specialAllowance: number;
+    overtimePay: number;
+    bonus: number;
+    totalGross: number;
+  };
+  deductions: {
+    pf: number;
+    esic: number;
+    pt: number;
+    tds: number;
+    advanceDeduction: number;
+    lopDeduction: number;
+    otherDeductions: number;
+    totalDeductions: number;
+  };
+  netPay: number;
+  netPayInWords: string;
+  status: 'GENERATED' | 'APPROVED' | 'PAID';
+  generatedAt: string;
+  createdAt: string;
+}
+
 export type PhaseAScreen = 
   | 'SPLASH'
   | 'LANDING'
@@ -587,7 +941,12 @@ export type PhaseAScreen =
   | 'COMPANY_MANAGEMENT'
   | 'EMPLOYEES'
   | 'ATTENDANCE_SHIFTS'
+  | 'LEAVE_MANAGEMENT'
+  | 'PAYROLL_COMPENSATION'
+  | 'INVENTORY_STOCK'
+  | 'ASSET_TRACKING'
   | 'SITE_OPERATIONS'
+  | 'REPORTS_ANALYTICS'
   | 'PROFILE'
   | 'SETTINGS'
   | 'NOTIFICATIONS'

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { CompanyTenant, UserSession, PhaseAScreen, MASTER_APP_MODULES, ApprovalRequestRecord } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { Pagination } from '../common/Pagination';
 import { SubscriptionService } from '../../services/subscriptionService';
 import { SubscriptionPlan, CompanySubscription } from '../../types';
 
@@ -372,6 +373,16 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
               </tbody>
             </table>
           </div>
+        )}
+
+        {filteredCompanies.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredCompanies.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={setItemsPerPage}
+          />
         )}
       </div>
 

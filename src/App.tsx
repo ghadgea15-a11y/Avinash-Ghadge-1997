@@ -35,6 +35,11 @@ import { SuperAdminCompaniesScreen } from './components/screens/SuperAdminCompan
 import { SuperAdminSubscriptionsScreen } from './components/screens/SuperAdminSubscriptionsScreen';
 import { LandingPageScreen } from './components/screens/LandingPageScreen';
 import { LegalPoliciesScreen } from './components/screens/LegalPoliciesScreen';
+import { LeaveManagementScreen } from './components/screens/LeaveManagementScreen';
+import { PayrollCompensationScreen } from './components/screens/PayrollCompensationScreen';
+import { InventoryStockScreen } from './components/screens/InventoryStockScreen';
+import { AssetTrackingScreen } from './components/screens/AssetTrackingScreen';
+import { ReportsAnalyticsScreen } from './components/screens/ReportsAnalyticsScreen';
 
 export function App() {
   const [currentScreen, setCurrentScreen] = useState<PhaseAScreen>('LANDING');
@@ -153,8 +158,12 @@ export function App() {
     'ENTERPRISE_DASHBOARD',
     'EMPLOYEES', 
     'ATTENDANCE_SHIFTS', 
+    'LEAVE_MANAGEMENT',
+    'PAYROLL_COMPENSATION',
+    'INVENTORY_STOCK',
     'SITE_OPERATIONS', 
     'COMPANY_MANAGEMENT',
+    'COMPANY_BILLING',
     'PROFILE', 
     'SETTINGS', 
     'NOTIFICATIONS',
@@ -334,6 +343,20 @@ export function App() {
                       />
                     )}
 
+                    {currentScreen === 'SUPER_ADMIN_COMPANY_DETAILS' && (
+                      <SuperAdminCompaniesScreen
+                        currentSession={userSession}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'SUPER_ADMIN_USERS' && (
+                      <ApprovalManagementScreen
+                        session={userSession}
+                        onNavigateBack={() => setCurrentScreen('SUPER_ADMIN_DASHBOARD')}
+                      />
+                    )}
+
                     
             {currentScreen === 'SUPER_ADMIN_SUBSCRIPTIONS' && (
               <SuperAdminSubscriptionsScreen 
@@ -402,11 +425,62 @@ export function App() {
                       />
                     )}
 
+                    {currentScreen === 'LEAVE_MANAGEMENT' && (
+                      <LeaveManagementScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'PAYROLL_COMPENSATION' && (
+                      <PayrollCompensationScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'INVENTORY_STOCK' && (
+                      <InventoryStockScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'ASSET_TRACKING' && (
+                      <AssetTrackingScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
                     {currentScreen === 'SITE_OPERATIONS' && (
                       <SiteOperationsScreen
                         userSession={userSession}
                         activeCompany={activeCompany}
                         isOnline={isOnline}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'REPORTS_ANALYTICS' && activeCompany && (
+                      <ReportsAnalyticsScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'COMPANY_BILLING' && (
+                      <CompanyBillingScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
                         onNavigate={setCurrentScreen}
                       />
                     )}

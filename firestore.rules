@@ -227,8 +227,18 @@ service cloud.firestore {
         allow delete: if isSuperAdmin();
       }
 
+      match /payroll_cycles/{cycleId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
       match /payroll_profiles/{payrollId} {
         allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /employee_salary_profiles/{profileId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || (signedIn() && sameCompany(companyId));
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
@@ -240,6 +250,11 @@ service cloud.firestore {
       match /salary_slips/{slipId} {
         allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || (signedIn() && sameCompany(companyId));
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /salary_advances/{advanceId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId) || (signedIn() && sameCompany(companyId));
       }
 
       match /advances_and_deductions/{advanceId} {

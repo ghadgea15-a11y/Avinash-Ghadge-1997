@@ -39,7 +39,22 @@ import {
   AccountStatus,
   ApprovalStatus,
   MASTER_APP_MODULES,
-  VendorRecord
+  VendorRecord,
+  LeaveRequestRecord,
+  LeaveBalanceRecord,
+  SalaryStructureRecord,
+  EmployeeSalaryProfileRecord,
+  SalaryAdvanceRecord,
+  PayrollCycleRecord,
+  SalarySlipRecord,
+  InventoryItemRecord,
+  StockTransactionRecord,
+  InventoryVendorRecord,
+  AssetRecord,
+  AssetMovementHistoryRecord,
+  AssetMaintenanceRecord,
+  AssetCondition,
+  AssetMovementAction
 } from '../types';
 
 export enum OperationType {
@@ -152,13 +167,6 @@ export class FirestoreService {
     companyId: string,
     onData: (employees: EmployeeRecord[]) => void
   ): () => void {
-    if (companyId === 'TEST-COMP') {
-      import('./mockDataGenerators').then(module => {
-        onData(module.generateMockEmployees());
-      });
-      return () => {};
-    }
-
     const path = `companies/${companyId}/employees`;
     try {
       const colRef = collection(db, 'companies', companyId, 'employees');
@@ -217,6 +225,54 @@ export class FirestoreService {
       console.warn('[Firestore] Employee subscription exception:', e);
       onData([]);
       return () => {};
+    }
+  }
+
+  static async getEmployees(companyId: string): Promise<EmployeeRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'employees');
+      const snap = await getDocs(colRef);
+      if (!snap.empty) {
+        return snap.docs.map(docSnap => ({
+          id: docSnap.id,
+          documents: [],
+          ...docSnap.data()
+        } as unknown as EmployeeRecord));
+      }
+      const legacyRef = collection(db, 'users');
+      const legacyQuery = query(legacyRef, where('companyId', '==', companyId));
+      const legacySnap = await getDocs(legacyQuery);
+      return legacySnap.docs.map(snap => ({
+        id: snap.id,
+        documents: [],
+        ...snap.data()
+      } as unknown as EmployeeRecord));
+    } catch (err) {
+      console.warn('[FirestoreService] getEmployees error:', err);
+      return [];
+    }
+  }
+
+  static async createApprovalRequest(companyId: string, request: {
+    type: string;
+    requestedByUid: string;
+    targetEntity: string;
+    details: string;
+  }): Promise<boolean> {
+    try {
+      const id = `REQ_${Date.now()}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      const docRef = doc(db, 'companies', companyId, 'approval_requests', id);
+      await setDoc(docRef, {
+        id,
+        companyId,
+        ...request,
+        status: 'PENDING',
+        createdAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] createApprovalRequest error:', err);
+      return false;
     }
   }
 
@@ -2095,7 +2151,76 @@ export class FirestoreService {
         }, { merge: true });
       }
 
-      // 5. Create Company Admin user account record
+      // 5. Create Default Branch & Primary Site
+      await setDoc(doc(db, 'companies', cleanCompanyId, 'branches', 'MAIN'), {
+        id: 'MAIN',
+        branchId: 'MAIN',
+        branchName: `${company.brandName} Head Branch`,
+        code: 'MAIN',
+        city: company.city || 'Mumbai',
+        state: company.state || 'Maharashtra',
+        companyId: cleanCompanyId,
+        createdAt: timestamp
+      }, { merge: true });
+
+      await setDoc(doc(db, 'companies', cleanCompanyId, 'sites', 'SITE-HQ'), {
+        id: 'SITE-HQ',
+        siteId: 'SITE-HQ',
+        siteName: `${company.brandName} Main Site / HQ`,
+        branchId: 'MAIN',
+        address: company.address || `${company.brandName} Operations Center`,
+        city: company.city || 'Mumbai',
+        state: company.state || 'Maharashtra',
+        country: company.country || 'India',
+        companyId: cleanCompanyId,
+        status: 'ACTIVE',
+        createdAt: timestamp
+      }, { merge: true });
+
+      // 6. Create Initial Subscription & Entitlements
+      const planCode = company.licenseTier === 'STARTER' ? 'PLAN_STARTER' : company.licenseTier === 'PROFESSIONAL' ? 'PLAN_PRO' : 'PLAN_ENTERPRISE';
+      const maxEmployees = company.maxEmployeesAllowed || 1000;
+      const subId = `SUB-${cleanCompanyId}`;
+
+      const initialSub = {
+        subscriptionId: subId,
+        companyId: cleanCompanyId,
+        planId: planCode,
+        status: 'ACTIVE',
+        billingCycle: 'MONTHLY',
+        currentPeriodStart: timestamp,
+        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        cancelAtPeriodEnd: false,
+        employeeLimit: maxEmployees,
+        userLimit: company.licenseTier === 'STARTER' ? 2 : company.licenseTier === 'PROFESSIONAL' ? 5 : 25,
+        storageLimitMB: company.licenseTier === 'STARTER' ? 1024 : company.licenseTier === 'PROFESSIONAL' ? 5120 : 51200,
+        source: 'SYSTEM',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        createdBy: createdByUid,
+        updatedBy: createdByUid
+      };
+
+      await setDoc(doc(db, 'companies', cleanCompanyId, 'subscriptions', subId), initialSub, { merge: true });
+
+      // Save Module Entitlements
+      const finalModules = enabledModules.length > 0 ? enabledModules : MASTER_APP_MODULES.map(m => m.key);
+      for (const modKey of finalModules) {
+        const entId = `${cleanCompanyId}_${modKey}`;
+        await setDoc(doc(db, 'companies', cleanCompanyId, 'entitlements', entId), {
+          id: entId,
+          companyId: cleanCompanyId,
+          moduleId: modKey,
+          enabled: true,
+          source: 'PLAN',
+          planId: planCode,
+          subscriptionId: subId,
+          validFrom: timestamp,
+          overriddenBySuperAdmin: false
+        }, { merge: true });
+      }
+
+      // 7. Create Company Admin user account record
       const adminEmail = adminInfo.email.trim().toLowerCase();
       const adminUid = `ADMIN-${cleanCompanyId}-${Date.now().toString().slice(-4)}`;
 
@@ -2135,19 +2260,19 @@ export class FirestoreService {
         designation: 'Company Administrator',
         assignedBranchId: 'MAIN',
         assignedRegionId: 'HQ',
-        assignedSiteId: 'HQ',
+        assignedSiteId: 'SITE-HQ',
         createdBy: createdByUid,
         createdAt: timestamp,
         updatedAt: timestamp
       }, { merge: true });
 
-      // 6. Log Audit Event
+      // 8. Log Audit Event
       await this.logAuditEvent(
         cleanCompanyId,
         createdByUid,
         createdByName,
         'CREATE_COMPANY',
-        `Created company ${company.brandName} (${cleanCompanyId}) with Admin ${adminInfo.email} and ${enabledModules.length} enabled modules.`
+        `Created company ${company.brandName} (${cleanCompanyId}) with Admin ${adminInfo.email} and ${finalModules.length} enabled modules.`
       );
 
       return {
@@ -2160,5 +2285,1685 @@ export class FirestoreService {
       return { success: false, message: err.message || 'Failed to create company.', companyId: cleanCompanyId };
     }
   }
+
+  // ==========================================
+  // LEAVE MANAGEMENT (HRMS) METHODS
+  // ==========================================
+
+  /**
+   * Subscribe to real-time leave requests for a company
+   */
+  static subscribeToLeaveRequests(
+    companyId: string,
+    onData: (leaves: LeaveRequestRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const q = query(
+        collection(db, 'companies', companyId, 'leave_requests'),
+        orderBy('createdAt', 'desc'),
+        limit(200)
+      );
+      return onSnapshot(q, (snapshot) => {
+        const list: LeaveRequestRecord[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({
+            id: docSnap.id,
+            ...docSnap.data()
+          } as LeaveRequestRecord);
+        });
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToLeaveRequests error:', err);
+        // Fallback to unordered if index is building
+        const fallbackCol = collection(db, 'companies', companyId, 'leave_requests');
+        onSnapshot(fallbackCol, (snapshot) => {
+          const list: LeaveRequestRecord[] = [];
+          snapshot.forEach((docSnap) => {
+            list.push({
+              id: docSnap.id,
+              ...docSnap.data()
+            } as LeaveRequestRecord);
+          });
+          list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+          onData(list);
+        });
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToLeaveRequests exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Get all leave requests for a company
+   */
+  static async getLeaveRequests(companyId: string): Promise<LeaveRequestRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'leave_requests');
+      const snap = await getDocs(colRef);
+      const list: LeaveRequestRecord[] = [];
+      snap.forEach((docSnap) => {
+        list.push({
+          id: docSnap.id,
+          ...docSnap.data()
+        } as LeaveRequestRecord);
+      });
+      return list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    } catch (err) {
+      console.error('[FirestoreService] getLeaveRequests error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Submit a new leave application
+   */
+  static async createLeaveRequest(
+    companyId: string,
+    request: Omit<LeaveRequestRecord, 'id' | 'createdAt'>
+  ): Promise<string | null> {
+    try {
+      const leaveId = `LEV_${Date.now()}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      const now = new Date().toISOString();
+      const payload: LeaveRequestRecord = {
+        ...request,
+        id: leaveId,
+        companyId,
+        status: 'PENDING',
+        appliedAt: now,
+        createdAt: now,
+        updatedAt: now
+      };
+
+      const docRef = doc(db, 'companies', companyId, 'leave_requests', leaveId);
+      await setDoc(docRef, payload);
+
+      // Also create an audit log
+      await this.logAuditEvent(
+        companyId,
+        request.employeeId,
+        request.employeeName,
+        'APPLY_LEAVE',
+        `Applied for ${request.daysCount} day(s) of ${request.leaveType} leave from ${request.startDate} to ${request.endDate}. Reason: ${request.reason}`
+      );
+
+      return leaveId;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `companies/${companyId}/leave_requests`);
+      return null;
+    }
+  }
+
+  /**
+   * Update leave request status (Approve, Reject, or Cancel)
+   */
+  static async updateLeaveRequestStatus(
+    companyId: string,
+    leaveId: string,
+    status: 'APPROVED' | 'REJECTED' | 'CANCELLED',
+    reviewer: {
+      uid: string;
+      name: string;
+      reason?: string;
+    }
+  ): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'leave_requests', leaveId);
+      const now = new Date().toISOString();
+
+      const updateData: Partial<LeaveRequestRecord> = {
+        status,
+        updatedAt: now
+      };
+
+      if (status === 'APPROVED') {
+        updateData.approvedBy = reviewer.uid;
+        updateData.approvedByName = reviewer.name;
+        updateData.approvedAt = now;
+      } else if (status === 'REJECTED') {
+        updateData.rejectedBy = reviewer.uid;
+        updateData.rejectedAt = now;
+        updateData.rejectionReason = reviewer.reason || 'Not approved';
+      }
+
+      await setDoc(docRef, updateData, { merge: true });
+
+      // Log audit
+      await this.logAuditEvent(
+        companyId,
+        reviewer.uid,
+        reviewer.name,
+        `LEAVE_${status}`,
+        `Leave request ${leaveId} was ${status.toLowerCase()} by ${reviewer.name}. ${reviewer.reason ? `Reason: ${reviewer.reason}` : ''}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/leave_requests/${leaveId}`);
+      return false;
+    }
+  }
+
+  /**
+   * Get or initialize leave balance for an employee for a given year
+   */
+  static async getLeaveBalance(
+    companyId: string,
+    employeeId: string,
+    employeeName: string,
+    year: number = new Date().getFullYear()
+  ): Promise<LeaveBalanceRecord> {
+    const balanceId = `${employeeId}_${year}`;
+    const defaultBalance: LeaveBalanceRecord = {
+      id: balanceId,
+      companyId,
+      employeeId,
+      employeeName,
+      year,
+      casualLeave: { total: 12, used: 0, remaining: 12 },
+      sickLeave: { total: 8, used: 0, remaining: 8 },
+      earnedLeave: { total: 15, used: 0, remaining: 15 },
+      unpaidLeave: { used: 0 },
+      updatedAt: new Date().toISOString()
+    };
+
+    try {
+      const docRef = doc(db, 'companies', companyId, 'leave_balances', balanceId);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        return snap.data() as LeaveBalanceRecord;
+      } else {
+        await setDoc(docRef, defaultBalance);
+        return defaultBalance;
+      }
+    } catch (err) {
+      console.warn('[FirestoreService] getLeaveBalance fallback:', err);
+      return defaultBalance;
+    }
+  }
+
+  /**
+   * Save or update leave balance
+   */
+  static async saveLeaveBalance(
+    companyId: string,
+    balance: LeaveBalanceRecord
+  ): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'leave_balances', balance.id);
+      await setDoc(docRef, {
+        ...balance,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/leave_balances/${balance.id}`);
+      return false;
+    }
+  }
+
+  // ==========================================
+  // PAYROLL & COMPENSATION (HRMS) METHODS
+  // ==========================================
+
+  /**
+   * Subscribe to Salary Structures
+   */
+  static subscribeToSalaryStructures(
+    companyId: string,
+    onData: (structures: SalaryStructureRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const colRef = collection(db, 'companies', companyId, 'salary_structures');
+      return onSnapshot(colRef, (snapshot) => {
+        const list: SalaryStructureRecord[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as SalaryStructureRecord);
+        });
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToSalaryStructures error:', err);
+        onData([]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToSalaryStructures exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Get Salary Structures
+   */
+  static async getSalaryStructures(companyId: string): Promise<SalaryStructureRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'salary_structures');
+      const snap = await getDocs(colRef);
+      const list: SalaryStructureRecord[] = [];
+      snap.forEach((docSnap) => {
+        list.push({ id: docSnap.id, ...docSnap.data() } as SalaryStructureRecord);
+      });
+      return list;
+    } catch (err) {
+      console.error('[FirestoreService] getSalaryStructures error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Save or Create Salary Structure
+   */
+  static async saveSalaryStructure(
+    companyId: string,
+    structure: Omit<SalaryStructureRecord, 'id' | 'createdAt'> & { id?: string }
+  ): Promise<boolean> {
+    try {
+      const structId = structure.id || `STR_${Date.now()}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      const now = new Date().toISOString();
+      const payload: SalaryStructureRecord = {
+        ...structure,
+        id: structId,
+        companyId,
+        createdAt: structure.id ? (structure as any).createdAt || now : now
+      };
+      const docRef = doc(db, 'companies', companyId, 'salary_structures', structId);
+      await setDoc(docRef, payload, { merge: true });
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/salary_structures`);
+      return false;
+    }
+  }
+
+  /**
+   * Subscribe to Employee Salary Profiles
+   */
+  static subscribeToSalaryProfiles(
+    companyId: string,
+    onData: (profiles: EmployeeSalaryProfileRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const colRef = collection(db, 'companies', companyId, 'payroll_profiles');
+      return onSnapshot(colRef, (snapshot) => {
+        const list: EmployeeSalaryProfileRecord[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as EmployeeSalaryProfileRecord);
+        });
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToSalaryProfiles error:', err);
+        onData([]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToSalaryProfiles exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Get all employee salary profiles
+   */
+  static async getSalaryProfiles(companyId: string): Promise<EmployeeSalaryProfileRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'payroll_profiles');
+      const snap = await getDocs(colRef);
+      const list: EmployeeSalaryProfileRecord[] = [];
+      snap.forEach((docSnap) => {
+        list.push({ id: docSnap.id, ...docSnap.data() } as EmployeeSalaryProfileRecord);
+      });
+      return list;
+    } catch (err) {
+      console.error('[FirestoreService] getSalaryProfiles error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Save Employee Salary Profile
+   */
+  static async saveSalaryProfile(
+    companyId: string,
+    profile: EmployeeSalaryProfileRecord
+  ): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'payroll_profiles', profile.id);
+      await setDoc(docRef, {
+        ...profile,
+        companyId,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/payroll_profiles/${profile.id}`);
+      return false;
+    }
+  }
+
+  /**
+   * Subscribe to Salary Advances
+   */
+  static subscribeToSalaryAdvances(
+    companyId: string,
+    onData: (advances: SalaryAdvanceRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const colRef = collection(db, 'companies', companyId, 'advances_and_deductions');
+      return onSnapshot(colRef, (snapshot) => {
+        const list: SalaryAdvanceRecord[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as SalaryAdvanceRecord);
+        });
+        list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToSalaryAdvances error:', err);
+        onData([]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToSalaryAdvances exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Create Salary Advance Request
+   */
+  static async createSalaryAdvance(
+    companyId: string,
+    advance: Omit<SalaryAdvanceRecord, 'id' | 'createdAt' | 'remainingAmount'>
+  ): Promise<string | null> {
+    try {
+      const advanceId = `ADV_${Date.now()}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      const now = new Date().toISOString();
+      const payload: SalaryAdvanceRecord = {
+        ...advance,
+        id: advanceId,
+        companyId,
+        remainingAmount: advance.amount,
+        createdAt: now
+      };
+      const docRef = doc(db, 'companies', companyId, 'advances_and_deductions', advanceId);
+      await setDoc(docRef, payload);
+
+      await this.logAuditEvent(
+        companyId,
+        advance.employeeId,
+        advance.employeeName,
+        'SALARY_ADVANCE_REQUEST',
+        `Requested salary advance of ₹${advance.amount}. Reason: ${advance.reason}`
+      );
+
+      return advanceId;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `companies/${companyId}/advances_and_deductions`);
+      return null;
+    }
+  }
+
+  /**
+   * Update Salary Advance status
+   */
+  static async updateSalaryAdvanceStatus(
+    companyId: string,
+    advanceId: string,
+    status: 'APPROVED' | 'REJECTED' | 'RECOVERED',
+    reviewer: { uid: string; name: string }
+  ): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'advances_and_deductions', advanceId);
+      const updateData: Partial<SalaryAdvanceRecord> = {
+        status,
+        approvedBy: reviewer.uid,
+        approvedByName: reviewer.name
+      };
+      await setDoc(docRef, updateData, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        reviewer.uid,
+        reviewer.name,
+        `SALARY_ADVANCE_${status}`,
+        `Advance ${advanceId} marked as ${status} by ${reviewer.name}`
+      );
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/advances_and_deductions/${advanceId}`);
+      return false;
+    }
+  }
+
+  /**
+   * Get all Payroll Cycles
+   */
+  static async getPayrollCycles(companyId: string): Promise<PayrollCycleRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'payroll');
+      const snap = await getDocs(colRef);
+      const list: PayrollCycleRecord[] = [];
+      snap.forEach((docSnap) => {
+        const data = docSnap.data() as PayrollCycleRecord;
+        list.push({ ...data, id: docSnap.id });
+      });
+      list.sort((a, b) => (b.id || '').localeCompare(a.id || ''));
+      return list;
+    } catch (err) {
+      console.error('[FirestoreService] getPayrollCycles error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Get Salary Advances
+   */
+  static async getSalaryAdvances(companyId: string): Promise<SalaryAdvanceRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'advances_and_deductions');
+      const snap = await getDocs(colRef);
+      const list: SalaryAdvanceRecord[] = [];
+      snap.forEach((docSnap) => {
+        const data = docSnap.data() as SalaryAdvanceRecord;
+        list.push({ ...data, id: docSnap.id });
+      });
+      list.sort((a, b) => (b.requestedDate || '').localeCompare(a.requestedDate || ''));
+      return list;
+    } catch (err) {
+      console.error('[FirestoreService] getSalaryAdvances error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Subscribe to Payroll Cycles
+   */
+  static subscribeToPayrollCycles(
+    companyId: string,
+    onData: (cycles: PayrollCycleRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const colRef = collection(db, 'companies', companyId, 'payroll');
+      return onSnapshot(colRef, (snapshot) => {
+        const list: PayrollCycleRecord[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as PayrollCycleRecord;
+          list.push({ ...data, id: docSnap.id });
+        });
+        list.sort((a, b) => (b.id || '').localeCompare(a.id || ''));
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToPayrollCycles error:', err);
+        onData([]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToPayrollCycles exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Get salary slips for a specific payroll cycle
+   */
+  static async getSalarySlips(companyId: string, cycleId: string): Promise<SalarySlipRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'salary_slips');
+      const snap = await getDocs(colRef);
+      const list: SalarySlipRecord[] = [];
+      snap.forEach((docSnap) => {
+        const data = docSnap.data() as SalarySlipRecord;
+        if (data.payrollCycleId === cycleId) {
+          list.push({ ...data, id: docSnap.id });
+        }
+      });
+      return list;
+    } catch (err) {
+      console.error('[FirestoreService] getSalarySlips error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Get salary slips for an employee
+   */
+  static async getEmployeeSalarySlips(companyId: string, employeeId: string): Promise<SalarySlipRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'salary_slips');
+      const snap = await getDocs(colRef);
+      const list: SalarySlipRecord[] = [];
+      snap.forEach((docSnap) => {
+        const data = docSnap.data() as SalarySlipRecord;
+        if (data.employeeId === employeeId) {
+          list.push({ ...data, id: docSnap.id });
+        }
+      });
+      list.sort((a, b) => `${b.year}-${String(b.month).padStart(2, '0')}`.localeCompare(`${a.year}-${String(a.month).padStart(2, '0')}`));
+      return list;
+    } catch (err) {
+      console.error('[FirestoreService] getEmployeeSalarySlips error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Execute Full Monthly Payroll Computation
+   */
+  static async executeMonthlyPayrollCalculation(
+    companyId: string,
+    month: number,
+    year: number,
+    actor: { uid: string; name: string }
+  ): Promise<{ success: boolean; cycleId: string; totalSlips: number }> {
+    try {
+      const cycleId = `${year}-${String(month).padStart(2, '0')}`;
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      const cycleLabel = `${monthNames[month - 1]} ${year}`;
+      const daysInMonth = new Date(year, month, 0).getDate();
+
+      // 1. Fetch Employees, Profiles, Structures, Advances, Leaves
+      const employees = await this.getEmployees(companyId);
+      const profiles = await this.getSalaryProfiles(companyId);
+      const structures = await this.getSalaryStructures(companyId);
+      const leaves = await this.getLeaveRequests(companyId);
+      const colAdv = collection(db, 'companies', companyId, 'advances_and_deductions');
+      const snapAdv = await getDocs(colAdv);
+      const advances: SalaryAdvanceRecord[] = [];
+      snapAdv.forEach(d => advances.push({ id: d.id, ...d.data() } as SalaryAdvanceRecord));
+
+      // Default structure if none exists
+      let defaultStruct = structures[0];
+      if (!defaultStruct) {
+        defaultStruct = {
+          id: 'DEFAULT_STANDARD',
+          companyId,
+          name: 'Standard Security & Facility Structure',
+          code: 'STD_SEC',
+          basicPercentage: 50,
+          hraPercentage: 20,
+          daPercentage: 15,
+          conveyanceAllowance: 1600,
+          medicalAllowance: 1250,
+          specialAllowance: 0,
+          pfApplicable: true,
+          esicApplicable: true,
+          ptApplicable: true,
+          status: 'ACTIVE',
+          createdAt: new Date().toISOString()
+        };
+        await setDoc(doc(db, 'companies', companyId, 'salary_structures', defaultStruct.id), defaultStruct);
+      }
+
+      let totalGrossPay = 0;
+      let totalDeductions = 0;
+      let totalNetPay = 0;
+      let slipCount = 0;
+
+      // 2. Compute slips for active employees
+      for (const emp of employees) {
+        if (emp.status === 'TERMINATED') continue;
+
+        // Profile or fallback
+        const empProfile = profiles.find(p => p.employeeId === emp.id || p.id === emp.id) || {
+          id: emp.id,
+          companyId,
+          employeeId: emp.id,
+          employeeName: `${emp.firstName} ${emp.lastName}`,
+          structureId: defaultStruct.id,
+          monthlyCtc: 21500,
+          baseMonthlySalary: 18000,
+          bankName: 'State Bank of India',
+          accountNumber: '••••••••' + (emp.id.slice(-4) || '1234'),
+          ifscCode: 'SBIN0001234',
+          panNumber: 'ABCDE1234F',
+          paymentMode: 'BANK_TRANSFER' as const,
+          updatedAt: new Date().toISOString()
+        };
+
+        const struct = structures.find(s => s.id === empProfile.structureId) || defaultStruct;
+
+        // Calculate leave deductions (Loss of Pay / Unpaid)
+        const empLeavesInMonth = leaves.filter(l => 
+          (l.employeeId === emp.id || l.employeeName === `${emp.firstName} ${emp.lastName}`) &&
+          l.status === 'APPROVED' &&
+          l.leaveType === 'UNPAID' &&
+          l.startDate.startsWith(`${year}-${String(month).padStart(2, '0')}`)
+        );
+        const lopDays = empLeavesInMonth.reduce((sum, l) => sum + (l.daysCount || 0), 0);
+        const payableDays = Math.max(0, daysInMonth - lopDays);
+
+        // Earnings
+        const baseRate = empProfile.baseMonthlySalary || 18000;
+        const proratedBase = Math.round((baseRate / daysInMonth) * payableDays);
+
+        const basic = Math.round((proratedBase * (struct.basicPercentage || 50)) / 100);
+        const hra = Math.round((basic * (struct.hraPercentage || 20)) / 100);
+        const da = Math.round((basic * (struct.daPercentage || 15)) / 100);
+        const conveyance = Math.round(((struct.conveyanceAllowance || 1600) / daysInMonth) * payableDays);
+        const medical = Math.round(((struct.medicalAllowance || 1250) / daysInMonth) * payableDays);
+        const specialAllowance = Math.max(0, proratedBase - (basic + hra + da + conveyance + medical));
+        const totalGross = basic + hra + da + conveyance + medical + specialAllowance;
+
+        // Deductions
+        const pf = struct.pfApplicable ? Math.round(Math.min(basic, 15000) * 0.12) : 0;
+        const esic = (struct.esicApplicable && totalGross <= 21000) ? Math.round(totalGross * 0.0075) : 0;
+        const pt = struct.ptApplicable ? (totalGross > 10000 ? 200 : (totalGross > 7500 ? 175 : 0)) : 0;
+        
+        // Active advance recovery
+        const empAdvance = advances.find(a => a.employeeId === emp.id && a.status === 'APPROVED' && a.remainingAmount > 0);
+        const advanceDeduction = empAdvance ? Math.min(empAdvance.monthlyDeductionAmount || 2000, empAdvance.remainingAmount) : 0;
+        const lopDeduction = Math.round((baseRate / daysInMonth) * lopDays);
+
+        const slipTotalDeductions = pf + esic + pt + advanceDeduction;
+        const netPay = Math.max(0, totalGross - slipTotalDeductions);
+
+        const slipId = `SLIP_${cycleId}_${emp.id}`;
+        const slipPayload: SalarySlipRecord = {
+          id: slipId,
+          companyId,
+          payrollCycleId: cycleId,
+          month,
+          year,
+          employeeId: emp.id,
+          employeeName: `${emp.firstName} ${emp.lastName}`,
+          departmentName: emp.departmentId || 'Operations',
+          designation: emp.designation || 'Security Officer',
+          bankName: empProfile.bankName,
+          accountNumber: empProfile.accountNumber,
+          ifscCode: empProfile.ifscCode,
+          panNumber: empProfile.panNumber,
+          uanNumber: empProfile.uanNumber,
+          totalMonthDays: daysInMonth,
+          workedDays: payableDays,
+          paidLeaveDays: daysInMonth - payableDays,
+          lopDays,
+          payableDays,
+          earnings: {
+            basic,
+            hra,
+            da,
+            conveyance,
+            medical,
+            specialAllowance,
+            overtimePay: 0,
+            bonus: 0,
+            totalGross
+          },
+          deductions: {
+            pf,
+            esic,
+            pt,
+            tds: 0,
+            advanceDeduction,
+            lopDeduction,
+            otherDeductions: 0,
+            totalDeductions: slipTotalDeductions
+          },
+          netPay,
+          netPayInWords: numberToIndianRupeesWords(netPay),
+          status: 'GENERATED',
+          generatedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString()
+        };
+
+        // Write slip to Firestore
+        const slipDocRef = doc(db, 'companies', companyId, 'salary_slips', slipId);
+        await setDoc(slipDocRef, slipPayload);
+
+        // Update advance remaining if any
+        if (empAdvance && advanceDeduction > 0) {
+          const newRemaining = Math.max(0, empAdvance.remainingAmount - advanceDeduction);
+          await setDoc(doc(db, 'companies', companyId, 'advances_and_deductions', empAdvance.id), {
+            remainingAmount: newRemaining,
+            status: newRemaining === 0 ? 'RECOVERED' : 'APPROVED'
+          }, { merge: true });
+        }
+
+        totalGrossPay += totalGross;
+        totalDeductions += slipTotalDeductions;
+        totalNetPay += netPay;
+        slipCount++;
+      }
+
+      // Save Cycle Record
+      const cyclePayload: PayrollCycleRecord = {
+        id: cycleId,
+        companyId,
+        month,
+        year,
+        cycleLabel,
+        totalEmployees: slipCount,
+        totalGrossPay,
+        totalDeductions,
+        totalNetPay,
+        status: 'CALCULATED',
+        processedAt: new Date().toISOString(),
+        processedBy: actor.uid,
+        processedByName: actor.name,
+        createdAt: new Date().toISOString()
+      };
+
+      await setDoc(doc(db, 'companies', companyId, 'payroll', cycleId), cyclePayload);
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'PAYROLL_CALCULATED',
+        `Processed monthly payroll for ${cycleLabel}. Total Net: ₹${totalNetPay.toLocaleString('en-IN')}, Employees: ${slipCount}`
+      );
+
+      return { success: true, cycleId, totalSlips: slipCount };
+    } catch (err) {
+      console.error('[FirestoreService] executeMonthlyPayrollCalculation error:', err);
+      handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/payroll`);
+      return { success: false, cycleId: '', totalSlips: 0 };
+    }
+  }
+
+  /**
+   * Update Payroll Cycle Status (e.g. APPROVED or DISBURSED)
+   */
+  static async updatePayrollCycleStatus(
+    companyId: string,
+    cycleId: string,
+    status: 'APPROVED' | 'DISBURSED',
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    try {
+      const now = new Date().toISOString();
+      const updateData: Partial<PayrollCycleRecord> = {
+        status
+      };
+      if (status === 'APPROVED') {
+        updateData.approvedAt = now;
+      } else if (status === 'DISBURSED') {
+        updateData.disbursedAt = now;
+      }
+
+      await setDoc(doc(db, 'companies', companyId, 'payroll', cycleId), updateData, { merge: true });
+
+      // Also update all slips of this cycle
+      const slips = await this.getSalarySlips(companyId, cycleId);
+      for (const slip of slips) {
+        await setDoc(doc(db, 'companies', companyId, 'salary_slips', slip.id), {
+          status: status === 'DISBURSED' ? 'PAID' : 'APPROVED'
+        }, { merge: true });
+      }
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        `PAYROLL_${status}`,
+        `Payroll cycle ${cycleId} was marked as ${status} by ${actor.name}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/payroll/${cycleId}`);
+      return false;
+    }
+  }
+
+  /**
+   * ============================================================
+   * INVENTORY & STOCK MANAGEMENT METHODS
+   * ============================================================
+   */
+
+  /**
+   * Real-time subscription to inventory items for a company
+   */
+  static subscribeToInventoryItems(
+    companyId: string,
+    onData: (items: InventoryItemRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const colRef = collection(db, 'companies', companyId, 'inventory_items');
+      return onSnapshot(colRef, (snap) => {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItemRecord));
+        list.sort((a, b) => (a.itemName || '').localeCompare(b.itemName || ''));
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToInventoryItems error:', err);
+        onData([]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToInventoryItems exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Fetch all inventory items for a company
+   */
+  static async getInventoryItems(companyId: string): Promise<InventoryItemRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'inventory_items');
+      const snap = await getDocs(colRef);
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItemRecord));
+      return list.sort((a, b) => (a.itemName || '').localeCompare(b.itemName || ''));
+    } catch (err) {
+      console.error('[FirestoreService] getInventoryItems error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Save or Update an Inventory Item
+   */
+  static async saveInventoryItem(
+    companyId: string,
+    item: InventoryItemRecord,
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/inventory_items/${item.id}`;
+    try {
+      const now = new Date().toISOString();
+      const currentStock = Number(item.currentStock) || 0;
+      const minThreshold = Number(item.minStockThreshold) || 5;
+
+      let calculatedStatus: InventoryItemRecord['status'] = item.status;
+      if (item.status !== 'DISCONTINUED') {
+        if (currentStock <= 0) {
+          calculatedStatus = 'OUT_OF_STOCK';
+        } else if (currentStock <= minThreshold) {
+          calculatedStatus = 'LOW_STOCK';
+        } else {
+          calculatedStatus = 'IN_STOCK';
+        }
+      }
+
+      const payload: InventoryItemRecord = {
+        ...item,
+        companyId,
+        currentStock,
+        minStockThreshold: minThreshold,
+        unitCost: Number(item.unitCost) || 0,
+        status: calculatedStatus,
+        createdAt: item.createdAt || now,
+        updatedAt: now
+      };
+
+      const docRef = doc(db, 'companies', companyId, 'inventory_items', item.id);
+      await setDoc(docRef, payload, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'INVENTORY_ITEM_SAVED',
+        `Saved item: ${item.itemName} (${item.itemCode}), Stock: ${currentStock} ${item.unit}, Status: ${calculatedStatus}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, path);
+      return false;
+    }
+  }
+
+  /**
+   * Delete an Inventory Item
+   */
+  static async deleteInventoryItem(
+    companyId: string,
+    itemId: string,
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/inventory_items/${itemId}`;
+    try {
+      const docRef = doc(db, 'companies', companyId, 'inventory_items', itemId);
+      await deleteDoc(docRef);
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'INVENTORY_ITEM_DELETED',
+        `Deleted inventory item ID: ${itemId}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, path);
+      return false;
+    }
+  }
+
+  /**
+   * Real-time subscription to stock transactions for a company
+   */
+  static subscribeToStockTransactions(
+    companyId: string,
+    onData: (txs: StockTransactionRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const colRef = collection(db, 'companies', companyId, 'inventory_transactions');
+      return onSnapshot(colRef, (snap) => {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as StockTransactionRecord));
+        list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToStockTransactions error:', err);
+        onData([]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToStockTransactions exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Record Stock Transaction and atomically adjust stock level of item
+   */
+  static async recordStockTransaction(
+    companyId: string,
+    transaction: Omit<StockTransactionRecord, 'id' | 'createdAt' | 'previousStock' | 'newStock'>,
+    actor: { uid: string; name: string }
+  ): Promise<{ success: boolean; transactionId: string; newStock: number }> {
+    const txId = `STX-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const now = new Date().toISOString();
+    try {
+      // 1. Fetch current item details
+      const itemRef = doc(db, 'companies', companyId, 'inventory_items', transaction.itemId);
+      const itemSnap = await getDoc(itemRef);
+
+      if (!itemSnap.exists()) {
+        throw new Error(`Inventory item with ID ${transaction.itemId} not found.`);
+      }
+
+      const itemData = itemSnap.data() as InventoryItemRecord;
+      const prevStock = Number(itemData.currentStock) || 0;
+      const qty = Number(transaction.quantity) || 0;
+
+      let newStock = prevStock;
+      switch (transaction.transactionType) {
+        case 'PURCHASE_INWARD':
+        case 'RETURN_FROM_EMPLOYEE':
+          newStock = prevStock + qty;
+          break;
+        case 'ISSUE_TO_EMPLOYEE':
+        case 'DAMAGE_SCRAP':
+          if (prevStock < qty) {
+            throw new Error(`Insufficient stock for ${itemData.itemName}. Available: ${prevStock}, Requested: ${qty}`);
+          }
+          newStock = prevStock - qty;
+          break;
+        case 'SITE_TRANSFER':
+          // Reduces from source site stock
+          if (prevStock < qty) {
+            throw new Error(`Insufficient stock for transfer. Available: ${prevStock}, Requested: ${qty}`);
+          }
+          newStock = prevStock - qty;
+          break;
+        case 'AUDIT_ADJUSTMENT':
+          // Replaces with audited physical count
+          newStock = qty;
+          break;
+        default:
+          newStock = prevStock;
+      }
+
+      // Determine updated status
+      let newStatus: InventoryItemRecord['status'] = itemData.status;
+      if (newStatus !== 'DISCONTINUED') {
+        if (newStock <= 0) {
+          newStatus = 'OUT_OF_STOCK';
+        } else if (newStock <= (itemData.minStockThreshold || 5)) {
+          newStatus = 'LOW_STOCK';
+        } else {
+          newStatus = 'IN_STOCK';
+        }
+      }
+
+      // Update Inventory Item doc
+      await setDoc(itemRef, {
+        currentStock: newStock,
+        status: newStatus,
+        updatedAt: now
+      }, { merge: true });
+
+      // Save Transaction Document
+      const txPayload: StockTransactionRecord = {
+        ...transaction,
+        id: txId,
+        companyId,
+        previousStock: prevStock,
+        newStock,
+        performedByUid: actor.uid,
+        performedByName: actor.name,
+        createdAt: now
+      };
+
+      const txRef = doc(db, 'companies', companyId, 'inventory_transactions', txId);
+      await setDoc(txRef, txPayload);
+
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        `STOCK_${transaction.transactionType}`,
+        `Item: ${itemData.itemName} (${itemData.itemCode}), Type: ${transaction.transactionType}, Qty: ${qty}, Stock: ${prevStock} -> ${newStock}`
+      );
+
+      return { success: true, transactionId: txId, newStock };
+    } catch (err: any) {
+      console.error('[FirestoreService] recordStockTransaction error:', err);
+      handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/inventory_transactions/${txId}`);
+      return { success: false, transactionId: '', newStock: 0 };
+    }
+  }
+
+  /**
+   * Real-time subscription to vendors for a company
+   */
+  static subscribeToInventoryVendors(
+    companyId: string,
+    onData: (vendors: InventoryVendorRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const colRef = collection(db, 'companies', companyId, 'vendors');
+      return onSnapshot(colRef, (snap) => {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryVendorRecord));
+        list.sort((a, b) => (a.vendorName || '').localeCompare(b.vendorName || ''));
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToInventoryVendors error:', err);
+        onData([]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToInventoryVendors exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Save or Update a Vendor
+   */
+  static async saveInventoryVendor(
+    companyId: string,
+    vendor: InventoryVendorRecord,
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/vendors/${vendor.id}`;
+    try {
+      const now = new Date().toISOString();
+      const payload: InventoryVendorRecord = {
+        ...vendor,
+        companyId,
+        createdAt: vendor.createdAt || now,
+        updatedAt: now
+      };
+
+      const docRef = doc(db, 'companies', companyId, 'vendors', vendor.id);
+      await setDoc(docRef, payload, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'VENDOR_SAVED',
+        `Saved vendor: ${vendor.vendorName} (${vendor.vendorCode}), Contact: ${vendor.contactPerson}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, path);
+      return false;
+    }
+  }
+
+  /**
+   * Delete a Vendor
+   */
+  static async deleteInventoryVendor(
+    companyId: string,
+    vendorId: string,
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/vendors/${vendorId}`;
+    try {
+      const docRef = doc(db, 'companies', companyId, 'vendors', vendorId);
+      await deleteDoc(docRef);
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'VENDOR_DELETED',
+        `Deleted vendor ID: ${vendorId}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, path);
+      return false;
+    }
+  }
+
+  // ==========================================
+  // ASSET TRACKING & LIFECYCLE MANAGEMENT
+  // ==========================================
+
+  /**
+   * Real-time subscription to Company Assets
+   */
+  static subscribeToAssets(
+    companyId: string,
+    onData: (assets: AssetRecord[]) => void
+  ): () => void {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'assets');
+      return onSnapshot(colRef, (snap) => {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as AssetRecord));
+        list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToAssets error:', err);
+        onData([]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToAssets exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Save or Update an Asset Record
+   */
+  static async saveAsset(
+    companyId: string,
+    asset: AssetRecord,
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/assets/${asset.id}`;
+    try {
+      const now = new Date().toISOString();
+      const payload: AssetRecord = {
+        ...asset,
+        companyId,
+        createdAt: asset.createdAt || now,
+        updatedAt: now
+      };
+
+      const docRef = doc(db, 'companies', companyId, 'assets', asset.id);
+      await setDoc(docRef, payload, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'ASSET_SAVED',
+        `Saved asset: ${asset.assetName} (${asset.assetCode}), Category: ${asset.category}, Status: ${asset.status}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, path);
+      return false;
+    }
+  }
+
+  /**
+   * Delete an Asset Record
+   */
+  static async deleteAsset(
+    companyId: string,
+    assetId: string,
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/assets/${assetId}`;
+    try {
+      const docRef = doc(db, 'companies', companyId, 'assets', assetId);
+      await deleteDoc(docRef);
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'ASSET_DELETED',
+        `Deleted asset ID: ${assetId}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, path);
+      return false;
+    }
+  }
+
+  /**
+   * Assign Asset to an Employee / Guard / Custodian (Check-Out)
+   */
+  static async assignAssetCustody(
+    companyId: string,
+    asset: AssetRecord,
+    assignment: {
+      employeeId: string;
+      employeeName: string;
+      siteId?: string;
+      siteName?: string;
+      expectedReturnDate?: string;
+      condition: AssetCondition;
+      remarks?: string;
+    },
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    const now = new Date().toISOString();
+    const assetPath = `companies/${companyId}/assets/${asset.id}`;
+
+    try {
+      // 1. Update Asset Status & Assignment
+      const updatedAsset: Partial<AssetRecord> = {
+        status: 'ASSIGNED',
+        condition: assignment.condition,
+        assignedEmployeeId: assignment.employeeId,
+        assignedEmployeeName: assignment.employeeName,
+        assignedDate: now,
+        expectedReturnDate: assignment.expectedReturnDate || '',
+        siteId: assignment.siteId || asset.siteId || '',
+        siteName: assignment.siteName || asset.siteName || '',
+        updatedAt: now
+      };
+
+      await setDoc(doc(db, 'companies', companyId, 'assets', asset.id), updatedAsset, { merge: true });
+
+      // 2. Record Custody Movement Ledger
+      const movementId = `MOV-${Date.now()}`;
+      const movementPayload: AssetMovementHistoryRecord = {
+        id: movementId,
+        companyId,
+        assetId: asset.id,
+        assetCode: asset.assetCode,
+        assetName: asset.assetName,
+        action: 'CHECK_OUT',
+        employeeId: assignment.employeeId,
+        employeeName: assignment.employeeName,
+        siteId: assignment.siteId || asset.siteId,
+        siteName: assignment.siteName || asset.siteName,
+        conditionAtAction: assignment.condition,
+        performedByUid: actor.uid,
+        performedByName: actor.name,
+        remarks: assignment.remarks || `Issued to ${assignment.employeeName}`,
+        timestamp: now
+      };
+
+      await setDoc(doc(db, 'companies', companyId, 'asset_movements', movementId), movementPayload);
+
+      // 3. Audit Log
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'ASSET_CHECK_OUT',
+        `Issued asset ${asset.assetName} (${asset.assetCode}) to ${assignment.employeeName}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, assetPath);
+      return false;
+    }
+  }
+
+  /**
+   * Return Asset from Employee / Guard / Custodian (Check-In)
+   */
+  static async returnAssetCustody(
+    companyId: string,
+    asset: AssetRecord,
+    returnDetails: {
+      condition: AssetCondition;
+      warehouseLocation?: string;
+      siteId?: string;
+      siteName?: string;
+      remarks?: string;
+      sendToMaintenance?: boolean;
+    },
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    const now = new Date().toISOString();
+    const assetPath = `companies/${companyId}/assets/${asset.id}`;
+
+    try {
+      const prevEmployeeName = asset.assignedEmployeeName || 'Custodian';
+      const prevEmployeeId = asset.assignedEmployeeId || '';
+
+      // 1. Update Asset Status & Clear Custody
+      const updatedAsset: Partial<AssetRecord> = {
+        status: returnDetails.sendToMaintenance ? 'UNDER_MAINTENANCE' : 'AVAILABLE',
+        condition: returnDetails.condition,
+        assignedEmployeeId: '',
+        assignedEmployeeName: '',
+        assignedDate: '',
+        expectedReturnDate: '',
+        warehouseLocation: returnDetails.warehouseLocation || asset.warehouseLocation || 'Main Store',
+        siteId: returnDetails.siteId || asset.siteId || '',
+        siteName: returnDetails.siteName || asset.siteName || '',
+        updatedAt: now
+      };
+
+      await setDoc(doc(db, 'companies', companyId, 'assets', asset.id), updatedAsset, { merge: true });
+
+      // 2. Record Custody Movement Ledger
+      const movementId = `MOV-${Date.now()}`;
+      const movementPayload: AssetMovementHistoryRecord = {
+        id: movementId,
+        companyId,
+        assetId: asset.id,
+        assetCode: asset.assetCode,
+        assetName: asset.assetName,
+        action: 'CHECK_IN',
+        employeeId: prevEmployeeId,
+        employeeName: prevEmployeeName,
+        siteId: returnDetails.siteId || asset.siteId,
+        siteName: returnDetails.siteName || asset.siteName,
+        conditionAtAction: returnDetails.condition,
+        performedByUid: actor.uid,
+        performedByName: actor.name,
+        remarks: returnDetails.remarks || `Returned from ${prevEmployeeName}`,
+        timestamp: now
+      };
+
+      await setDoc(doc(db, 'companies', companyId, 'asset_movements', movementId), movementPayload);
+
+      // 3. Audit Log
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'ASSET_CHECK_IN',
+        `Returned asset ${asset.assetName} (${asset.assetCode}) from ${prevEmployeeName}, Condition: ${returnDetails.condition}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, assetPath);
+      return false;
+    }
+  }
+
+  /**
+   * Physical Verification / Barcode Scan Audit
+   */
+  static async recordPhysicalAssetAudit(
+    companyId: string,
+    asset: AssetRecord,
+    auditData: {
+      condition: AssetCondition;
+      verifiedLocation: string;
+      notes?: string;
+    },
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    const now = new Date().toISOString();
+    const assetPath = `companies/${companyId}/assets/${asset.id}`;
+
+    try {
+      const updatedAsset: Partial<AssetRecord> = {
+        condition: auditData.condition,
+        lastAuditDate: now,
+        lastAuditedBy: actor.name,
+        warehouseLocation: auditData.verifiedLocation,
+        updatedAt: now
+      };
+
+      await setDoc(doc(db, 'companies', companyId, 'assets', asset.id), updatedAsset, { merge: true });
+
+      // Record Audit Movement
+      const movementId = `AUD-${Date.now()}`;
+      const movementPayload: AssetMovementHistoryRecord = {
+        id: movementId,
+        companyId,
+        assetId: asset.id,
+        assetCode: asset.assetCode,
+        assetName: asset.assetName,
+        action: 'AUDIT_VERIFIED',
+        siteId: asset.siteId,
+        siteName: asset.siteName,
+        conditionAtAction: auditData.condition,
+        performedByUid: actor.uid,
+        performedByName: actor.name,
+        remarks: auditData.notes || `Physical verification completed at ${auditData.verifiedLocation}`,
+        timestamp: now
+      };
+
+      await setDoc(doc(db, 'companies', companyId, 'asset_movements', movementId), movementPayload);
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'ASSET_AUDITED',
+        `Physically verified asset ${asset.assetName} (${asset.assetCode})`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, assetPath);
+      return false;
+    }
+  }
+
+  /**
+   * Log Asset Maintenance / Calibration / Repair
+   */
+  static async recordAssetMaintenance(
+    companyId: string,
+    maintenance: Omit<AssetMaintenanceRecord, 'id' | 'createdAt'>,
+    asset: AssetRecord,
+    statusTransition: 'UNDER_MAINTENANCE' | 'AVAILABLE',
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    const now = new Date().toISOString();
+    const maintenanceId = `MNT-${Date.now()}`;
+    const payload: AssetMaintenanceRecord = {
+      ...maintenance,
+      id: maintenanceId,
+      companyId,
+      createdAt: now
+    };
+
+    try {
+      // 1. Save Maintenance Record
+      await setDoc(doc(db, 'companies', companyId, 'asset_maintenance', maintenanceId), payload);
+
+      // 2. Update Asset
+      const updatedAsset: Partial<AssetRecord> = {
+        status: statusTransition,
+        nextMaintenanceDate: maintenance.nextServiceDate || '',
+        updatedAt: now
+      };
+
+      await setDoc(doc(db, 'companies', companyId, 'assets', asset.id), updatedAsset, { merge: true });
+
+      // 3. Record Movement Action
+      const movementId = `MNT-MOV-${Date.now()}`;
+      const actionType: AssetMovementAction = statusTransition === 'UNDER_MAINTENANCE' ? 'MAINTENANCE_OUT' : 'MAINTENANCE_IN';
+      const movementPayload: AssetMovementHistoryRecord = {
+        id: movementId,
+        companyId,
+        assetId: asset.id,
+        assetCode: asset.assetCode,
+        assetName: asset.assetName,
+        action: actionType,
+        conditionAtAction: asset.condition,
+        performedByUid: actor.uid,
+        performedByName: actor.name,
+        remarks: `${maintenance.serviceType}: ${maintenance.actionTaken || maintenance.issueDescription} (${maintenance.serviceVendor})`,
+        timestamp: now
+      };
+
+      await setDoc(doc(db, 'companies', companyId, 'asset_movements', movementId), movementPayload);
+
+      // 4. Audit Log
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'ASSET_MAINTENANCE',
+        `Logged ${maintenance.serviceType} for ${asset.assetName} (${asset.assetCode}) - Cost: ₹${maintenance.serviceCost}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/asset_maintenance/${maintenanceId}`);
+      return false;
+    }
+  }
+
+  /**
+   * Real-time subscription to Company Sites
+   */
+  static subscribeToSites(
+    companyId: string,
+    onData: (sites: SiteRecord[]) => void
+  ): () => void {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'sites');
+      return onSnapshot(colRef, (snap) => {
+        const sites = snap.docs.map(d => ({ id: d.id, ...d.data() } as SiteRecord));
+        onData(sites);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToSites error:', err);
+        onData([]);
+      });
+    } catch (e) {
+      console.warn('[FirestoreService] subscribeToSites exception:', e);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Real-time subscription to Asset Movements
+   */
+  static subscribeToAssetMovements(
+    companyId: string,
+    onData: (movements: AssetMovementHistoryRecord[]) => void
+  ): () => void {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'asset_movements');
+      return onSnapshot(colRef, (snap) => {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as AssetMovementHistoryRecord));
+        list.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToAssetMovements error:', err);
+        onData([]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToAssetMovements exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Real-time subscription to Asset Maintenance records
+   */
+  static subscribeToAssetMaintenance(
+    companyId: string,
+    onData: (records: AssetMaintenanceRecord[]) => void
+  ): () => void {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'asset_maintenance');
+      return onSnapshot(colRef, (snap) => {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as AssetMaintenanceRecord));
+        list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToAssetMaintenance error:', err);
+        onData([]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToAssetMaintenance exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+}
+
+// Indian Rupee Words Helper Function
+function numberToIndianRupeesWords(amount: number): string {
+  if (amount === 0) return 'Zero Rupees Only';
+  const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+    'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+  function convertChunk(n: number): string {
+    let str = '';
+    if (n >= 100) {
+      str += units[Math.floor(n / 100)] + ' Hundred ';
+      n %= 100;
+    }
+    if (n >= 20) {
+      str += tens[Math.floor(n / 10)] + ' ';
+      n %= 10;
+    }
+    if (n > 0) {
+      str += units[n] + ' ';
+    }
+    return str.trim();
+  }
+
+  let num = Math.floor(amount);
+  let crore = Math.floor(num / 10000000);
+  num %= 10000000;
+  let lakh = Math.floor(num / 100000);
+  num %= 100000;
+  let thousand = Math.floor(num / 1000);
+  num %= 1000;
+  let remainder = num;
+
+  let result = '';
+  if (crore > 0) result += convertChunk(crore) + ' Crore ';
+  if (lakh > 0) result += convertChunk(lakh) + ' Lakh ';
+  if (thousand > 0) result += convertChunk(thousand) + ' Thousand ';
+  if (remainder > 0) result += convertChunk(remainder) + ' ';
+
+  return (result.trim() + ' Rupees Only').replace(/\s+/g, ' ');
 }
 

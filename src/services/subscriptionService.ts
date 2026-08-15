@@ -72,6 +72,25 @@ export class SubscriptionService {
 
   // ================= COMPANY SUBSCRIPTION ================= //
 
+  static async getAllCompanySubscriptions(companies: { companyId: string; brandName: string }[]): Promise<{ companyId: string; companyName: string; subscription: CompanySubscription | null }[]> {
+    try {
+      const results = await Promise.all(
+        companies.map(async (comp) => {
+          const sub = await this.getCompanySubscription(comp.companyId);
+          return {
+            companyId: comp.companyId,
+            companyName: comp.brandName,
+            subscription: sub
+          };
+        })
+      );
+      return results;
+    } catch (err) {
+      console.warn('[SubscriptionService] getAllCompanySubscriptions error:', err);
+      return [];
+    }
+  }
+
   static async getCompanySubscription(companyId: string): Promise<CompanySubscription | null> {
     const q = query(collection(db, 'companies', companyId, SUBSCRIPTIONS_COLLECTION));
     const snapshot = await getDocs(q);
@@ -81,6 +100,112 @@ export class SubscriptionService {
     const subs = snapshot.docs.map(doc => doc.data() as CompanySubscription);
     const activeSub = subs.find(s => ['ACTIVE', 'TRIAL', 'GRACE_PERIOD'].includes(s.status));
     return activeSub || subs[0];
+  }
+
+  static async saveCompanySubscription(companyId: string, subscription: CompanySubscription): Promise<void> {
+    const docRef = doc(db, 'companies', companyId, SUBSCRIPTIONS_COLLECTION, subscription.subscriptionId);
+    await setDoc(docRef, subscription, { merge: true });
+  }
+
+  static async assignPlanToCompany(
+    companyId: string, 
+    planId: string, 
+    billingCycle: 'MONTHLY' | 'YEARLY' = 'MONTHLY',
+    durationMonths: number = 12,
+    updatedByUid: string
+  ): Promise<CompanySubscription> {
+    const plan = await this.getPlan(planId);
+    if (!plan) {
+      throw new Error(`Plan with ID ${planId} not found.`);
+    }
+
+    const timestamp = new Date().toISOString();
+    const subId = `SUB-${companyId}-${Date.now().toString().slice(-4)}`;
+    const endPeriod = new Date(Date.now() + durationMonths * 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const newSub: CompanySubscription = {
+      subscriptionId: subId,
+      companyId: companyId,
+      planId: plan.planId,
+      status: 'ACTIVE',
+      billingCycle: billingCycle,
+      startDate: timestamp,
+      currentPeriodStart: timestamp,
+      currentPeriodEnd: endPeriod,
+      renewalDate: endPeriod,
+      autoRenew: true,
+      cancelAtPeriodEnd: false,
+      employeeLimit: plan.employeeLimit,
+      userLimit: plan.userLimit,
+      storageLimitMB: plan.storageLimitMB,
+      source: 'MANUAL',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      createdBy: updatedByUid,
+      updatedBy: updatedByUid
+    };
+
+    // 1. Save Subscription Record
+    await this.saveCompanySubscription(companyId, newSub);
+
+    // 2. Update Company Tenant tier & employee/site quotas
+    const companyRef = doc(db, 'companies', companyId);
+    const tier = plan.planCode === 'STARTER' ? 'STARTER' : plan.planCode === 'PRO' ? 'PROFESSIONAL' : 'ENTERPRISE';
+    await updateDoc(companyRef, {
+      licenseTier: tier,
+      maxEmployeesAllowed: plan.employeeLimit,
+      maxSitesAllowed: tier === 'STARTER' ? 5 : tier === 'PROFESSIONAL' ? 25 : 100,
+      enabledModules: plan.enabledModules,
+      updatedAt: timestamp
+    });
+
+    // 3. Synchronize Entitlements
+    await this.syncEntitlementsForPlan(companyId, plan.planId, subId, plan.enabledModules);
+
+    return newSub;
+  }
+
+  static async updateCompanySubscriptionStatus(
+    companyId: string,
+    subscriptionId: string,
+    status: 'ACTIVE' | 'TRIAL' | 'PAST_DUE' | 'CANCELED' | 'EXPIRED' | 'GRACE_PERIOD',
+    endIsoDate?: string
+  ): Promise<void> {
+    const subRef = doc(db, 'companies', companyId, SUBSCRIPTIONS_COLLECTION, subscriptionId);
+    const updates: Record<string, any> = {
+      status,
+      updatedAt: new Date().toISOString()
+    };
+    if (endIsoDate) {
+      updates.currentPeriodEnd = endIsoDate;
+    }
+    await updateDoc(subRef, updates);
+  }
+
+  static async syncEntitlementsForPlan(
+    companyId: string, 
+    planId: string, 
+    subscriptionId: string, 
+    enabledModules: string[]
+  ): Promise<void> {
+    const timestamp = new Date().toISOString();
+    for (const modKey of enabledModules) {
+      const entId = `${companyId}_${modKey}`;
+      const entRef = doc(db, 'companies', companyId, ENTITLEMENTS_COLLECTION, entId);
+      const entitlement: ModuleEntitlement = {
+        id: entId,
+        companyId: companyId,
+        moduleId: modKey,
+        enabled: true,
+        source: 'PLAN',
+        planId: planId,
+        subscriptionId: subscriptionId,
+        validFrom: timestamp,
+        overriddenBySuperAdmin: false,
+        updatedAt: timestamp
+      };
+      await setDoc(entRef, entitlement, { merge: true });
+    }
   }
 
   // Uses a transaction to ensure no partial updates for payment -> subscription -> entitlement

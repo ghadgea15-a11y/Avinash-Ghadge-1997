@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, Building, Clock, AlertTriangle, UserCheck, CheckCircle2,
-  Calendar, FileText, ChevronRight, Activity, ArrowRight, Shield
+  Calendar, FileText, ChevronRight, Activity, ArrowRight, Shield, DollarSign, Boxes, QrCode, BarChart3
 } from 'lucide-react';
 import { CompanyTenant, UserSession, PhaseAScreen, EmployeeRecord, ShiftRecord, AttendanceLogRecord, ApprovalRequestRecord } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
@@ -138,44 +138,82 @@ export const EnterpriseDashboardScreen: React.FC<EnterpriseDashboardScreenProps>
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
             <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Quick Actions</h3>
           </div>
-          <div className="p-4 grid grid-cols-2 gap-3">
-            {moduleAccess.EMPLOYEES && (
+          <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
             <button onClick={() => onNavigate('EMPLOYEES')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
               <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-3 group-hover:scale-110 transition-transform">
                 <Users className="w-5 h-5" />
               </div>
               <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Manage Employees</span>
             </button>
-          )}
-            {moduleAccess.ATTENDANCE && (
+
             <button onClick={() => onNavigate('ATTENDANCE_SHIFTS')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
               <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3 group-hover:scale-110 transition-transform">
                 <Clock className="w-5 h-5" />
               </div>
               <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">View Attendance</span>
             </button>
-          )}
-            
-          <button onClick={() => onNavigate('COMPANY_BILLING')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
-            <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-3 group-hover:scale-110 transition-transform">
-              <Shield className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Billing & Plan</span>
-          </button>
-  
-          {moduleAccess.COMPANY_MANAGEMENT && (
+
+            <button onClick={() => onNavigate('INVENTORY_STOCK')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
+              <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-3 group-hover:scale-110 transition-transform">
+                <Boxes className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Inventory & Stock</span>
+            </button>
+
+            <button onClick={() => onNavigate('ASSET_TRACKING')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
+              <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-3 group-hover:scale-110 transition-transform">
+                <QrCode className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Asset Tracking</span>
+            </button>
+
+            <button onClick={() => onNavigate('SITE_OPERATIONS')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
+              <div className="w-10 h-10 rounded-full bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center text-sky-600 dark:text-sky-400 mb-3 group-hover:scale-110 transition-transform">
+                <Shield className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Site Operations</span>
+            </button>
+
+            <button onClick={() => onNavigate('LEAVE_MANAGEMENT')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
+              <div className="w-10 h-10 rounded-full bg-pink-50 dark:bg-pink-500/10 flex items-center justify-center text-pink-600 dark:text-pink-400 mb-3 group-hover:scale-110 transition-transform">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Leave Management</span>
+            </button>
+
+            <button onClick={() => onNavigate('PAYROLL_COMPENSATION')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
+              <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3 group-hover:scale-110 transition-transform">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Payroll & Salary</span>
+            </button>
+
+            <button onClick={() => onNavigate('APPROVAL_MANAGEMENT')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
+              <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-3 group-hover:scale-110 transition-transform">
+                <FileText className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Pending Approvals</span>
+            </button>
+
             <button onClick={() => onNavigate('COMPANY_MANAGEMENT')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
               <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-3 group-hover:scale-110 transition-transform">
                 <Building className="w-5 h-5" />
               </div>
               <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Company Structure</span>
             </button>
-          )}
-            <button onClick={() => onNavigate('APPROVAL_MANAGEMENT')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
-              <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-3 group-hover:scale-110 transition-transform">
-                <FileText className="w-5 h-5" />
+
+            <button onClick={() => onNavigate('COMPANY_BILLING')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
+              <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-3 group-hover:scale-110 transition-transform">
+                <Shield className="w-5 h-5" />
               </div>
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Pending Approvals</span>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Billing & Plan</span>
+            </button>
+
+            <button onClick={() => onNavigate('REPORTS_ANALYTICS')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-center group">
+              <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-3 group-hover:scale-110 transition-transform">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Reports & Analytics</span>
             </button>
           </div>
         </div>
@@ -248,12 +286,37 @@ export const EnterpriseDashboardScreen: React.FC<EnterpriseDashboardScreenProps>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">View punches & shifts</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center text-center hover:border-indigo-500 cursor-pointer transition-colors">
-          <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-3">
+        <div 
+          onClick={() => onNavigate('LEAVE_MANAGEMENT')}
+          className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center text-center hover:border-indigo-500 cursor-pointer transition-colors"
+        >
+          <div className="w-12 h-12 rounded-full bg-pink-50 dark:bg-pink-500/10 flex items-center justify-center text-pink-600 dark:text-pink-400 mb-3">
             <Calendar className="w-6 h-6" />
           </div>
           <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">My Leaves</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Apply & track leave requests</p>
+        </div>
+
+        <div 
+          onClick={() => onNavigate('PAYROLL_COMPENSATION')}
+          className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center text-center hover:border-indigo-500 cursor-pointer transition-colors"
+        >
+          <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3">
+            <DollarSign className="w-6 h-6" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">My Payslips</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">View salary & advances</p>
+        </div>
+
+        <div 
+          onClick={() => onNavigate('ASSET_TRACKING')}
+          className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center text-center hover:border-indigo-500 cursor-pointer transition-colors"
+        >
+          <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-3">
+            <QrCode className="w-6 h-6" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">My Gear & Assets</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Custody, verification & status</p>
         </div>
       </div>
     </div>
