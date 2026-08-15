@@ -462,7 +462,8 @@ export type PhaseAScreen =
   | 'SUPER_ADMIN_COMPANY_DETAILS'
   | 'SUPER_ADMIN_USERS'
   | 'SUPER_ADMIN_PENDING_APPROVALS'
-  | 'SUPER_ADMIN_MODULES';
+  | 'SUPER_ADMIN_MODULES'
+  | 'LEGAL_POLICIES';
 
 export type AppThemeMode = 'DARK' | 'LIGHT' | 'SYSTEM';
 

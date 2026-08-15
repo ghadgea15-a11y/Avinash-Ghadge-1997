@@ -60,9 +60,24 @@ export const LandingPageScreen: React.FC<LandingPageScreenProps> = ({ onNavigate
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
 
-  const handleDemoSubmit = (e: React.FormEvent) => {
+  const handleDemoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!demoForm.name.trim() || !demoForm.email.trim()) return;
+    
+    try {
+      const { setDoc, doc } = await import('firebase/firestore');
+      const { db } = await import('../../firebase');
+      
+      const demoId = `DEMO-${Date.now()}`;
+      await setDoc(doc(db, 'demo_requests', demoId), {
+        ...demoForm,
+        createdAt: new Date().toISOString(),
+        status: 'NEW'
+      });
+    } catch (err) {
+      console.warn('Failed to submit demo request to backend', err);
+    }
+
     setFormSubmitted(true);
   };
 
@@ -1223,15 +1238,15 @@ export const LandingPageScreen: React.FC<LandingPageScreenProps> = ({ onNavigate
       <footer className={`border-t py-14 ${isDark ? 'bg-[#02050E] border-slate-800' : 'bg-white border-slate-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             
             {/* Col 1: Brand & Verified Company Identity */}
-            <div className="space-y-3 md:col-span-1">
+            <div className="space-y-3 md:col-span-2">
               <AppLogo size="sm" showSubtitle={true} />
               <div className="space-y-1">
                 <p className="text-xs font-bold text-slate-200">Shourya Enterprises Pvt. Ltd.</p>
                 <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Log Sheet Muster &bull; Smart Workforce & Attendance Management Platform.
+                  Log Sheet Muster &bull; Smart Workforce, Attendance & Security Management Platform.
                 </p>
               </div>
               <a
@@ -1246,7 +1261,7 @@ export const LandingPageScreen: React.FC<LandingPageScreenProps> = ({ onNavigate
 
             {/* Col 2: Quick Links */}
             <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Quick Links</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Navigation</h4>
               <ul className="space-y-1.5 text-xs">
                 <li><a href="#home" className="text-slate-400 hover:text-white transition">Home</a></li>
                 <li><a href="#features" className="text-slate-400 hover:text-white transition">Features</a></li>
@@ -1256,15 +1271,50 @@ export const LandingPageScreen: React.FC<LandingPageScreenProps> = ({ onNavigate
               </ul>
             </div>
 
-            {/* Col 3: Product Modules */}
+            {/* Col 3: Legal & Compliance */}
             <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Product</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Legal & Compliance</h4>
               <ul className="space-y-1.5 text-xs">
-                <li><a href="#showcase" className="text-slate-400 hover:text-white transition">HRMS</a></li>
-                <li><a href="#showcase" className="text-slate-400 hover:text-white transition">Attendance</a></li>
-                <li><a href="#showcase" className="text-slate-400 hover:text-white transition">Gate Operations</a></li>
-                <li><a href="#showcase" className="text-slate-400 hover:text-white transition">Patrol</a></li>
-                <li><a href="#showcase" className="text-slate-400 hover:text-white transition">Workforce Management</a></li>
+                <li>
+                  <button 
+                    onClick={() => onNavigate('LEGAL_POLICIES')}
+                    className="text-slate-400 hover:text-indigo-400 transition text-left"
+                  >
+                    Privacy Policy
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => onNavigate('LEGAL_POLICIES')}
+                    className="text-slate-400 hover:text-indigo-400 transition text-left"
+                  >
+                    Data Processing (DPA)
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => onNavigate('LEGAL_POLICIES')}
+                    className="text-slate-400 hover:text-indigo-400 transition text-left"
+                  >
+                    Cookie & Analytics
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => onNavigate('LEGAL_POLICIES')}
+                    className="text-slate-400 hover:text-indigo-400 transition text-left"
+                  >
+                    Refunds & Subscriptions
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => onNavigate('LEGAL_POLICIES')}
+                    className="text-slate-400 hover:text-indigo-400 transition text-left"
+                  >
+                    Acceptable Use (AUP)
+                  </button>
+                </li>
               </ul>
             </div>
 

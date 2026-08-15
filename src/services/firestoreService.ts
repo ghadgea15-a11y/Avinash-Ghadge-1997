@@ -1515,6 +1515,17 @@ export class FirestoreService {
     onData: (requests: ApprovalRequestRecord[]) => void
   ): () => void {
     try {
+      if (companyId === 'GLOBAL_ADMIN') {
+        const rootRef = collection(db, 'approval_requests');
+        return onSnapshot(rootRef, (snap) => {
+          const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as ApprovalRequestRecord));
+          onData(list);
+        }, (err) => {
+          console.warn('[Firestore] subscribeToApprovalRequests (GLOBAL) error:', err);
+          onData([]);
+        });
+      }
+
       const colRef = collection(db, 'companies', companyId, 'approval_requests');
       return onSnapshot(colRef, (snap) => {
         if (!snap.empty) {

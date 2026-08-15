@@ -31,6 +31,7 @@ import { SuperAdminCreateCompany } from './components/screens/SuperAdminCreateCo
 import { SuperAdminModulesScreen } from './components/screens/SuperAdminModulesScreen';
 import { SuperAdminCompaniesScreen } from './components/screens/SuperAdminCompaniesScreen';
 import { LandingPageScreen } from './components/screens/LandingPageScreen';
+import { LegalPoliciesScreen } from './components/screens/LegalPoliciesScreen';
 
 export function App() {
   const [currentScreen, setCurrentScreen] = useState<PhaseAScreen>('LANDING');
@@ -175,6 +176,11 @@ export function App() {
         <div className="min-h-screen w-full font-sans transition-colors duration-200">
           <LandingPageScreen onNavigate={setCurrentScreen} />
         </div>
+      ) : currentScreen === 'LEGAL_POLICIES' ? (
+        /* Standalone Legal & Compliance Policy Center */
+        <div className="min-h-screen w-full font-sans transition-colors duration-200">
+          <LegalPoliciesScreen onNavigate={setCurrentScreen} />
+        </div>
       ) : currentScreen === 'KOTLIN_CODE_VIEWER' ? (
         /* Standalone Kotlin Code Viewer */
         <div className="min-h-screen w-full bg-slate-950 text-white p-4">
@@ -209,7 +215,7 @@ export function App() {
 
             {currentScreen === 'SIGN_UP' && (
               <SignUpScreen
-                initialCompany={activeCompany}
+                initialCompany={null}
                 onSignUpSuccess={(session) => {
                   setUserSession(session);
                   if (session.accountStatus === 'ACTIVE') {

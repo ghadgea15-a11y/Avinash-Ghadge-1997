@@ -113,8 +113,33 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   };
 
   const handleGoogleLogin = async () => {
-    // Currently disabled Google Login to prefer Email/Password standard for enterprise
-    setError('Google login is disabled for this tenant. Please use Email and Password.');
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      const res = await FirebaseAuthService.signInWithGoogle();
+      if (res.userSession) {
+        SessionManager.setUserSession(res.userSession);
+        const company = SessionManager.getActiveCompany() || {
+          companyId: res.userSession.companyId,
+          companyLegalName: res.userSession.companyId,
+          brandName: res.userSession.companyId,
+          licenseTier: 'ENTERPRISE',
+          allowedBranches: ['MAIN'],
+          maxEmployeesAllowed: 1000,
+          maxSitesAllowed: 50,
+          primaryColorHex: '#4f46e5',
+          secondaryColorHex: '#06b6d4',
+          status: 'ACTIVE'
+        };
+        onLoginSuccess(res.userSession, company);
+      } else if (res.isNewUser) {
+        onNavigate('SIGN_UP');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Google Login failed. Please use Email and Password.');
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const handleBiometricSuccess = async () => {
@@ -331,6 +356,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <Fingerprint className="w-4 h-4 text-indigo-600" />
               <span>Biometric Login</span>
             </button>
+          </div>
+
+          {/* Terms & Privacy acceptance notice */}
+          <div className="pt-1 text-center">
+            <p className="text-[11px] text-slate-400">
+              By signing in, you agree to our{' '}
+              <button
+                type="button"
+                onClick={() => onNavigate('LEGAL_POLICIES')}
+                className="text-indigo-400 hover:underline font-medium"
+              >
+                Privacy Policy & Enterprise Terms
+              </button>
+              .
+            </p>
           </div>
 
           {error && (

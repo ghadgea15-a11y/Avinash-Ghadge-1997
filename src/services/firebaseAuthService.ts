@@ -445,10 +445,27 @@ export class FirebaseAuthService {
     accountStatus?: AccountStatus;
   }> {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
     let userCredential;
     try {
       userCredential = await signInWithPopup(auth, provider);
     } catch (err: any) {
+      console.error('[FirebaseAuthService] Google Sign-In error:', err);
+      const code = err?.code || '';
+      if (code === 'auth/popup-blocked') {
+        throw new Error('Google Sign-In popup was blocked by your browser. Please allow popups for this site or use Email & Password.');
+      } else if (code === 'auth/unauthorized-domain') {
+        const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
+        throw new Error(`Domain "${currentHostname}" is not in Firebase Auth's Authorized Domains list. Please use Email & Password below, or add "${currentHostname}" to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
+      } else if (code === 'auth/operation-not-allowed') {
+        throw new Error('Google Sign-In is not enabled in Firebase Console (Authentication > Sign-in method). Please register using Email & Password below.');
+      } else if (code === 'auth/popup-closed-by-user') {
+        throw new Error('Google Sign-In window was closed. Please try again or use Email & Password.');
+      } else if (code === 'auth/cancelled-popup-request') {
+        throw new Error('Another sign-in popup is already in progress.');
+      } else if (code === 'auth/network-request-failed') {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      }
       throw new Error(err.message || 'Google authentication was cancelled or failed.');
     }
 
