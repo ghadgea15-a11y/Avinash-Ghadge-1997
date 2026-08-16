@@ -9,7 +9,10 @@ export type WorkflowContextType =
   | 'SALARY_ADVANCE'
   | 'PAYROLL_CYCLE'
   | 'MATERIAL_GATE_PASS'
-  | 'INCIDENT_ESCALATION';
+  | 'INCIDENT_ESCALATION'
+  | 'PROMOTION'
+  | 'TRANSFER'
+  | 'EXIT';
 
 export interface WorkflowContext {
   companyId: string;
@@ -72,6 +75,10 @@ export class WorkflowEngine {
         return WorkflowEngine.resolveFinancialApproval(authority, session, context);
       case 'MATERIAL_GATE_PASS':
         return WorkflowEngine.resolveMaterialPass(authority, session, context);
+      case 'PROMOTION':
+      case 'TRANSFER':
+      case 'EXIT':
+        return WorkflowEngine.resolveLifecycleApproval(authority, session, context);
       default:
         // By default, fallback to checking if they have at least Official Staff privileges
         const baseAllowed: AuthorityLevel[] = ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_OFFICIAL_STAFF'];
@@ -157,5 +164,17 @@ export class WorkflowEngine {
       return { canApprove: true };
     }
     return { canApprove: false, reason: 'Supervisors cannot authorize outward material passes.' };
+  }
+
+  private static resolveLifecycleApproval(auth: AuthorityLevel, session: UserSession, ctx: WorkflowContext): WorkflowResolution {
+    // Lifecycle changes (Promotion, Transfer, Exit) require Corporate/Senior management authority
+    const allowed: AuthorityLevel[] = ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_OFFICIAL_STAFF', 'A4_REGIONAL_AREA_MANAGER'];
+    if (allowed.includes(auth)) {
+      if (auth === 'A3_OFFICIAL_STAFF' && !['HR', 'HR_ADMIN', 'COMPANY_ADMIN', 'OPERATIONS_OFFICE'].includes(session.role)) {
+         return { canApprove: false, reason: 'Only HR, Operations Office, or Company Admin can approve employee lifecycle changes.' };
+      }
+      return { canApprove: true };
+    }
+    return { canApprove: false, reason: 'Site managers and supervisors cannot approve corporate lifecycle transitions.' };
   }
 }

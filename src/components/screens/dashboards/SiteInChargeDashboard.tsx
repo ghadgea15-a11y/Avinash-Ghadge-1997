@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Building, Shield, Clock, AlertTriangle, Truck, UserCheck, HardDrive, Package, CheckSquare, AlertCircle, ClipboardList } from 'lucide-react';
 import { 
   CompanyTenant, UserSession, PhaseAScreen, EmployeeRecord, 
-  AttendanceLogRecord, IncidentReportRecord, VisitorLogRecord, 
+  AttendanceRecord, IncidentReportRecord, VisitorLogRecord, 
   MaterialMovementRecord, AssetRecord, InventoryItemRecord, PatrolLogRecord, TaskRecord, DailySiteLogRecord
 } from '../../../types';
 import { FirestoreService } from '../../../services/firestoreService';
@@ -16,7 +16,7 @@ interface DashboardProps {
 
 export const SiteInChargeDashboard: React.FC<DashboardProps> = ({ userSession, company, onNavigate }) => {
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
-  const [attendance, setAttendance] = useState<AttendanceLogRecord[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [incidents, setIncidents] = useState<IncidentReportRecord[]>([]);
   const [visitors, setVisitors] = useState<VisitorLogRecord[]>([]);
   const [materials, setMaterials] = useState<MaterialMovementRecord[]>([]);
@@ -37,7 +37,7 @@ export const SiteInChargeDashboard: React.FC<DashboardProps> = ({ userSession, c
     
     const unsubs = [
       FirestoreService.subscribeToEmployees(userSession, company.companyId, (data) => setEmployees(data.filter(e => e.assignedSiteId === siteId))),
-      FirestoreService.subscribeToAttendanceLogs(userSession, company.companyId, (data) => setAttendance(data.filter(a => a.siteId === siteId))),
+      FirestoreService.subscribeToAttendance(userSession, company.companyId, (data) => setAttendance(data.filter(a => a.siteId === siteId))),
       FirestoreService.subscribeToIncidentReports(userSession, company.companyId, (data) => setIncidents(data.filter(i => i.siteId === siteId))),
       FirestoreService.subscribeToVisitorLogs(userSession, company.companyId, (data) => setVisitors(data.filter(v => v.siteId === siteId))),
       FirestoreService.subscribeToMaterialLogs(userSession, company.companyId, (data) => setMaterials(data.filter(m => m.siteId === siteId))),
@@ -68,7 +68,7 @@ export const SiteInChargeDashboard: React.FC<DashboardProps> = ({ userSession, c
 
   const activeEmployees = employees.filter(e => e.status === 'ACTIVE').length;
   const today = new Date().toISOString().split('T')[0];
-  const presentToday = new Set(attendance.filter(a => a.date === today).map(a => a.employeeId)).size;
+  const presentToday = new Set(attendance.filter(a => a.attendanceDate === today).map(a => a.employeeId)).size;
   const absentToday = Math.max(0, activeEmployees - presentToday);
   
   const openIncidents = incidents.filter(i => i.status === 'OPEN' || i.status === 'UNDER_INVESTIGATION').length;

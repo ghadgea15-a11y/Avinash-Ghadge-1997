@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { 
   CompanyTenant, UserSession, PhaseAScreen, EmployeeRecord, 
-  AttendanceLogRecord, SalarySlipRecord, InventoryItemRecord, 
+  AttendanceRecord, SalarySlipRecord, InventoryItemRecord, 
   AssetRecord, SiteRecord, BranchRecord, IncidentReportRecord, 
   PatrolLogRecord, VisitorLogRecord, MaterialMovementRecord 
 } from '../../types';
@@ -54,7 +54,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
   // Data Collections
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
-  const [attendanceLogs, setAttendanceLogs] = useState<AttendanceLogRecord[]>([]);
+  const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [salarySlips, setSalarySlips] = useState<SalarySlipRecord[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItemRecord[]>([]);
   const [assets, setAssets] = useState<AssetRecord[]>([]);
@@ -81,7 +81,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
     setLoading(true);
 
     const unsubEmp = FirestoreService.subscribeToEmployees(userSession, companyId, setEmployees);
-    const unsubAtt = FirestoreService.subscribeToAttendanceLogs(userSession, companyId, setAttendanceLogs);
+    const unsubAtt = FirestoreService.subscribeToAttendance(userSession, companyId, setAttendanceLogs);
     const unsubInv = FirestoreService.subscribeToInventoryItems(userSession, companyId, setInventoryItems);
     const unsubAst = FirestoreService.subscribeToAssets(userSession, companyId, setAssets);
     const unsubSit = FirestoreService.subscribeToSites(companyId, setSites);
@@ -135,13 +135,13 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
   // Month-filtered Attendance Map: `employeeId_day` -> log
   const monthlyAttendanceMap = useMemo(() => {
-    const map = new Map<string, AttendanceLogRecord>();
+    const map = new Map<string, AttendanceRecord>();
     const monthStr = selectedMonth.toString().padStart(2, '0');
     const prefix = `${selectedYear}-${monthStr}`;
 
     attendanceLogs.forEach(log => {
-      if (log.date && log.date.startsWith(prefix)) {
-        const day = parseInt(log.date.split('-')[2], 10);
+      if (log.attendanceDate && log.attendanceDate.startsWith(prefix)) {
+        const day = parseInt(log.attendanceDate.split('-')[2], 10);
         map.set(`${log.employeeId}_${day}`, log);
       }
     });
@@ -160,7 +160,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
     
     // Today's attendance
     const todayStr = new Date().toISOString().split('T')[0];
-    const todayLogs = attendanceLogs.filter(a => a.date === todayStr);
+    const todayLogs = attendanceLogs.filter(a => a.attendanceDate === todayStr);
     const presentTodayCount = todayLogs.filter(a => a.status === 'PRESENT' || a.status === 'HALF_DAY').length;
     const todayAttendanceRate = activeStaff > 0 ? Math.round((presentTodayCount / activeStaff) * 100) : 0;
 
@@ -847,7 +847,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                         <div className="text-[10px] text-slate-400 font-mono">{emp.employeeId || emp.id}</div>
                       </td>
                       <td className="p-3">{sites.find(s => s.id === emp.assignedSiteId)?.name || 'HQ Post'}</td>
-                      <td className="p-3 font-mono">{emp.assignedShiftId || emp.shiftId || 'SHIFT-A (08:00 - 20:00)'}</td>
+                      <td className="p-3 font-mono">{emp.shiftId || emp.shiftId || 'SHIFT-A (08:00 - 20:00)'}</td>
                       <td className="p-3 font-mono font-bold text-emerald-600">26 Days</td>
                       <td className="p-3 font-mono font-bold text-purple-600">18 Hrs</td>
                       <td className="p-3 font-bold text-slate-700 dark:text-slate-300">96%</td>

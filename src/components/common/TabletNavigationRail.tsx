@@ -19,7 +19,12 @@ import {
   DollarSign, 
   Boxes,
   QrCode,
-  BarChart3
+  BarChart3,
+  LifeBuoy,
+  GraduationCap,
+  ShoppingCart,
+  IdCard,
+  ShieldAlert
 } from 'lucide-react';
 import { PhaseAScreen, UserSession, UserRole } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -60,19 +65,23 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
 
   // Tenant / Company Admin / Staff destinations
   const tenantDestinations = [
-    { screen: 'ENTERPRISE_DASHBOARD' as PhaseAScreen, label: 'Dashboard', icon: LayoutDashboard },
-    { screen: 'COMPANY_MANAGEMENT' as PhaseAScreen, label: 'Company', icon: Building2, roles: ['COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER'] },
-    { screen: 'APPROVAL_MANAGEMENT' as PhaseAScreen, label: 'Approvals', icon: UserCheck, roles: ['COMPANY_ADMIN', 'HR_ADMIN'] },
-    { screen: 'EMPLOYEES' as PhaseAScreen, label: 'Staff', icon: Users, roles: ['COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER'] },
-    { screen: 'ATTENDANCE_SHIFTS' as PhaseAScreen, label: 'Attendance', icon: Clock },
-    { screen: 'LEAVE_MANAGEMENT' as PhaseAScreen, label: 'Leaves', icon: CalendarDays },
-    { screen: 'PAYROLL_COMPENSATION' as PhaseAScreen, label: 'Payroll', icon: DollarSign },
-    { screen: 'INVENTORY_STOCK' as PhaseAScreen, label: 'Inventory', icon: Boxes },
-    { screen: 'ASSET_TRACKING' as PhaseAScreen, label: 'Assets', icon: QrCode },
-    { screen: 'SITE_OPERATIONS' as PhaseAScreen, label: 'Operations', icon: ShieldCheck },
-    { screen: 'REPORTS_ANALYTICS' as PhaseAScreen, label: 'Reports', icon: BarChart3 },
-    { screen: 'NOTIFICATIONS' as PhaseAScreen, label: 'Alerts', icon: Bell, badge: unreadNotifCount },
-    { screen: 'SETTINGS' as PhaseAScreen, label: 'Settings', icon: Settings },
+    { screen: 'ENTERPRISE_DASHBOARD' as PhaseAScreen, label: 'Dashboard', icon: LayoutDashboard, badge: 0 },
+    { screen: 'EMPLOYEES' as PhaseAScreen, label: 'HCM Staff', icon: Users, roles: ['COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER'], badge: 0 },
+    { screen: 'ID_BADGES' as PhaseAScreen, label: 'Badges', icon: IdCard, badge: 0 },
+    { screen: 'COMPLIANCE' as PhaseAScreen, label: 'Compliance', icon: ShieldAlert, badge: 0 },
+    { screen: 'ATTENDANCE_SHIFTS' as PhaseAScreen, label: 'WFM Roster', icon: Clock, badge: 0 },
+    { screen: 'PAYROLL_COMPENSATION' as PhaseAScreen, label: 'Payroll', icon: DollarSign, badge: 0 },
+    { screen: 'SITE_OPERATIONS' as PhaseAScreen, label: 'Operations', icon: ShieldCheck, badge: 0 },
+    { screen: 'ASSET_TRACKING' as PhaseAScreen, label: 'EAM Assets', icon: QrCode, badge: 0 },
+    { screen: 'INVENTORY_STOCK' as PhaseAScreen, label: 'SCM Stock', icon: Boxes, badge: 0 },
+    { screen: 'CLIENT_MANAGEMENT' as PhaseAScreen, label: 'CRM Clients', icon: Building2, badge: 0 },
+    { screen: 'SERVICE_DESK' as PhaseAScreen, label: 'Service Desk', icon: LifeBuoy, badge: 0 },
+    { screen: 'TALENT_ACQUISITION' as PhaseAScreen, label: 'Recruit ATS', icon: UserCheck, badge: 0 },
+    { screen: 'TRAINING_LMS' as PhaseAScreen, label: 'LMS Training', icon: GraduationCap, badge: 0 },
+    { screen: 'PROCUREMENT_SRM' as PhaseAScreen, label: 'Procurement', icon: ShoppingCart, badge: 0 },
+    { screen: 'REPORTS_ANALYTICS' as PhaseAScreen, label: 'BI Reports', icon: BarChart3, badge: 0 },
+    { screen: 'APPROVAL_MANAGEMENT' as PhaseAScreen, label: 'GRC Approvals', icon: Award, badge: 0 },
+    { screen: 'SETTINGS' as PhaseAScreen, label: 'Settings', icon: Settings, badge: 0 },
   ];
 
   const activeDestinations = isSuperAdmin 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Clock, AlertTriangle, UserCheck, ShieldCheck, CheckSquare, ClipboardList, TrendingUp } from 'lucide-react';
 import { 
-  CompanyTenant, UserSession, PhaseAScreen, AttendanceLogRecord, 
+  CompanyTenant, UserSession, PhaseAScreen, AttendanceRecord, 
   EmployeeRecord, IncidentReportRecord, TaskRecord, DailySiteLogRecord 
 } from '../../../types';
 import { FirestoreService } from '../../../services/firestoreService';
@@ -14,7 +14,7 @@ interface DashboardProps {
 }
 
 export const SupervisorDashboard: React.FC<DashboardProps> = ({ userSession, company, onNavigate }) => {
-  const [attendance, setAttendance] = useState<AttendanceLogRecord[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [incidents, setIncidents] = useState<IncidentReportRecord[]>([]);
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
@@ -39,7 +39,7 @@ export const SupervisorDashboard: React.FC<DashboardProps> = ({ userSession, com
           (e.supervisorId === userSession.employeeId || e.reportingManagerId === userSession.employeeId)
         ));
       }),
-      FirestoreService.subscribeToAttendanceLogs(userSession, company.companyId, (data) => {
+      FirestoreService.subscribeToAttendance(userSession, company.companyId, (data) => {
         setAttendance(data.filter(a => a.siteId === siteId));
       }),
       FirestoreService.subscribeToIncidentReports(userSession, company.companyId, (data) => {
@@ -71,12 +71,12 @@ export const SupervisorDashboard: React.FC<DashboardProps> = ({ userSession, com
   
   // Cross reference today's attendance with the supervisor's team
   const teamAttendanceToday = attendance.filter(a => 
-    a.date === today && 
+    a.attendanceDate === today && 
     employees.some(e => e.id === a.employeeId)
   );
   
   // Guards punched IN but not OUT
-  const activeOnDuty = teamAttendanceToday.filter(a => a.status === 'PRESENT' && !a.checkOutTime).length;
+  const activeOnDuty = teamAttendanceToday.filter(a => a.status === 'PRESENT' && !a.checkOut).length;
   
   // Calculate absent
   const presentSet = new Set(teamAttendanceToday.map(a => a.employeeId));

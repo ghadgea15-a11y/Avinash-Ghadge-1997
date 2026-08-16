@@ -19,6 +19,11 @@ import { ProfileScreen } from './components/screens/ProfileScreen';
 import { SettingsScreen } from './components/screens/SettingsScreen';
 import { NotificationsScreen } from './components/screens/NotificationsScreen';
 import { EmployeeModuleScreen } from './components/screens/EmployeeModuleScreen';
+
+import { ClientManagementScreen } from './components/screens/ClientManagementScreen';
+import { DeploymentManagementScreen } from './components/screens/DeploymentManagementScreen';
+import { ShiftRosterScreen } from './components/screens/ShiftRosterScreen';
+
 import { CompanyManagementScreen } from './components/screens/CompanyManagementScreen';
 import { AttendanceShiftsScreen } from './components/screens/AttendanceShiftsScreen';
 import { SiteOperationsScreen } from './components/screens/SiteOperationsScreen';
@@ -39,9 +44,15 @@ import { LeaveManagementScreen } from './components/screens/LeaveManagementScree
 import { PayrollCompensationScreen } from './components/screens/PayrollCompensationScreen';
 import { InventoryStockScreen } from './components/screens/InventoryStockScreen';
 import { AssetTrackingScreen } from './components/screens/AssetTrackingScreen';
+import { ServiceDeskScreen } from './components/screens/ServiceDeskScreen';
+import { TalentAcquisitionScreen } from './components/screens/TalentAcquisitionScreen';
+import { TrainingLmsScreen } from './components/screens/TrainingLmsScreen';
+import { ProcurementSrmScreen } from './components/screens/ProcurementSrmScreen';
 
 import { TaskManagementScreen } from './components/screens/TaskManagementScreen';
 import { AnnouncementsScreen } from './components/screens/AnnouncementsScreen';
+import { IdentityBadgeScreen } from './components/screens/IdentityBadgeScreen';
+import { ComplianceDashboardScreen } from './components/screens/ComplianceDashboardScreen';
 import { MyTasksScreen } from './components/screens/MyTasksScreen';
 
 import { ReportsAnalyticsScreen } from './components/screens/ReportsAnalyticsScreen';
@@ -427,6 +438,27 @@ export function App() {
                       />
                     )}
 
+                    
+                    {currentScreen === 'CLIENT_MANAGEMENT' && activeCompany && (
+                      <ClientManagementScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                      />
+                    )}
+                    {currentScreen === 'DEPLOYMENT_MANAGEMENT' && activeCompany && (
+                      <DeploymentManagementScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                      />
+                    )}
+                    {currentScreen === 'SHIFT_ROSTER' && activeCompany && (
+                      <ShiftRosterScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                      />
+                    )}
+
                     {currentScreen === 'EMPLOYEES' && (
                       <EmployeeModuleScreen
                         userSession={userSession}
@@ -480,6 +512,21 @@ export function App() {
                       />
                     )}
 
+                    {currentScreen === 'ID_BADGES' && activeCompany && (
+                      <IdentityBadgeScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'COMPLIANCE' && activeCompany && (
+                      <ComplianceDashboardScreen
+                        userSession={userSession}
+                      />
+                    )}
+
                     {currentScreen === 'ANNOUNCEMENTS' && activeCompany && (
                       <AnnouncementsScreen
                         userSession={userSession}
@@ -498,6 +545,38 @@ export function App() {
 
                     {currentScreen === 'ASSET_TRACKING' && (
                       <AssetTrackingScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'SERVICE_DESK' && (
+                      <ServiceDeskScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'TALENT_ACQUISITION' && (
+                      <TalentAcquisitionScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'TRAINING_LMS' && (
+                      <TrainingLmsScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'PROCUREMENT_SRM' && (
+                      <ProcurementSrmScreen
                         userSession={userSession}
                         activeCompany={activeCompany}
                         onNavigate={setCurrentScreen}

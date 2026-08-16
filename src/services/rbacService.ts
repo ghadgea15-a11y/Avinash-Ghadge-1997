@@ -113,8 +113,10 @@ export class RbacService {
       case 'ATTENDANCE':
       case 'SHIFTS':
       case 'LEAVE':
+      case 'ID_BADGES':
+      case 'COMPLIANCE':
         return ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_OFFICIAL_STAFF', 'A4_REGIONAL_AREA_MANAGER', 'A5_SITE_IN_CHARGE', 'A6_SUPERVISOR'].includes(authority) || 
-               // Everyone can see their own attendance
+               // Everyone can see their own attendance or badge
                ['A7_SKILLED', 'A8_SEMI_SKILLED', 'A9_SUPPORT'].includes(authority);
       case 'PAYROLL':
       case 'BILLING':
@@ -177,6 +179,8 @@ export class RbacService {
        // Official staff can only modify their domains
        if (authority === 'A3_OFFICIAL_STAFF') {
           if (context.module === 'EMPLOYEES' && ['HR', 'HR_ADMIN'].includes(session.role)) return true;
+          if (context.module === 'ID_BADGES' && ['HR', 'HR_ADMIN'].includes(session.role)) return true;
+          if (context.module === 'COMPLIANCE' && ['HR', 'HR_ADMIN', 'ADMIN'].includes(session.role)) return true;
           if (context.module === 'PAYROLL' && ['FINANCE', 'FINANCE_MANAGER'].includes(session.role)) return true;
           // EHS for incidents, etc...
           if (context.module === 'SECURITY_INCIDENTS' && ['EHS'].includes(session.role)) return true;
@@ -187,7 +191,7 @@ export class RbacService {
        if (['A4_REGIONAL_AREA_MANAGER', 'A5_SITE_IN_CHARGE'].includes(authority)) {
           if (context.targetSiteId && context.targetSiteId !== session.assignedSiteId) return false;
           // They can update shifts, attendance, incidents for their site
-          if (['SHIFTS', 'ATTENDANCE', 'SECURITY_INCIDENTS', 'VISITORS'].includes(context.module)) return true;
+          if (['SHIFTS', 'ATTENDANCE', 'SECURITY_INCIDENTS', 'VISITORS', 'ID_BADGES'].includes(context.module)) return true;
        }
 
        // Supervisors can only create/update operational logs

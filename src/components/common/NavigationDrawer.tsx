@@ -1,679 +1,165 @@
 import React from 'react';
+import { UserSession, CompanyTenant, PhaseAScreen } from '../../types';
 import { 
-  X, 
-  LayoutDashboard, 
-  User, 
-  Bell, 
-  Settings, 
-  Lock, 
   LogOut, 
-  ShieldCheck, 
+  X, 
+  Home, 
+  Users, 
   Building2, 
-  Sun, 
-  Moon, 
-  ChevronRight,
-  UserCheck,
-  Clock,
-  Layers,
+  CheckSquare, 
+  Calendar, 
+  DollarSign, 
+  LayoutDashboard, 
+  Settings, 
+  ShieldCheck, 
+  Boxes, 
+  QrCode, 
+  BarChart3, 
+  LifeBuoy, 
+  UserCheck, 
+  GraduationCap, 
+  ShoppingCart,
   Award,
-  PlusCircle,
-  Users,
-  CalendarDays,
-  CreditCard,
-  DollarSign,
-  Boxes,
-  QrCode,
-  BarChart3
+  Bell,
+  IdCard,
+  ShieldAlert
 } from 'lucide-react';
-import { PhaseAScreen, UserSession, CompanyTenant, UserRole } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
-import { RbacService } from '../../services/rbacService';
-import { AppLogo } from './AppLogo';
 
 interface NavigationDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  currentScreen: PhaseAScreen;
+  currentScreen: string;
   onNavigate: (screen: PhaseAScreen) => void;
-  userSession: UserSession | null;
+  onRoleSwitch?: (newRole: any) => void;
+  onLockSession?: () => void;
+  onLogout?: () => void;
+  isOnline?: boolean;
+  userSession: UserSession;
   activeCompany: CompanyTenant | null;
-  unreadNotifCount: number;
-  onRoleSwitch: (role: UserRole) => void;
-  onLockSession: () => void;
-  onLogout: () => void;
-  isOnline: boolean;
+  unreadNotifCount?: number;
 }
 
-export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
+export function NavigationDrawer({
   isOpen,
   onClose,
   currentScreen,
   onNavigate,
   userSession,
   activeCompany,
-  unreadNotifCount,
+  unreadNotifCount = 0,
+  onRoleSwitch,
   onLockSession,
-  onLogout
-}) => {
-  const { themeMode, setThemeMode, isDark } = useTheme();
+  onLogout,
+  isOnline
+}: NavigationDrawerProps) {
+  const { isDark } = useTheme();
 
   if (!isOpen) return null;
 
-  const isSuperAdmin = userSession?.role === 'SUPER_ADMIN';
+  const NavItem = ({ icon: Icon, label, screen, badge }: { icon: any, label: string, screen: PhaseAScreen, badge?: string | number }) => (
+    <button
+      onClick={() => {
+        onNavigate(screen);
+        onClose();
+      }}
+      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-all duration-150 ${
+        currentScreen === screen
+          ? 'bg-indigo-600/10 text-indigo-700 dark:text-indigo-400 font-bold'
+          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <Icon className="w-4 h-4 shrink-0" />
+        <span className="truncate">{label}</span>
+      </div>
+      {badge !== undefined && (
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
+          {badge}
+        </span>
+      )}
+    </button>
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex animate-in fade-in duration-200">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-      />
-
-      {/* Drawer Container */}
-      <div className={`relative w-80 max-w-[85vw] h-full flex flex-col z-10 shadow-2xl transition-transform duration-300 ${
-        isDark ? 'bg-slate-900 border-r border-slate-800 text-slate-100' : 'bg-white border-r border-slate-200 text-slate-900'
-      }`}>
-        {/* Header */}
-        <div className={`p-4 pb-3 border-b ${
-          isSuperAdmin
-            ? isDark ? 'border-amber-900/40 bg-amber-950/20' : 'border-amber-200 bg-amber-50/50'
-            : isDark ? 'border-slate-800 bg-slate-950/60' : 'border-slate-200 bg-indigo-50/50'
-        }`}>
-          <div className="flex items-center justify-between mb-2.5">
-            <div className="flex items-center gap-2">
-              <AppLogo size="sm" showSubtitle={true} />
-            </div>
-
-            <button
-              onClick={onClose}
-              className={`p-1.5 rounded-full transition ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-200 text-slate-600'}`}
-            >
-              <X className="w-4 h-4" />
-            </button>
+    <div className="fixed inset-0 z-50 flex">
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
+      
+      {/* Drawer */}
+      <div className={`relative w-80 max-w-[85vw] h-full shadow-2xl flex flex-col ${isDark ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'}`}>
+        {/* Drawer Header */}
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+          <div>
+            <h2 className="font-bold text-base">Shourya Enterprise ERP</h2>
+            <p className="text-xs text-slate-500 truncate">{activeCompany?.brandName || activeCompany?.companyLegalName || 'Facility Platform'}</p>
           </div>
-
-          {/* User Info Tile */}
-          {userSession && (
-            <div className={`p-2.5 rounded-xl border flex items-center gap-2.5 ${
-              isSuperAdmin
-                ? isDark ? 'bg-slate-950 border-amber-900/50' : 'bg-white border-amber-200 shadow-sm'
-                : isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
-            }`}>
-              <img
-                src={userSession.avatarUrl || undefined}
-                alt="Avatar"
-                className={`w-9 h-9 rounded-full object-cover border-2 shadow ${
-                  isSuperAdmin ? 'border-amber-500' : 'border-indigo-500'
-                }`}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold truncate">{userSession.fullName}</p>
-                <div className="flex items-center gap-1">
-                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                    isSuperAdmin
-                      ? 'bg-amber-500/20 text-amber-500 dark:text-amber-400'
-                      : 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
-                  }`}>
-                    {userSession.role}
-                  </span>
-                </div>
-                <p className="text-[10px] text-slate-400 font-mono truncate">{userSession.employeeId}</p>
-              </div>
-            </div>
-          )}
+          <button onClick={onClose} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
+            <X className="w-5 h-5" />
+          </button>
         </div>
+        
+        {/* Drawer Navigation List with 14 Modules */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-4 text-xs">
+          <div>
+            <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              Core & Workforce
+            </span>
+            <NavItem icon={LayoutDashboard} label="Enterprise Dashboard" screen="ENTERPRISE_DASHBOARD" />
+            <NavItem icon={Users} label="1. HCM Staff & Lifecycle" screen="EMPLOYEES" />
+            <NavItem icon={IdCard} label="1b. Identity Badge Master" screen="ID_BADGES" />
+            <NavItem icon={ShieldAlert} label="1c. Document Compliance" screen="COMPLIANCE" />
+            <NavItem icon={Calendar} label="2. WFM Attendance & Roster" screen="ATTENDANCE_SHIFTS" />
+            <NavItem icon={Calendar} label="2b. Shift Roster Planner" screen="SHIFT_ROSTER" />
+            <NavItem icon={DollarSign} label="3. ERP Payroll & Finance" screen="PAYROLL_COMPENSATION" />
+          </div>
 
-        {/* Navigation Items Body */}
-        <div className="flex-1 overflow-y-auto p-2.5 space-y-3">
-          
-          {/* ======================================================== */}
-          {/* 1. SUPER ADMIN EXCLUSIVE NAVIGATION                      */}
-          {/* ======================================================== */}
-          {isSuperAdmin ? (
-            <div>
-              <p className={`text-[10px] font-bold uppercase tracking-wider px-2 mb-1.5 flex items-center gap-1.5 text-amber-500`}>
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Global Platform Administration</span>
-              </p>
-              <div className="space-y-1">
-                {/* 1. Global Overview */}
-                <button
-                  onClick={() => { onNavigate('SUPER_ADMIN_DASHBOARD'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'SUPER_ADMIN_DASHBOARD'
-                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-amber-50 hover:text-amber-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <LayoutDashboard className="w-4 h-4 text-amber-400" />
-                    <span>Global Dashboard</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
+          <div>
+            <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              Operations & Supply Chain
+            </span>
+            <NavItem icon={ShieldCheck} label="4. Site Operations (Patrol/Log)" screen="SITE_OPERATIONS" />
+            <NavItem icon={QrCode} label="5. EAM Asset Tracking" screen="ASSET_TRACKING" />
+            <NavItem icon={Boxes} label="6. SCM Inventory & Stock" screen="INVENTORY_STOCK" />
+            <NavItem icon={Building2} label="7. CRM Client Accounts" screen="CLIENT_MANAGEMENT" />
+            <NavItem icon={LifeBuoy} label="11. Service Desk & SLA" screen="SERVICE_DESK" />
+            <NavItem icon={ShoppingCart} label="14. Procurement SRM & PO" screen="PROCUREMENT_SRM" />
+          </div>
 
-                {/* 2. Tenant Directory */}
-                <button
-                  onClick={() => { onNavigate('SUPER_ADMIN_COMPANIES'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'SUPER_ADMIN_COMPANIES'
-                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-amber-50 hover:text-amber-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Building2 className="w-4 h-4 text-sky-400" />
-                    <span>Tenant Management</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
+          <div>
+            <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              Talent, Learning & Governance
+            </span>
+            <NavItem icon={UserCheck} label="12. Talent Acquisition & ATS" screen="TALENT_ACQUISITION" />
+            <NavItem icon={GraduationCap} label="13. LMS & PSARA Compliance" screen="TRAINING_LMS" />
+            <NavItem icon={BarChart3} label="8. BI Reports & Analytics" screen="REPORTS_ANALYTICS" />
+            <NavItem icon={CheckSquare} label="9. BPM Task Management" screen="TASK_MANAGEMENT" />
+            <NavItem icon={Award} label="10. GRC Policy & Approvals" screen="APPROVAL_MANAGEMENT" />
+          </div>
 
-                {/* 3. Onboard New Tenant */}
-                <button
-                  onClick={() => { onNavigate('SUPER_ADMIN_CREATE_COMPANY'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'SUPER_ADMIN_CREATE_COMPANY'
-                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-amber-50 hover:text-amber-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <PlusCircle className="w-4 h-4 text-emerald-400" />
-                    <span>Register New Tenant</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-
-                {/* 4. Subscription Plans */}
-                <button
-                  onClick={() => { onNavigate('SUPER_ADMIN_SUBSCRIPTIONS'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'SUPER_ADMIN_SUBSCRIPTIONS'
-                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-amber-50 hover:text-amber-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Award className="w-4 h-4 text-purple-400" />
-                    <span>Subscription Plans & Tiers</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-
-                {/* 5. Module Entitlements */}
-                <button
-                  onClick={() => { onNavigate('SUPER_ADMIN_MODULES'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'SUPER_ADMIN_MODULES'
-                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-amber-50 hover:text-amber-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Layers className="w-4 h-4 text-indigo-400" />
-                    <span>Module Entitlements</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-
-                {/* 6. Pending User Approvals */}
-                <button
-                  onClick={() => { onNavigate('SUPER_ADMIN_PENDING_APPROVALS'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'SUPER_ADMIN_PENDING_APPROVALS'
-                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-amber-50 hover:text-amber-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <UserCheck className="w-4 h-4 text-rose-400" />
-                    <span>Pending Approvals</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-
-                {/* 7. Notifications */}
-                <button
-                  onClick={() => { onNavigate('NOTIFICATIONS'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'NOTIFICATIONS'
-                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-amber-50 hover:text-amber-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Bell className="w-4 h-4 text-amber-400" />
-                    <span>System Alerts & Audits</span>
-                  </div>
-                  {unreadNotifCount > 0 && (
-                    <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      {unreadNotifCount}
-                    </span>
-                  )}
-                </button>
-
-                {/* 8. Settings */}
-                <button
-                  onClick={() => { onNavigate('SETTINGS'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'SETTINGS'
-                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-amber-50 hover:text-amber-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Settings className="w-4 h-4 text-slate-400" />
-                    <span>Platform Settings</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* ======================================================== */
-            /* 2. TENANT / COMPANY USER NAVIGATION                      */
-            /* ======================================================== */
-            <div>
-              <p className={`text-[10px] font-bold uppercase tracking-wider px-2 mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                Company Operations
-              </p>
-              <div className="space-y-1">
-                <button
-                  onClick={() => { onNavigate('ENTERPRISE_DASHBOARD'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'ENTERPRISE_DASHBOARD'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <LayoutDashboard className="w-4 h-4 text-indigo-400" />
-                    <span>Dashboard</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-
-                
-                {RbacService.hasModuleAccess(userSession, 'SHIFTS') && (
-                  <button
-                    onClick={() => { onNavigate('TASK_MANAGEMENT'); onClose(); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                      currentScreen === 'TASK_MANAGEMENT'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : isDark 
-                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <LayoutDashboard className="w-4 h-4 text-emerald-400" />
-                      <span>Task Management</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                  </button>
-                )}
-
-                <button
-                  onClick={() => { onNavigate('MY_TASKS'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'MY_TASKS'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <UserCheck className="w-4 h-4 text-cyan-400" />
-                    <span>My Tasks</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-
-                <button
-                  onClick={() => { onNavigate('ANNOUNCEMENTS'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'ANNOUNCEMENTS'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Bell className="w-4 h-4 text-amber-400" />
-                    <span>Announcements</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-
-                {RbacService.hasModuleAccess(userSession, 'COMPANY_MANAGEMENT') && (
-                  <button
-                    onClick={() => { onNavigate('COMPANY_MANAGEMENT'); onClose(); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                      currentScreen === 'COMPANY_MANAGEMENT'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : isDark 
-                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Building2 className="w-4 h-4 text-purple-400" />
-                      <span>Company & RBAC</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                  </button>
-                )}
-
-                {RbacService.hasModuleAccess(userSession, 'APPROVAL_MANAGEMENT') && (
-                  <button
-                    onClick={() => { onNavigate('APPROVAL_MANAGEMENT'); onClose(); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                      currentScreen === 'APPROVAL_MANAGEMENT'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : isDark 
-                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <UserCheck className="w-4 h-4 text-rose-400" />
-                      <span>Staff Approvals</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                  </button>
-                )}
-
-                {RbacService.hasModuleAccess(userSession, 'EMPLOYEES') && (
-                  <button
-                    onClick={() => { onNavigate('EMPLOYEES'); onClose(); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                      currentScreen === 'EMPLOYEES'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : isDark 
-                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Users className="w-4 h-4 text-emerald-400" />
-                      <span>Employee Management</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                  </button>
-                )}
-
-                <button
-                  onClick={() => { onNavigate('ATTENDANCE_SHIFTS'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'ATTENDANCE_SHIFTS'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Clock className="w-4 h-4 text-amber-400" />
-                    <span>Attendance & Shifts</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-
-                <button
-                  onClick={() => { onNavigate('LEAVE_MANAGEMENT'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'LEAVE_MANAGEMENT'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <CalendarDays className="w-4 h-4 text-pink-400" />
-                    <span>Leave Management</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-
-                {RbacService.hasModuleAccess(userSession, 'PAYROLL') && (
-                  <button
-                    onClick={() => { onNavigate('PAYROLL_COMPENSATION'); onClose(); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                      currentScreen === 'PAYROLL_COMPENSATION'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : isDark 
-                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <DollarSign className="w-4 h-4 text-emerald-400" />
-                      <span>Payroll & Compensation</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                  </button>
-                )}
-
-                {RbacService.hasModuleAccess(userSession, 'INVENTORY') && (
-                  <button
-                    onClick={() => { onNavigate('INVENTORY_STOCK'); onClose(); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                      currentScreen === 'INVENTORY_STOCK'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : isDark 
-                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Boxes className="w-4 h-4 text-amber-400" />
-                      <span>Inventory & Stock</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                  </button>
-                )}
-
-                {RbacService.hasModuleAccess(userSession, 'ASSETS') && (
-                  <button
-                    onClick={() => { onNavigate('ASSET_TRACKING'); onClose(); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                      currentScreen === 'ASSET_TRACKING'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : isDark 
-                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <QrCode className="w-4 h-4 text-purple-400" />
-                      <span>Asset Tracking & Gear</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                  </button>
-                )}
-
-                {RbacService.hasModuleAccess(userSession, 'SITE_OPERATIONS') && (
-                  <button
-                    onClick={() => { onNavigate('SITE_OPERATIONS'); onClose(); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                      currentScreen === 'SITE_OPERATIONS'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : isDark 
-                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <ShieldCheck className="w-4 h-4 text-sky-400" />
-                      <span>Site Operations & Patrols</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                  </button>
-                )}
-
-                <button
-                  onClick={() => { onNavigate('REPORTS_ANALYTICS'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'REPORTS_ANALYTICS'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <BarChart3 className="w-4 h-4 text-indigo-400" />
-                    <span>Reports & Analytics</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-
-                {RbacService.hasModuleAccess(userSession, 'COMPANY_BILLING') && (
-                  <button
-                    onClick={() => { onNavigate('COMPANY_BILLING'); onClose(); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                      currentScreen === 'COMPANY_BILLING'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : isDark 
-                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <CreditCard className="w-4 h-4 text-emerald-400" />
-                      <span>Subscription & Plan</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                  </button>
-                )}
-
-                <button
-                  onClick={() => { onNavigate('PROFILE'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'PROFILE'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <User className="w-4 h-4 text-slate-400" />
-                    <span>Profile</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-
-                <button
-                  onClick={() => { onNavigate('NOTIFICATIONS'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'NOTIFICATIONS'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Bell className="w-4 h-4 text-indigo-400" />
-                    <span>Notifications</span>
-                  </div>
-                  {unreadNotifCount > 0 && (
-                    <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      {unreadNotifCount}
-                    </span>
-                  )}
-                </button>
-
-                <button
-                  onClick={() => { onNavigate('SETTINGS'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    currentScreen === 'SETTINGS'
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : isDark 
-                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white' 
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Settings className="w-4 h-4 text-slate-400" />
-                    <span>Settings</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-              </div>
-            </div>
-          )}
-
+          <div>
+            <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              System
+            </span>
+            <NavItem icon={Bell} label="Notifications & Alerts" screen="NOTIFICATIONS" badge={unreadNotifCount} />
+            <NavItem icon={Settings} label="Settings & Diagnostics" screen="SETTINGS" />
+          </div>
         </div>
-
-        {/* Footer Actions */}
-        <div className={`p-3.5 border-t space-y-2 ${isDark ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-slate-50'}`}>
-          {/* Theme Mode Toggle */}
-          <div className="flex items-center justify-between p-2 rounded-xl border border-slate-700/50">
-            <span className="text-xs font-medium">Theme Mode</span>
-            <div className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-lg">
-              <button
-                onClick={() => setThemeMode('LIGHT')}
-                className={`p-1.5 rounded-md text-xs transition ${!isDark ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}
-                title="Light Theme"
-              >
-                <Sun className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setThemeMode('DARK')}
-                className={`p-1.5 rounded-md text-xs transition ${isDark ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}
-                title="Dark Theme"
-              >
-                <Moon className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <button
-              onClick={() => { onLockSession(); onClose(); }}
-              className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition ${
-                isDark 
-                  ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' 
-                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <Lock className="w-3.5 h-3.5 text-amber-500" />
-              <span>Lock</span>
-            </button>
-
-            <button
-              onClick={() => { onLogout(); onClose(); }}
-              className="py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white shadow transition"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign Out</span>
-            </button>
-          </div>
+        
+        {/* Footer */}
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800">
+          <button 
+            onClick={() => {
+              if (onLogout) onLogout();
+              onClose();
+            }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out Session</span>
+          </button>
         </div>
       </div>
     </div>
   );
-};
+}

@@ -259,6 +259,7 @@ export const MASTER_APP_MODULES: AppModule[] = [
   { key: 'VISITOR_GATE_PASS', name: 'Visitor Gate Pass', description: 'Visitor check-in/out and digital badges', category: 'SECURITY', icon: 'UserCheck' },
   { key: 'MATERIAL_GATE_PASS', name: 'Material Gate Pass', description: 'Inward/outward material movement gate passes', category: 'SECURITY', icon: 'Truck' },
   { key: 'DAILY_SITE_MUSTER', name: 'Daily Site Muster', description: 'Daily site logs, weather, and guard counts', category: 'SECURITY', icon: 'ClipboardList' },
+  { key: 'ID_BADGES', name: 'Identity Badges', description: 'Employee identity card lifecycle and QR verification', category: 'HRMS', icon: 'IdCard' },
   { key: 'VENDOR_MANAGEMENT', name: 'Vendor & Contractor Management', description: 'Multi-vendor agency master, contract staff allocation, and contractor billing', category: 'HRMS', icon: 'Building' },
   { key: 'COMPLIANCE', name: 'Compliance & Audit', description: 'Regulatory compliance and statutory documents', category: 'SYSTEM', icon: 'CheckSquare' },
   { key: 'AUDIT_LOGS', name: 'System Audit Logs', description: 'Immutable trail of user and system actions', category: 'SYSTEM', icon: 'History' },
@@ -320,21 +321,27 @@ export interface ApprovalRequestRecord {
   companyName?: string;
   departmentId: string;
   departmentName: string;
-  requestedRole: UserRole;
-  emailVerified: boolean;
+  requestedRole?: UserRole;
+  emailVerified?: boolean;
   companyAdminApproval: ApprovalStatus;
   companyAdminApprovedBy?: string;
   companyAdminApprovedAt?: string;
   hrApproval: ApprovalStatus;
   hrApprovedBy?: string;
   hrApprovedAt?: string;
-  accountStatus: AccountStatus;
+  accountStatus?: AccountStatus;
   status?: 'PENDING' | 'APPROVED' | 'REJECTED';
   rejectionReason?: string;
   rejectedBy?: string;
   rejectedAt?: string;
   createdAt: string;
   updatedAt: string;
+
+  // Lifecycle extension
+  type?: 'ONBOARDING' | 'LIFECYCLE';
+  context?: 'PROMOTION' | 'TRANSFER' | 'EXIT';
+  employeeId?: string;
+  details?: any;
 }
 
 export interface AuditLogRecord {
@@ -357,38 +364,193 @@ export interface SystemConfigRecord {
 
 export interface OfflineQueueItem {
   id: string;
-  actionType: 'PUNCH_IN' | 'PUNCH_OUT' | 'PATROL_CHECK' | 'PATROL_TOUR_LOG' | 'INCIDENT_REPORT' | 'VISITOR_LOG' | 'VISITOR_CHECK_OUT' | 'MATERIAL_PASS' | 'MATERIAL_APPROVE' | 'CREATE_EMPLOYEE' | 'UPDATE_EMPLOYEE_STATUS';
+  actionType: 'PUNCH_IN' | 'PUNCH_OUT' | 'PATROL_CHECK' | 'PATROL_TOUR_LOG' | 'INCIDENT_REPORT' | 'VISITOR_LOG' | 'VISITOR_CHECK_OUT' | 'MATERIAL_PASS' | 'MATERIAL_APPROVE' | 'CREATE_EMPLOYEE' | 'UPDATE_EMPLOYEE_STATUS' | 'CREATE_ROSTER' | 'DELETE_ROSTER';
   payload: Record<string, unknown>;
   timestamp: number;
   status: 'PENDING' | 'SYNCED' | 'FAILED';
 }
 
-export interface EmployeeDocument {
+export type DocumentStatus = 
+  | 'MISSING'
+  | 'UPLOADED'
+  | 'UNDER_VERIFICATION'
+  | 'VERIFIED'
+  | 'EXPIRING_SOON'
+  | 'EXPIRED'
+  | 'RENEWAL_PENDING'
+  | 'RENEWED'
+  | 'REJECTED';
+
+export interface DocumentTypeConfig {
   id: string;
-  type: 'AADHAR' | 'PAN' | 'POLICE_VERIFICATION' | 'CONTRACT';
-  documentNumber: string;
-  fileUrl: string;
-  status: 'VERIFIED' | 'PENDING' | 'REJECTED';
-  uploadedAt: string;
+  companyId: string;
+  name: string;
+  code: string; // e.g., 'AADHAR', 'DRIVING_LICENSE'
+  isMandatory: boolean;
+  description?: string;
+  expiryAlertThresholds: number[]; // days before expiry to alert, e.g., [90, 60, 30, 15, 7, 1]
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmployeeDocumentRecord {
+  id: string;
+  companyId: string;
+  employeeId: string;
+  documentTypeCode: string;
+  documentNumber?: string;
+  fileReference: string; // Firebase Storage Path
+  fileUrl?: string; // Temporary download URL
+  issueDate?: string;
+  expiryDate?: string;
+  status: DocumentStatus;
+  
+  verificationStatus: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  verifiedBy?: string;
+  verifiedByName?: string;
+  verifiedAt?: string;
+  
+  uploadedBy: string;
+  uploadedByName: string;
+  
+  remarks?: string;
+  rejectionReason?: string;
+  
+  previousDocumentId?: string; // Link to history
+  isLatest: boolean;
+  
+  createdAt: string;
+  updatedAt: string;
+  
+  // Alert Tracking
+  lastAlertSentAt?: string;
+  lastThresholdReached?: number;
+}
+
+export type EmployeeLifecycleStatus = 
+  | 'APPLICANT'
+  | 'OFFERED'
+  | 'PRE_ONBOARDING'
+  | 'ONBOARDING'
+  | 'ACTIVE'
+  | 'PROMOTION_PENDING'
+  | 'TRANSFER_PENDING'
+  | 'SUSPENDED'
+  | 'EXIT_INITIATED'
+  | 'EXIT_PENDING'
+  | 'EXITED';
+
+export type OnboardingTaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'WAIVED' | 'OVERDUE';
+
+export interface OnboardingTask {
+  id: string;
+  title: string;
+  description?: string;
+  status: OnboardingTaskStatus;
+  isMandatory: boolean;
+  assignedToRole?: UserRole;
+  dueDate?: string;
+  completedAt?: string;
+  completedBy?: string;
+  remarks?: string;
+  waivedBy?: string;
+  waiveReason?: string;
+}
+
+export interface LifecycleHistoryRecord {
+  id: string;
+  type: 'STATUS_CHANGE' | 'PROMOTION' | 'TRANSFER' | 'EXIT' | 'ONBOARDING_TASK';
+  fromStatus?: string;
+  toStatus: string;
+  effectiveDate: string;
+  reason?: string;
+  initiatedBy: string;
+  approvedBy?: string;
+  timestamp: string;
+  details?: Record<string, any>;
+}
+
+export interface PromotionRequest {
+  id: string;
+  employeeId: string;
+  companyId: string;
+  previousDesignation: string;
+  newDesignation: string;
+  previousDepartmentId: string;
+  newDepartmentId: string;
+  previousManagerId?: string;
+  newManagerId?: string;
+  effectiveDate: string;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  initiatedBy: string;
+  approvedBy?: string;
+  createdAt: string;
+}
+
+export interface TransferRequest {
+  id: string;
+  employeeId: string;
+  companyId: string;
+  previousSiteId: string;
+  newSiteId: string;
+  previousBranchId: string;
+  newBranchId: string;
+  previousRegionId: string;
+  newRegionId: string;
+  effectiveDate: string;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  initiatedBy: string;
+  approvedBy?: string;
+  createdAt: string;
+}
+
+export interface ExitRequest {
+  id: string;
+  employeeId: string;
+  companyId: string;
+  exitType: 'RESIGNATION' | 'TERMINATION' | 'RETIREMENT' | 'CONTRACT_END' | 'ABSCONDING' | 'OTHER';
+  resignationDate?: string;
+  lastWorkingDay: string;
+  reason: string;
+  remarks?: string;
+  status: 'PENDING' | 'CLEARANCE' | 'APPROVED' | 'REJECTED';
+  initiatedBy: string;
+  approvedBy?: string;
+  exitChecklist: OnboardingTask[];
+  createdAt: string;
 }
 
 export interface EmployeeRecord {
-  id: string;
-  employeeId?: string;
+  id: string; // Internal GUID
+  employeeId: string; // Business ID (e.g. EMP1001)
+  employeeCode?: string; // Additional code if needed
   companyId: string;
-  authUid?: string;
+  authUid?: string; // Link to Firebase Auth
+  
   firstName: string;
+  middleName?: string;
   lastName: string;
-  email?: string;
+  profilePictureUrl?: string;
+  
   contactNumber: string;
+  email?: string;
+  
+  maskedAadhaar?: string;
+  panNumber?: string;
   dateOfBirth: string;
-  bloodGroup: string;
   gender: 'MALE' | 'FEMALE' | 'OTHER';
-  emergencyContact: {
-    name: string;
-    relation: string;
-    phone: string;
-  };
+  bloodGroup: string;
+  
+  joinedDate: string;
+  employmentType: 'PERMANENT' | 'CONTRACT' | 'TEMPORARY' | 'PROBATION';
+  vendorId?: string; // If employmentType is CONTRACT
+  status: 'ACTIVE' | 'PENDING_VERIFICATION' | 'SUSPENDED' | 'TERMINATED' | 'DEACTIVATED';
+  lifecycleStatus: EmployeeLifecycleStatus;
+  onboardingTasks?: OnboardingTask[];
+  
   assignedRegionId: string;
   assignedAreaId?: string;
   assignedBranchId: string;
@@ -396,29 +558,35 @@ export interface EmployeeRecord {
   departmentId: string;
   designation: string;
   
+  supervisorId?: string; // Reporting Supervisor
+  reportingManagerId?: string; // Reporting Manager
+  
+  shiftId?: string;
+  weeklyOff?: number[]; // [0-6]
+  
+  address?: string;
+  emergencyContact: {
+    name: string;
+    relation: string;
+    phone: string;
+  };
+  
+  bankDetailsRef?: string;
+  documentStatus?: 'COMPLETE' | 'INCOMPLETE' | 'PENDING_RENEWAL';
+  
   workforceCategory?: WorkforceCategory;
   organizationalGrade?: string;
   skillGrade?: SkillGrade;
   authorityLevel?: AuthorityLevel;
-  reportingManagerId?: string;
-  functionalManagerId?: string;
-  approvalAuthorityId?: string;
   dataScope?: DataScope;
-
-  status: 'ACTIVE' | 'PENDING_VERIFICATION' | 'SUSPENDED' | 'TERMINATED';
-  joinedDate: string;
-  supervisorId?: string;
-  shiftId?: string;
-  assignedShiftId?: string;
-  employmentType?: 'PERMANENT' | 'CONTRACT' | 'TEMPORARY';
-  vendorId?: string;
-  vendorName?: string;
-  profilePictureUrl?: string;
   role: UserRole;
-  documents: EmployeeDocument[];
-  createdBy: string;
+  
+  documents: EmployeeDocumentRecord[];
+  
   createdAt: string;
   updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
 }
 
 export interface RegionRecord {
@@ -476,6 +644,8 @@ export interface VendorRecord {
 export interface SiteRecord {
   id: string;
   name: string;
+  siteName?: string;
+  companyId?: string;
   branchId: string;
   clientName: string;
   address: string;
@@ -501,6 +671,66 @@ export interface DesignationRecord {
   createdAt?: string;
 }
 
+// --- Identity Badge Lifecycle ---
+
+export type BadgeStatus = 
+  | 'REQUESTED'
+  | 'APPROVED'
+  | 'ISSUED'
+  | 'ACTIVE'
+  | 'SUSPENDED'
+  | 'LOST'
+  | 'DAMAGED'
+  | 'REPLACEMENT_REQUESTED'
+  | 'RETURNED'
+  | 'EXPIRED'
+  | 'DEACTIVATED';
+
+export type BadgeType = 'REGULAR' | 'TEMPORARY' | 'VISITOR' | 'CONTRACTOR';
+
+export interface IdentityBadgeRecord {
+  id: string;
+  badgeNumber: string; // Unique Identifier
+  employeeId: string;
+  companyId: string;
+  badgeType: BadgeType;
+  status: BadgeStatus;
+  
+  issueDate: string;
+  effectiveFrom: string;
+  expiryDate: string;
+  issuedBy: string; // User ID
+  
+  activatedDate?: string;
+  deactivatedDate?: string;
+  returnDate?: string;
+  
+  replacementReason?: string;
+  lostDamagedReason?: string;
+  
+  qrIdentifier: string; // Secure secure non-sensitive identifier
+  
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
+}
+
+export interface BadgeLifecycleEvent {
+  id: string;
+  badgeId: string;
+  companyId: string;
+  employeeId: string;
+  action: string;
+  fromStatus?: BadgeStatus;
+  toStatus: BadgeStatus;
+  actorId: string;
+  actorName: string;
+  reason?: string;
+  timestamp: string;
+  details?: Record<string, any>;
+}
+
 export interface UserMembershipRecord {
   userId: string;
   email: string;
@@ -521,53 +751,99 @@ export interface UserMembershipRecord {
 export interface ShiftRecord {
   id: string;
   companyId: string;
-  siteId?: string;
-  name: string;
-  code: string;
+  shiftCode: string;
+  shiftName: string;
   startTime: string; // HH:mm format, e.g. "08:00"
   endTime: string;   // HH:mm format, e.g. "16:00"
-  gracePeriodMinutes: number; // e.g. 15
-  breakDurationMinutes: number; // e.g. 30
+  shiftDurationMinutes: number;
+  gracePeriodMinutes: number;
+  lateThresholdMinutes: number;
+  earlyDepartureThresholdMinutes: number;
+  breakDurationMinutes: number;
+  isCrossMidnight: boolean;
+  minWorkMinutes: number;
   weeklyOffDays: number[]; // 0 = Sun, 1 = Mon, ..., 6 = Sat
+  applicableSites?: string[];
+  applicableDepartments?: string[];
+  weeklyApplicability: number[]; // 0 = Sun, 1 = Mon, ..., 6 = Sat
   status: 'ACTIVE' | 'INACTIVE';
-  createdAt?: string;
-  updatedAt?: string;
-  createdBy?: string;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface AttendanceLogRecord {
+export type AttendanceStatus = 
+  | 'SCHEDULED'
+  | 'PRESENT'
+  | 'LATE'
+  | 'EARLY_DEPARTURE'
+  | 'ABSENT'
+  | 'HALF_DAY'
+  | 'ON_LEAVE'
+  | 'HOLIDAY'
+  | 'WEEKLY_OFF'
+  | 'MISSED_PUNCH'
+  | 'PENDING_REGULARIZATION'
+  | 'REGULARIZED';
+
+export type AttendanceSource = 'EMPLOYEE' | 'SUPERVISOR' | 'ADMIN' | 'IMPORT' | 'SYSTEM';
+
+export interface AttendanceRecord {
   id: string;
   companyId: string;
   employeeId: string;
   employeeName: string;
-  siteId: string;
-  siteName?: string;
+  rosterId: string;
   shiftId: string;
-  shiftName?: string;
-  date: string; // YYYY-MM-DD
-  checkInTime?: string; // ISO string
-  checkOutTime?: string; // ISO string
-  status: 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LATE' | 'EARLY_DEPARTURE' | 'ON_LEAVE' | 'PENDING_APPROVAL';
-  checkInGps?: { latitude: number; longitude: number; accuracy?: number };
-  checkOutGps?: { latitude: number; longitude: number; accuracy?: number };
-  checkInPhotoUrl?: string;
-  checkOutPhotoUrl?: string;
-  checkInMethod: 'SELF_GPS' | 'SUPERVISOR_MUSTER' | 'BIOMETRIC' | 'MANUAL_CORRECTION';
-  lateArrivalMinutes: number;
+  shiftName: string;
+  siteId: string;
+  siteName: string;
+  attendanceDate: string; // YYYY-MM-DD
+  checkIn?: string; // ISO string
+  checkOut?: string; // ISO string
+  status: AttendanceStatus;
+  lateMinutes: number;
   earlyDepartureMinutes: number;
+  workedMinutes: number;
   overtimeMinutes: number;
-  correctionNote?: string;
-  correctionRequested?: boolean;
-  correctionStatus?: 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  source: AttendanceSource;
+  checkInGps?: { 
+    latitude: number; 
+    longitude: number; 
+    accuracy?: number;
+    verification?: 'WITHIN_GEOFENCE' | 'OUTSIDE_GEOFENCE' | 'NOT_AVAILABLE';
+  };
+  checkOutGps?: { 
+    latitude: number; 
+    longitude: number; 
+    accuracy?: number;
+    verification?: 'WITHIN_GEOFENCE' | 'OUTSIDE_GEOFENCE' | 'NOT_AVAILABLE';
+  };
+  deviceInfo?: string;
+  remarks?: string;
+  regularizationRequested?: boolean;
+  regularizationReason?: string;
+  regularizationDetails?: {
+    originalStatus: AttendanceStatus;
+    requestedStatus: AttendanceStatus;
+    requestedCheckIn?: string;
+    requestedCheckOut?: string;
+  };
   approvedBy?: string;
-  createdAt: string;
-  updatedAt?: string;
+  approvedByName?: string;
+  approvedAt?: string;
   createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PatrolCheckpointRecord {
   id: string;
   companyId: string;
+  assignedRegionId?: string;
+  assignedBranchId?: string;
   siteId: string;
   siteName?: string;
   checkpointName: string;
@@ -583,6 +859,8 @@ export interface PatrolCheckpointRecord {
 export interface PatrolLogRecord {
   id: string;
   companyId: string;
+  assignedRegionId?: string;
+  assignedBranchId?: string;
   siteId: string;
   siteName?: string;
   patrolName: string;
@@ -606,6 +884,8 @@ export interface IncidentReportRecord {
   behaviorCategory?: string;
   id: string;
   companyId: string;
+  assignedRegionId?: string;
+  assignedBranchId?: string;
   siteId: string;
   siteName?: string;
   reportedById: string;
@@ -626,6 +906,8 @@ export interface IncidentReportRecord {
 export interface VisitorLogRecord {
   id: string;
   companyId: string;
+  assignedRegionId?: string;
+  assignedBranchId?: string;
   siteId: string;
   siteName?: string;
   visitorName: string;
@@ -640,6 +922,8 @@ export interface VisitorLogRecord {
   checkOutTime?: string;
   status: 'IN_SITE' | 'CHECKED_OUT';
   entryGateGuardId: string;
+  badgeReturned?: boolean;
+  checkoutNotes?: string;
   photoUrl?: string;
   createdAt: string;
 }
@@ -647,6 +931,8 @@ export interface VisitorLogRecord {
 export interface MaterialMovementRecord {
   id: string;
   companyId: string;
+  assignedRegionId?: string;
+  assignedBranchId?: string;
   siteId: string;
   siteName?: string;
   movementType: 'INWARD' | 'OUTWARD';
@@ -676,6 +962,8 @@ export interface DailySiteLogRecord {
   notes?: string;
   id: string;
   companyId: string;
+  assignedRegionId?: string;
+  assignedBranchId?: string;
   siteId: string;
   siteName: string;
   date: string; // YYYY-MM-DD
@@ -1058,6 +1346,9 @@ export type PhaseAScreen =
   | 'SESSION_LOCK'
   | 'ENTERPRISE_DASHBOARD'
   | 'COMPANY_MANAGEMENT'
+  | 'CLIENT_MANAGEMENT'
+  | 'DEPLOYMENT_MANAGEMENT'
+  | 'SHIFT_ROSTER'
   | 'EMPLOYEES'
   | 'ATTENDANCE_SHIFTS'
   | 'LEAVE_MANAGEMENT'
@@ -1079,8 +1370,14 @@ export type PhaseAScreen =
   | 'SUPER_ADMIN_MODULES'
   | 'LEGAL_POLICIES'
   | 'TASK_MANAGEMENT'
+  | 'ID_BADGES'
   | 'ANNOUNCEMENTS'
-  | 'MY_TASKS';
+  | 'MY_TASKS'
+  | 'SERVICE_DESK'
+  | 'TALENT_ACQUISITION'
+  | 'TRAINING_LMS'
+  | 'PROCUREMENT_SRM'
+  | 'COMPLIANCE';
 
 export type AppThemeMode = 'DARK' | 'LIGHT' | 'SYSTEM';
 
@@ -1128,6 +1425,9 @@ export interface InitStep {
 
 export const APP_MODULES = {
   COMPANY_MANAGEMENT: 'COMPANY_MANAGEMENT',
+  CLIENTS: 'CLIENTS',
+  DEPLOYMENTS: 'DEPLOYMENTS',
+  SHIFT_ROSTER: 'SHIFT_ROSTER',
   APPROVAL_MANAGEMENT: 'APPROVAL_MANAGEMENT',
   SITE_OPERATIONS: 'SITE_OPERATIONS',
   COMPANY_BILLING: 'COMPANY_BILLING',
@@ -1143,7 +1443,9 @@ export const APP_MODULES = {
   ANALYTICS: 'ANALYTICS',
   VISITORS: 'VISITORS',
   GUARD_PATROL: 'GUARD_PATROL',
-  SECURITY_INCIDENTS: 'SECURITY_INCIDENTS'
+  SECURITY_INCIDENTS: 'SECURITY_INCIDENTS',
+  ID_BADGES: 'ID_BADGES',
+  COMPLIANCE: 'COMPLIANCE'
 } as const;
 
 export type AppModuleKey = keyof typeof APP_MODULES;
@@ -1152,6 +1454,7 @@ export interface TaskRecord {
   id: string;
   companyId: string;
   siteId?: string;
+  siteName?: string;
   departmentTag?: string;
   assignedTo: string;
   assignedToName?: string;
@@ -1159,8 +1462,10 @@ export interface TaskRecord {
   createdByName?: string;
   title: string;
   description: string;
+  priority?: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
   dueDate?: string;
   slaDeadline?: string;
+  checklist?: { id: string; text: string; done: boolean }[];
   completionNotes?: string;
   photoUrl?: string;
   status: 'TODO' | 'IN_PROGRESS' | 'PENDING_VERIFICATION' | 'COMPLETED' | 'CANCELLED' | 'PENDING' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'RESOLVED';
@@ -1171,9 +1476,14 @@ export interface TaskRecord {
 export interface AnnouncementRecord {
   id: string;
   companyId: string;
+  assignedRegionId?: string;
+  assignedBranchId?: string;
+  title?: string;
+  category?: string;
   targetAudience: string;
   message: string;
   priority: 'NORMAL' | 'URGENT';
+  isPinned?: boolean;
   createdBy: string;
   createdByName?: string;
   createdAt: number;
@@ -1193,3 +1503,414 @@ export interface DocumentRecord {
   updatedAt: number;
   payload?: any;
 }
+
+export interface KpiSnapshotRecord {
+  id: string;
+  companyId: string;
+  date: string;
+  totalActiveEmployees: number;
+  openIncidents: number;
+  totalSlaBreaches: number;
+  activeSites: number;
+  status: 'PUBLISHED';
+  createdAt: number;
+}
+
+export interface ClientRecord {
+  id: string;
+  companyId: string;
+  clientName: string;
+  clientType: 'CORPORATE' | 'GOVERNMENT' | 'INDUSTRIAL' | 'RESIDENTIAL' | 'INSTITUTIONAL';
+  registeredAddress: string;
+  gstNumber?: string;
+  contractStartDate: string;
+  contractEndDate?: string;
+  contractStatus: 'ACTIVE' | 'EXPIRED' | 'TERMINATED' | 'UNDER_NEGOTIATION';
+  defaultBillingRateType: 'PER_SHIFT' | 'MONTHLY_FIXED' | 'HOURLY';
+  defaultBillingRate: number;
+  primaryContactName: string;
+  primaryContactPhone: string;
+  primaryContactEmail: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeploymentRecord {
+  id: string;
+  companyId: string;
+  employeeId: string;
+  employeeName: string;
+  siteId: string;
+  siteName: string;
+  clientId: string;
+  clientName: string;
+  startDate: string;
+  endDate?: string;
+  status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ON_HOLD';
+  deploymentType: 'PERMANENT_POSTING' | 'TEMPORARY' | 'RELIEF';
+  billingRateType: 'PER_SHIFT' | 'MONTHLY_FIXED' | 'HOURLY';
+  billingRate: number;
+  assignedShiftTypeId: string;
+  approvedByUserId?: string;
+  approvedAt?: string;
+  endReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type RosterStatus = 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'COMPLETED' | 'SCHEDULED';
+
+export interface RosterRecord {
+  id: string;
+  companyId: string;
+  siteId: string;
+  siteName: string;
+  employeeId: string;
+  employeeName: string;
+  shiftId: string;
+  shiftName: string;
+  date: string; // YYYY-MM-DD
+  rosterDate?: string; // For legacy compatibility during migration
+  departmentId?: string;
+  supervisorId?: string;
+  status: RosterStatus;
+  publishedAt?: string;
+  publishedBy?: string;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeploymentHistoryRecord {
+  id: string;
+  companyId: string;
+  deploymentId: string;
+  employeeId: string;
+  action: 'SITE_TRANSFER' | 'RATE_CHANGE' | 'STATUS_CHANGE';
+  previousValue: any;
+  newValue: any;
+  changedByUserId: string;
+  changedAt: string;
+  reason?: string;
+}
+
+// ============================================================================
+// MODULE 11: SERVICE MANAGEMENT / CLIENT HELPDESK
+// ============================================================================
+export type ServiceTicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type ServiceTicketStatus = 'OPEN' | 'IN_PROGRESS' | 'PENDING_CLIENT' | 'RESOLVED' | 'CLOSED' | 'REOPENED';
+export type ServiceTicketCategory = 
+  | 'GUARD_BEHAVIOR' 
+  | 'SHORT_MANPOWER' 
+  | 'EQUIPMENT_MALFUNCTION' 
+  | 'BILLING_INVOICE' 
+  | 'ACCESS_CONTROL' 
+  | 'PATROL_IRREGULARITY' 
+  | 'CLEANLINESS_HYGIENE' 
+  | 'OTHER';
+
+export interface TicketCommentRecord {
+  id: string;
+  ticketId: string;
+  companyId: string;
+  authorUserId: string;
+  authorName: string;
+  authorRole: string;
+  comment: string;
+  isInternalOnly: boolean;
+  createdAt: string;
+}
+
+export interface ServiceTicketRecord {
+  id: string;
+  ticketNumber: string; // e.g. TKT-2026-001
+  companyId: string;
+  clientId: string;
+  clientName: string;
+  siteId: string;
+  siteName: string;
+  title: string;
+  description: string;
+  category: ServiceTicketCategory;
+  priority: ServiceTicketPriority;
+  status: ServiceTicketStatus;
+  reportedByUserId: string;
+  reportedByName: string;
+  reportedByEmail?: string;
+  reportedByPhone?: string;
+  assignedToUserId?: string;
+  assignedToName?: string;
+  slaDueTime: string; // ISO string calculated from priority
+  isSlaBreached: boolean;
+  resolutionSummary?: string;
+  resolvedAt?: string;
+  resolvedByUserId?: string;
+  closedAt?: string;
+  clientRating?: number; // 1 - 5 stars
+  clientFeedbackNotes?: string;
+  linkedIncidentId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================================================
+// MODULE 12: TALENT ACQUISITION & ONBOARDING (ATS)
+// ============================================================================
+export type RequisitionStatus = 'OPEN' | 'INTERVIEWING' | 'FILLED' | 'CANCELLED';
+export type CandidateStage = 
+  | 'APPLIED' 
+  | 'SCREENING' 
+  | 'INTERVIEW' 
+  | 'BACKGROUND_VERIFICATION' 
+  | 'SELECTED' 
+  | 'OFFER_EXTENDED' 
+  | 'ONBOARDED' 
+  | 'REJECTED';
+
+export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'FAILED' | 'EXEMPTED';
+
+export interface JobRequisitionRecord {
+  id: string;
+  requisitionCode: string; // e.g. REQ-2026-012
+  companyId: string;
+  jobTitle: string;
+  departmentId: string;
+  departmentName: string;
+  siteId: string;
+  siteName: string;
+  designationId?: string;
+  openPositions: number;
+  filledPositions: number;
+  minExperienceYears: number;
+  salaryMinMonthly: number;
+  salaryMaxMonthly: number;
+  workforceCategory: WorkforceCategory;
+  jobDescription: string;
+  status: RequisitionStatus;
+  targetHiringDate: string;
+  createdByUserId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CandidateRecord {
+  id: string;
+  candidateCode: string; // e.g. CAND-8841
+  companyId: string;
+  requisitionId?: string;
+  jobTitleAppliedFor: string;
+  fullName: string;
+  gender: 'MALE' | 'FEMALE' | 'OTHER';
+  dateOfBirth: string;
+  phoneNumber: string;
+  email?: string;
+  currentAddress: string;
+  permanentAddress?: string;
+  experienceYears: number;
+  highestEducation: string;
+  aadhaarNumber?: string;
+  aadhaarVerificationStatus: VerificationStatus;
+  panNumber?: string;
+  policeVerificationStatus: VerificationStatus;
+  policeStationName?: string;
+  policeVerificationCertUrl?: string;
+  previousEmployer?: string;
+  expectedSalaryMonthly: number;
+  offeredSalaryMonthly?: number;
+  stage: CandidateStage;
+  interviewFeedback?: string;
+  interviewerRating?: number; // 1-5
+  rejectionReason?: string;
+  convertedToEmployeeId?: string;
+  onboardedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================================================
+// MODULE 13: LEARNING & COMPLIANCE / LMS
+// ============================================================================
+export type TrainingCategory = 
+  | 'PSARA_COMPLIANCE' 
+  | 'FIRE_SAFETY_EVACUATION' 
+  | 'INDUSTRIAL_FIRST_AID' 
+  | 'CRISIS_EMERGENCY_RESPONSE' 
+  | 'POSH_CODE_OF_CONDUCT' 
+  | 'FACILITY_CLEANING_SOP' 
+  | 'UNARMED_COMBAT_DEFENSE' 
+  | 'SECURITY_EQUIPMENT_OPERATION';
+
+export interface TrainingProgramRecord {
+  id: string;
+  programCode: string; // e.g. TRN-PSARA-01
+  companyId: string;
+  title: string;
+  description: string;
+  category: TrainingCategory;
+  isMandatoryForPSARA: boolean;
+  validityMonths: number; // e.g. 12 or 24 months before refresher needed
+  durationHours: number;
+  passScorePercentage: number;
+  trainerName: string;
+  trainerDesignation?: string;
+  location: string;
+  status: 'ACTIVE' | 'ARCHIVED';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TrainingEnrollmentRecord {
+  id: string;
+  companyId: string;
+  programId: string;
+  programTitle: string;
+  employeeId: string;
+  employeeName: string;
+  siteId: string;
+  siteName?: string;
+  enrollmentDate: string;
+  scheduledDate: string;
+  attendanceStatus: 'SCHEDULED' | 'PRESENT' | 'ABSENT';
+  scoreObtained?: number;
+  resultStatus: 'ENROLLED' | 'IN_PROGRESS' | 'PASSED' | 'FAILED';
+  certificateId?: string;
+  certificateNumber?: string;
+  certificateIssuedDate?: string;
+  certificateExpiryDate?: string;
+  notes?: string;
+  evaluatedByUserId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================================================
+// MODULE 14: PROCUREMENT & SOURCING / SRM
+// ============================================================================
+export type ProcurementStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'PO_ISSUED' | 'PARTIALLY_DELIVERED' | 'FULFILLED' | 'CANCELLED';
+export type PurchaseOrderStatus = 'DRAFT' | 'ISSUED' | 'PARTIALLY_RECEIVED' | 'COMPLETED' | 'CANCELLED';
+
+export interface RequisitionLineItem {
+  itemId?: string;
+  itemCode?: string;
+  itemName: string;
+  description?: string;
+  unit: string; // e.g. PCS, METERS, BOXES, LITRES
+  quantityRequested: number;
+  estimatedUnitPrice: number;
+  totalEstimatedAmount: number;
+}
+
+export interface ProcurementRequisitionRecord {
+  id: string;
+  prNumber: string; // e.g. PR-2026-004
+  companyId: string;
+  departmentId: string;
+  departmentName: string;
+  requestedByUserId: string;
+  requestedByName: string;
+  siteId: string;
+  siteName: string;
+  urgency: 'LOW' | 'NORMAL' | 'HIGH' | 'EMERGENCY';
+  requiredByDate: string;
+  justification: string;
+  items: RequisitionLineItem[];
+  totalEstimatedValue: number;
+  status: ProcurementStatus;
+  approvedByUserId?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  poId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PurchaseOrderLineItem {
+  itemId?: string;
+  itemName: string;
+  unit: string;
+  quantityOrdered: number;
+  quantityReceived: number;
+  unitPrice: number;
+  taxPercent: number;
+  totalAmount: number;
+}
+
+export interface PurchaseOrderRecord {
+  id: string;
+  poNumber: string; // e.g. PO-2026-0091
+  companyId: string;
+  prId?: string;
+  vendorId: string;
+  vendorName: string;
+  vendorGstin?: string;
+  shippingSiteId: string;
+  shippingSiteName: string;
+  deliveryAddress: string;
+  orderDate: string;
+  expectedDeliveryDate: string;
+  paymentTerms: 'ADVANCE' | 'NET_15' | 'NET_30' | 'NET_45' | 'ON_DELIVERY';
+  items: PurchaseOrderLineItem[];
+  subtotal: number;
+  taxAmount: number;
+  grandTotal: number;
+  status: PurchaseOrderStatus;
+  authorizedByUserId: string;
+  authorizedByName: string;
+  termsAndConditions?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GoodsReceiptNoteRecord {
+  id: string;
+  grnNumber: string; // e.g. GRN-2026-0034
+  companyId: string;
+  poId: string;
+  poNumber: string;
+  vendorId: string;
+  vendorName: string;
+  siteId: string;
+  siteName: string;
+  deliveryChallanNumber: string;
+  receivedDate: string;
+  receivedByUserId: string;
+  receivedByName: string;
+  vendorInvoiceNumber?: string;
+  vendorInvoiceAmount?: number;
+  itemsReceived: {
+    itemName: string;
+    unit: string;
+    quantityOrdered: number;
+    quantityReceived: number;
+    quantityAccepted: number;
+    quantityRejected: number;
+    rejectionReason?: string;
+  }[];
+  inspectionNotes?: string;
+  hasVariance: boolean;
+  createdAt: string;
+}
+
+export interface ThreeWayMatchRecord {
+  id: string;
+  companyId: string;
+  poId: string;
+  poNumber: string;
+  grnId: string;
+  grnNumber: string;
+  vendorInvoiceNumber: string;
+  vendorInvoiceDate: string;
+  poTotalAmount: number;
+  grnAcceptedValue: number;
+  invoiceTotalAmount: number;
+  varianceAmount: number;
+  isMatched: boolean;
+  matchStatus: 'EXACT_MATCH' | 'TOLERANCE_ACCEPTED' | 'DISCREPANCY_FLAGGED' | 'RESOLVED';
+  flaggedReason?: string;
+  reviewedByUserId?: string;
+  approvedForPayment: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+

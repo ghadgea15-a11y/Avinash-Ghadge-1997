@@ -327,7 +327,8 @@ export const AssetTrackingScreen: React.FC<AssetTrackingScreenProps> = ({
     const success = await FirestoreService.saveAsset(
       companyId,
       payload,
-      { uid: userSession.userId, name: userSession.fullName }
+      { uid: userSession.userId, name: userSession.fullName },
+      editingAsset || undefined
     );
 
     setSubmitting(false);

@@ -9,7 +9,7 @@ export class QueryScopeEngine {
    */
   static buildScope(
     session: UserSession,
-    collectionType: 'EMPLOYEES' | 'ATTENDANCE' | 'LEAVES' | 'ASSETS' | 'INCIDENTS' | 'VISITORS' | 'MATERIALS' | 'PAYROLL' | 'APPROVALS' | 'TASKS' | 'ANNOUNCEMENTS' | 'DOCUMENTS' | 'LOGS'
+    collectionType: 'EMPLOYEES' | 'ATTENDANCE' | 'LEAVES' | 'ASSETS' | 'INCIDENTS' | 'VISITORS' | 'MATERIALS' | 'PAYROLL' | 'APPROVALS' | 'TASKS' | 'ANNOUNCEMENTS' | 'DOCUMENTS' | 'LOGS' | 'CLIENTS' | 'DEPLOYMENTS' | 'SHIFT_ROSTERS'
   ): QueryConstraint[] {
     const authority = RbacService.getAuthorityLevel(session);
     const constraints: QueryConstraint[] = [];
@@ -28,7 +28,7 @@ export class QueryScopeEngine {
     if (authority === 'A4_REGIONAL_AREA_MANAGER' && session.assignedRegionId) {
       if (['EMPLOYEES'].includes(collectionType)) {
         constraints.push(where('assignedRegionId', '==', session.assignedRegionId));
-      } else if (['ATTENDANCE', 'INCIDENTS', 'VISITORS', 'MATERIALS', 'LEAVES', 'ASSETS', 'TASKS', 'ANNOUNCEMENTS', 'DOCUMENTS', 'LOGS'].includes(collectionType)) {
+      } else if (['ATTENDANCE', 'INCIDENTS', 'VISITORS', 'MATERIALS', 'LEAVES', 'ASSETS', 'TASKS', 'ANNOUNCEMENTS', 'DOCUMENTS', 'LOGS', 'DEPLOYMENTS', 'SHIFT_ROSTERS', 'CLIENTS'].includes(collectionType)) {
         constraints.push(where('assignedRegionId', '==', session.assignedRegionId));
       }
       return constraints;
@@ -38,7 +38,7 @@ export class QueryScopeEngine {
     if (authority === 'A5_SITE_IN_CHARGE' && session.assignedSiteId) {
       if (['EMPLOYEES'].includes(collectionType)) {
         constraints.push(where('assignedSiteId', '==', session.assignedSiteId));
-      } else if (['ATTENDANCE', 'INCIDENTS', 'VISITORS', 'MATERIALS', 'LEAVES', 'ASSETS', 'TASKS', 'ANNOUNCEMENTS', 'DOCUMENTS', 'LOGS'].includes(collectionType)) {
+      } else if (['ATTENDANCE', 'INCIDENTS', 'VISITORS', 'MATERIALS', 'LEAVES', 'ASSETS', 'TASKS', 'ANNOUNCEMENTS', 'DOCUMENTS', 'LOGS', 'DEPLOYMENTS', 'SHIFT_ROSTERS'].includes(collectionType)) {
         constraints.push(where('siteId', '==', session.assignedSiteId));
       } else {
         return constraints;
@@ -50,7 +50,7 @@ export class QueryScopeEngine {
     if (authority === 'A6_SUPERVISOR' && session.assignedSiteId) {
       if (['EMPLOYEES'].includes(collectionType)) {
         constraints.push(where('assignedSiteId', '==', session.assignedSiteId));
-      } else if (['ATTENDANCE', 'INCIDENTS', 'VISITORS', 'MATERIALS', 'LEAVES', 'ASSETS', 'TASKS', 'ANNOUNCEMENTS', 'DOCUMENTS', 'LOGS'].includes(collectionType)) {
+      } else if (['ATTENDANCE', 'INCIDENTS', 'VISITORS', 'MATERIALS', 'LEAVES', 'ASSETS', 'TASKS', 'ANNOUNCEMENTS', 'DOCUMENTS', 'LOGS', 'DEPLOYMENTS', 'SHIFT_ROSTERS'].includes(collectionType)) {
         constraints.push(where('siteId', '==', session.assignedSiteId));
       } else {
         return constraints;
@@ -67,12 +67,23 @@ export class QueryScopeEngine {
       } else if (collectionType === 'INCIDENTS') {
         constraints.push(where('reportedById', '==', session.employeeId));
       } else if (collectionType === 'ANNOUNCEMENTS') {
-        // Handled client side for target_audience
+        // Broadcasters filter on client side based on targetAudience
       } else if (collectionType === 'TASKS') {
         constraints.push(where('assignedTo', '==', session.employeeId));
+      } else if (collectionType === 'VISITORS' || collectionType === 'MATERIALS' || collectionType === 'LOGS') {
+        // Ground staff usually see logs for their assigned site if they have access
+        if (session.assignedSiteId) {
+          constraints.push(where('siteId', '==', session.assignedSiteId));
+        } else {
+          constraints.push(where('employeeId', '==', session.employeeId));
+        }
       } else if (collectionType === 'APPROVALS') {
         // Approval doesn't have employeeId, it has 'uid'
         constraints.push(where('uid', '==', session.userId));
+      } else if (collectionType === 'CLIENTS') {
+        // Ground staff do not need full client records usually, but if needed, we can restrict to their assignedSiteId? 
+        // For now, no access to CLIENTS collection directly for A7-A9
+        constraints.push(where('employeeId', '==', session.employeeId || 'UNAUTHORIZED'));
       } else {
         // Fallback lock
         constraints.push(where('employeeId', '==', session.employeeId));

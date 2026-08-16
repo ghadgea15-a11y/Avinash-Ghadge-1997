@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, AlertTriangle, ClipboardList, CheckSquare } from 'lucide-react';
 import { 
-  CompanyTenant, UserSession, PhaseAScreen, AttendanceLogRecord, TaskRecord, AnnouncementRecord
+  CompanyTenant, UserSession, PhaseAScreen, AttendanceRecord, TaskRecord, AnnouncementRecord
 } from '../../../types';
 import { FirestoreService } from '../../../services/firestoreService';
+import { OfflineSyncService } from '../../../services/offlineSyncService';
 
 interface DashboardProps {
   userSession: UserSession;
@@ -12,7 +13,7 @@ interface DashboardProps {
 }
 
 export const SupportStaffDashboard: React.FC<DashboardProps> = ({ userSession, company, onNavigate }) => {
-  const [attendance, setAttendance] = useState<AttendanceLogRecord[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
   const [announcements, setAnnouncements] = useState<AnnouncementRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +25,7 @@ export const SupportStaffDashboard: React.FC<DashboardProps> = ({ userSession, c
     }
 
     const unsubs = [
-      FirestoreService.subscribeToAttendanceLogs(userSession, company.companyId, (data) => {
+      FirestoreService.subscribeToAttendance(userSession, company.companyId, (data) => {
         setAttendance(data.filter(a => a.employeeId === userSession.employeeId));
       }),
       FirestoreService.subscribeToTasks(userSession, company.companyId, (data) => {
@@ -53,8 +54,8 @@ export const SupportStaffDashboard: React.FC<DashboardProps> = ({ userSession, c
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const punchedInToday = attendance.find(a => a.date === today && a.status === 'PRESENT');
-  const isPunchedIn = punchedInToday && !punchedInToday.checkOutTime;
+  const punchedInToday = attendance.find(a => a.attendanceDate === today && a.status === 'PRESENT');
+  const isPunchedIn = punchedInToday && !punchedInToday.checkOut;
 
   return (
     <div className="space-y-6">
@@ -69,8 +70,14 @@ export const SupportStaffDashboard: React.FC<DashboardProps> = ({ userSession, c
             {isPunchedIn ? 'ON DUTY' : 'OFF DUTY'}
           </p>
           <p className="text-xs text-slate-500 mt-2">
-            {isPunchedIn && punchedInToday.checkInTime ? `Punched in at ${new Date(punchedInToday.checkInTime).toLocaleTimeString()}` : 'Not punched in today'}
+            {isPunchedIn && punchedInToday.checkIn ? `Punched in at ${new Date(punchedInToday.checkIn).toLocaleTimeString()}` : 'Not punched in today'}
           </p>
+          <div className="mt-4 flex gap-2">
+            <button onClick={() => onNavigate('ATTENDANCE_SHIFTS')} className="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow text-sm">
+              Open Attendance Panel
+            </button>
+          </div>
+
         </div>
       </div>
 

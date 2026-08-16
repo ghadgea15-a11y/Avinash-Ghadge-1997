@@ -74,7 +74,8 @@ export async function seedTataMotorsData(companyId: string, currentUserEmployeeI
     } as any; // Cast as any because pin is an extra property
 
     // Save to Firestore
-    await FirestoreService.saveEmployee(companyId, emp);
+    const actor = { id: currentUserEmployeeId || 'SYSTEM', name: 'Seed Utility' };
+    await FirestoreService.saveEmployee(companyId, emp, actor);
     console.log(`Saved ${i}/100: ${firstName} ${lastName} (${desigObj.title}) - ID: ${employeeId} PIN: 1234`);
   }
   

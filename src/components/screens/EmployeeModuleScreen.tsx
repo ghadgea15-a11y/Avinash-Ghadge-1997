@@ -37,7 +37,14 @@ import {
 } from 'lucide-react';
 import { 
   EmployeeRecord, 
-  EmployeeDocument, 
+  EmployeeLifecycleStatus,
+  LifecycleHistoryRecord,
+  OnboardingTask,
+  OnboardingTaskStatus,
+  PromotionRequest,
+  TransferRequest,
+  ExitRequest,
+  EmployeeDocumentRecord, 
   UserSession, 
   CompanyTenant, 
   UserRole, 
@@ -48,6 +55,7 @@ import {
   DesignationRecord
 } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
+import { DocumentManagementTab } from '../employee/DocumentManagementTab';
 import { FirestoreService } from '../../services/firestoreService';
 import { SubscriptionService } from '../../services/subscriptionService';
 import { StorageService } from '../../services/storageService';
@@ -92,6 +100,33 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
   // Document upload modal state
   const [showAddDocModal, setShowAddDocModal] = useState<boolean>(false);
+  const [lifecycleHistory, setLifecycleHistory] = useState<LifecycleHistoryRecord[]>([]);
+  const [activeLifecycleTab, setActiveLifecycleTab] = useState<'TIMELINE' | 'ONBOARDING' | 'ACTIONS'>('TIMELINE');
+  const [showPromotionModal, setShowPromotionModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
+
+  const [promoForm, setPromoForm] = useState({
+    newDesignation: '',
+    newDepartmentId: '',
+    newManagerId: '',
+    effectiveDate: new Date().toISOString().split('T')[0],
+    reason: ''
+  });
+
+  const [transferForm, setTransferForm] = useState({
+    newSiteId: '',
+    newBranchId: '',
+    newRegionId: '',
+    effectiveDate: new Date().toISOString().split('T')[0],
+    reason: ''
+  });
+
+  const [exitForm, setExitForm] = useState({
+    exitType: 'RESIGNATION' as ExitRequest['exitType'],
+    lastWorkingDay: new Date().toISOString().split('T')[0],
+    reason: ''
+  });
   const [newDocData, setNewDocData] = useState<{
     type: 'AADHAR' | 'PAN' | 'POLICE_VERIFICATION' | 'CONTRACT';
     documentNumber: string;
@@ -116,8 +151,10 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
   // Form state for registration / edit
   const [formData, setFormData] = useState({
-    employeeCode: '',
+    employeeId: '', // Business ID (e.g. EMP-101)
+    employeeCode: '', // Secondary code
     firstName: '',
+    middleName: '',
     lastName: '',
     email: '',
     contactNumber: '',
@@ -133,11 +170,16 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     departmentId: 'DPT-SECURITY',
     designation: 'Security Officer',
     supervisorId: '',
+    reportingManagerId: '',
     shiftId: 'SHIFT-DAY-0800-2000',
-    employmentType: 'PERMANENT' as 'PERMANENT' | 'CONTRACT' | 'TEMPORARY',
+    employmentType: 'PERMANENT' as 'PERMANENT' | 'CONTRACT' | 'TEMPORARY' | 'PROBATION',
     vendorId: '',
     role: 'GUARD' as UserRole,
-    aadharNumber: ''
+    aadharNumber: '',
+    panNumber: '',
+    address: '',
+    bankDetailsRef: '',
+    weeklyOff: [0] as number[]
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -186,6 +228,15 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     loadOrgStructure();
   }, [currentCompanyId]);
 
+  useEffect(() => {
+    if (selectedEmployee && currentCompanyId) {
+      const unsub = FirestoreService.subscribeToLifecycleHistory(currentCompanyId, selectedEmployee.id, (data) => {
+        setLifecycleHistory(data);
+      });
+      return () => unsub();
+    }
+  }, [selectedEmployee, currentCompanyId]);
+
   // Realtime Firestore listener for employees
   useEffect(() => {
     setLoading(true);
@@ -204,7 +255,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     const active = employees.filter(e => e.status === 'ACTIVE').length;
     const pending = employees.filter(e => e.status === 'PENDING_VERIFICATION').length;
     const suspended = employees.filter(e => e.status === 'SUSPENDED').length;
-    const kycPending = employees.filter(e => (e.documents || []).some(d => d.status === 'PENDING')).length;
+    const kycPending = employees.filter(e => (e.documents || []).some(d => d.status === 'UPLOADED')).length;
     return { total, active, pending, suspended, kycPending };
   }, [employees]);
 
@@ -248,18 +299,25 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   const validateForm = async () => {
     const errors: Record<string, string> = {};
 
-    if (!editingEmployeeId && !formData.employeeCode.trim()) {
-      errors.employeeCode = 'Employee ID / Code is required';
-    } else if (!editingEmployeeId) {
+    if (!formData.employeeId.trim()) {
+      errors.employeeId = 'Employee ID is required';
+    } else {
       const codeRegex = /^[A-Z0-9_-]{3,20}$/i;
-      if (!codeRegex.test(formData.employeeCode.trim())) {
-        errors.employeeCode = 'Use 3-20 alphanumeric characters (e.g. EMP-101)';
+      if (!codeRegex.test(formData.employeeId.trim())) {
+        errors.employeeId = 'Use 3-20 alphanumeric characters (e.g. EMP-101)';
       } else {
         // Check uniqueness in Firestore
-        const exists = await FirestoreService.checkEmployeeExists(currentCompanyId, formData.employeeCode.trim());
-        if (exists) {
-          errors.employeeCode = `Employee ID ${formData.employeeCode.trim()} already exists in this tenant!`;
+        const isUnique = await FirestoreService.isEmployeeIdUnique(currentCompanyId, formData.employeeId.trim(), editingEmployeeId || undefined);
+        if (!isUnique) {
+          errors.employeeId = `Employee ID ${formData.employeeId.trim()} already exists!`;
         }
+      }
+    }
+
+    if (formData.employeeCode && formData.employeeCode.trim()) {
+      const isCodeUnique = await FirestoreService.isEmployeeCodeUnique(currentCompanyId, formData.employeeCode.trim(), editingEmployeeId || undefined);
+      if (!isCodeUnique) {
+        errors.employeeCode = `Employee Code ${formData.employeeCode.trim()} already exists!`;
       }
     }
 
@@ -282,7 +340,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     if (!editingEmployeeId) {
       if (!formData.aadharNumber.trim()) {
         errors.aadharNumber = 'Aadhaar / Identity document number is required';
-      } else if (!/^[0-9]{4}-?[0-9]{4}-?[0-9]{4}$/.test(formData.aadharNumber.trim())) {
+      } else if (!/^[0-9]{4}-?[0-9]{4}-?[0-9]{4}$/.test(formData.aadharNumber.trim().replace(/\s/g, ''))) {
         errors.aadharNumber = 'Format: 1234-5678-9012 (12 digits)';
       }
     }
@@ -304,8 +362,10 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
     setEditingEmployeeId(emp.id);
     setFormData({
-      employeeCode: emp.id || '',
+      employeeId: emp.employeeId || '',
+      employeeCode: emp.employeeCode || '',
       firstName: emp.firstName || '',
+      middleName: emp.middleName || '',
       lastName: emp.lastName || '',
       email: emp.email || '',
       contactNumber: emp.contactNumber || '',
@@ -321,15 +381,84 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       departmentId: emp.departmentId || 'DPT-SECURITY',
       designation: emp.designation || 'Security Officer',
       supervisorId: emp.supervisorId || '',
+      reportingManagerId: emp.reportingManagerId || '',
       shiftId: emp.shiftId || 'SHIFT-DAY-0800-2000',
-      employmentType: emp.employmentType || 'PERMANENT',
+      employmentType: (emp.employmentType as any) || 'PERMANENT',
       vendorId: emp.vendorId || '',
       role: emp.role || 'GUARD',
-      aadharNumber: emp.documents?.[0]?.documentNumber || ''
+      aadharNumber: emp.documents?.find(d => d.documentTypeCode === 'AADHAR')?.documentNumber || '',
+      panNumber: emp.panNumber || '',
+      address: emp.address || '',
+      bankDetailsRef: emp.bankDetailsRef || '',
+      weeklyOff: emp.weeklyOff || [0]
     });
 
     setActiveTab('REGISTER');
     setSelectedEmployee(null);
+  };
+
+  const handleUpdateOnboardingTask = async (empId: string, taskId: string, completed: boolean) => {
+    if (!activeCompany) return;
+    const actor = { id: userSession.userId, name: userSession.fullName };
+    const status: OnboardingTaskStatus = completed ? 'COMPLETED' : 'IN_PROGRESS';
+    const success = await FirestoreService.updateOnboardingTask(activeCompany.companyId, empId, taskId, { status }, actor);
+    if (success && selectedEmployee) {
+      setSelectedEmployee(prev => {
+        if (!prev) return null;
+        const updatedTasks = (prev.onboardingTasks || []).map(t => t.id === taskId ? { ...t, status, completedAt: completed ? new Date().toISOString() : undefined, completedBy: completed ? userSession.userId : undefined } : t);
+        return { ...prev, onboardingTasks: updatedTasks };
+      });
+    }
+  };
+
+  const handleInitiatePromotion = async () => {
+    if (!activeCompany || !selectedEmployee) return;
+    const actor = { id: userSession.userId, name: userSession.fullName };
+    const success = await FirestoreService.initiatePromotion(activeCompany.companyId, {
+      ...promoForm,
+      companyId: activeCompany.companyId,
+      employeeId: selectedEmployee.id,
+      previousDesignation: selectedEmployee.designation || '',
+      previousDepartmentId: selectedEmployee.departmentId || '',
+      initiatedBy: actor.id,
+    }, actor);
+    if (success) {
+      setFeedbackMessage({ text: 'Promotion request initiated and pending approval.', type: 'SUCCESS' });
+      setShowPromotionModal(false);
+    }
+  };
+
+  const handleInitiateTransfer = async () => {
+    if (!activeCompany || !selectedEmployee) return;
+    const actor = { id: userSession.userId, name: userSession.fullName };
+    const success = await FirestoreService.initiateTransfer(activeCompany.companyId, {
+      ...transferForm,
+      companyId: activeCompany.companyId,
+      employeeId: selectedEmployee.id,
+      previousSiteId: selectedEmployee.assignedSiteId || '',
+      previousBranchId: selectedEmployee.assignedBranchId || '',
+      previousRegionId: selectedEmployee.assignedRegionId || 'REG-001',
+      initiatedBy: actor.id,
+    }, actor);
+    if (success) {
+      setFeedbackMessage({ text: 'Transfer request initiated and pending approval.', type: 'SUCCESS' });
+      setShowTransferModal(false);
+    }
+  };
+
+  const handleInitiateExit = async () => {
+    if (!activeCompany || !selectedEmployee) return;
+    const actor = { id: userSession.userId, name: userSession.fullName };
+    const success = await FirestoreService.initiateExit(activeCompany.companyId, {
+      ...exitForm,
+      companyId: activeCompany.companyId,
+      employeeId: selectedEmployee.id,
+      initiatedBy: actor.id,
+    }, actor);
+    if (success) {
+      setFeedbackMessage({ text: 'Exit/Separation process initiated.', type: 'SUCCESS' });
+      setShowExitModal(false);
+    }
   };
 
   // Submit Employee Registration or Update
@@ -362,7 +491,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     }
 
 
-    const empId = editingEmployeeId || formData.employeeCode.trim();
+    const empId = editingEmployeeId || `EMP-${Date.now().toString(36).toUpperCase()}`;
 
     setUploadingFile(true);
     let finalProfileUrl = editingEmployeeId 
@@ -388,23 +517,39 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     setUploadingFile(false);
 
 
-    const existingDocs = editingEmployeeId 
+    const existingDocs: EmployeeDocumentRecord[] = editingEmployeeId 
       ? (employees.find(e => e.id === empId)?.documents || [])
       : [
           {
             id: `DOC-${Date.now()}`,
-            type: 'AADHAR' as const,
+            companyId: currentCompanyId,
+            employeeId: empId,
+            documentTypeCode: 'AADHAR',
             documentNumber: formData.aadharNumber.trim(),
+            fileReference: `companies/${currentCompanyId}/employees/${empId}/documents/AADHAR/aadhar`,
             fileUrl: aadharDocUrl,
-            status: 'PENDING' as const,
-            uploadedAt: new Date().toISOString().split('T')[0]
+            status: 'UPLOADED',
+            verificationStatus: 'PENDING',
+            uploadedBy: userSession.userId,
+            uploadedByName: userSession.fullName,
+            isLatest: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           }
         ];
 
+    const actor = {
+      id: userSession.userId,
+      name: userSession.fullName
+    };
+
     const recordPayload: EmployeeRecord = {
       id: empId,
+      employeeId: formData.employeeId.trim(),
+      employeeCode: formData.employeeCode.trim() || undefined,
       companyId: currentCompanyId,
       firstName: formData.firstName.trim(),
+      middleName: formData.middleName.trim() || undefined,
       lastName: formData.lastName.trim(),
       email: formData.email.trim() || undefined,
       contactNumber: formData.contactNumber.trim(),
@@ -422,12 +567,18 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       departmentId: formData.departmentId,
       designation: formData.designation,
       supervisorId: formData.supervisorId || undefined,
+      reportingManagerId: formData.reportingManagerId || undefined,
       shiftId: formData.shiftId,
       employmentType: formData.employmentType,
-      vendorId: formData.vendorId || undefined,
-      vendorName: formData.vendorId ? vendors.find(v => v.id === formData.vendorId)?.vendorName : undefined,
+      weeklyOff: formData.weeklyOff,
+      address: formData.address.trim() || undefined,
+      panNumber: formData.panNumber.trim() || undefined,
+      bankDetailsRef: formData.bankDetailsRef.trim() || undefined,
       status: editingEmployeeId 
         ? (employees.find(e => e.id === empId)?.status || 'ACTIVE')
+        : 'ACTIVE',
+      lifecycleStatus: editingEmployeeId 
+        ? (employees.find(e => e.id === empId)?.lifecycleStatus || 'ACTIVE')
         : 'ACTIVE',
       joinedDate: editingEmployeeId
         ? (employees.find(e => e.id === empId)?.joinedDate || new Date().toISOString().split('T')[0])
@@ -437,14 +588,15 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       createdAt: editingEmployeeId ? (employees.find(e => e.id === empId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       documents: existingDocs,
-      createdBy: employees.find(e => e.id === empId)?.createdBy || userSession?.userId || 'SYSTEM'
+      createdBy: editingEmployeeId ? (employees.find(e => e.id === empId)?.createdBy || userSession?.userId || 'SYSTEM') : (userSession?.userId || 'SYSTEM'),
+      updatedBy: userSession?.userId || 'SYSTEM'
     };
 
     if (isOnline) {
-      const success = await FirestoreService.saveEmployee(currentCompanyId, recordPayload);
+      const success = await FirestoreService.saveEmployee(currentCompanyId, recordPayload, actor);
       if (success) {
         setFeedbackMessage({ 
-          text: `Employee ${empId} (${recordPayload.firstName} ${recordPayload.lastName}) ${editingEmployeeId ? 'updated' : 'registered'} successfully!`, 
+          text: `Employee ${formData.employeeId} (${recordPayload.firstName} ${recordPayload.lastName}) ${editingEmployeeId ? 'updated' : 'registered'} successfully!`, 
           type: 'SUCCESS' 
         });
       } else {
@@ -466,8 +618,10 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     setProfilePictureFile(null);
     setAadharFile(null);
     setFormData({
+      employeeId: '',
       employeeCode: '',
       firstName: '',
+      middleName: '',
       lastName: '',
       email: '',
       contactNumber: '',
@@ -483,11 +637,16 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       departmentId: 'DPT-SECURITY',
       designation: 'Security Officer',
       supervisorId: '',
+      reportingManagerId: '',
       shiftId: 'SHIFT-DAY-0800-2000',
       employmentType: 'PERMANENT',
       vendorId: '',
       role: 'GUARD',
-      aadharNumber: ''
+      aadharNumber: '',
+      panNumber: '',
+      address: '',
+      bankDetailsRef: '',
+      weeklyOff: [0]
     });
     setFormErrors({});
   };
@@ -502,10 +661,11 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     setEmployees(prev => prev.map(e => e.id === empId ? { ...e, status } : e));
 
     if (isOnline) {
-      await FirestoreService.updateEmployeeStatus(currentCompanyId, empId, status, userSession.employeeId);
+      const actor = { id: userSession.userId, name: userSession.fullName };
+      await FirestoreService.updateEmployeeStatus(currentCompanyId, empId, status, actor);
       setFeedbackMessage({ text: `Employee ${empId} status updated to ${status}.`, type: 'SUCCESS' });
     } else {
-      OfflineSyncService.queueAction('UPDATE_EMPLOYEE_STATUS', { empId, status, approverId: userSession.employeeId });
+      OfflineSyncService.queueAction('UPDATE_EMPLOYEE_STATUS', { empId, status, approverId: userSession.userId });
       setFeedbackMessage({ text: `Status update queued offline.`, type: 'INFO' });
     }
 
@@ -524,7 +684,8 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     }
 
     if (isOnline) {
-      const success = await FirestoreService.deleteEmployee(currentCompanyId, empId);
+      const actor = { id: userSession.userId, name: userSession.fullName };
+      const success = await FirestoreService.deleteEmployee(currentCompanyId, empId, actor);
       if (success) {
         setFeedbackMessage({ text: `Employee ${empId} permanently deleted from company records.`, type: 'SUCCESS' });
         setEmployees(prev => prev.filter(e => e.id !== empId));
@@ -560,14 +721,21 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     }
     setUploadingFile(false);
 
-    const newDoc: EmployeeDocument = {
-
+    const newDoc: EmployeeDocumentRecord = {
       id: `DOC-${Date.now()}`,
-      type: newDocData.type,
+      companyId: currentCompanyId,
+      employeeId: selectedEmployee.id,
+      documentTypeCode: newDocData.type,
       documentNumber: newDocData.documentNumber.trim(),
+      fileReference: `companies/${currentCompanyId}/employees/${selectedEmployee.id}/documents/${newDocData.type}/doc`,
       fileUrl: finalDocUrl,
       status: 'VERIFIED',
-      uploadedAt: new Date().toISOString().split('T')[0]
+      verificationStatus: 'VERIFIED',
+      uploadedBy: userSession.userId,
+      uploadedByName: userSession.fullName,
+      isLatest: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     const updatedDocs = [...(selectedEmployee.documents || []), newDoc];
@@ -992,7 +1160,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-sm font-bold tracking-tight">
-                            {emp.firstName} {emp.lastName}
+                            {emp.firstName} {emp.middleName ? `${emp.middleName} ` : ''}{emp.lastName}
                           </h3>
                           <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
                             emp.status === 'ACTIVE' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' :
@@ -1004,7 +1172,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                           </span>
                         </div>
                         <p className="text-xs text-indigo-400 font-mono font-bold mt-0.5">
-                          {emp.id} • {emp.designation}
+                          {emp.employeeId || emp.id} • {emp.designation}
                         </p>
                         <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
                           <Building className="w-3 h-3 text-slate-500 shrink-0" />
@@ -1084,17 +1252,30 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {/* Employee ID / Code */}
+            {/* Employee ID (Business ID) */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Employee ID / Code *</label>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">Employee ID (Business) *</label>
               <input
                 type="text"
-                disabled={!!editingEmployeeId}
-                value={formData.employeeCode}
-                onChange={(e) => setFormData(prev => ({ ...prev, employeeCode: e.target.value.toUpperCase() }))}
+                value={formData.employeeId}
+                onChange={(e) => setFormData(prev => ({ ...prev, employeeId: e.target.value.toUpperCase() }))}
                 placeholder="e.g. EMP-101"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-bold border focus:outline-none ${
-                  editingEmployeeId ? 'opacity-60 bg-slate-950 border-slate-800' :
+                  formErrors.employeeId ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}
+              />
+              {formErrors.employeeId && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.employeeId}</p>}
+            </div>
+
+            {/* Employee Code (Secondary) */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">Employee Code (Optional)</label>
+              <input
+                type="text"
+                value={formData.employeeCode}
+                onChange={(e) => setFormData(prev => ({ ...prev, employeeCode: e.target.value.toUpperCase() }))}
+                placeholder="e.g. SE-99"
+                className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-bold border focus:outline-none ${
                   formErrors.employeeCode ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
                 }`}
               />
@@ -1112,6 +1293,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 }`}
               />
             </div>
+            
             {/* First Name */}
             <div>
               <label className="block text-[11px] font-bold text-slate-400 mb-1">First Name *</label>
@@ -1125,6 +1307,20 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 }`}
               />
               {formErrors.firstName && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.firstName}</p>}
+            </div>
+
+            {/* Middle Name */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">Middle Name</label>
+              <input
+                type="text"
+                value={formData.middleName}
+                onChange={(e) => setFormData(prev => ({ ...prev, middleName: e.target.value }))}
+                placeholder="e.g. Kumar"
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}
+              />
             </div>
 
             {/* Last Name */}
@@ -1179,6 +1375,86 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 type="date"
                 value={formData.dateOfBirth}
                 onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}
+              />
+            </div>
+
+            {/* Gender */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">Gender</label>
+              <select
+                value={formData.gender}
+                onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value as any }))}
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}
+              >
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+
+            {/* Blood Group */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">Blood Group</label>
+              <select
+                value={formData.bloodGroup}
+                onChange={(e) => setFormData(prev => ({ ...prev, bloodGroup: e.target.value }))}
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}
+              >
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+              </select>
+            </div>
+
+            {/* PAN Number */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">PAN Number</label>
+              <input
+                type="text"
+                value={formData.panNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, panNumber: e.target.value.toUpperCase() }))}
+                placeholder="ABCDE1234F"
+                className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-bold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}
+              />
+            </div>
+
+            {/* Aadhaar Number */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">Aadhaar Card Number *</label>
+              <input
+                type="text"
+                value={formData.aadharNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, aadharNumber: e.target.value }))}
+                placeholder="1234 5678 9012"
+                className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-bold border focus:outline-none ${
+                  formErrors.aadharNumber ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}
+              />
+              {formErrors.aadharNumber && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.aadharNumber}</p>}
+            </div>
+
+            {/* Address */}
+            <div className="sm:col-span-2">
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">Full Residential Address</label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                placeholder="House No, Street, Landmark, City, State, PIN"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
                   isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
                 }`}
@@ -1260,15 +1536,37 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                     <option key={d.id} value={d.title}>{d.title} (Level {d.level})</option>
                   ))
                 ) : (
-                  <>
-                    <option value="Security Officer">Security Officer</option>
-                    <option value="Senior Guard">Senior Guard</option>
-                    <option value="Field Inspector">Field Inspector</option>
-                    <option value="Site Supervisor">Site Supervisor</option>
-                    <option value="Operations Executive">Operations Executive</option>
-                  </>
+                  <option value="Security Officer">Security Officer</option>
                 )}
               </select>
+            </div>
+
+            {/* Reporting Supervisor */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">Reporting Supervisor</label>
+              <input
+                type="text"
+                value={formData.supervisorId}
+                onChange={(e) => setFormData(prev => ({ ...prev, supervisorId: e.target.value }))}
+                placeholder="Supervisor ID or Name"
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}
+              />
+            </div>
+
+            {/* Reporting Manager */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">Reporting Manager</label>
+              <input
+                type="text"
+                value={formData.reportingManagerId}
+                onChange={(e) => setFormData(prev => ({ ...prev, reportingManagerId: e.target.value }))}
+                placeholder="Manager ID or Name"
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}
+              />
             </div>
 
             {/* Employment Type */}
@@ -1276,35 +1574,17 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               <label className="block text-[11px] font-bold text-slate-400 mb-1">Employment Type *</label>
               <select
                 value={formData.employmentType}
-                onChange={(e) => setFormData(prev => ({ ...prev, employmentType: e.target.value as any, vendorId: e.target.value === 'CONTRACT' ? (vendors[0]?.id || '') : '' }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, employmentType: e.target.value as any }))}
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
                   isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
                 }`}
               >
                 <option value="PERMANENT">PERMANENT (Direct Payroll)</option>
+                <option value="PROBATION">PROBATION (Direct Payroll)</option>
                 <option value="CONTRACT">CONTRACT (Vendor Supply)</option>
                 <option value="TEMPORARY">TEMPORARY (Casual Duty)</option>
               </select>
             </div>
-
-            {formData.employmentType === 'CONTRACT' && (
-              <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Select Vendor / Agency *</label>
-                <select
-                  value={formData.vendorId}
-                  onChange={(e) => setFormData(prev => ({ ...prev, vendorId: e.target.value }))}
-                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    formErrors.vendorId ? 'border-rose-500 bg-rose-50' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
-                  }`}
-                >
-                  <option value="">-- Select Vendor --</option>
-                  {vendors.map(v => (
-                    <option key={v.id} value={v.id}>{v.vendorName} ({v.vendorCode})</option>
-                  ))}
-                </select>
-                {formErrors.vendorId && <p className="text-[10px] text-rose-500 mt-1">{formErrors.vendorId}</p>}
-              </div>
-            )}
 
             {/* Role Scope */}
             <div>
@@ -1353,35 +1633,6 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               />
               {formErrors.emergencyPhone && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.emergencyPhone}</p>}
             </div>
-
-            {/* Aadhaar / ID Number (New onboarding only) */}
-            {!editingEmployeeId && (
-              <>
-              <div>
-                                <label className="block text-[11px] font-bold text-slate-400 mb-1">Aadhaar Card Number *</label>
-                <input
-                  type="text"
-                  value={formData.aadharNumber}
-                  onChange={(e) => setFormData(prev => ({ ...prev, aadharNumber: e.target.value }))}
-                  placeholder="1234-5678-9012"
-                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    formErrors.aadharNumber ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
-                  }`}
-                />
-                {formErrors.aadharNumber && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.aadharNumber}</p>}
-              </div>
-              <div className="mt-3">
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Aadhaar File / Scan (Optional)</label>
-                <input
-                  type="file"
-                  onChange={(e) => setAadharFile(e.target.files?.[0] || null)}
-                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200'
-                  }`}
-                />
-              </div>
-              </>
-            )}
           </div>
 
           <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
@@ -1422,7 +1673,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             </p>
           </div>
 
-          {employees.filter(e => e.status === 'PENDING_VERIFICATION' || (e.documents || []).some(d => d.status === 'PENDING')).length === 0 ? (
+          {employees.filter(e => e.status === 'PENDING_VERIFICATION' || (e.documents || []).some(d => d.status === 'UPLOADED')).length === 0 ? (
             <div className={`p-8 text-center rounded-3xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
               <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
               <h4 className="text-sm font-bold">Verification Queue Clear</h4>
@@ -1430,7 +1681,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             </div>
           ) : (
             employees
-              .filter(e => e.status === 'PENDING_VERIFICATION' || (e.documents || []).some(d => d.status === 'PENDING'))
+              .filter(e => e.status === 'PENDING_VERIFICATION' || (e.documents || []).some(d => d.status === 'UPLOADED'))
               .map(emp => (
                 <div key={emp.id} className={`p-4 rounded-2xl border space-y-3 ${
                   isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
@@ -1473,11 +1724,11 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                       <div key={doc.id} className="flex items-center justify-between text-xs bg-slate-950/40 p-2 rounded-xl border border-slate-800/80">
                         <div className="flex items-center gap-2">
                           <FileText className="w-3.5 h-3.5 text-indigo-400" />
-                          <span className="font-mono font-bold">{doc.type}:</span>
-                          <span>{maskDocumentNumber(doc.documentNumber)}</span>
+                          <span className="font-mono font-bold">{doc.documentTypeCode}:</span>
+                          <span>{maskDocumentNumber(doc.documentNumber || '')}</span>
                         </div>
 
-                        {doc.status === 'PENDING' ? (
+                        {doc.status === 'UPLOADED' ? (
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleVerifyDoc(emp.id, doc.id, 'VERIFIED')}
@@ -1556,8 +1807,8 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 </div>
                 {selectedEmployee.employmentType === 'CONTRACT' && (
                   <div className="col-span-2">
-                    <span className="text-slate-500 text-[10px]">Vendor / Agency Name:</span>
-                    <p className="font-bold text-amber-400">{selectedEmployee.vendorName || selectedEmployee.vendorId || 'N/A'}</p>
+                    <span className="text-slate-500 text-[10px]">Vendor / Agency ID:</span>
+                    <p className="font-bold text-amber-400">{selectedEmployee.vendorId || 'N/A'}</p>
                   </div>
                 )}
                 <div>
@@ -1599,49 +1850,144 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 </div>
               </div>
 
-              {/* KYC Documents */}
-              <div className="p-3 rounded-2xl border border-slate-800 space-y-2">
+              {/* KYC Documents Section Replaced with Tab */}
+              <div className="p-3 rounded-2xl border border-slate-800">
+                <DocumentManagementTab 
+                  employee={selectedEmployee} 
+                  userSession={userSession} 
+                  onUpdate={() => {
+                    // Update the employee in the main list to reflect new documents
+                    setEmployees(prev => prev.map(e => e.id === selectedEmployee.id ? { ...e } : e));
+                  }} 
+                />
+              </div>
+
+              {/* LIFECYCLE & TIMELINE SECTION */}
+              <div className="pt-3 border-t border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Identity & Compliance Documents</p>
-                  {canManageEmployees && (
-                    <button
-                      onClick={() => setShowAddDocModal(true)}
-                      className="text-[10px] font-bold text-indigo-400 hover:underline flex items-center gap-1"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>{uploadingFile ? 'Uploading...' : 'Attach Document'}</span>
-                    </button>
-                  )}
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-500" />
+                    Employee Lifecycle & Service Timeline
+                  </p>
+                  <div className="flex bg-slate-950/60 p-0.5 rounded-lg border border-slate-800">
+                    {(['TIMELINE', 'ONBOARDING', 'ACTIONS'] as const).map(tab => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveLifecycleTab(tab)}
+                        className={`px-2 py-1 rounded text-[9px] font-black transition-all ${
+                          activeLifecycleTab === tab 
+                            ? 'bg-indigo-600 text-white shadow-sm' 
+                            : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {(selectedEmployee.documents || []).length === 0 ? (
-                  <p className="text-[11px] text-slate-500 italic">No KYC documents attached yet.</p>
-                ) : (
-                  (selectedEmployee.documents || []).map(d => (
-                    <div key={d.id} className="p-2 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-3.5 h-3.5 text-indigo-400" />
-                        <span className="font-mono font-bold text-indigo-300">{d.type}:</span>
-                        <span>{maskDocumentNumber(d.documentNumber)}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {d.fileUrl && (
-                          <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-indigo-300">
-                            <Eye className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                        <span className={`text-[10px] font-bold ${d.status === 'VERIFIED' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                          {d.status}
-                        </span>
+                {activeLifecycleTab === 'TIMELINE' && (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1 text-slate-300">
+                    {lifecycleHistory.length === 0 ? (
+                      <p className="text-[10px] text-slate-500 italic py-2">No history recorded for this employee.</p>
+                    ) : (
+                      lifecycleHistory.map((event, idx) => (
+                        <div key={event.id} className="relative pl-4 pb-3 last:pb-0 border-l border-slate-800">
+                          <div className="absolute -left-[4.5px] top-1 w-2 h-2 rounded-full bg-indigo-500 ring-4 ring-slate-900" />
+                          <div className="text-[10px] flex items-center justify-between">
+                            <span className="font-bold text-indigo-300">{event.type.replace(/_/g, ' ')}</span>
+                            <span className="text-slate-500 font-mono">{new Date(event.effectiveDate).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">{event.reason}</p>
+                          <div className="text-[9px] text-slate-600 flex items-center gap-1 mt-1">
+                            <User className="w-2.5 h-2.5" />
+                            <span>Action by: {event.initiatedBy}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
 
-                        {canManageEmployees && (
-                          <button onClick={() => handleDeleteDocument(d.id, d.fileUrl)} className="p-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400" title="Delete">
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        )}
+                {activeLifecycleTab === 'ONBOARDING' && (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {(selectedEmployee.onboardingTasks || []).length === 0 ? (
+                      <div className="p-4 text-center bg-slate-950/40 rounded-xl border border-slate-800">
+                        <BadgeCheck className="w-8 h-8 text-emerald-500/50 mx-auto mb-1" />
+                        <p className="text-[10px] text-slate-400">This employee has no active onboarding checklist.</p>
                       </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold text-slate-500">Progress: {Math.round(((selectedEmployee.onboardingTasks || []).filter(t => t.status === 'COMPLETED').length / (selectedEmployee.onboardingTasks || []).length) * 100)}%</span>
+                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800`}>
+                            {selectedEmployee.lifecycleStatus}
+                          </span>
+                        </div>
+                        {(selectedEmployee.onboardingTasks || []).map(task => (
+                          <div key={task.id} className="flex items-center justify-between p-2 rounded-xl bg-slate-950/60 border border-slate-800 group">
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => handleUpdateOnboardingTask(selectedEmployee.id, task.id, task.status !== 'COMPLETED')}
+                                disabled={!canApproveOnboarding}
+                                className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                                  task.status === 'COMPLETED' 
+                                    ? 'bg-emerald-600 border-emerald-500 text-white' 
+                                    : 'border-slate-700 hover:border-indigo-500'
+                                }`}
+                              >
+                                {task.status === 'COMPLETED' && <CheckCircle2 className="w-3 h-3" />}
+                              </button>
+                              <div>
+                                <p className={`text-[11px] font-bold ${task.status === 'COMPLETED' ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+                                  {task.title}
+                                  {task.isMandatory && <span className="text-rose-500 ml-1">*</span>}
+                                </p>
+                                <p className="text-[9px] text-slate-500">{task.description}</p>
+                              </div>
+                            </div>
+                            {task.status === 'COMPLETED' && (
+                              <div className="text-[8px] text-slate-600 font-mono text-right">
+                                DONE: {new Date(task.completedAt!).toLocaleDateString()}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeLifecycleTab === 'ACTIONS' && (
+                  <div className="grid grid-cols-1 gap-2">
+                    <p className="text-[10px] text-slate-500 mb-1">Trigger career events, transfers, or offboarding workflows:</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setShowPromotionModal(true)}
+                        disabled={selectedEmployee.status !== 'ACTIVE'}
+                        className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        Initiate Promotion
+                      </button>
+                      <button
+                        onClick={() => setShowTransferModal(true)}
+                        disabled={selectedEmployee.status !== 'ACTIVE'}
+                        className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                      >
+                        <ArrowUpDown className="w-3 h-3" />
+                        Internal Transfer
+                      </button>
+                      <button
+                        onClick={() => setShowExitModal(true)}
+                        disabled={['TERMINATED', 'EXITED'].includes(selectedEmployee.status)}
+                        className="px-3 py-2 rounded-xl bg-rose-900/60 hover:bg-rose-900 text-rose-100 disabled:opacity-50 text-[10px] font-bold flex items-center gap-1.5 border border-rose-800"
+                      >
+                        <XCircle className="w-3 h-3" />
+                        Initiate Separation / Exit
+                      </button>
                     </div>
-                  ))
+                  </div>
                 )}
               </div>
             </div>
@@ -1795,6 +2141,226 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 className="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold"
               >
                 Delete Record
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PROMOTION MODAL */}
+      {showPromotionModal && selectedEmployee && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <h3 className="text-sm font-bold flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <span>Initiate Promotion Request</span>
+            </h3>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">New Designation *</label>
+                <select
+                  value={promoForm.newDesignation}
+                  onChange={(e) => setPromoForm(prev => ({ ...prev, newDesignation: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <option value="">Select New Rank</option>
+                  {designations.map(d => <option key={d.id} value={d.title}>{d.title}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Effective Date *</label>
+                <input
+                  type="date"
+                  value={promoForm.effectiveDate}
+                  onChange={(e) => setPromoForm(prev => ({ ...prev, effectiveDate: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Reason / Merit Details *</label>
+                <textarea
+                  value={promoForm.reason}
+                  onChange={(e) => setPromoForm(prev => ({ ...prev, reason: e.target.value }))}
+                  placeholder="Explain why this employee is being promoted..."
+                  className={`w-full px-3 py-2 rounded-xl text-xs border focus:outline-none min-h-[80px] ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+              <button
+                onClick={() => setShowPromotionModal(false)}
+                className="px-4 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleInitiatePromotion}
+                disabled={!promoForm.newDesignation || !promoForm.reason}
+                className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold disabled:opacity-50"
+              >
+                Submit Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TRANSFER MODAL */}
+      {showTransferModal && selectedEmployee && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <h3 className="text-sm font-bold flex items-center gap-2">
+              <ArrowUpDown className="w-4 h-4 text-emerald-400" />
+              <span>Internal Transfer / Re-deployment</span>
+            </h3>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Destination Site *</label>
+                <select
+                  value={transferForm.newSiteId}
+                  onChange={(e) => {
+                    const site = sites.find(s => s.id === e.target.value);
+                    setTransferForm(prev => ({ 
+                      ...prev, 
+                      newSiteId: e.target.value,
+                      newBranchId: site?.branchId || '',
+                      newRegionId: site?.branchId || 'REG-001'
+                    }));
+                  }}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <option value="">Select Target Site</option>
+                  {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Effective Date *</label>
+                <input
+                  type="date"
+                  value={transferForm.effectiveDate}
+                  onChange={(e) => setTransferForm(prev => ({ ...prev, effectiveDate: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Reason for Transfer *</label>
+                <textarea
+                  value={transferForm.reason}
+                  onChange={(e) => setTransferForm(prev => ({ ...prev, reason: e.target.value }))}
+                  placeholder="Structural headcount adjustment, client request, etc."
+                  className={`w-full px-3 py-2 rounded-xl text-xs border focus:outline-none min-h-[80px] ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+              <button
+                onClick={() => setShowTransferModal(false)}
+                className="px-4 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleInitiateTransfer}
+                disabled={!transferForm.newSiteId || !transferForm.reason}
+                className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold disabled:opacity-50"
+              >
+                Submit Transfer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EXIT MODAL */}
+      {showExitModal && selectedEmployee && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <h3 className="text-sm font-bold flex items-center gap-2">
+              <XCircle className="w-4 h-4 text-rose-400" />
+              <span>Initiate Exit / Separation</span>
+            </h3>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Exit Type *</label>
+                <select
+                  value={exitForm.exitType}
+                  onChange={(e) => setExitForm(prev => ({ ...prev, exitType: e.target.value as any }))}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <option value="RESIGNATION">Resignation (Voluntary)</option>
+                  <option value="TERMINATION">Termination (Involuntary)</option>
+                  <option value="RETIREMENT">Retirement</option>
+                  <option value="ABSCONDING">Absconding</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Last Working Day *</label>
+                <input
+                  type="date"
+                  value={exitForm.lastWorkingDay}
+                  onChange={(e) => setExitForm(prev => ({ ...prev, lastWorkingDay: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Reason / Remarks *</label>
+                <textarea
+                  value={exitForm.reason}
+                  onChange={(e) => setExitForm(prev => ({ ...prev, reason: e.target.value }))}
+                  placeholder="Exit interview summary or termination cause..."
+                  className={`w-full px-3 py-2 rounded-xl text-xs border focus:outline-none min-h-[80px] ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+              <button
+                onClick={() => setShowExitModal(false)}
+                className="px-4 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleInitiateExit}
+                disabled={!exitForm.reason}
+                className="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold disabled:opacity-50"
+              >
+                Initiate Exit
               </button>
             </div>
           </div>

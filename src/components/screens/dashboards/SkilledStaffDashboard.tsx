@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, AlertTriangle, CheckSquare, Wrench, Shield, MonitorSmartphone } from 'lucide-react';
 import { 
-  CompanyTenant, UserSession, PhaseAScreen, AttendanceLogRecord, 
+  CompanyTenant, UserSession, PhaseAScreen, AttendanceRecord, 
   AssetRecord, IncidentReportRecord, TaskRecord, AnnouncementRecord
 } from '../../../types';
 import { FirestoreService } from '../../../services/firestoreService';
+import { OfflineSyncService } from '../../../services/offlineSyncService';
 
 interface DashboardProps {
   userSession: UserSession;
@@ -13,7 +14,7 @@ interface DashboardProps {
 }
 
 export const SkilledStaffDashboard: React.FC<DashboardProps> = ({ userSession, company, onNavigate }) => {
-  const [attendance, setAttendance] = useState<AttendanceLogRecord[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [assets, setAssets] = useState<AssetRecord[]>([]);
   const [incidents, setIncidents] = useState<IncidentReportRecord[]>([]);
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
@@ -27,7 +28,7 @@ export const SkilledStaffDashboard: React.FC<DashboardProps> = ({ userSession, c
     }
 
     const unsubs = [
-      FirestoreService.subscribeToAttendanceLogs(userSession, company.companyId, (data) => {
+      FirestoreService.subscribeToAttendance(userSession, company.companyId, (data) => {
         setAttendance(data.filter(a => a.employeeId === userSession.employeeId));
       }),
       FirestoreService.subscribeToAssets(userSession, company.companyId, (data) => {
@@ -63,8 +64,8 @@ export const SkilledStaffDashboard: React.FC<DashboardProps> = ({ userSession, c
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const punchedInToday = attendance.find(a => a.date === today && a.status === 'PRESENT');
-  const isPunchedIn = punchedInToday && !punchedInToday.checkOutTime;
+  const punchedInToday = attendance.find(a => a.attendanceDate === today && a.status === 'PRESENT');
+  const isPunchedIn = punchedInToday && !punchedInToday.checkOut;
 
   const openIncidents = incidents.filter(i => i.status === 'OPEN' || i.status === 'UNDER_INVESTIGATION').length;
 
@@ -81,10 +82,14 @@ export const SkilledStaffDashboard: React.FC<DashboardProps> = ({ userSession, c
             {isPunchedIn ? 'ON DUTY' : 'OFF DUTY'}
           </p>
           <p className="text-xs text-slate-500 mt-2">
-            {isPunchedIn && punchedInToday.checkInTime ? `Punched in at ${new Date(punchedInToday.checkInTime).toLocaleTimeString()}` : 'Not punched in today'}
+            {isPunchedIn && punchedInToday.checkIn ? `Punched in at ${new Date(punchedInToday.checkIn).toLocaleTimeString()}` : 'Not punched in today'}
           </p>
+          <div className="mt-4 flex gap-2">
+            <button onClick={() => onNavigate('ATTENDANCE_SHIFTS')} className="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow text-sm">
+              Open Attendance Panel
+            </button>
+          </div>
         </div>
-
         {/* Assigned Equipment */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
           <div className="flex items-center justify-between mb-4">

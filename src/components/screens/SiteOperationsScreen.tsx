@@ -46,6 +46,7 @@ import {
   EmployeeRecord 
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { StorageService } from '../../services/storageService';
 import { OfflineSyncService } from '../../services/offlineSyncService';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -115,8 +116,12 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     title: string;
     category: IncidentReportRecord['category'];
     severity: IncidentReportRecord['severity'];
+    id?: string;
     type: 'INCIDENT' | 'COMPLAINT' | 'BBS_OBSERVATION';
     description: string;
+    behaviorCategory?: string;
+    slaDeadline?: string;
+    photoFile?: File | null;
   }>({ siteId: '', title: '', category: 'SECURITY_BREACH', severity: 'MEDIUM', description: '', type: 'INCIDENT' });
 
   // 3. Visitor Check-in Modal
@@ -145,6 +150,62 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     driverName: string;
     driverPhone: string;
   }>({ siteId: '', movementType: 'INWARD', gatePassNumber: '', materialDescription: '', quantity: '1 Unit', supplierVendorName: '', vehicleNumber: '', driverName: '', driverPhone: '' });
+
+  // 5. Visitor Check-Out Modal (Gate Pass Return Validation)
+  const [isVisitorCheckoutModalOpen, setIsVisitorCheckoutModalOpen] = useState<boolean>(false);
+  const [selectedVisitorForCheckout, setSelectedVisitorForCheckout] = useState<VisitorLogRecord | null>(null);
+  const [visitorCheckoutForm, setVisitorCheckoutForm] = useState<{
+    badgeReturned: boolean;
+    notes: string;
+  }>({ badgeReturned: true, notes: '' });
+
+  // 6. Site Inspection Modal
+  const [isInspectionModalOpen, setIsInspectionModalOpen] = useState<boolean>(false);
+  const [inspectionForm, setInspectionForm] = useState<{
+    siteId: string;
+    date: string;
+    guardsCountOnDuty: number;
+    score: number;
+    accessControlOk: boolean;
+    cctvLightingOk: boolean;
+    fireSafetyOk: boolean;
+    turnoutOk: boolean;
+    notes: string;
+  }>({
+    siteId: '',
+    date: new Date().toISOString().split('T')[0],
+    guardsCountOnDuty: 4,
+    score: 95,
+    accessControlOk: true,
+    cctvLightingOk: true,
+    fireSafetyOk: true,
+    turnoutOk: true,
+    notes: 'Facility security perimeter and access logs inspected and compliant.'
+  });
+
+  // 7. Shift Handover Modal
+  const [isHandoverModalOpen, setIsHandoverModalOpen] = useState<boolean>(false);
+  const [handoverForm, setHandoverForm] = useState<{
+    siteId: string;
+    date: string;
+    incomingSupervisorId: string;
+    incomingSupervisorName: string;
+    keysTransferred: boolean;
+    radiosTransferred: boolean;
+    logbooksTransferred: boolean;
+    musterVerified: boolean;
+    notes: string;
+  }>({
+    siteId: '',
+    date: new Date().toISOString().split('T')[0],
+    incomingSupervisorId: '',
+    incomingSupervisorName: '',
+    keysTransferred: true,
+    radiosTransferred: true,
+    logbooksTransferred: true,
+    musterVerified: true,
+    notes: 'Shift handover complete. All equipment, master keys, and muster logs verified.'
+  });
 
   // Active Patrol Simulation
   const [activePatrolCheckpointsVisited, setActivePatrolCheckpointsVisited] = useState<string[]>([]);
@@ -209,6 +270,8 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     const newCp: PatrolCheckpointRecord = {
       id: `CP-${Date.now()}`,
       companyId,
+      assignedRegionId: userSession.assignedRegionId,
+      assignedBranchId: userSession.assignedBranchId,
       siteId: finalSiteId,
       checkpointName: checkpointForm.checkpointName.trim(),
       code,
@@ -268,6 +331,8 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     const patrolLog: PatrolLogRecord = {
       id: `PATROL-${Date.now()}`,
       companyId,
+      assignedRegionId: userSession.assignedRegionId,
+      assignedBranchId: userSession.assignedBranchId,
       siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""),
       siteName: siteObj?.name || 'Main Site',
       patrolName: `Routine Patrol #${patrolLogs.length + 1}`,
@@ -307,38 +372,95 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     }
 
     const siteObj = sites.find(s => s.id === incidentForm.siteId);
+    const incId = incidentForm.id || `INC-${Date.now()}`;
+    let uploadedPhotoUrls: string[] = [];
+    
+    setIsLoading(true);
+    
+    if (incidentForm.photoFile && isOnline) {
+      try {
+        const path = `companies/${companyId}/incidents/${incId}/${incidentForm.photoFile.name}`;
+        const url = await StorageService.uploadFile(path, incidentForm.photoFile);
+        uploadedPhotoUrls.push(url);
+      } catch (err) {
+        setStatusMsg({ type: 'ERROR', text: 'Failed to upload photo.' });
+        setIsLoading(false);
+        return;
+      }
+    }
+
     const newInc: IncidentReportRecord = {
-      id: `INC-${Date.now()}`,
+      id: incId,
       companyId,
+      assignedRegionId: userSession.assignedRegionId,
+      assignedBranchId: userSession.assignedBranchId,
       siteId: incidentForm.siteId || (selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "")),
       siteName: siteObj?.name || 'Main Site',
       reportedById: userSession.employeeId,
       reportedByName: userSession.fullName,
+      type: incidentForm.type,
       title: incidentForm.title.trim(),
+      behaviorCategory: incidentForm.behaviorCategory,
+      slaDeadline: incidentForm.slaDeadline,
       category: incidentForm.category,
       severity: incidentForm.severity,
       description: incidentForm.description.trim(),
-      status: 'OPEN',
+      status: incidentForm.type === 'BBS_OBSERVATION' ? 'RECORDED' : 'OPEN',
+      photoUrls: uploadedPhotoUrls,
       reportedAt: new Date().toISOString()
     };
 
-    setIsLoading(true);
     if (!isOnline) {
       OfflineSyncService.queueAction('INCIDENT_REPORT', { companyId, data: newInc });
       setIsIncidentModalOpen(false);
       setStatusMsg({ type: 'INFO', text: 'Offline: Incident Report queued for sync.' });
+      setIsLoading(false);
       return;
     }
+    
     const ok = await FirestoreService.saveIncidentReport(companyId, newInc);
+    
+    if (ok && newInc.severity === 'CRITICAL' && !incidentForm.id) {
+       // Only notify on creation
+       await FirestoreService.createNotification({
+          id: `NOTIF-${Date.now()}`,
+          title: 'CRITICAL INCIDENT REPORTED',
+          message: `${newInc.title} at ${newInc.siteName}`,
+          type: 'ALERT',
+          timestamp: new Date().toISOString(),
+          isRead: false,
+          siteId: newInc.siteId
+       });
+    }
+    
     setIsLoading(false);
 
     if (ok) {
       setStatusMsg({ type: 'SUCCESS', text: `Incident '${newInc.title}' reported.` });
       setIsIncidentModalOpen(false);
-      setIncidentForm({ siteId: selectedSiteId, title: '', category: 'SECURITY_BREACH', severity: 'MEDIUM', description: '', type: 'INCIDENT' as const });
+      setIncidentForm({ siteId: selectedSiteId, title: '', category: 'SECURITY_BREACH', severity: 'MEDIUM', description: '', type: 'INCIDENT' as const, photoFile: null });
     } else {
       setStatusMsg({ type: 'ERROR', text: 'Failed to report incident.' });
     }
+  };
+
+  const getComplaintSlaStatus = (inc: IncidentReportRecord) => {
+    if (inc.status === 'RESOLVED' || inc.status === 'CLOSED') {
+      return { status: 'RESOLVED', label: 'Resolved', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' };
+    }
+    if (!inc.slaDeadline) {
+      return { status: 'NO_SLA', label: 'No SLA Set', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' };
+    }
+    const deadlineTime = new Date(inc.slaDeadline).getTime();
+    const now = Date.now();
+    const diffMs = deadlineTime - now;
+    if (diffMs < 0) {
+      return { status: 'BREACHED', label: 'SLA BREACHED', color: 'bg-rose-600 text-white animate-pulse' };
+    }
+    if (diffMs < 4 * 3600 * 1000) {
+      return { status: 'AT_RISK', label: 'SLA AT RISK (<4h)', color: 'bg-amber-500 text-white font-bold' };
+    }
+    return { status: 'ON_TRACK', label: 'SLA On Track', color: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' };
   };
 
   const handleUpdateIncidentStatus = async (reportId: string, status: IncidentReportRecord['status']) => {
@@ -352,6 +474,21 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
       userSession.userId,
       userSession.fullName
     );
+
+    // If escalated, route notification to A3/A4 Operations leadership
+    if (ok && status === 'ESCALATED') {
+      const inc = incidents.find(i => i.id === reportId);
+      await FirestoreService.createNotification({
+        id: `NOTIF-ESC-${Date.now()}`,
+        title: 'ESCALATED INCIDENT/COMPLAINT - A3/A4 ACTION REQUIRED',
+        message: `Incident/Complaint "${inc?.title || reportId}" has been escalated for site ${inc?.siteName || selectedSiteId}. Immediate review required by Operations Leadership.`,
+        type: 'ALERT',
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        siteId: inc?.siteId || selectedSiteId
+      });
+    }
+
     setIsLoading(false);
 
     if (ok) {
@@ -362,7 +499,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   };
 
   // ----------------------------------------------------
-  // HANDLERS: VISITORS
+  // HANDLERS: VISITORS & GATE PASS RETURN VALIDATION
   // ----------------------------------------------------
   const handleCheckInVisitor = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -378,6 +515,8 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     const newVis: VisitorLogRecord = {
       id: `VISLOG-${Date.now()}`,
       companyId,
+      assignedRegionId: userSession.assignedRegionId,
+      assignedBranchId: userSession.assignedBranchId,
       siteId: visitorForm.siteId || (selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "")),
       siteName: siteObj?.name || 'Main Site',
       visitorName: visitorForm.visitorName.trim(),
@@ -413,23 +552,155 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     }
   };
 
-  const handleCheckOutVisitor = async (visitorId: string) => {
-    if (!companyId) return;
+  const handleOpenVisitorCheckout = (visitor: VisitorLogRecord) => {
+    setSelectedVisitorForCheckout(visitor);
+    setVisitorCheckoutForm({ badgeReturned: true, notes: '' });
+    setIsVisitorCheckoutModalOpen(true);
+  };
+
+  const handleConfirmVisitorCheckout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!companyId || !selectedVisitorForCheckout) return;
     setIsLoading(true);
     let ok = false;
     if (!isOnline) {
-      OfflineSyncService.queueAction('VISITOR_CHECK_OUT', { companyId, visitorId, checkOutTime: new Date().toISOString() });
+      OfflineSyncService.queueAction('VISITOR_CHECK_OUT', {
+        companyId,
+        visitorId: selectedVisitorForCheckout.id,
+        checkOutTime: new Date().toISOString(),
+        badgeReturned: visitorCheckoutForm.badgeReturned,
+        notes: visitorCheckoutForm.notes
+      });
       ok = true;
       setStatusMsg({ type: 'INFO', text: 'Offline: Visitor check-out queued.' });
     } else {
-      ok = await FirestoreService.checkOutVisitor(companyId, visitorId);
+      ok = await FirestoreService.checkOutVisitor(
+        companyId,
+        selectedVisitorForCheckout.id,
+        new Date().toISOString(),
+        visitorCheckoutForm.badgeReturned,
+        visitorCheckoutForm.notes
+      );
     }
     setIsLoading(false);
 
     if (ok) {
-      setStatusMsg({ type: 'SUCCESS', text: 'Visitor checked out from site.' });
+      setStatusMsg({
+        type: 'SUCCESS',
+        text: `Visitor ${selectedVisitorForCheckout.visitorName} checked out. Badge returned: ${visitorCheckoutForm.badgeReturned ? 'Yes' : 'No'}.`
+      });
+      setIsVisitorCheckoutModalOpen(false);
+      setSelectedVisitorForCheckout(null);
     } else {
       setStatusMsg({ type: 'ERROR', text: 'Failed to check out visitor.' });
+    }
+  };
+
+  // ----------------------------------------------------
+  // HANDLERS: SITE INSPECTIONS & SHIFT HANDOVERS
+  // ----------------------------------------------------
+  const handleSaveInspection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isLoading) return;
+    const finalSiteId = inspectionForm.siteId || (selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""));
+    if (!companyId || !finalSiteId) {
+      setStatusMsg({ type: 'ERROR', text: 'Site selection required for inspection.' });
+      return;
+    }
+
+    const siteObj = sites.find(s => s.id === finalSiteId);
+    const checklist = [
+      { item: 'Access Control & Gate Manning', passed: inspectionForm.accessControlOk },
+      { item: 'CCTV & Perimeter Lighting', passed: inspectionForm.cctvLightingOk },
+      { item: 'Fire & Emergency Systems', passed: inspectionForm.fireSafetyOk },
+      { item: 'Guard Turnout & Grooming', passed: inspectionForm.turnoutOk }
+    ];
+
+    const newLog: DailySiteLogRecord = {
+      id: `INSP-${Date.now()}`,
+      companyId,
+      assignedRegionId: userSession.assignedRegionId,
+      assignedBranchId: userSession.assignedBranchId,
+      siteId: finalSiteId,
+      siteName: siteObj?.name || 'Main Site',
+      date: inspectionForm.date,
+      supervisorId: userSession.employeeId || userSession.userId,
+      supervisorName: userSession.fullName,
+      inspectorId: userSession.employeeId || userSession.userId,
+      logType: 'INSPECTION',
+      guardsCountOnDuty: inspectionForm.guardsCountOnDuty,
+      totalPatrolsCompleted: patrolLogs.filter(p => p.siteId === finalSiteId).length,
+      totalVisitorsLogged: visitors.filter(v => v.siteId === finalSiteId).length,
+      totalIncidentsReported: incidents.filter(i => i.siteId === finalSiteId).length,
+      checklistData: checklist,
+      score: inspectionForm.score,
+      status: 'SUBMITTED',
+      notes: inspectionForm.notes,
+      createdAt: new Date().toISOString()
+    };
+
+    setIsLoading(true);
+    const ok = await FirestoreService.saveDailySiteLog(companyId, newLog);
+    setIsLoading(false);
+
+    if (ok) {
+      setStatusMsg({ type: 'SUCCESS', text: `Site inspection log recorded (Score: ${inspectionForm.score}%).` });
+      setIsInspectionModalOpen(false);
+    } else {
+      setStatusMsg({ type: 'ERROR', text: 'Failed to record site inspection.' });
+    }
+  };
+
+  const handleSaveHandover = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isLoading) return;
+    const finalSiteId = handoverForm.siteId || (selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""));
+    if (!companyId || !finalSiteId) {
+      setStatusMsg({ type: 'ERROR', text: 'Site selection required for handover.' });
+      return;
+    }
+
+    const siteObj = sites.find(s => s.id === finalSiteId);
+    const incomingEmp = employees.find(e => e.id === handoverForm.incomingSupervisorId);
+
+    const newLog: DailySiteLogRecord = {
+      id: `HANDOVER-${Date.now()}`,
+      companyId,
+      assignedRegionId: userSession.assignedRegionId,
+      assignedBranchId: userSession.assignedBranchId,
+      siteId: finalSiteId,
+      siteName: siteObj?.name || 'Main Site',
+      date: handoverForm.date,
+      supervisorId: userSession.employeeId || userSession.userId,
+      supervisorName: userSession.fullName,
+      outgoingSupervisorId: userSession.employeeId || userSession.userId,
+      incomingSupervisorId: handoverForm.incomingSupervisorId || 'DUTY_SUPERVISOR',
+      logType: 'HANDOVER',
+      guardsCountOnDuty: 4,
+      totalPatrolsCompleted: patrolLogs.filter(p => p.siteId === finalSiteId).length,
+      totalVisitorsLogged: visitors.filter(v => v.siteId === finalSiteId).length,
+      totalIncidentsReported: incidents.filter(i => i.siteId === finalSiteId).length,
+      inventoryStatus: {
+        keysTransferred: handoverForm.keysTransferred,
+        radiosTransferred: handoverForm.radiosTransferred,
+        logbooksTransferred: handoverForm.logbooksTransferred,
+        musterVerified: handoverForm.musterVerified,
+        incomingSupervisorName: incomingEmp ? `${incomingEmp.firstName} ${incomingEmp.lastName}` : (handoverForm.incomingSupervisorName || 'Duty Supervisor')
+      },
+      status: 'INITIATED',
+      notes: handoverForm.notes,
+      createdAt: new Date().toISOString()
+    };
+
+    setIsLoading(true);
+    const ok = await FirestoreService.saveDailySiteLog(companyId, newLog);
+    setIsLoading(false);
+
+    if (ok) {
+      setStatusMsg({ type: 'SUCCESS', text: 'Shift handover register created successfully.' });
+      setIsHandoverModalOpen(false);
+    } else {
+      setStatusMsg({ type: 'ERROR', text: 'Failed to create shift handover.' });
     }
   };
 
@@ -452,6 +723,8 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     const newMat: MaterialMovementRecord = {
       id: `MAT-${Date.now()}`,
       companyId,
+      assignedRegionId: userSession.assignedRegionId,
+      assignedBranchId: userSession.assignedBranchId,
       siteId: finalSiteId,
       siteName: siteObj?.name || 'Main Site',
       movementType: materialForm.movementType,
@@ -900,7 +1173,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
             </div>
 
             <button
-              onClick={() => { setIncidentForm(prev => ({ ...prev, siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "") })); setIsIncidentModalOpen(true); }}
+              onClick={() => { setIncidentForm({ siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""), title: '', category: 'SECURITY_BREACH', severity: 'MEDIUM', type: 'INCIDENT', description: '', behaviorCategory: '', slaDeadline: '', photoFile: null }); setIsIncidentModalOpen(true); }}
               className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
@@ -913,22 +1186,58 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               <>
               {paginatedIncidents.map(inc => (
                 <div key={inc.id} className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-3`}>
+                  
                   <div className="flex items-center justify-between">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                      inc.severity === 'CRITICAL' ? 'bg-rose-600 text-white' :
-                      inc.severity === 'HIGH' ? 'bg-amber-500 text-white' : 'bg-indigo-500 text-white'
-                    }`}>
-                      {inc.severity} SEVERITY
-                    </span>
-
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      inc.status === 'RESOLVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                    }`}>
-                      {inc.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                        inc.severity === 'CRITICAL' ? 'bg-rose-600 text-white' :
+                        inc.severity === 'HIGH' ? 'bg-amber-500 text-white' : 'bg-indigo-500 text-white'
+                      }`}>
+                        {inc.severity} SEVERITY
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        inc.status === 'RESOLVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                      }`}>
+                        {inc.status}
+                      </span>
+                    </div>
+                    <button onClick={() => { setIncidentForm({ id: inc.id, siteId: inc.siteId, title: inc.title, category: inc.category, severity: inc.severity, type: inc.type as any, description: inc.description, behaviorCategory: inc.behaviorCategory, slaDeadline: inc.slaDeadline, photoFile: null }); setIsIncidentModalOpen(true); }} className="text-slate-400 hover:text-indigo-600 transition p-1">
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{inc.title}</h4>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                    <span className="text-indigo-600 mr-2">[{inc.type || 'INCIDENT'}]</span>
+                    {inc.title}
+                  </h4>
+
+                  {inc.photoUrls && inc.photoUrls.length > 0 && (
+                    <div className="mt-2">
+                      <img src={inc.photoUrls[0]} alt="Evidence" className="w-16 h-16 object-cover rounded-lg border border-slate-200" />
+                    </div>
+                  )}
+
+                  {inc.type === 'BBS_OBSERVATION' && inc.behaviorCategory && (
+                     <p className="text-xs font-semibold text-amber-600">Behavior: {inc.behaviorCategory}</p>
+                  )}
+                  {inc.type === 'COMPLAINT' && (
+                    <div className="flex items-center gap-2 pt-1">
+                      {(() => {
+                        const sla = getComplaintSlaStatus(inc);
+                        return (
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${sla.color}`}>
+                            {sla.label}
+                          </span>
+                        );
+                      })()}
+                      {inc.slaDeadline && (
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          Due: {new Date(inc.slaDeadline).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   <p className="text-xs text-slate-600 dark:text-slate-300">{inc.description}</p>
 
                   <div className="text-[10px] text-slate-400 space-y-0.5 border-t border-slate-100 dark:border-slate-800 pt-2">
@@ -936,16 +1245,56 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     <p>Time: {new Date(inc.reportedAt).toLocaleString()}</p>
                   </div>
 
-                  {inc.status === 'OPEN' && (
-                    <div className="flex items-center gap-2 pt-1">
-                      <button
-                        onClick={() => handleUpdateIncidentStatus(inc.id, 'RESOLVED')}
-                        className="w-full py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow hover:bg-emerald-700 transition"
-                      >
-                        Mark Resolved
-                      </button>
-                    </div>
-                  )}
+                  {/* Status updates based on TYPE & Escalation Routing */}
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {inc.type === 'BBS_OBSERVATION' ? (
+                      <>
+                        {inc.status === 'RECORDED' && (
+                          <button onClick={() => handleUpdateIncidentStatus(inc.id, 'ACTION_REQUIRED')} className="flex-1 py-1.5 rounded-xl bg-amber-500 text-white text-xs font-semibold shadow hover:bg-amber-600 transition">Action Required</button>
+                        )}
+                        {(inc.status === 'RECORDED' || inc.status === 'ACTION_REQUIRED') && (
+                          <button onClick={() => handleUpdateIncidentStatus(inc.id, 'CLOSED')} className="flex-1 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow hover:bg-emerald-700 transition">Close Observation</button>
+                        )}
+                      </>
+                    ) : inc.type === 'COMPLAINT' ? (
+                      <>
+                        {inc.status === 'OPEN' && (
+                          <button onClick={() => handleUpdateIncidentStatus(inc.id, 'IN_PROGRESS')} className="flex-1 py-1.5 rounded-xl bg-blue-500 text-white text-xs font-semibold shadow hover:bg-blue-600 transition">In Progress</button>
+                        )}
+                        {(inc.status === 'OPEN' || inc.status === 'IN_PROGRESS') && (
+                          <>
+                            <button onClick={() => handleUpdateIncidentStatus(inc.id, 'ESCALATED')} className="flex-1 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-semibold shadow hover:bg-rose-700 transition flex items-center justify-center gap-1">
+                              <AlertTriangle className="w-3.5 h-3.5" />
+                              <span>Escalate to A3/A4</span>
+                            </button>
+                            <button onClick={() => handleUpdateIncidentStatus(inc.id, 'RESOLVED')} className="flex-1 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow hover:bg-emerald-700 transition">Resolve</button>
+                          </>
+                        )}
+                        {inc.status === 'ESCALATED' && (
+                          <button onClick={() => handleUpdateIncidentStatus(inc.id, 'RESOLVED')} className="w-full py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow hover:bg-emerald-700 transition">Resolve Escalated Issue</button>
+                        )}
+                      </>
+                    ) : (
+                      /* Standard INCIDENT */
+                      <>
+                        {['OPEN', 'UNDER_INVESTIGATION', 'IN_PROGRESS'].includes(inc.status) && (
+                          <div className="flex w-full items-center gap-2">
+                            {inc.severity === 'CRITICAL' && (
+                              <button onClick={() => handleUpdateIncidentStatus(inc.id, 'ESCALATED')} className="flex-1 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-semibold shadow hover:bg-rose-700 transition flex items-center justify-center gap-1">
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                                <span>Escalate to A3/A4</span>
+                              </button>
+                            )}
+                            <button onClick={() => handleUpdateIncidentStatus(inc.id, 'RESOLVED')} className="flex-1 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow hover:bg-emerald-700 transition">Mark Resolved</button>
+                          </div>
+                        )}
+                        {inc.status === 'ESCALATED' && (
+                          <button onClick={() => handleUpdateIncidentStatus(inc.id, 'RESOLVED')} className="w-full py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow hover:bg-emerald-700 transition">Mark Escalation Resolved</button>
+                        )}
+                      </>
+                    )}
+                  </div>
+
                 </div>
               ))}
                 <div className="col-span-full">
@@ -975,7 +1324,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Gate Visitor Log Register</h3>
-              <p className="text-xs text-slate-500">Log entry/exit of guests, contractors, and corporate visitors.</p>
+              <p className="text-xs text-slate-500">Log entry/exit of guests, contractors, and corporate visitors with pass return validation.</p>
             </div>
 
             <button
@@ -997,8 +1346,8 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     <th className="py-3 px-4">Badge #</th>
                     <th className="py-3 px-4">Visitor</th>
                     <th className="py-3 px-4">Company / Host</th>
-                    <th className="py-3 px-4">Check-In</th>
-                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4">Check-In / Out</th>
+                    <th className="py-3 px-4">Status & Badge</th>
                     <th className="py-3 px-4 text-right">Action</th>
                   </tr>
                 </thead>
@@ -1016,21 +1365,33 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                           <p className="text-slate-700 dark:text-slate-300">{v.visitorCompany}</p>
                           <p className="text-[10px] text-slate-400">Host: {v.hostEmployeeName}</p>
                         </td>
-                        <td className="py-3 px-4 font-mono">{new Date(v.checkInTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                        <td className="py-3 px-4 font-mono text-[11px]">
+                          <div>In: {new Date(v.checkInTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                          {v.checkOutTime && (
+                            <div className="text-slate-400">Out: {new Date(v.checkOutTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                          )}
+                        </td>
                         <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            v.status === 'IN_SITE' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
-                          }`}>
-                            {v.status}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className={`w-fit px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              v.status === 'IN_SITE' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                            }`}>
+                              {v.status}
+                            </span>
+                            {v.status === 'CHECKED_OUT' && (
+                              <span className={`text-[10px] font-semibold ${v.badgeReturned ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                {v.badgeReturned ? '✓ Badge Returned' : '⚠ Badge Missing'}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 px-4 text-right">
                           {v.status === 'IN_SITE' && (
                             <button
-                              onClick={() => handleCheckOutVisitor(v.id)}
-                              className="px-2.5 py-1 rounded-lg bg-rose-600 text-white text-[10px] font-bold shadow hover:bg-rose-700"
+                              onClick={() => handleOpenVisitorCheckout(v)}
+                              className="px-2.5 py-1 rounded-lg bg-rose-600 text-white text-[10px] font-bold shadow hover:bg-rose-700 transition"
                             >
-                              Check Out
+                              Check Out & Verify
                             </button>
                           )}
                         </td>
@@ -1068,7 +1429,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Inward / Outward Material Gate Pass</h3>
-              <p className="text-xs text-slate-500">Track raw materials, equipment dispatches, and supplier vehicles.</p>
+              <p className="text-xs text-slate-500">Track raw materials, equipment dispatches, and supplier vehicles with full lifecycle approval.</p>
             </div>
 
             <button
@@ -1087,19 +1448,26 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                 <div key={m.id} className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-3`}>
                   <div className="flex items-center justify-between">
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      m.movementType === 'INWARD' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'
+                      m.movementType === 'INWARD' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300'
                     }`}>
                       {m.movementType} PASS #{m.gatePassNumber}
                     </span>
 
-                    <span className="text-[10px] font-bold text-amber-600">{m.status}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      m.status === 'APPROVED' || m.status === 'RECEIVED' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                      m.status === 'REJECTED' ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300' :
+                      m.status === 'DISPATCHED' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300' :
+                      'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+                    }`}>
+                      {m.status}
+                    </span>
                   </div>
 
                   <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">{m.materialDescription} ({m.quantity})</h4>
-                  <p className="text-xs text-slate-600 dark:text-slate-300">Supplier: {m.supplierVendorName}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300">Supplier / Vendor: {m.supplierVendorName}</p>
 
                   <div className="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2 space-y-0.5">
-                    <p>Vehicle: {m.vehicleNumber || 'N/A'} • Driver: {m.driverName} ({m.driverPhone})</p>
+                    <p>Vehicle: {m.vehicleNumber || 'N/A'} • Driver: {m.driverName || 'N/A'} ({m.driverPhone || 'N/A'})</p>
                     <p>Created: {new Date(m.createdAt).toLocaleString()}</p>
                   </div>
 
@@ -1107,10 +1475,36 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         onClick={() => handleUpdateMaterialStatus(m.id, 'APPROVED')}
-                        className="w-full py-1 rounded-xl bg-emerald-600 text-white text-[10px] font-bold shadow hover:bg-emerald-700"
+                        className="flex-1 py-1.5 rounded-xl bg-emerald-600 text-white text-[10px] font-bold shadow hover:bg-emerald-700 transition"
                       >
-                        Approve
+                        Approve Pass
                       </button>
+                      <button
+                        onClick={() => handleUpdateMaterialStatus(m.id, 'REJECTED')}
+                        className="flex-1 py-1.5 rounded-xl bg-rose-600 text-white text-[10px] font-bold shadow hover:bg-rose-700 transition"
+                      >
+                        Reject Pass
+                      </button>
+                    </div>
+                  )}
+
+                  {m.status === 'APPROVED' && (
+                    <div className="flex items-center gap-2 pt-1">
+                      {m.movementType === 'OUTWARD' ? (
+                        <button
+                          onClick={() => handleUpdateMaterialStatus(m.id, 'DISPATCHED')}
+                          className="w-full py-1.5 rounded-xl bg-indigo-600 text-white text-[10px] font-bold shadow hover:bg-indigo-700 transition"
+                        >
+                          Mark Dispatched from Gate
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleUpdateMaterialStatus(m.id, 'RECEIVED')}
+                          className="w-full py-1.5 rounded-xl bg-emerald-600 text-white text-[10px] font-bold shadow hover:bg-emerald-700 transition"
+                        >
+                          Mark Received at Gate
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1132,75 +1526,99 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
         </div>
       )}
 
-
+      {/* ============================================================ */}
+      {/* TAB 5: DAILY SITE LOGS & SHIFT HANDOVERS */}
+      {/* ============================================================ */}
       {activeTab === 'DAILY_LOGS' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Daily Logs & Handovers</h3>
-              <p className="text-xs text-slate-500">Manage daily site inspections and shift handovers.</p>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Daily Site Inspection & Shift Handover Register</h3>
+              <p className="text-xs text-slate-500">Facility audit checklists, muster verification, and duty supervisor handovers.</p>
             </div>
-            <button
-              onClick={() => {
-                const log = {
-                  siteName: 'Unknown', supervisorId: userSession.employeeId || '', supervisorName: 'Unknown', guardsCountOnDuty: 0, totalPatrolsCompleted: 0, totalVisitorsLogged: 0, totalIncidentsReported: 0,
-                  id: crypto.randomUUID(),
-                  companyId,
-                  siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""),
-                  date: new Date().toISOString().split('T')[0],
-                  inspectorId: userSession.employeeId || '',
-                  logType: 'INSPECTION',
-                  notes: 'Routine site inspection completed.',
-                  createdAt: new Date().toISOString()
-                };
-                FirestoreService.saveDailySiteLog(companyId, log as DailySiteLogRecord);
-                setStatusMsg({ type: 'SUCCESS', text: 'Inspection log created.' });
-              }}
-              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Inspection</span>
-            </button>
-            <button
-              onClick={() => {
-                const log = {
-                  siteName: 'Unknown', supervisorId: userSession.employeeId || '', supervisorName: 'Unknown', guardsCountOnDuty: 0, totalPatrolsCompleted: 0, totalVisitorsLogged: 0, totalIncidentsReported: 0,
-                  id: crypto.randomUUID(),
-                  companyId,
-                  siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""),
-                  date: new Date().toISOString().split('T')[0],
-                  logType: 'HANDOVER',
-                  outgoingSupervisorId: userSession.employeeId || '',
-                  incomingSupervisorId: 'NEXT_SHIFT_USER',
-                  notes: 'Shift handover complete. All keys and radios transferred.',
-                  createdAt: new Date().toISOString()
-                };
-                FirestoreService.saveDailySiteLog(companyId, log as DailySiteLogRecord);
-                setStatusMsg({ type: 'SUCCESS', text: 'Handover log created.' });
-              }}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow flex items-center gap-2 ml-2"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Shift Handover</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setInspectionForm(prev => ({ ...prev, siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "") }));
+                  setIsInspectionModalOpen(true);
+                }}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>New Site Inspection</span>
+              </button>
+              <button
+                onClick={() => {
+                  setHandoverForm(prev => ({ ...prev, siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "") }));
+                  setIsHandoverModalOpen(true);
+                }}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow flex items-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Shift Handover</span>
+              </button>
+            </div>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {dailySiteLogs.filter(d => selectedSiteId === "ALL" || d.siteId === selectedSiteId).map(log => (
               <div key={log.id} className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-3`}>
                 <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800">
-                    {log.logType || 'STANDARD'}
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                    log.logType === 'INSPECTION' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300'
+                  }`}>
+                    {log.logType || 'INSPECTION'} • {log.siteName || 'Site'}
                   </span>
                   <span className="text-[10px] font-bold text-slate-400">{new Date(log.createdAt).toLocaleString()}</span>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-300">{log.notes}</p>
-                {log.logType === 'HANDOVER' && (
-                  <p className="text-[10px] text-slate-400">Outgoing: {log.outgoingSupervisorId}</p>
+
+                {log.logType === 'INSPECTION' ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                      <span className="text-slate-700 dark:text-slate-300">Compliance Score:</span>
+                      <span className={`font-bold ${Number(log.score || 0) >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                        {log.score || 95}%
+                      </span>
+                    </div>
+                    {log.checklistData && log.checklistData.length > 0 && (
+                      <div className="grid grid-cols-2 gap-1.5 pt-1">
+                        {log.checklistData.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300">
+                            <span className={item.passed ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
+                              {item.passed ? '✓' : '✗'}
+                            </span>
+                            <span className="truncate">{item.item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-xs text-slate-600 dark:text-slate-300 pt-1">{log.notes}</p>
+                    <p className="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2">
+                      Inspector: {log.supervisorName || log.inspectorId} • On Duty: {log.guardsCountOnDuty || 0} Guards
+                    </p>
+                  </div>
+                ) : (
+                  /* HANDOVER LOG */
+                  <div className="space-y-2">
+                    <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Outgoing: <span className="font-bold text-slate-900 dark:text-slate-100">{log.supervisorName || 'Duty Supervisor'}</span> → Incoming: <span className="font-bold text-indigo-600">{log.inventoryStatus?.incomingSupervisorName || log.incomingSupervisorId || 'Next Supervisor'}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 text-[11px] text-slate-600 dark:text-slate-300 pt-1">
+                      <div>Master Keys: <span className="font-bold text-emerald-600">{log.inventoryStatus?.keysTransferred ? 'Transferred' : 'Pending'}</span></div>
+                      <div>Walkie-Talkies: <span className="font-bold text-emerald-600">{log.inventoryStatus?.radiosTransferred ? 'Transferred' : 'Pending'}</span></div>
+                      <div>Logbooks: <span className="font-bold text-emerald-600">{log.inventoryStatus?.logbooksTransferred ? 'Verified' : 'Pending'}</span></div>
+                      <div>Muster Count: <span className="font-bold text-emerald-600">{log.inventoryStatus?.musterVerified ? 'Verified' : 'Pending'}</span></div>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 pt-1">{log.notes}</p>
+                    <p className="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2">
+                      Handover Status: <span className="font-bold text-emerald-600">{log.status || 'COMPLETED'}</span>
+                    </p>
+                  </div>
                 )}
               </div>
             ))}
             {dailySiteLogs.length === 0 && (
-              <div className="col-span-full py-12 text-center text-slate-400">No daily logs found.</div>
+              <div className="col-span-full py-12 text-center text-slate-400">No daily inspection or handover logs recorded yet.</div>
             )}
           </div>
         </div>
@@ -1283,7 +1701,6 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                 />
               </div>
 
-              
               <div>
                 <label className="text-[10px] font-bold uppercase text-slate-500">Record Type</label>
                 <select
@@ -1296,6 +1713,31 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   <option value="BBS_OBSERVATION">BBS Observation</option>
                 </select>
               </div>
+
+              {incidentForm.type === 'BBS_OBSERVATION' && (
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500">Behavior Category (BBS)</label>
+                  <input
+                    type="text"
+                    value={incidentForm.behaviorCategory || ''}
+                    onChange={e => setIncidentForm({ ...incidentForm, behaviorCategory: e.target.value })}
+                    className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                    placeholder="e.g. Unsafe lifting, Not wearing PPE"
+                    required
+                  />
+                </div>
+              )}
+              {incidentForm.type === 'COMPLAINT' && (
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500">SLA Deadline</label>
+                  <input
+                    type="date"
+                    value={incidentForm.slaDeadline || ''}
+                    onChange={e => setIncidentForm({ ...incidentForm, slaDeadline: e.target.value })}
+                    className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -1336,6 +1778,19 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   rows={3}
                   className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
                   required
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase text-slate-500">Attach Evidence Photo</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={e => {
+                    const file = e.target.files?.[0] || null;
+                    setIncidentForm({ ...incidentForm, photoFile: file });
+                  }}
+                  className={`w-full mt-1 p-2 text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
                 />
               </div>
 
@@ -1461,6 +1916,237 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setIsMaterialModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-500">Cancel</button>
                 <button type="submit" disabled={isLoading} className="px-5 py-2 rounded-xl bg-amber-600 text-white text-xs font-bold shadow disabled:opacity-50">{isLoading ? "Creating..." : "Create Pass"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 5: VISITOR CHECK-OUT & GATE PASS RETURN VALIDATION */}
+      {isVisitorCheckoutModalOpen && selectedVisitorForCheckout && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className={`w-full max-w-md p-6 rounded-3xl border shadow-2xl ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} space-y-4`}>
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Visitor Check-Out & Pass Return</h3>
+                <p className="text-[11px] text-slate-500">Validate physical badge surrender before departure.</p>
+              </div>
+              <button onClick={() => { setIsVisitorCheckoutModalOpen(false); setSelectedVisitorForCheckout(null); }} className="opacity-60 hover:opacity-100">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className={`p-3 rounded-2xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'} space-y-1 text-xs`}>
+              <p><span className="font-semibold text-slate-500">Visitor:</span> <span className="font-bold text-slate-900 dark:text-slate-100">{selectedVisitorForCheckout.visitorName}</span></p>
+              <p><span className="font-semibold text-slate-500">Assigned Badge:</span> <span className="font-mono font-bold text-indigo-500">{selectedVisitorForCheckout.badgeNumber}</span></p>
+              <p><span className="font-semibold text-slate-500">Company:</span> {selectedVisitorForCheckout.visitorCompany}</p>
+            </div>
+
+            <form onSubmit={handleConfirmVisitorCheckout} className="space-y-4">
+              <div className="flex items-center gap-3 p-3 rounded-2xl border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/30 dark:border-emerald-800">
+                <input
+                  type="checkbox"
+                  id="badgeReturnCheckbox"
+                  checked={visitorCheckoutForm.badgeReturned}
+                  onChange={e => setVisitorCheckoutForm({ ...visitorCheckoutForm, badgeReturned: e.target.checked })}
+                  className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
+                />
+                <label htmlFor="badgeReturnCheckbox" className="text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+                  Physical Visitor Badge Returned & Inspected
+                </label>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase text-slate-500">Check-Out Notes (Optional)</label>
+                <input
+                  type="text"
+                  value={visitorCheckoutForm.notes}
+                  onChange={e => setVisitorCheckoutForm({ ...visitorCheckoutForm, notes: e.target.value })}
+                  placeholder="e.g. Badge in good condition, escorted out."
+                  className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button type="button" onClick={() => { setIsVisitorCheckoutModalOpen(false); setSelectedVisitorForCheckout(null); }} className="px-4 py-2 text-xs font-semibold text-slate-500">Cancel</button>
+                <button type="submit" disabled={isLoading} className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow disabled:opacity-50">
+                  {isLoading ? "Processing..." : "Complete Check-Out"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 6: SITE INSPECTION MODAL */}
+      {isInspectionModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className={`w-full max-w-md p-6 rounded-3xl border shadow-2xl ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} space-y-4`}>
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Site Facility Inspection</h3>
+                <p className="text-[11px] text-slate-500">Perform standard 4-point facility security audit.</p>
+              </div>
+              <button onClick={() => setIsInspectionModalOpen(false)} className="opacity-60 hover:opacity-100"><X className="w-4 h-4" /></button>
+            </div>
+
+            <form onSubmit={handleSaveInspection} className="space-y-3">
+              <div>
+                <label className="text-[10px] font-bold uppercase text-slate-500">Site</label>
+                <select
+                  value={inspectionForm.siteId || ''}
+                  onChange={e => setInspectionForm({ ...inspectionForm, siteId: e.target.value })}
+                  className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                >
+                  <option value="">-- Select a Site --</option>
+                  {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500">Inspection Date</label>
+                  <input
+                    type="date"
+                    value={inspectionForm.date}
+                    onChange={e => setInspectionForm({ ...inspectionForm, date: e.target.value })}
+                    className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500">Compliance Score (%)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={inspectionForm.score}
+                    onChange={e => setInspectionForm({ ...inspectionForm, score: Number(e.target.value) })}
+                    className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <label className="text-[10px] font-bold uppercase text-slate-500">Audit Checklist Items</label>
+                <div className="space-y-1.5 text-xs">
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={inspectionForm.accessControlOk} onChange={e => setInspectionForm({ ...inspectionForm, accessControlOk: e.target.checked })} />
+                    <span>Access Control & Boom Barriers Operational</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={inspectionForm.cctvLightingOk} onChange={e => setInspectionForm({ ...inspectionForm, cctvLightingOk: e.target.checked })} />
+                    <span>CCTV & Perimeter Lighting Functional</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={inspectionForm.fireSafetyOk} onChange={e => setInspectionForm({ ...inspectionForm, fireSafetyOk: e.target.checked })} />
+                    <span>Fire Extinguishers & Emergency Exits Clear</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={inspectionForm.turnoutOk} onChange={e => setInspectionForm({ ...inspectionForm, turnoutOk: e.target.checked })} />
+                    <span>Guard Uniforms, Turnout & ID Badges Compliant</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase text-slate-500">Audit Notes / Corrective Actions</label>
+                <textarea
+                  value={inspectionForm.notes}
+                  onChange={e => setInspectionForm({ ...inspectionForm, notes: e.target.value })}
+                  rows={2}
+                  className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                  required
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setIsInspectionModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-500">Cancel</button>
+                <button type="submit" disabled={isLoading} className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow disabled:opacity-50">
+                  {isLoading ? "Saving..." : "Submit Inspection"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 7: SHIFT HANDOVER MODAL */}
+      {isHandoverModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className={`w-full max-w-md p-6 rounded-3xl border shadow-2xl ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} space-y-4`}>
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Shift Handover Register</h3>
+                <p className="text-[11px] text-slate-500">Transfer custody of keys, radios, and site logs.</p>
+              </div>
+              <button onClick={() => setIsHandoverModalOpen(false)} className="opacity-60 hover:opacity-100"><X className="w-4 h-4" /></button>
+            </div>
+
+            <form onSubmit={handleSaveHandover} className="space-y-3">
+              <div>
+                <label className="text-[10px] font-bold uppercase text-slate-500">Site</label>
+                <select
+                  value={handoverForm.siteId || ''}
+                  onChange={e => setHandoverForm({ ...handoverForm, siteId: e.target.value })}
+                  className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                >
+                  <option value="">-- Select a Site --</option>
+                  {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase text-slate-500">Incoming Duty Supervisor</label>
+                <select
+                  value={handoverForm.incomingSupervisorId || ''}
+                  onChange={e => setHandoverForm({ ...handoverForm, incomingSupervisorId: e.target.value })}
+                  className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                >
+                  <option value="">-- Select Incoming Supervisor --</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} ({emp.employeeId || emp.id})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <label className="text-[10px] font-bold uppercase text-slate-500">Custody Transfers & Checks</label>
+                <div className="space-y-1.5 text-xs">
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={handoverForm.keysTransferred} onChange={e => setHandoverForm({ ...handoverForm, keysTransferred: e.target.checked })} />
+                    <span>Master Key Sets & Padlock Keys Handed Over</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={handoverForm.radiosTransferred} onChange={e => setHandoverForm({ ...handoverForm, radiosTransferred: e.target.checked })} />
+                    <span>Walkie-Talkies & Charging Docks Handed Over</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={handoverForm.logbooksTransferred} onChange={e => setHandoverForm({ ...handoverForm, logbooksTransferred: e.target.checked })} />
+                    <span>Physical Gate Logbooks Signed Off</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={handoverForm.musterVerified} onChange={e => setHandoverForm({ ...handoverForm, musterVerified: e.target.checked })} />
+                    <span>Guard Muster Headcount Verified</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase text-slate-500">Handover Remarks & Outstanding Instructions</label>
+                <textarea
+                  value={handoverForm.notes}
+                  onChange={e => setHandoverForm({ ...handoverForm, notes: e.target.value })}
+                  rows={2}
+                  className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                  required
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setIsHandoverModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-500">Cancel</button>
+                <button type="submit" disabled={isLoading} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow disabled:opacity-50">
+                  {isLoading ? "Saving..." : "Confirm Handover"}
+                </button>
               </div>
             </form>
           </div>

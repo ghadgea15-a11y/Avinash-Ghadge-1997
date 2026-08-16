@@ -53,12 +53,131 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
+        "companyId": { "type": "string" },
         "action": { "type": "string" },
-        "performedBy": { "type": "string" },
-        "timestamp": { "type": "string" },
-        "details": { "type": "object" }
+        "actorId": { "type": "string" },
+        "actorName": { "type": "string" },
+        "details": { "type": "string" },
+        "targetUser": { "type": "string" },
+        "timestamp": { "type": "string" }
       },
-      "required": ["action", "performedBy", "timestamp"]
+      "required": ["id", "action", "actorId", "timestamp"]
+    },
+    "Task": {
+      "title": "Operational Task / Work Order",
+      "description": "Task assigned to staff with status tracking and verification",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "siteId": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "priority": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "URGENT"] },
+        "status": { "type": "string", "enum": ["TODO", "IN_PROGRESS", "PENDING_VERIFICATION", "COMPLETED", "CANCELLED"] },
+        "slaDeadline": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "companyId", "siteId", "assignedTo", "title", "status", "createdAt"]
+    },
+    "IncidentReport": {
+      "title": "Incident / Complaint / BBS Report",
+      "description": "Formal report for incidents, complaints, or safety observations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "type": { "type": "string", "enum": ["COMPLAINT", "BBS_OBSERVATION", "INCIDENT", "ACCIDENT"] },
+        "siteId": { "type": "string" },
+        "reportedBy": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["OPEN", "IN_PROGRESS", "RESOLVED", "ESCALATED", "CLOSED"] },
+        "slaDeadline": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "companyId", "type", "siteId", "reportedBy", "status", "createdAt"]
+    },
+    "DailySiteLog": {
+      "title": "Daily Site Log / Inspection / Handover",
+      "description": "Daily operational logs for site activities",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "logType": { "type": "string", "enum": ["INSPECTION", "HANDOVER", "DAILY_REPORT"] },
+        "siteId": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { "type": "string", "enum": ["DRAFT", "SUBMITTED", "REVIEWED", "ACCEPTED"] },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "companyId", "logType", "siteId", "date", "status", "createdAt"]
+    },
+    "Announcement": {
+      "title": "Announcement / Communication",
+      "description": "Top-down communication messages",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "targetAudience": { "type": "string" },
+        "message": { "type": "string" },
+        "priority": { "type": "string", "enum": ["NORMAL", "URGENT"] },
+        "createdBy": { "type": "string" },
+        "expiresAt": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "companyId", "message", "priority", "createdAt"]
+    },
+    "VisitorLog": {
+      "title": "Visitor Log",
+      "description": "Gate entry/exit logs for visitors",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "siteId": { "type": "string" },
+        "visitorName": { "type": "string" },
+        "badgeNumber": { "type": "string" },
+        "status": { "type": "string", "enum": ["IN_SITE", "CHECKED_OUT"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "companyId", "siteId", "visitorName", "status", "createdAt"]
+    },
+    "MaterialMovement": {
+      "title": "Material Movement Log",
+      "description": "Inward/Outward material movement logs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "siteId": { "type": "string" },
+        "movementType": { "type": "string", "enum": ["INWARD", "OUTWARD"] },
+        "gatePassNumber": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING_APPROVAL", "APPROVED", "DISPATCHED", "RECEIVED", "REJECTED"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "companyId", "siteId", "movementType", "gatePassNumber", "status", "createdAt"]
+    },
+    "KpiSnapshot": {
+      "title": "KPI Snapshot",
+      "description": "Enterprise-wide health metrics for executive review",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "date": { "type": "string" },
+        "totalActiveEmployees": { "type": "number" },
+        "openIncidents": { "type": "number" },
+        "totalSlaBreaches": { "type": "number" },
+        "activeSites": { "type": "number" },
+        "status": { "type": "string", "enum": ["PUBLISHED"] },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "companyId", "date", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -73,6 +192,34 @@
     "/companies/{companyId}/attendance/{attendanceId}": {
       "schema": { "$ref": "#/entities/AttendanceLog" },
       "description": "Attendance log records for company"
+    },
+    "/companies/{companyId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "Operational tasks"
+    },
+    "/companies/{companyId}/incident_reports/{reportId}": {
+      "schema": { "$ref": "#/entities/IncidentReport" },
+      "description": "Incident and safety reports"
+    },
+    "/companies/{companyId}/daily_site_logs/{logId}": {
+      "schema": { "$ref": "#/entities/DailySiteLog" },
+      "description": "Daily site operation logs"
+    },
+    "/companies/{companyId}/visitor_logs/{visitorId}": {
+      "schema": { "$ref": "#/entities/VisitorLog" },
+      "description": "Visitor logs"
+    },
+    "/companies/{companyId}/material_movement_logs/{matId}": {
+      "schema": { "$ref": "#/entities/MaterialMovement" },
+      "description": "Material movement logs"
+    },
+    "/companies/{companyId}/announcements/{announcementId}": {
+      "schema": { "$ref": "#/entities/Announcement" },
+      "description": "Company announcements"
+    },
+    "/companies/{companyId}/kpi_snapshots/{snapshotId}": {
+      "schema": { "$ref": "#/entities/KpiSnapshot" },
+      "description": "Executive KPI snapshots"
     },
     "/companies/{companyId}/audit_logs/{logId}": {
       "schema": { "$ref": "#/entities/AuditLog" },

@@ -129,22 +129,56 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
     setActionError(null);
 
     try {
-      const ok = await FirestoreService.rejectUserApplication(
-        rejectingRequest.companyId,
-        rejectingRequest.id,
-        session.userId,
-        rejectionReason.trim()
-      );
+      const ok = rejectingRequest.type === 'LIFECYCLE'
+        ? await FirestoreService.resolveLifecycleApproval(
+            rejectingRequest.companyId,
+            rejectingRequest.id,
+            'REJECTED',
+            session,
+            rejectionReason.trim()
+          )
+        : await FirestoreService.rejectUserApplication(
+            rejectingRequest.companyId,
+            rejectingRequest.id,
+            session.userId,
+            rejectionReason.trim()
+          );
 
       if (ok) {
-        setActionSuccess(`Application for ${rejectingRequest.fullName} was rejected.`);
+        setActionSuccess(`${rejectingRequest.type === 'LIFECYCLE' ? 'Lifecycle request' : 'Application'} for ${rejectingRequest.fullName} was rejected.`);
         setRejectingRequest(null);
         setRejectionReason('');
       } else {
-        setActionError('Failed to reject application.');
+        setActionError('Failed to reject.');
       }
     } catch (err: any) {
       setActionError(err.message || 'Error rejecting application.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleApproveLifecycle = async (req: ApprovalRequestRecord) => {
+    setActionLoading(req.id);
+    setActionSuccess(null);
+    setActionError(null);
+
+    try {
+      const ok = await FirestoreService.resolveLifecycleApproval(
+        req.companyId,
+        req.id,
+        'APPROVED',
+        session,
+        '' // No rejection reason
+      );
+
+      if (ok) {
+        setActionSuccess(`Lifecycle request approved successfully.`);
+      } else {
+        setActionError('Failed to approve lifecycle request.');
+      }
+    } catch (err: any) {
+      setActionError(err.message || 'Error processing lifecycle approval.');
     } finally {
       setActionLoading(null);
     }
@@ -161,15 +195,14 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
 
     if (!matchSearch) return false;
 
-    if (activeTab === 'PENDING') {
-      return req.accountStatus !== 'ACTIVE' && req.accountStatus !== 'REJECTED';
-    }
-    if (activeTab === 'APPROVED') {
-      return req.accountStatus === 'ACTIVE' || req.accountStatus === 'ADMIN_APPROVED' || req.accountStatus === 'HR_APPROVED';
-    }
-    if (activeTab === 'REJECTED') {
-      return req.accountStatus === 'REJECTED';
-    }
+      // Filter match
+      const matchStatus = 
+        activeTab === 'PENDING' ? (req.status === 'PENDING' || (req.accountStatus !== 'ACTIVE' && req.accountStatus !== 'REJECTED')) :
+        activeTab === 'APPROVED' ? (req.status === 'APPROVED' || req.accountStatus === 'ACTIVE') :
+        activeTab === 'REJECTED' ? (req.status === 'REJECTED' || req.accountStatus === 'REJECTED') :
+        true;
+
+      if (!matchStatus) return false;
     return true;
   });
 
@@ -363,42 +396,68 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
                   {/* Right Column: Approval Action Buttons */}
                   {req.accountStatus !== 'REJECTED' && (
                     <div className="flex flex-wrap lg:flex-col gap-2 shrink-0">
-                      {/* Admin Approve Button */}
-                      {!isAdminApproved && (
-                        <button
-                          onClick={() => handleApproveAdmin(req)}
-                          disabled={isProcessing}
-                          className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition shadow-sm"
-                        >
-                          {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
-                          <span>Approve as Admin</span>
-                        </button>
-                      )}
+                      {req.type === 'LIFECYCLE' ? (
+                        <>
+                          <button
+                            onClick={() => handleApproveLifecycle(req)}
+                            disabled={!!actionLoading}
+                            className="bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white font-semibold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition shadow-sm"
+                          >
+                            {actionLoading === req.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                            <span>Approve {req.context}</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setRejectingRequest(req);
+                              setRejectionReason('');
+                            }}
+                            disabled={!!actionLoading}
+                            className="bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 font-semibold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Reject Request</span>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {/* Admin Approve Button */}
+                          {!isAdminApproved && (
+                            <button
+                              onClick={() => handleApproveAdmin(req)}
+                              disabled={isProcessing}
+                              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition shadow-sm"
+                            >
+                              {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                              <span>Approve as Admin</span>
+                            </button>
+                          )}
 
-                      {/* HR Approve Button */}
-                      {!isHrApproved && (
-                        <button
-                          onClick={() => handleApproveHR(req)}
-                          disabled={isProcessing}
-                          className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition shadow-sm"
-                        >
-                          {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
-                          <span>Approve as HR</span>
-                        </button>
-                      )}
+                          {/* HR Approve Button */}
+                          {!isHrApproved && (
+                            <button
+                              onClick={() => handleApproveHR(req)}
+                              disabled={isProcessing}
+                              className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition shadow-sm"
+                            >
+                              {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
+                              <span>Approve as HR</span>
+                            </button>
+                          )}
 
-                      {/* Reject Application Button */}
-                      <button
-                        onClick={() => {
-                          setRejectingRequest(req);
-                          setRejectionReason('');
-                        }}
-                        disabled={isProcessing}
-                        className="bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 font-semibold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                        <span>Reject Application</span>
-                      </button>
+                          {/* Reject Application Button */}
+                          <button
+                            onClick={() => {
+                              setRejectingRequest(req);
+                              setRejectionReason('');
+                            }}
+                            disabled={isProcessing}
+                            className="bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 font-semibold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Reject Application</span>
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

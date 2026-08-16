@@ -66,12 +66,12 @@ export class OfflineSyncService {
                 if (item.actionType === 'PUNCH_IN') {
           const { companyId, data } = item.payload as any;
           if (companyId && data) {
-            await FirestoreService.checkInEmployee(companyId, data);
+            await FirestoreService.saveAttendance(companyId, data);
           }
         } else if (item.actionType === 'PUNCH_OUT') {
           const { companyId, data } = item.payload as any;
-          if (companyId && data && data.attendanceId && data.checkOutTime) {
-            await FirestoreService.checkOutEmployee(companyId, data.attendanceId, data.checkOutTime, data.checkOutGps, data.shift);
+          if (companyId && data) {
+            await FirestoreService.saveAttendance(companyId, data);
           }
         } else if (item.actionType === 'PATROL_CHECK') {
           const { companyId, data } = item.payload as any;
@@ -97,13 +97,24 @@ export class OfflineSyncService {
         } else if (item.actionType === 'CREATE_EMPLOYEE') {
           const emp = item.payload as any;
           if (emp && emp.companyId && emp.id) {
-            await FirestoreService.saveEmployee(emp.companyId, emp);
+            const actor = { id: emp.updatedBy || 'SYSTEM', name: 'Offline Sync' };
+            await FirestoreService.saveEmployee(emp.companyId, emp, actor);
           }
         } else if (item.actionType === 'UPDATE_EMPLOYEE_STATUS') {
           const { empId, status, approverId, companyId } = item.payload as any;
           if (empId && status) {
             if (!companyId) throw new Error('Missing companyId in queue payload');
             await FirestoreService.updateEmployeeStatus(companyId, empId, status, approverId || 'SYSTEM');
+          }
+        } else if (item.actionType === 'CREATE_ROSTER') {
+          const { companyId, rosters, actor } = item.payload as any;
+          if (companyId && rosters) {
+            await FirestoreService.bulkSaveRosters(companyId, rosters, actor);
+          }
+        } else if (item.actionType === 'DELETE_ROSTER') {
+          const { companyId, rosterId, actor } = item.payload as any;
+          if (companyId && rosterId) {
+            await FirestoreService.deleteRoster(companyId, rosterId, actor);
           }
         }
         syncedCount++;

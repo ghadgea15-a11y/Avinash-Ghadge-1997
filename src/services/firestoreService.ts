@@ -10,7 +10,8 @@ import {
   query, 
   where, 
   orderBy, 
-  limit 
+  limit,
+  runTransaction 
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { QueryScopeEngine } from './queryScopeEngine';
@@ -22,7 +23,11 @@ import {
   UserProfileData, 
   AppSettings, 
   UserSession, 
-  EmployeeRecord, 
+  EmployeeRecord,
+  ClientRecord,
+  DeploymentRecord,
+  RosterRecord,
+  DeploymentHistoryRecord, 
   CompanyTenant, 
   BranchRecord, 
   SiteRecord, 
@@ -31,7 +36,7 @@ import {
   UserMembershipRecord, 
   UserRole,
   ShiftRecord,
-  AttendanceLogRecord,
+  AttendanceRecord,
   PatrolCheckpointRecord,
   PatrolLogRecord,
   IncidentReportRecord,
@@ -59,8 +64,32 @@ import {
   AssetMovementHistoryRecord,
   AssetMaintenanceRecord,
   AssetCondition,
-  AssetMovementAction
+  AssetMovementAction,
+  ServiceTicketRecord,
+  TicketCommentRecord,
+  JobRequisitionRecord,
+  CandidateRecord,
+  TrainingProgramRecord,
+  TrainingEnrollmentRecord,
+  ProcurementRequisitionRecord,
+  PurchaseOrderRecord,
+  GoodsReceiptNoteRecord,
+  ThreeWayMatchRecord,
+  OnboardingTask,
+  LifecycleHistoryRecord,
+  PromotionRequest,
+  TransferRequest,
+  ExitRequest,
+  IdentityBadgeRecord,
+  BadgeStatus,
+  BadgeType,
+  BadgeLifecycleEvent,
+  DocumentTypeConfig,
+  EmployeeDocumentRecord,
+  DocumentStatus,
 } from '../types';
+import { WorkflowEngine } from './workflowEngine';
+import { WfmService } from './wfmService';
 
 export enum OperationType {
   CREATE = 'create',
@@ -280,16 +309,57 @@ export class FirestoreService {
   }
 
   /**
+   * Check if an Employee ID is unique within the company
+   */
+  static async isEmployeeIdUnique(companyId: string, employeeId: string, excludeInternalId?: string): Promise<boolean> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'employees');
+      const q = query(colRef, where('employeeId', '==', employeeId));
+      const snap = await getDocs(q);
+      
+      if (snap.empty) return true;
+      if (excludeInternalId && snap.docs.length === 1 && snap.docs[0].id === excludeInternalId) return true;
+      
+      return false;
+    } catch (err) {
+      console.error('[FirestoreService] isEmployeeIdUnique error:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Check if an Employee Code is unique within the company
+   */
+  static async isEmployeeCodeUnique(companyId: string, employeeCode: string, excludeInternalId?: string): Promise<boolean> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'employees');
+      const q = query(colRef, where('employeeCode', '==', employeeCode));
+      const snap = await getDocs(q);
+      
+      if (snap.empty) return true;
+      if (excludeInternalId && snap.docs.length === 1 && snap.docs[0].id === excludeInternalId) return true;
+      
+      return false;
+    } catch (err) {
+      console.error('[FirestoreService] isEmployeeCodeUnique error:', err);
+      return false;
+    }
+  }
+
+  /**
    * Create or update Employee document in Firestore (Dual-writing for 100% sync)
    */
-  static async saveEmployee(companyId: string, employee: EmployeeRecord): Promise<boolean> {
+  static async saveEmployee(companyId: string, employee: EmployeeRecord, actor: { id: string, name: string }): Promise<boolean> {
     const legacyPath = `users/${employee.id}`;
     const newPath = `companies/${companyId}/employees/${employee.id}`;
     try {
+      const isUpdate = !!employee.updatedAt && employee.createdAt !== employee.updatedAt;
+      
       const payload = {
         ...employee,
         companyId, // ensure companyId matches
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        updatedBy: actor.id
       };
 
       // 1. Write to modern subcollection (Android & Web app alignment)
@@ -297,12 +367,507 @@ export class FirestoreService {
       await setDoc(refNew, payload, { merge: true });
 
       // 2. Write to legacy root 'users' collection (Web login support)
-      const refLegacy = doc(db, 'users', employee.id);
-      await setDoc(refLegacy, payload, { merge: true });
+      // Only write to 'users' if the employee has app access (authUid exists)
+      if (employee.authUid) {
+        const refLegacy = doc(db, 'users', employee.id);
+        await setDoc(refLegacy, payload, { merge: true });
+      }
+
+      // 3. Audit Log
+      await this.logAuditEvent(
+        companyId,
+        actor.id,
+        actor.name,
+        isUpdate ? 'EMPLOYEE_UPDATED' : 'EMPLOYEE_CREATED',
+        `${isUpdate ? 'Updated' : 'Created'} employee record for ${employee.firstName} ${employee.lastName} (${employee.employeeId})`,
+        employee.id
+      );
 
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, `${newPath} & ${legacyPath}`);
+      return false;
+    }
+  }
+
+  /**
+   * Convert a recruitment candidate to an active employee
+   */
+  static async convertCandidateToEmployee(
+    companyId: string,
+    candidate: CandidateRecord,
+    employeeData: Partial<EmployeeRecord>,
+    actor: { id: string, name: string }
+  ): Promise<string | null> {
+    try {
+      const employeeId = employeeData.id || `EMP-${Date.now()}`;
+      
+      const newEmployee: EmployeeRecord = {
+        ...employeeData,
+        id: employeeId,
+        companyId,
+        firstName: candidate.fullName.split(' ')[0],
+        lastName: candidate.fullName.split(' ').slice(1).join(' ') || ' ',
+        email: candidate.email || '',
+        contactNumber: candidate.phoneNumber,
+        dateOfBirth: candidate.dateOfBirth,
+        gender: candidate.gender,
+        maskedAadhaar: candidate.aadhaarNumber ? `XXXX-XXXX-${candidate.aadhaarNumber.slice(-4)}` : '',
+        panNumber: candidate.panNumber || '',
+        lifecycleStatus: 'ONBOARDING',
+        status: 'PENDING_VERIFICATION',
+        onboardingTasks: this.getDefaultOnboardingTasks(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        createdBy: actor.id,
+        updatedBy: actor.id,
+      } as EmployeeRecord;
+
+      const ok = await this.saveEmployee(companyId, newEmployee, actor);
+      
+      if (ok) {
+        // Update candidate stage
+        await setDoc(doc(db, 'companies', companyId, 'candidates', candidate.id), {
+          stage: 'CONVERTED',
+          convertedToEmployeeId: employeeId,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+
+        // Add Lifecycle Event
+        await this.addLifecycleEvent(companyId, employeeId, {
+          type: 'STATUS_CHANGE',
+          toStatus: 'ONBOARDING',
+          effectiveDate: new Date().toISOString(),
+          reason: 'Converted from candidate',
+          initiatedBy: actor.id,
+          timestamp: new Date().toISOString(),
+          details: { candidateId: candidate.id }
+        }, actor);
+
+        return employeeId;
+      }
+      return null;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `candidate conversion ${candidate.id}`);
+      return null;
+    }
+  }
+
+  private static getDefaultOnboardingTasks(): OnboardingTask[] {
+    return [
+      { id: 'OT-01', title: 'Identity Verification', status: 'PENDING', isMandatory: true },
+      { id: 'OT-02', title: 'Address Verification', status: 'PENDING', isMandatory: true },
+      { id: 'OT-03', title: 'Bank Details Collection', status: 'PENDING', isMandatory: true },
+      { id: 'OT-04', title: 'Policy Acknowledgement', status: 'PENDING', isMandatory: true },
+      { id: 'OT-05', title: 'Profile Photo Upload', status: 'PENDING', isMandatory: false },
+      { id: 'OT-06', title: 'Emergency Contact Setup', status: 'PENDING', isMandatory: true },
+      { id: 'OT-07', title: 'Site Induction Training', status: 'PENDING', isMandatory: true },
+    ];
+  }
+
+  /**
+   * Add a lifecycle history event for an employee
+   */
+  static async addLifecycleEvent(
+    companyId: string,
+    employeeId: string,
+    event: Omit<LifecycleHistoryRecord, 'id'>,
+    actor: { id: string, name: string }
+  ): Promise<boolean> {
+    try {
+      const eventId = `EVT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const ref = doc(db, 'companies', companyId, 'employees', employeeId, 'lifecycleEvents', eventId);
+      
+      await setDoc(ref, {
+        ...event,
+        id: eventId,
+        timestamp: new Date().toISOString()
+      });
+
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        actor.id,
+        actor.name,
+        'EMPLOYEE_LIFECYCLE_EVENT',
+        `Recorded ${event.type} event for employee ${employeeId}: ${event.reason || 'No reason provided'}`,
+        employeeId
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `lifecycle event ${employeeId}`);
+      return false;
+    }
+  }
+
+  /**
+   * Update an onboarding task status
+   */
+  static async updateOnboardingTask(
+    companyId: string,
+    employeeId: string,
+    taskId: string,
+    updates: Partial<OnboardingTask>,
+    actor: { id: string, name: string }
+  ): Promise<boolean> {
+    try {
+      const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+      const snap = await getDoc(empRef);
+      if (!snap.exists()) return false;
+
+      const employee = snap.data() as EmployeeRecord;
+      const tasks = employee.onboardingTasks || [];
+      const updatedTasks = tasks.map(t => t.id === taskId ? { 
+        ...t, 
+        ...updates, 
+        completedAt: updates.status === 'COMPLETED' ? new Date().toISOString() : t.completedAt,
+        completedBy: updates.status === 'COMPLETED' ? actor.id : t.completedBy,
+        waivedBy: updates.status === 'WAIVED' ? actor.id : t.waivedBy
+      } : t);
+
+      await setDoc(empRef, { 
+        onboardingTasks: updatedTasks,
+        updatedAt: new Date().toISOString(),
+        updatedBy: actor.id
+      }, { merge: true });
+
+      // If all mandatory tasks are completed, move to ACTIVE if current status is ONBOARDING
+      const mandatoryTasks = updatedTasks.filter(t => t.isMandatory);
+      const allMandatoryDone = mandatoryTasks.every(t => t.status === 'COMPLETED' || t.status === 'WAIVED');
+
+      if (allMandatoryDone && employee.lifecycleStatus === 'ONBOARDING') {
+        await setDoc(empRef, { 
+          lifecycleStatus: 'ACTIVE',
+          status: 'ACTIVE'
+        }, { merge: true });
+        
+        await this.addLifecycleEvent(companyId, employeeId, {
+          type: 'STATUS_CHANGE',
+          fromStatus: 'ONBOARDING',
+          toStatus: 'ACTIVE',
+          effectiveDate: new Date().toISOString(),
+          reason: 'Mandatory onboarding completed',
+          initiatedBy: 'SYSTEM',
+          timestamp: new Date().toISOString()
+        }, actor);
+      }
+
+      // Record lifecycle history for task completion
+      await this.addLifecycleEvent(companyId, employeeId, {
+        type: 'ONBOARDING_TASK',
+        toStatus: updates.status || 'UPDATED',
+        effectiveDate: new Date().toISOString(),
+        reason: `Onboarding task ${taskId} marked as ${updates.status}`,
+        initiatedBy: actor.id,
+        timestamp: new Date().toISOString(),
+        details: { taskId, updates }
+      }, actor);
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `onboarding task ${employeeId}`);
+      return false;
+    }
+  }
+
+  /**
+   * Initiate a promotion request
+   */
+  static async initiatePromotion(
+    companyId: string,
+    request: Omit<PromotionRequest, 'id' | 'status' | 'createdAt'>,
+    actor: { id: string, name: string }
+  ): Promise<string | null> {
+    try {
+      const requestId = `PROM-${Date.now()}`;
+      const ref = doc(db, 'companies', companyId, 'promotions', requestId);
+      
+      await setDoc(ref, {
+        ...request,
+        id: requestId,
+        status: 'PENDING',
+        createdAt: new Date().toISOString()
+      });
+
+      // Update employee lifecycle status
+      await setDoc(doc(db, 'companies', companyId, 'employees', request.employeeId), {
+        lifecycleStatus: 'PROMOTION_PENDING'
+      }, { merge: true });
+
+      await this.addLifecycleEvent(companyId, request.employeeId, {
+        type: 'PROMOTION',
+        toStatus: 'PROMOTION_PENDING',
+        effectiveDate: request.effectiveDate,
+        reason: request.reason,
+        initiatedBy: actor.id,
+        timestamp: new Date().toISOString(),
+        details: { requestId }
+      }, actor);
+
+      return requestId;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `promotion request ${request.employeeId}`);
+      return null;
+    }
+  }
+
+  /**
+   * Approve promotion request and apply changes
+   */
+  static async approvePromotion(
+    companyId: string,
+    requestId: string,
+    actor: { id: string, name: string }
+  ): Promise<boolean> {
+    try {
+      const promoRef = doc(db, 'companies', companyId, 'promotions', requestId);
+      const promoSnap = await getDoc(promoRef);
+      if (!promoSnap.exists()) return false;
+
+      const promo = promoSnap.data() as PromotionRequest;
+      
+      // Update Employee Record
+      const empRef = doc(db, 'companies', companyId, 'employees', promo.employeeId);
+      await setDoc(empRef, {
+        designation: promo.newDesignation,
+        departmentId: promo.newDepartmentId,
+        reportingManagerId: promo.newManagerId || promo.previousManagerId,
+        lifecycleStatus: 'ACTIVE',
+        updatedAt: new Date().toISOString(),
+        updatedBy: actor.id
+      }, { merge: true });
+
+      // Update Promotion Status
+      await setDoc(promoRef, {
+        status: 'APPROVED',
+        approvedBy: actor.id,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      await this.addLifecycleEvent(companyId, promo.employeeId, {
+        type: 'PROMOTION',
+        fromStatus: 'PROMOTION_PENDING',
+        toStatus: 'ACTIVE',
+        effectiveDate: promo.effectiveDate,
+        reason: 'Promotion Approved',
+        initiatedBy: promo.initiatedBy,
+        approvedBy: actor.id,
+        timestamp: new Date().toISOString(),
+        details: { requestId, promoData: promo }
+      }, actor);
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `approve promotion ${requestId}`);
+      return false;
+    }
+  }
+
+  /**
+   * Initiate a transfer request
+   */
+  static async initiateTransfer(
+    companyId: string,
+    request: Omit<TransferRequest, 'id' | 'status' | 'createdAt'>,
+    actor: { id: string, name: string }
+  ): Promise<string | null> {
+    try {
+      const requestId = `XFER-${Date.now()}`;
+      const ref = doc(db, 'companies', companyId, 'transfers', requestId);
+      
+      await setDoc(ref, {
+        ...request,
+        id: requestId,
+        status: 'PENDING',
+        createdAt: new Date().toISOString()
+      });
+
+      // Update employee lifecycle status
+      await setDoc(doc(db, 'companies', companyId, 'employees', request.employeeId), {
+        lifecycleStatus: 'TRANSFER_PENDING'
+      }, { merge: true });
+
+      await this.addLifecycleEvent(companyId, request.employeeId, {
+        type: 'TRANSFER',
+        toStatus: 'TRANSFER_PENDING',
+        effectiveDate: request.effectiveDate,
+        reason: request.reason,
+        initiatedBy: actor.id,
+        timestamp: new Date().toISOString(),
+        details: { requestId }
+      }, actor);
+
+      return requestId;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `transfer request ${request.employeeId}`);
+      return null;
+    }
+  }
+
+  /**
+   * Approve transfer request and apply changes
+   */
+  static async approveTransfer(
+    companyId: string,
+    requestId: string,
+    actor: { id: string, name: string }
+  ): Promise<boolean> {
+    try {
+      const xferRef = doc(db, 'companies', companyId, 'transfers', requestId);
+      const xferSnap = await getDoc(xferRef);
+      if (!xferSnap.exists()) return false;
+
+      const xfer = xferSnap.data() as TransferRequest;
+      
+      // Update Employee Record
+      const empRef = doc(db, 'companies', companyId, 'employees', xfer.employeeId);
+      await setDoc(empRef, {
+        assignedSiteId: xfer.newSiteId,
+        assignedBranchId: xfer.newBranchId,
+        assignedRegionId: xfer.newRegionId,
+        lifecycleStatus: 'ACTIVE',
+        updatedAt: new Date().toISOString(),
+        updatedBy: actor.id
+      }, { merge: true });
+
+      // Update Transfer Status
+      await setDoc(xferRef, {
+        status: 'APPROVED',
+        approvedBy: actor.id,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      await this.addLifecycleEvent(companyId, xfer.employeeId, {
+        type: 'TRANSFER',
+        fromStatus: 'TRANSFER_PENDING',
+        toStatus: 'ACTIVE',
+        effectiveDate: xfer.effectiveDate,
+        reason: 'Transfer Approved',
+        initiatedBy: xfer.initiatedBy,
+        approvedBy: actor.id,
+        timestamp: new Date().toISOString(),
+        details: { requestId, transferData: xfer }
+      }, actor);
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `approve transfer ${requestId}`);
+      return false;
+    }
+  }
+
+  /**
+   * Initiate an exit process
+   */
+  static async initiateExit(
+    companyId: string,
+    request: Omit<ExitRequest, 'id' | 'status' | 'createdAt' | 'exitChecklist'>,
+    actor: { id: string, name: string }
+  ): Promise<string | null> {
+    try {
+      const requestId = `EXIT-${Date.now()}`;
+      const ref = doc(db, 'companies', companyId, 'exits', requestId);
+      
+      const exitChecklist: OnboardingTask[] = [
+        { id: 'EXT-01', title: 'ID Badge Return', status: 'PENDING', isMandatory: true },
+        { id: 'EXT-02', title: 'Uniform/Company Property Return', status: 'PENDING', isMandatory: true },
+        { id: 'EXT-03', title: 'Asset Clearance', status: 'PENDING', isMandatory: true },
+        { id: 'EXT-04', title: 'Supervisor Clearance', status: 'PENDING', isMandatory: true },
+        { id: 'EXT-05', title: 'Final HR Clearance', status: 'PENDING', isMandatory: true },
+      ];
+
+      await setDoc(ref, {
+        ...request,
+        id: requestId,
+        status: 'PENDING',
+        exitChecklist,
+        createdAt: new Date().toISOString()
+      });
+
+      // Update employee lifecycle status
+      await setDoc(doc(db, 'companies', companyId, 'employees', request.employeeId), {
+        lifecycleStatus: 'EXIT_INITIATED'
+      }, { merge: true });
+
+      await this.addLifecycleEvent(companyId, request.employeeId, {
+        type: 'EXIT',
+        toStatus: 'EXIT_INITIATED',
+        effectiveDate: request.lastWorkingDay,
+        reason: request.reason,
+        initiatedBy: actor.id,
+        timestamp: new Date().toISOString(),
+        details: { requestId, exitType: request.exitType }
+      }, actor);
+
+      return requestId;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `exit request ${request.employeeId}`);
+      return null;
+    }
+  }
+
+  /**
+   * Approve exit and deactivate access
+   */
+  static async approveExit(
+    companyId: string,
+    requestId: string,
+    actor: { id: string, name: string }
+  ): Promise<boolean> {
+    try {
+      const exitRef = doc(db, 'companies', companyId, 'exits', requestId);
+      const exitSnap = await getDoc(exitRef);
+      if (!exitSnap.exists()) return false;
+
+      const exit = exitSnap.data() as ExitRequest;
+      
+      // Update Employee Record
+      const empRef = doc(db, 'companies', companyId, 'employees', exit.employeeId);
+      await setDoc(empRef, {
+        lifecycleStatus: 'EXITED',
+        status: 'DEACTIVATED',
+        updatedAt: new Date().toISOString(),
+        updatedBy: actor.id
+      }, { merge: true });
+
+      // Update Exit Status
+      await setDoc(exitRef, {
+        status: 'APPROVED',
+        approvedBy: actor.id,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      // Deactivate Auth if exists
+      const empSnap = await getDoc(empRef);
+      const empData = empSnap.data() as EmployeeRecord;
+      if (empData.authUid) {
+        // Log access deactivation
+        await this.logAuditEvent(
+          companyId,
+          actor.id,
+          actor.name,
+          'ACCESS_DEACTIVATED',
+          `Deactivated application access for exited employee ${exit.employeeId}`,
+          exit.employeeId
+        );
+      }
+
+      await this.addLifecycleEvent(companyId, exit.employeeId, {
+        type: 'EXIT',
+        fromStatus: 'EXIT_PENDING',
+        toStatus: 'EXITED',
+        effectiveDate: exit.lastWorkingDay,
+        reason: 'Exit Process Approved & Finalized',
+        initiatedBy: exit.initiatedBy,
+        approvedBy: actor.id,
+        timestamp: new Date().toISOString(),
+        details: { requestId, exitData: exit }
+      }, actor);
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `approve exit ${requestId}`);
       return false;
     }
   }
@@ -314,14 +879,15 @@ export class FirestoreService {
     companyId: string,
     employeeId: string,
     status: EmployeeRecord['status'],
-    approverId: string
+    actor: { id: string, name: string }
   ): Promise<boolean> {
     const legacyPath = `users/${employeeId}`;
     const newPath = `companies/${companyId}/employees/${employeeId}`;
     try {
       const payload = {
         status,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        updatedBy: actor.id
       };
 
       const refNew = doc(db, 'companies', companyId, 'employees', employeeId);
@@ -330,11 +896,38 @@ export class FirestoreService {
       const refLegacy = doc(db, 'users', employeeId);
       await setDoc(refLegacy, payload, { merge: true });
 
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        actor.id,
+        actor.name,
+        'EMPLOYEE_STATUS_CHANGED',
+        `Changed employee ${employeeId} status to ${status}`,
+        employeeId
+      );
+
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `${newPath} & ${legacyPath}`);
       return false;
     }
+  }
+
+  /**
+   * Subscribe to employee lifecycle history
+   */
+  static subscribeToLifecycleHistory(
+    companyId: string,
+    employeeId: string,
+    onUpdate: (data: LifecycleHistoryRecord[]) => void
+  ) {
+    const q = query(
+      collection(db, 'companies', companyId, 'employees', employeeId, 'lifecycleEvents'),
+      orderBy('timestamp', 'desc')
+    );
+    return onSnapshot(q, (snap) => {
+      onUpdate(snap.docs.map(d => d.data() as LifecycleHistoryRecord));
+    });
   }
 
   /**
@@ -370,7 +963,7 @@ export class FirestoreService {
   /**
    * Delete an employee record from Firestore
    */
-  static async deleteEmployee(companyId: string, employeeId: string): Promise<boolean> {
+  static async deleteEmployee(companyId: string, employeeId: string, actor: { id: string, name: string }): Promise<boolean> {
     const legacyPath = `users/${employeeId}`;
     const newPath = `companies/${companyId}/employees/${employeeId}`;
     try {
@@ -380,6 +973,16 @@ export class FirestoreService {
 
       const refLegacy = doc(db, 'users', employeeId);
       await deleteDoc(refLegacy);
+
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        actor.id,
+        actor.name,
+        'EMPLOYEE_DELETED',
+        `Permanently deleted employee record ${employeeId}`,
+        employeeId
+      );
 
       return true;
     } catch (err) {
@@ -547,7 +1150,7 @@ export class FirestoreService {
   static async checkDuplicateShiftCode(companyId: string, code: string, excludeId?: string): Promise<boolean> {
     try {
       const colRef = collection(db, 'companies', companyId, 'shifts');
-      const q = query(colRef, where('code', '==', code.trim().toUpperCase()));
+      const q = query(colRef, where('shiftCode', '==', code.trim().toUpperCase()));
       const snap = await getDocs(q);
       if (snap.empty) return false;
       return snap.docs.some(d => d.id !== excludeId);
@@ -559,232 +1162,37 @@ export class FirestoreService {
 
   /**
    * ============================================================
-   * ATTENDANCE & PUNCH MANAGEMENT METHODS
+   * ROSTER MANAGEMENT METHODS
    * ============================================================
    */
-  static subscribeToAttendanceLogs(session: UserSession, companyId: string, onData: (logs: AttendanceLogRecord[]) => void
+  static subscribeToRosters(session: UserSession, companyId: string, onData: (rosters: RosterRecord[]) => void
   ): () => void {
     try {
-      const colRef = collection(db, 'companies', companyId, 'attendance_logs');
-      return onSnapshot(colRef, (snap) => {
-        const logs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AttendanceLogRecord));
-        onData(logs);
+      const colRef = collection(db, 'companies', companyId, 'rosters');
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'ATTENDANCE'));
+      return onSnapshot(q, (snap) => {
+        const rosters = snap.docs.map(d => ({ id: d.id, ...d.data() } as RosterRecord));
+        onData(rosters);
       }, (err) => {
-        console.warn('[Firestore] subscribeToAttendanceLogs error:', err);
-        // Fallback check on companies/{companyId}/attendance
-        const fallbackRef = collection(db, 'companies', companyId, 'attendance');
-        getDocs(fallbackRef).then(snap => {
-          const fallbackLogs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AttendanceLogRecord));
-          onData(fallbackLogs);
-        }).catch(() => onData([]));
+        console.warn('[Firestore] subscribeToRosters error:', err);
+        onData([]);
       });
     } catch (e) {
-      console.warn('[Firestore] subscribeToAttendanceLogs exception:', e);
+      console.warn('[Firestore] subscribeToRosters exception:', e);
       onData([]);
       return () => {};
     }
   }
 
-  static async getAttendanceLogsDetailed(
-    companyId: string,
-    filters?: { date?: string; employeeId?: string; siteId?: string; status?: string }
-  ): Promise<AttendanceLogRecord[]> {
+  static async saveRoster(companyId: string, roster: RosterRecord): Promise<boolean> {
+    const path = `companies/${companyId}/rosters/${roster.id}`;
     try {
-      const colRef = collection(db, 'companies', companyId, 'attendance_logs');
-      const snap = await getDocs(colRef);
-      let logs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AttendanceLogRecord));
-      
-      if (logs.length === 0) {
-        const fallbackRef = collection(db, 'companies', companyId, 'attendance');
-        const snapFb = await getDocs(fallbackRef);
-        logs = snapFb.docs.map(d => ({ id: d.id, ...d.data() } as AttendanceLogRecord));
-      }
-
-      if (filters) {
-        if (filters.date) {
-          logs = logs.filter(l => l.date === filters.date);
-        }
-        if (filters.employeeId) {
-          logs = logs.filter(l => l.employeeId === filters.employeeId);
-        }
-        if (filters.siteId) {
-          logs = logs.filter(l => l.siteId === filters.siteId);
-        }
-        if (filters.status) {
-          logs = logs.filter(l => l.status === filters.status);
-        }
-      }
-
-      return logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    } catch (err) {
-      console.warn('[Firestore] getAttendanceLogsDetailed error:', err);
-      return [];
-    }
-  }
-
-  /**
-   * Performs Check-in for an employee with duplicate check & late arrival calculations
-   */
-  static async checkInEmployee(
-    companyId: string,
-    log: Omit<AttendanceLogRecord, 'id' | 'createdAt'>,
-    shift?: ShiftRecord
-  ): Promise<{ success: boolean; message: string; logId?: string }> {
-    const todayStr = log.date || new Date().toISOString().split('T')[0];
-    const logId = `ATT-${todayStr}-${log.employeeId}`;
-    const primaryPath = `companies/${companyId}/attendance_logs/${logId}`;
-    
-    try {
-      const ref = doc(db, 'companies', companyId, 'attendance_logs', logId);
-
-      // 1. Verify if employee already checked in today (wrapped for offline resilience)
-      try {
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          const existingData = snap.data() as AttendanceLogRecord;
-          if (existingData.checkInTime && !existingData.checkOutTime) {
-            return { success: false, message: 'Employee has already checked in today without checking out. Please check out first.' };
-          }
-          if (existingData.checkInTime && existingData.checkOutTime) {
-            return { success: false, message: 'Employee attendance punch for today is already completed.' };
-          }
-        }
-      } catch (getDocErr) {
-        console.warn('[Firestore] Offline check-in getDoc notice:', getDocErr);
-      }
-
-      // 2. Compute Late Arrival Minutes based on Shift
-      let lateMinutes = 0;
-      let status: AttendanceLogRecord['status'] = log.status || 'PRESENT';
-
-      if (shift && log.checkInTime) {
-        const checkInDate = new Date(log.checkInTime);
-        const [shiftHours, shiftMins] = shift.startTime.split(':').map(Number);
-        const scheduledTime = new Date(checkInDate);
-        scheduledTime.setHours(shiftHours, shiftMins, 0, 0);
-
-        const graceEndTime = new Date(scheduledTime.getTime() + (shift.gracePeriodMinutes || 0) * 60 * 1000);
-        
-        if (checkInDate > graceEndTime) {
-          lateMinutes = Math.floor((checkInDate.getTime() - scheduledTime.getTime()) / (1000 * 60));
-          status = 'LATE';
-        }
-      }
-
-      const payload: AttendanceLogRecord = {
-        ...log,
-        id: logId,
-        companyId,
-        date: todayStr,
-        lateArrivalMinutes: lateMinutes,
-        status,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      await setDoc(ref, payload, { merge: true });
-
-      // Dual write to attendance collection for backwards compatibility
-      const refLegacy = doc(db, 'companies', companyId, 'attendance', logId);
-      await setDoc(refLegacy, payload, { merge: true }).catch(err => 
-        console.warn('[Firestore] Legacy collection write offline warning:', err)
-      );
-
-      return { success: true, message: `Check-in successful. Status: ${status}`, logId };
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, primaryPath);
-      return { success: true, message: `Check-in recorded offline. Status: ${log.status || 'PRESENT'}`, logId };
-    }
-  }
-
-  /**
-   * Performs Check-out for an employee with early departure & overtime calculations
-   */
-  static async checkOutEmployee(
-    companyId: string,
-    attendanceId: string,
-    checkOutTime: string,
-    checkOutGps?: { latitude: number; longitude: number; accuracy?: number },
-    shift?: ShiftRecord
-  ): Promise<{ success: boolean; message: string }> {
-    const primaryPath = `companies/${companyId}/attendance_logs/${attendanceId}`;
-    try {
-      const ref = doc(db, 'companies', companyId, 'attendance_logs', attendanceId);
-      let existingData: Partial<AttendanceLogRecord> = {};
-
-      try {
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          existingData = snap.data() as AttendanceLogRecord;
-        } else {
-          const refLegacy = doc(db, 'companies', companyId, 'attendance', attendanceId);
-          const snapLegacy = await getDoc(refLegacy);
-          if (snapLegacy.exists()) {
-            existingData = snapLegacy.data() as AttendanceLogRecord;
-          }
-        }
-      } catch (getDocErr) {
-        console.warn('[Firestore] Offline check-out getDoc notice:', getDocErr);
-      }
-
-      let earlyDepartureMinutes = 0;
-      let overtimeMinutes = 0;
-
-      if (shift && checkOutTime) {
-        const checkOutDate = new Date(checkOutTime);
-        const [shiftEndH, shiftEndM] = shift.endTime.split(':').map(Number);
-        const scheduledEndTime = new Date(checkOutDate);
-        scheduledEndTime.setHours(shiftEndH, shiftEndM, 0, 0);
-
-        if (checkOutDate < scheduledEndTime) {
-          earlyDepartureMinutes = Math.floor((scheduledEndTime.getTime() - checkOutDate.getTime()) / (1000 * 60));
-        } else if (checkOutDate > scheduledEndTime) {
-          overtimeMinutes = Math.floor((checkOutDate.getTime() - scheduledEndTime.getTime()) / (1000 * 60));
-        }
-      }
-
-      const updates: Partial<AttendanceLogRecord> = {
-        checkOutTime,
-        checkOutGps,
-        earlyDepartureMinutes,
-        overtimeMinutes,
-        updatedAt: new Date().toISOString()
-      };
-
-      await setDoc(ref, updates, { merge: true });
-
-      const refLegacy = doc(db, 'companies', companyId, 'attendance', attendanceId);
-      await setDoc(refLegacy, updates, { merge: true }).catch(err =>
-        console.warn('[Firestore] Legacy collection write offline warning:', err)
-      );
-
-      return { success: true, message: 'Check-out successful.' };
-    } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, primaryPath);
-      return { success: true, message: 'Check-out recorded offline.' };
-    }
-  }
-
-  /**
-   * Direct Save or Manual Attendance Correction by Supervisor/Admin
-   */
-  static async saveAttendanceLogDirect(companyId: string, log: AttendanceLogRecord): Promise<boolean> {
-    const path = `companies/${companyId}/attendance_logs/${log.id}`;
-    try {
-      const ref = doc(db, 'companies', companyId, 'attendance_logs', log.id);
+      const ref = doc(db, 'companies', companyId, 'rosters', roster.id);
       await setDoc(ref, {
-        ...log,
+        ...roster,
         companyId,
         updatedAt: new Date().toISOString()
       }, { merge: true });
-
-      const refLegacy = doc(db, 'companies', companyId, 'attendance', log.id);
-      await setDoc(refLegacy, {
-        ...log,
-        companyId,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
-
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, path);
@@ -792,85 +1200,279 @@ export class FirestoreService {
     }
   }
 
-  /**
-   * Request Attendance Correction (Employee/Supervisor)
-   */
-  static async requestAttendanceCorrection(
-    companyId: string,
-    attendanceId: string,
-    correctionNote: string
-  ): Promise<boolean> {
-    const path = `companies/${companyId}/attendance_logs/${attendanceId}`;
+  static async bulkSaveRosters(companyId: string, rosters: RosterRecord[], actor: { id: string; name: string }): Promise<boolean> {
     try {
-      const updates = {
-        correctionNote,
-        correctionRequested: true,
-        correctionStatus: 'PENDING' as const,
-        updatedAt: new Date().toISOString()
-      };
+      await runTransaction(db, async (transaction) => {
+        for (const roster of rosters) {
+          const ref = doc(db, 'companies', companyId, 'rosters', roster.id);
+          transaction.set(ref, {
+            ...roster,
+            companyId,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        }
+      });
 
-      const ref = doc(db, 'companies', companyId, 'attendance_logs', attendanceId);
-      await setDoc(ref, updates, { merge: true });
+      // Send Notifications to employees
+      for (const roster of rosters) {
+        const notifId = `NOTIF_ROSTER_${roster.id}`;
+        const notifRef = doc(db, 'companies', companyId, 'notifications', notifId);
+        await setDoc(notifRef, {
+          id: notifId,
+          title: 'Shift Assigned',
+          message: `You have been assigned to ${roster.shiftName} at ${roster.siteName} for ${roster.date || roster.rosterDate}.`,
+          type: 'INFO',
+          timestamp: new Date().toISOString(),
+          isRead: false,
+          userId: roster.employeeId, // Target specific employee
+          actionRoute: 'ATTENDANCE_SHIFTS'
+        });
+      }
 
-      const refLegacy = doc(db, 'companies', companyId, 'attendance', attendanceId);
-      await setDoc(refLegacy, updates, { merge: true });
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        actor.id,
+        actor.name,
+        'ROSTER_BULK_ASSIGN',
+        `Assigned shifts to ${rosters.length} members for ${rosters[0]?.date || rosters[0]?.rosterDate}`
+      );
 
       return true;
     } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, path);
+      console.error('[Firestore] bulkSaveRosters error:', err);
       return false;
     }
   }
 
-  /**
-   * Approve or Reject Attendance Correction Request
-   */
-  static async approveOrRejectAttendanceCorrection(
-    companyId: string,
-    attendanceId: string,
-    approved: boolean,
-    approverId: string,
-    updatedLog?: Partial<AttendanceLogRecord>
-  ): Promise<boolean> {
-    const path = `companies/${companyId}/attendance_logs/${attendanceId}`;
+  static async deleteRoster(companyId: string, rosterId: string, actor: { id: string; name: string }): Promise<boolean> {
     try {
-      const updates: Partial<AttendanceLogRecord> = {
-        ...updatedLog,
-        correctionStatus: approved ? 'APPROVED' : 'REJECTED',
-        correctionRequested: false,
-        approvedBy: approverId,
-        status: approved ? (updatedLog?.status || 'PRESENT') : 'ABSENT',
-        updatedAt: new Date().toISOString()
-      };
-
-      const ref = doc(db, 'companies', companyId, 'attendance_logs', attendanceId);
-      await setDoc(ref, updates, { merge: true });
-
-      const refLegacy = doc(db, 'companies', companyId, 'attendance', attendanceId);
-      await setDoc(refLegacy, updates, { merge: true });
-
-      return true;
-    } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, path);
-      return false;
-    }
-  }
-
-  /**
-   * Delete Attendance Log
-   */
-  static async deleteAttendanceLog(companyId: string, attendanceId: string): Promise<boolean> {
-    const path = `companies/${companyId}/attendance_logs/${attendanceId}`;
-    try {
-      const ref = doc(db, 'companies', companyId, 'attendance_logs', attendanceId);
+      const ref = doc(db, 'companies', companyId, 'rosters', rosterId);
+      const snap = await getDoc(ref);
+      const rosterData = snap.data() as RosterRecord | undefined;
+      
       await deleteDoc(ref);
 
-      const refLegacy = doc(db, 'companies', companyId, 'attendance', attendanceId);
-      await deleteDoc(refLegacy);
+      if (rosterData) {
+        const notifId = `NOTIF_ROSTER_DEL_${rosterId}`;
+        const notifRef = doc(db, 'companies', companyId, 'notifications', notifId);
+        await setDoc(notifRef, {
+          id: notifId,
+          title: 'Shift Cancelled',
+          message: `Your shift on ${rosterData.date || rosterData.rosterDate} has been cancelled.`,
+          type: 'WARNING',
+          timestamp: new Date().toISOString(),
+          isRead: false,
+          userId: rosterData.employeeId,
+          actionRoute: 'ATTENDANCE_SHIFTS'
+        });
+      }
+
+      await this.logAuditEvent(
+        companyId,
+        actor.id,
+        actor.name,
+        'ROSTER_DELETE',
+        `Deleted roster assignment ${rosterId}`
+      );
 
       return true;
     } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, path);
+      console.error('[Firestore] deleteRoster error:', err);
+      return false;
+    }
+  }
+
+  /**
+   * ============================================================
+   * ATTENDANCE & PUNCH MANAGEMENT METHODS
+   * ============================================================
+   */
+  static subscribeToAttendance(session: UserSession, companyId: string, onData: (logs: AttendanceRecord[]) => void
+  ): () => void {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'attendance');
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'ATTENDANCE'));
+      return onSnapshot(q, (snap) => {
+        const logs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AttendanceRecord));
+        onData(logs);
+      }, (err) => {
+        console.warn('[Firestore] subscribeToAttendance error:', err);
+        onData([]);
+      });
+    } catch (e) {
+      console.warn('[Firestore] subscribeToAttendance exception:', e);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  static async saveAttendance(companyId: string, record: AttendanceRecord): Promise<boolean> {
+    const path = `companies/${companyId}/attendance/${record.id}`;
+    try {
+      const ref = doc(db, 'companies', companyId, 'attendance', record.id);
+      await setDoc(ref, {
+        ...record,
+        companyId,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, path);
+      return false;
+    }
+  }
+
+  static async punchIn(
+    companyId: string, 
+    employeeId: string, 
+    employeeName: string,
+    rosterId: string,
+    shift: ShiftRecord,
+    siteId: string,
+    siteName: string,
+    gps?: { latitude: number, longitude: number, accuracy?: number },
+    deviceInfo?: string
+  ): Promise<{ success: boolean; message: string; record?: AttendanceRecord }> {
+    const date = new Date().toISOString().split('T')[0];
+    const id = `ATT-${date}-${employeeId}`;
+    try {
+      const now = new Date().toISOString();
+      const metrics = WfmService.calculateAttendanceMetrics(shift, date, now);
+      
+      const record: AttendanceRecord = {
+        id,
+        companyId,
+        employeeId,
+        employeeName,
+        rosterId,
+        shiftId: shift.id,
+        shiftName: shift.shiftName,
+        siteId,
+        siteName,
+        attendanceDate: date,
+        checkIn: now,
+        status: metrics.status,
+        lateMinutes: metrics.lateMinutes,
+        earlyDepartureMinutes: 0,
+        workedMinutes: 0,
+        overtimeMinutes: 0,
+        source: 'EMPLOYEE',
+        checkInGps: gps ? { ...gps, verification: 'NOT_AVAILABLE' } : undefined, // Placeholder for geofence check
+        deviceInfo,
+        createdBy: employeeId,
+        updatedBy: employeeId,
+        createdAt: now,
+        updatedAt: now
+      };
+
+      const ok = await this.saveAttendance(companyId, record);
+      return { success: ok, message: ok ? 'Check-in successful' : 'Failed to save attendance', record: ok ? record : undefined };
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `attendance/${id}`);
+      return { success: false, message: 'Internal error during check-in' };
+    }
+  }
+
+  static async punchOut(
+    companyId: string,
+    attendanceId: string,
+    shift: ShiftRecord,
+    gps?: { latitude: number, longitude: number, accuracy?: number }
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'attendance', attendanceId);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return { success: false, message: 'Attendance record not found' };
+
+      const record = snap.data() as AttendanceRecord;
+      const now = new Date().toISOString();
+      const metrics = WfmService.calculateAttendanceMetrics(shift, record.attendanceDate, record.checkIn, now);
+
+      const updates: Partial<AttendanceRecord> = {
+        checkOut: now,
+        status: metrics.status,
+        earlyDepartureMinutes: metrics.earlyDepartureMinutes,
+        workedMinutes: metrics.workedMinutes,
+        overtimeMinutes: metrics.overtimeMinutes,
+        checkOutGps: gps ? { ...gps, verification: 'NOT_AVAILABLE' } : undefined,
+        updatedAt: now
+      };
+
+      await setDoc(ref, updates, { merge: true });
+      return { success: true, message: 'Check-out successful' };
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `attendance/${attendanceId}`);
+      return { success: false, message: 'Internal error during check-out' };
+    }
+  }
+
+  static async supervisorPunch(
+    companyId: string,
+    employeeId: string,
+    employeeName: string,
+    rosterId: string,
+    shift: ShiftRecord,
+    siteId: string,
+    siteName: string,
+    action: 'IN' | 'OUT',
+    supervisorId: string,
+    remarks?: string
+  ): Promise<boolean> {
+    const date = new Date().toISOString().split('T')[0];
+    const id = `ATT-${date}-${employeeId}`;
+    try {
+      const now = new Date().toISOString();
+      
+      if (action === 'IN') {
+        const metrics = WfmService.calculateAttendanceMetrics(shift, date, now);
+        const record: AttendanceRecord = {
+          id,
+          companyId,
+          employeeId,
+          employeeName,
+          rosterId,
+          shiftId: shift.id,
+          shiftName: shift.shiftName,
+          siteId,
+          siteName,
+          attendanceDate: date,
+          checkIn: now,
+          status: metrics.status,
+          lateMinutes: metrics.lateMinutes,
+          earlyDepartureMinutes: 0,
+          workedMinutes: 0,
+          overtimeMinutes: 0,
+          source: 'SUPERVISOR',
+          remarks: remarks || 'Supervisor Punch-In',
+          createdBy: supervisorId,
+          updatedBy: supervisorId,
+          createdAt: now,
+          updatedAt: now
+        };
+        return await this.saveAttendance(companyId, record);
+      } else {
+        const ref = doc(db, 'companies', companyId, 'attendance', id);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return false;
+        
+        const record = snap.data() as AttendanceRecord;
+        const metrics = WfmService.calculateAttendanceMetrics(shift, record.attendanceDate, record.checkIn, now);
+        
+        await setDoc(ref, {
+          checkOut: now,
+          status: metrics.status,
+          earlyDepartureMinutes: metrics.earlyDepartureMinutes,
+          workedMinutes: metrics.workedMinutes,
+          overtimeMinutes: metrics.overtimeMinutes,
+          remarks: (record.remarks ? record.remarks + '; ' : '') + (remarks || 'Supervisor Punch-Out'),
+          updatedAt: now,
+          updatedBy: supervisorId
+        }, { merge: true });
+        return true;
+      }
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `attendance/${id}`);
       return false;
     }
   }
@@ -945,6 +1547,17 @@ export class FirestoreService {
   /**
    * Listen to real-time Notifications
    */
+  static async createNotification(notification: AppNotification): Promise<boolean> {
+    try {
+      const ref = doc(db, 'notifications', notification.id);
+      await setDoc(ref, notification);
+      return true;
+    } catch (e) {
+      console.warn('[Firestore] createNotification error:', e);
+      return false;
+    }
+  }
+
   static subscribeToNotifications(
     role: string, 
     onData: (notifications: AppNotification[]) => void
@@ -1229,8 +1842,19 @@ export class FirestoreService {
       await setDoc(ref, {
         ...checkpoint,
         companyId,
-        createdAt: checkpoint.createdAt || new Date().toISOString()
+        createdAt: checkpoint.createdAt || new Date().toISOString(),
+        updatedAt: Date.now()
       }, { merge: true });
+
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        'SYSTEM',
+        'Management',
+        'PATROL_CHECKPOINT_UPDATED',
+        `Patrol Checkpoint updated: ${checkpoint.checkpointName}. Site: ${checkpoint.siteName || checkpoint.siteId}`
+      );
+
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, path);
@@ -1245,8 +1869,19 @@ export class FirestoreService {
       await setDoc(ref, {
         ...log,
         companyId,
-        createdAt: log.createdAt || new Date().toISOString()
+        createdAt: log.createdAt || new Date().toISOString(),
+        updatedAt: Date.now()
       }, { merge: true });
+
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        log.guardId || 'SYSTEM',
+        log.guardName || 'Security Guard',
+        'PATROL_COMPLETED',
+        `Patrol completed: ${log.patrolName} (${log.status}). Site: ${log.siteName || log.siteId}`
+      );
+
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, path);
@@ -1263,7 +1898,8 @@ export class FirestoreService {
   ): () => void {
     try {
       const colRef = collection(db, 'companies', companyId, 'incident_reports');
-      return onSnapshot(colRef, (snap) => {
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'INCIDENTS'));
+      return onSnapshot(q, (snap) => {
         const reports = snap.docs.map(d => ({ id: d.id, ...d.data() } as IncidentReportRecord));
         onData(reports);
       }, (err) => {
@@ -1284,8 +1920,19 @@ export class FirestoreService {
       await setDoc(ref, {
         ...report,
         companyId,
-        reportedAt: report.reportedAt || new Date().toISOString()
+        reportedAt: report.reportedAt || new Date().toISOString(),
+        updatedAt: Date.now()
       }, { merge: true });
+
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        report.reportedById || 'SYSTEM',
+        report.reportedByName || 'System',
+        'INCIDENT_REPORTED',
+        `Incident reported: ${report.title} (${report.severity}). Site: ${report.siteName || report.siteId}`
+      );
+
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, path);
@@ -1328,7 +1975,8 @@ export class FirestoreService {
   ): () => void {
     try {
       const colRef = collection(db, 'companies', companyId, 'visitor_logs');
-      return onSnapshot(colRef, (snap) => {
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'VISITORS'));
+      return onSnapshot(q, (snap) => {
         const visitors = snap.docs.map(d => ({ id: d.id, ...d.data() } as VisitorLogRecord));
         onData(visitors);
       }, (err) => {
@@ -1350,8 +1998,19 @@ export class FirestoreService {
         ...visitor,
         companyId,
         status: 'IN_SITE',
-        createdAt: visitor.createdAt || new Date().toISOString()
+        createdAt: visitor.createdAt || new Date().toISOString(),
+        updatedAt: Date.now()
       }, { merge: true });
+
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        visitor.entryGateGuardId || 'SYSTEM',
+        'Gate Guard',
+        'VISITOR_CHECK_IN',
+        `Visitor Checked In: ${visitor.visitorName} (Badge: ${visitor.badgeNumber}). Site: ${visitor.siteName || visitor.siteId}`
+      );
+
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, path);
@@ -1359,13 +2018,15 @@ export class FirestoreService {
     }
   }
 
-  static async checkOutVisitor(companyId: string, visitorId: string, checkOutTimeISO?: string): Promise<boolean> {
+  static async checkOutVisitor(companyId: string, visitorId: string, checkOutTimeISO?: string, badgeReturned = true, checkoutNotes?: string): Promise<boolean> {
     const path = `companies/${companyId}/visitor_logs/${visitorId}`;
     try {
       const ref = doc(db, 'companies', companyId, 'visitor_logs', visitorId);
       await setDoc(ref, {
         checkOutTime: checkOutTimeISO || new Date().toISOString(),
-        status: 'CHECKED_OUT'
+        status: 'CHECKED_OUT',
+        badgeReturned,
+        ...(checkoutNotes ? { checkoutNotes } : {})
       }, { merge: true });
       return true;
     } catch (err) {
@@ -1383,7 +2044,8 @@ export class FirestoreService {
   ): () => void {
     try {
       const colRef = collection(db, 'companies', companyId, 'material_movement_logs');
-      return onSnapshot(colRef, (snap) => {
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'MATERIALS'));
+      return onSnapshot(q, (snap) => {
         const materials = snap.docs.map(d => ({ id: d.id, ...d.data() } as MaterialMovementRecord));
         onData(materials);
       }, (err) => {
@@ -1404,8 +2066,19 @@ export class FirestoreService {
       await setDoc(ref, {
         ...material,
         companyId,
-        createdAt: material.createdAt || new Date().toISOString()
+        createdAt: material.createdAt || new Date().toISOString(),
+        updatedAt: Date.now()
       }, { merge: true });
+
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        material.createdBy || 'SYSTEM',
+        'System',
+        'MATERIAL_MOVEMENT_LOGGED',
+        `${material.movementType} movement: ${material.materialDescription} (GP: ${material.gatePassNumber}). Site: ${material.siteName || material.siteId}`
+      );
+
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, path);
@@ -1444,7 +2117,8 @@ export class FirestoreService {
   ): () => void {
     try {
       const colRef = collection(db, 'companies', companyId, 'daily_site_logs');
-      return onSnapshot(colRef, (snap) => {
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'LOGS'));
+      return onSnapshot(q, (snap) => {
         const logs = snap.docs.map(d => ({ id: d.id, ...d.data() } as DailySiteLogRecord));
         onData(logs);
       }, (err) => {
@@ -1458,14 +2132,50 @@ export class FirestoreService {
     }
   }
 
+  static async saveDailySiteLog(companyId: string, log: DailySiteLogRecord): Promise<boolean> {
+    const path = `companies/${companyId}/daily_site_logs/${log.id}`;
+    try {
+      const ref = doc(db, 'companies', companyId, 'daily_site_logs', log.id);
+      await setDoc(ref, {
+        ...log,
+        companyId,
+        createdAt: log.createdAt || new Date().toISOString(),
+        updatedAt: Date.now()
+      }, { merge: true });
+
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        log.supervisorId || 'SYSTEM',
+        log.supervisorName || 'System',
+        'DAILY_LOG_SUBMITTED',
+        `${log.logType} log submitted for ${log.date}. Site: ${log.siteName || log.siteId}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, path);
+      return false;
+    }
+  }
 
   static async saveTask(companyId: string, task: TaskRecord): Promise<boolean> {
     try {
       const ref = doc(db, 'companies', companyId, 'tasks', task.id);
       await setDoc(ref, {
         ...task,
-        updatedAt: new Date().toISOString()
+        updatedAt: Date.now()
       }, { merge: true });
+
+      // Log Audit Event
+      await this.logAuditEvent(
+        companyId,
+        task.createdBy,
+        task.createdByName || 'System',
+        'TASK_CREATED',
+        `New task dispatched: ${task.title}. Assigned to: ${task.assignedToName || task.assignedTo}`
+      );
+
       return true;
     } catch (err) {
       console.error('[FirestoreService] saveTask error:', err);
@@ -1478,11 +2188,32 @@ export class FirestoreService {
       const ref = doc(db, 'companies', companyId, 'announcements', ann.id);
       await setDoc(ref, {
         ...ann,
-        updatedAt: new Date().toISOString()
+        updatedAt: Date.now()
       }, { merge: true });
+
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        ann.createdBy || 'SYSTEM',
+        ann.createdByName || 'Management',
+        'ANNOUNCEMENT_PUBLISHED',
+        `Announcement broadcast: ${ann.title}. Target: ${ann.targetAudience}`
+      );
+
       return true;
     } catch (err) {
       console.error('[FirestoreService] saveAnnouncement error:', err);
+      return false;
+    }
+  }
+
+  static async deleteAnnouncement(companyId: string, annId: string): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'announcements', annId);
+      await deleteDoc(ref);
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] deleteAnnouncement error:', err);
       return false;
     }
   }
@@ -1497,22 +2228,6 @@ export class FirestoreService {
       return true;
     } catch (err) {
       console.error('[FirestoreService] saveDocumentRecord error:', err);
-      return false;
-    }
-  }
-
-  static async saveDailySiteLog(companyId: string, siteLog: DailySiteLogRecord): Promise<boolean> {
-    const path = `companies/${companyId}/daily_site_logs/${siteLog.id}`;
-    try {
-      const ref = doc(db, 'companies', companyId, 'daily_site_logs', siteLog.id);
-      await setDoc(ref, {
-        ...siteLog,
-        companyId,
-        createdAt: siteLog.createdAt || new Date().toISOString()
-      }, { merge: true });
-      return true;
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, path);
       return false;
     }
   }
@@ -2603,6 +3318,8 @@ export class FirestoreService {
       };
       const docRef = doc(db, 'companies', companyId, 'salary_structures', structId);
       await setDoc(docRef, payload, { merge: true });
+
+      
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/salary_structures`);
@@ -3235,6 +3952,8 @@ export class FirestoreService {
       const docRef = doc(db, 'companies', companyId, 'inventory_items', item.id);
       await setDoc(docRef, payload, { merge: true });
 
+      
+
       await this.logAuditEvent(
         companyId,
         actor.uid,
@@ -3456,6 +4175,8 @@ export class FirestoreService {
       const docRef = doc(db, 'companies', companyId, 'vendors', vendor.id);
       await setDoc(docRef, payload, { merge: true });
 
+      
+
       await this.logAuditEvent(
         companyId,
         actor.uid,
@@ -3510,7 +4231,8 @@ export class FirestoreService {
   ): () => void {
     try {
       const colRef = collection(db, 'companies', companyId, 'assets');
-      return onSnapshot(colRef, (snap) => {
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'ASSETS'));
+      return onSnapshot(q, (snap) => {
         const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as AssetRecord));
         list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
         onData(list);
@@ -3531,7 +4253,8 @@ export class FirestoreService {
   static async saveAsset(
     companyId: string,
     asset: AssetRecord,
-    actor: { uid: string; name: string }
+    actor: { uid: string; name: string },
+    oldAsset?: AssetRecord
   ): Promise<boolean> {
     const path = `companies/${companyId}/assets/${asset.id}`;
     try {
@@ -3545,6 +4268,30 @@ export class FirestoreService {
 
       const docRef = doc(db, 'companies', companyId, 'assets', asset.id);
       await setDoc(docRef, payload, { merge: true });
+
+      // If site or assignee changed, create a SITE_TRANSFER or CHECK_OUT movement automatically
+      if (oldAsset && (oldAsset.siteId !== asset.siteId || oldAsset.assignedEmployeeId !== asset.assignedEmployeeId)) {
+        const movementId = `MOV-${Date.now()}`;
+        const action = oldAsset.siteId !== asset.siteId ? 'SITE_TRANSFER' : 'CHECK_OUT';
+        const movementPayload: AssetMovementHistoryRecord = {
+          id: movementId,
+          companyId,
+          assetId: asset.id,
+          assetCode: asset.assetCode,
+          assetName: asset.assetName,
+          action,
+          employeeId: asset.assignedEmployeeId,
+          employeeName: asset.assignedEmployeeName,
+          siteId: asset.siteId,
+          siteName: asset.siteName,
+          conditionAtAction: asset.condition,
+          performedByUid: actor.uid,
+          performedByName: actor.name,
+          remarks: 'Updated via Asset Edit',
+          timestamp: now
+        };
+        await setDoc(doc(db, 'companies', companyId, 'asset_movements', movementId), movementPayload);
+      }
 
       await this.logAuditEvent(
         companyId,
@@ -3981,6 +4728,15 @@ export class FirestoreService {
   static async updateTaskStatus(taskId: string, companyId: string, status: TaskRecord['status'], updates?: Partial<TaskRecord>): Promise<void> {
     const docRef = doc(db, 'companies', companyId, 'tasks', taskId);
     await updateDoc(docRef, { status, updatedAt: Date.now(), ...updates });
+
+    // Log Audit Event
+    await this.logAuditEvent(
+      companyId,
+      'SYSTEM',
+      'Task Engine',
+      'TASK_STATUS_UPDATED',
+      `Task ${taskId} status changed to ${status}`
+    );
   }
 
   static async updateDailySiteLog(logId: string, companyId: string, updates: Partial<DailySiteLogRecord>): Promise<void> {
@@ -3998,7 +4754,1123 @@ export class FirestoreService {
     await updateDoc(docRef, { status, updatedAt: Date.now(), ...updates });
   }
 
+  
+  // ==========================================
+  // CLIENT MANAGEMENT (Phase 2F P0)
+  // ==========================================
+  static async getClients(companyId: string): Promise<ClientRecord[]> {
+    const colRef = collection(db, 'companies', companyId, 'clients');
+    const q = query(colRef);
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.data() as ClientRecord);
   }
+
+  static subscribeToClients(userSession: UserSession, companyId: string, onUpdate: (clients: ClientRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'clients');
+    const q = query(colRef, ...QueryScopeEngine.buildScope(userSession, 'CLIENTS'));
+    return onSnapshot(q, (snap) => {
+      onUpdate(snap.docs.map(d => d.data() as ClientRecord));
+    });
+  }
+
+  static async saveClient(companyId: string, client: ClientRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'clients', client.id);
+      await setDoc(docRef, {
+        ...client,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving client:', err);
+      return false;
+    }
+  }
+
+  // ==========================================
+  // DEPLOYMENT MANAGEMENT (Phase 2F P0)
+  // ==========================================
+  static async getDeployments(companyId: string): Promise<DeploymentRecord[]> {
+    const colRef = collection(db, 'companies', companyId, 'deployments');
+    const q = query(colRef);
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.data() as DeploymentRecord);
+  }
+
+  static subscribeToDeployments(userSession: UserSession, companyId: string, onUpdate: (deps: DeploymentRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'deployments');
+    const q = query(colRef, ...QueryScopeEngine.buildScope(userSession, 'DEPLOYMENTS'));
+    return onSnapshot(q, (snap) => {
+      onUpdate(snap.docs.map(d => d.data() as DeploymentRecord));
+    });
+  }
+
+  static async saveDeployment(userSession: UserSession, companyId: string, deployment: DeploymentRecord, oldDeployment?: DeploymentRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'deployments', deployment.id);
+      
+      // If transferring site or changing rate, create history record
+      if (oldDeployment && (oldDeployment.siteId !== deployment.siteId || oldDeployment.billingRate !== deployment.billingRate || oldDeployment.status !== deployment.status)) {
+         const historyRef = doc(collection(db, 'companies', companyId, 'deployments', deployment.id, 'history'));
+         const historyRecord: DeploymentHistoryRecord = {
+           id: historyRef.id,
+           companyId,
+           deploymentId: deployment.id,
+           employeeId: deployment.employeeId,
+           action: oldDeployment.siteId !== deployment.siteId ? 'SITE_TRANSFER' : (oldDeployment.billingRate !== deployment.billingRate ? 'RATE_CHANGE' : 'STATUS_CHANGE'),
+           previousValue: oldDeployment,
+           newValue: deployment,
+           changedByUserId: userSession.userId,
+           changedAt: new Date().toISOString()
+         };
+         await setDoc(historyRef, historyRecord);
+      }
+
+      await setDoc(docRef, {
+        ...deployment,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      // BACKWARD COMPATIBILITY (Dual-write siteId to EmployeeRecord)
+      if (deployment.status === 'ACTIVE') {
+         const empRef = doc(db, 'companies', companyId, 'employees', deployment.employeeId);
+         await setDoc(empRef, { siteId: deployment.siteId, updatedAt: new Date().toISOString() }, { merge: true });
+      }
+
+      return true;
+    } catch (err) {
+      console.error('Error saving deployment:', err);
+      return false;
+    }
+  }
+
+  // ==========================================
+  // SHIFT ROSTER (Phase 2F P1)
+  // ==========================================
+  static subscribeToShiftRosters(userSession: UserSession, companyId: string, siteId: string, onUpdate: (rosters: RosterRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'sites', siteId, 'shiftRoster');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      onUpdate(snap.docs.map(d => d.data() as RosterRecord));
+    });
+  }
+
+  static async saveShiftRoster(companyId: string, siteId: string, roster: RosterRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'sites', siteId, 'shiftRoster', roster.id);
+      await setDoc(docRef, {
+        ...roster,
+        createdAt: roster.createdAt || new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving shift roster:', err);
+      return false;
+    }
+  }
+
+  // ==========================================
+  // MODULE 11: SERVICE MANAGEMENT / HELPDESK
+  // ==========================================
+  static subscribeToServiceTickets(companyId: string, onUpdate: (tickets: ServiceTicketRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'serviceTickets');
+    const q = query(colRef, orderBy('createdAt', 'desc'));
+    return onSnapshot(q, (snap) => {
+      onUpdate(snap.docs.map(d => d.data() as ServiceTicketRecord));
+    }, (err) => {
+      console.warn('Fallback listening to serviceTickets without index:', err);
+      const fallbackQ = query(colRef);
+      return onSnapshot(fallbackQ, (fallbackSnap) => {
+        const list = fallbackSnap.docs.map(d => d.data() as ServiceTicketRecord);
+        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        onUpdate(list);
+      });
+    });
+  }
+
+  static async saveServiceTicket(companyId: string, ticket: ServiceTicketRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'serviceTickets', ticket.id);
+      await setDoc(docRef, {
+        ...ticket,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving service ticket:', err);
+      return false;
+    }
+  }
+
+  static subscribeToTicketComments(companyId: string, ticketId: string, onUpdate: (comments: TicketCommentRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'serviceTickets', ticketId, 'comments');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as TicketCommentRecord);
+      list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async addTicketComment(companyId: string, ticketId: string, comment: TicketCommentRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'serviceTickets', ticketId, 'comments', comment.id);
+      await setDoc(docRef, comment);
+      return true;
+    } catch (err) {
+      console.error('Error adding ticket comment:', err);
+      return false;
+    }
+  }
+
+  // ==========================================
+  // MODULE 12: TALENT ACQUISITION & ONBOARDING (ATS)
+  // ==========================================
+  static subscribeToJobRequisitions(companyId: string, onUpdate: (reqs: JobRequisitionRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'jobRequisitions');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as JobRequisitionRecord);
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async saveJobRequisition(companyId: string, req: JobRequisitionRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'jobRequisitions', req.id);
+      await setDoc(docRef, {
+        ...req,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving job requisition:', err);
+      return false;
+    }
+  }
+
+  static subscribeToCandidates(companyId: string, onUpdate: (candidates: CandidateRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'candidates');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as CandidateRecord);
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async saveCandidate(companyId: string, candidate: CandidateRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'candidates', candidate.id);
+      await setDoc(docRef, {
+        ...candidate,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving candidate:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Handle approval or rejection of a lifecycle request (Promotion, Transfer, Exit)
+   */
+  static async resolveLifecycleApproval(
+    companyId: string,
+    requestId: string,
+    decision: 'APPROVED' | 'REJECTED',
+    actor: UserSession,
+    rejectionReason: string = ''
+  ): Promise<boolean> {
+    try {
+      // 1. Verify Authority via WorkflowEngine
+      // We need to fetch the request first to know its context
+      const collections = {
+        'PROMOTION': 'promotions',
+        'TRANSFER': 'transfers',
+        'EXIT': 'exits'
+      } as const;
+
+      // Try each collection to find the request (simplification for this phase)
+      let requestData: any = null;
+      let requestType: 'PROMOTION' | 'TRANSFER' | 'EXIT' | null = null;
+
+      for (const [type, coll] of Object.entries(collections)) {
+        const docRef = doc(db, 'companies', companyId, coll, requestId);
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          requestData = snap.data();
+          requestType = type as any;
+          break;
+        }
+      }
+
+      if (!requestData || !requestType) throw new Error('Request not found');
+
+      const resolution = WorkflowEngine.resolveApprovalAuthority(actor, requestType, {
+        companyId,
+        targetDepartmentId: requestData.newDepartmentId,
+        targetSiteId: requestData.newSiteId,
+        requestorRole: actor.role
+      });
+
+      if (!resolution.canApprove) {
+        throw new Error(resolution.reason || 'Insufficient authority to resolve this lifecycle request.');
+      }
+
+      if (decision === 'REJECTED') {
+        const coll = collections[requestType];
+        await updateDoc(doc(db, 'companies', companyId, coll, requestId), {
+          status: 'REJECTED',
+          rejectionReason,
+          rejectedBy: actor.userId,
+          updatedAt: new Date().toISOString()
+        });
+
+        // Revert employee lifecycleStatus
+        await updateDoc(doc(db, 'companies', companyId, 'employees', requestData.employeeId), {
+          lifecycleStatus: 'ACTIVE'
+        });
+
+        return true;
+      }
+
+      // decision === 'APPROVED'
+      const coll = collections[requestType];
+      await updateDoc(doc(db, 'companies', companyId, coll, requestId), {
+        status: 'APPROVED',
+        approvedBy: actor.userId,
+        updatedAt: new Date().toISOString()
+      });
+
+      // Apply the change to the employee record
+      const empRef = doc(db, 'companies', companyId, 'employees', requestData.employeeId);
+      const updates: any = {
+        lifecycleStatus: 'ACTIVE',
+        updatedAt: new Date().toISOString(),
+        updatedBy: actor.userId
+      };
+
+      if (requestType === 'PROMOTION') {
+        updates.designation = requestData.newDesignation;
+        updates.departmentId = requestData.newDepartmentId || requestData.previousDepartmentId;
+      } else if (requestType === 'TRANSFER') {
+        updates.assignedSiteId = requestData.newSiteId;
+        updates.assignedBranchId = requestData.newBranchId;
+        updates.assignedRegionId = requestData.newRegionId;
+      } else if (requestType === 'EXIT') {
+        updates.lifecycleStatus = 'EXITED';
+        updates.status = 'DEACTIVATED';
+      }
+
+      await updateDoc(empRef, updates);
+
+      // Add History Event
+      await this.addLifecycleEvent(companyId, requestData.employeeId, {
+        type: requestType,
+        toStatus: updates.lifecycleStatus,
+        effectiveDate: requestData.effectiveDate || new Date().toISOString(),
+        reason: requestData.reason,
+        initiatedBy: requestData.initiatedBy,
+        approvedBy: actor.userId,
+        timestamp: new Date().toISOString(),
+        details: { requestId, decision }
+      }, { id: actor.userId, name: actor.fullName });
+
+      return true;
+    } catch (err) {
+      console.error('Error resolving lifecycle approval:', err);
+      return false;
+    }
+  }
+
+  // ==========================================
+  // MODULE 13: LEARNING & COMPLIANCE / LMS
+  // ==========================================
+  static subscribeToTrainingPrograms(companyId: string, onUpdate: (programs: TrainingProgramRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'trainingPrograms');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as TrainingProgramRecord);
+      list.sort((a, b) => a.title.localeCompare(b.title));
+      onUpdate(list);
+    });
+  }
+
+  static async saveTrainingProgram(companyId: string, program: TrainingProgramRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'trainingPrograms', program.id);
+      await setDoc(docRef, {
+        ...program,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving training program:', err);
+      return false;
+    }
+  }
+
+  static subscribeToTrainingEnrollments(companyId: string, onUpdate: (enrollments: TrainingEnrollmentRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'trainingEnrollments');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as TrainingEnrollmentRecord);
+      list.sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async saveTrainingEnrollment(companyId: string, enrollment: TrainingEnrollmentRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'trainingEnrollments', enrollment.id);
+      await setDoc(docRef, {
+        ...enrollment,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving training enrollment:', err);
+      return false;
+    }
+  }
+
+  // ==========================================
+  // MODULE 14: PROCUREMENT & SOURCING / SRM
+  // ==========================================
+  static subscribeToProcurementRequisitions(companyId: string, onUpdate: (prs: ProcurementRequisitionRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'procurementRequisitions');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as ProcurementRequisitionRecord);
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async saveProcurementRequisition(companyId: string, pr: ProcurementRequisitionRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'procurementRequisitions', pr.id);
+      await setDoc(docRef, {
+        ...pr,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving procurement requisition:', err);
+      return false;
+    }
+  }
+
+  static subscribeToPurchaseOrders(companyId: string, onUpdate: (pos: PurchaseOrderRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'purchaseOrders');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as PurchaseOrderRecord);
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async savePurchaseOrder(companyId: string, po: PurchaseOrderRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'purchaseOrders', po.id);
+      await setDoc(docRef, {
+        ...po,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving purchase order:', err);
+      return false;
+    }
+  }
+
+  static subscribeToGoodsReceiptNotes(companyId: string, onUpdate: (grns: GoodsReceiptNoteRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'goodsReceiptNotes');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as GoodsReceiptNoteRecord);
+      list.sort((a, b) => new Date(b.receivedDate).getTime() - new Date(a.receivedDate).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async saveGoodsReceiptNote(companyId: string, grn: GoodsReceiptNoteRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'goodsReceiptNotes', grn.id);
+      await setDoc(docRef, grn, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving GRN:', err);
+      return false;
+    }
+  }
+
+  static subscribeToThreeWayMatches(companyId: string, onUpdate: (matches: ThreeWayMatchRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'threeWayMatches');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as ThreeWayMatchRecord);
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async saveThreeWayMatch(companyId: string, match: ThreeWayMatchRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'threeWayMatches', match.id);
+      await setDoc(docRef, {
+        ...match,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving 3-way match:', err);
+      return false;
+    }
+  }
+
+  static subscribeToVendors(userSession: UserSession, companyId: string, onUpdate: (vendors: VendorRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'vendors');
+    return onSnapshot(colRef, (snap) => {
+      const list = snap.docs.map(d => d.data() as VendorRecord);
+      onUpdate(list);
+    }, (err) => {
+      console.warn('Error subscribing to vendors:', err);
+      onUpdate([]);
+    });
+  }
+
+  static subscribeToDepartments(companyId: string, onUpdate: (departments: DepartmentRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'departments');
+    return onSnapshot(colRef, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as DepartmentRecord));
+      onUpdate(list);
+    }, (err) => {
+      console.warn('Error subscribing to departments:', err);
+      onUpdate([]);
+    });
+  }
+
+  static subscribeToDesignations(companyId: string, onUpdate: (designations: DesignationRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'designations');
+    return onSnapshot(colRef, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as DesignationRecord));
+      onUpdate(list);
+    }, (err) => {
+      console.warn('Error subscribing to designations:', err);
+      onUpdate([]);
+    });
+  }
+
+  // ============================================================================
+  // IDENTITY BADGE LIFECYCLE MANAGEMENT
+  // ============================================================================
+
+  /**
+   * Check if a badge number is unique within the company
+   */
+  static async isBadgeNumberUnique(companyId: string, badgeNumber: string, excludeId?: string): Promise<boolean> {
+    try {
+      const q = query(
+        collection(db, 'companies', companyId, 'badges'),
+        where('badgeNumber', '==', badgeNumber)
+      );
+      const snap = await getDocs(q);
+      if (snap.empty) return true;
+      if (excludeId && snap.docs.length === 1 && snap.docs[0].id === excludeId) return true;
+      return false;
+    } catch (err) {
+      console.error('[FirestoreService] isBadgeNumberUnique error:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Issues a new badge to an employee
+   */
+  static async issueBadge(
+    companyId: string, 
+    badgeData: Omit<IdentityBadgeRecord, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'qrIdentifier'>,
+    actor: { id: string; name: string }
+  ): Promise<string | null> {
+    try {
+      // 1. Verify Uniqueness
+      const isUnique = await this.isBadgeNumberUnique(companyId, badgeData.badgeNumber);
+      if (!isUnique) throw new Error('Badge number already exists.');
+
+      // 2. Verify Employee Eligibility
+      const empRef = doc(db, 'companies', companyId, 'employees', badgeData.employeeId);
+      const empSnap = await getDoc(empRef);
+      if (!empSnap.exists()) throw new Error('Employee not found.');
+      const employee = empSnap.data() as EmployeeRecord;
+      if (employee.lifecycleStatus === 'EXITED') throw new Error('Cannot issue badge to an exited employee.');
+
+      // 3. Check for existing active badge
+      const activeBadge = await this.getEmployeeActiveBadge(companyId, badgeData.employeeId);
+      if (activeBadge) throw new Error('Employee already has an active badge. Deactivate or replace it first.');
+
+      const badgeId = doc(collection(db, 'companies', companyId, 'badges')).id;
+      const qrIdentifier = `IDB-${companyId}-${badgeId.substring(0, 8)}-${Math.random().toString(36).substring(7)}`;
+
+      const now = new Date().toISOString();
+      const newBadge: IdentityBadgeRecord = {
+        ...badgeData,
+        id: badgeId,
+        qrIdentifier,
+        createdAt: now,
+        updatedAt: now,
+        createdBy: actor.id,
+        updatedBy: actor.id
+      };
+
+      await setDoc(doc(db, 'companies', companyId, 'badges', badgeId), newBadge);
+
+      // Audit and Notification
+      await this.addBadgeHistory(companyId, badgeId, {
+        id: '', // Will be set in addBadgeHistory
+        badgeId,
+        companyId,
+        employeeId: badgeData.employeeId,
+        action: 'BADGE_ISSUED',
+        toStatus: badgeData.status,
+        actorId: actor.id,
+        actorName: actor.name,
+        timestamp: now,
+        details: { badgeNumber: badgeData.badgeNumber }
+      });
+
+      return badgeId;
+    } catch (err) {
+      console.error('[FirestoreService] issueBadge error:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Transitions badge status with audit trail
+   */
+  static async updateBadgeStatus(
+    companyId: string,
+    badgeId: string,
+    newStatus: BadgeStatus,
+    reason: string,
+    actor: { id: string; name: string },
+    details?: Record<string, any>
+  ): Promise<boolean> {
+    try {
+      const badgeRef = doc(db, 'companies', companyId, 'badges', badgeId);
+      const badgeSnap = await getDoc(badgeRef);
+      if (!badgeSnap.exists()) throw new Error('Badge not found');
+      const badge = badgeSnap.data() as IdentityBadgeRecord;
+
+      const now = new Date().toISOString();
+      const updates: Partial<IdentityBadgeRecord> = {
+        status: newStatus,
+        updatedAt: now,
+        updatedBy: actor.id
+      };
+
+      if (newStatus === 'ACTIVE') updates.activatedDate = now;
+      if (newStatus === 'DEACTIVATED') updates.deactivatedDate = now;
+      if (newStatus === 'RETURNED') {
+        updates.returnDate = now;
+        updates.status = 'RETURNED';
+      }
+      if (newStatus === 'LOST') updates.lostDamagedReason = reason;
+      if (newStatus === 'DAMAGED') updates.lostDamagedReason = reason;
+
+      await updateDoc(badgeRef, updates);
+
+      await this.addBadgeHistory(companyId, badgeId, {
+        id: '', 
+        badgeId,
+        companyId,
+        employeeId: badge.employeeId,
+        action: `BADGE_${newStatus}`,
+        fromStatus: badge.status,
+        toStatus: newStatus,
+        actorId: actor.id,
+        actorName: actor.name,
+        reason,
+        timestamp: now,
+        details
+      });
+
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] updateBadgeStatus error:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Replaces an old badge with a new one
+   */
+  static async replaceBadge(
+    companyId: string,
+    oldBadgeId: string,
+    newBadgeData: Omit<IdentityBadgeRecord, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'qrIdentifier' | 'status'>,
+    actor: { id: string; name: string },
+    reason: string
+  ): Promise<string | null> {
+    try {
+      return await runTransaction(db, async (transaction) => {
+        const oldBadgeRef = doc(db, 'companies', companyId, 'badges', oldBadgeId);
+        const oldBadgeSnap = await transaction.get(oldBadgeRef);
+        if (!oldBadgeSnap.exists()) throw new Error('Old badge not found');
+        const oldBadge = oldBadgeSnap.data() as IdentityBadgeRecord;
+
+        // 1. Deactivate old badge
+        const now = new Date().toISOString();
+        transaction.update(oldBadgeRef, {
+          status: 'DEACTIVATED',
+          deactivatedDate: now,
+          updatedAt: now,
+          updatedBy: actor.id,
+          replacementReason: reason
+        });
+
+        // 2. Create new badge
+        const badgeId = doc(collection(db, 'companies', companyId, 'badges')).id;
+        const qrIdentifier = `IDB-${companyId}-${badgeId.substring(0, 8)}-${Math.random().toString(36).substring(7)}`;
+
+        const newBadge: IdentityBadgeRecord = {
+          ...newBadgeData,
+          id: badgeId,
+          status: 'ACTIVE',
+          qrIdentifier,
+          createdAt: now,
+          updatedAt: now,
+          createdBy: actor.id,
+          updatedBy: actor.id,
+          activatedDate: now
+        };
+
+        transaction.set(doc(db, 'companies', companyId, 'badges', badgeId), newBadge);
+
+        // 3. Add history for replacement
+        const historyId = doc(collection(db, 'companies', companyId, 'badge_history')).id;
+        transaction.set(doc(db, 'companies', companyId, 'badge_history', historyId), {
+          id: historyId,
+          badgeId: oldBadgeId,
+          companyId,
+          employeeId: oldBadge.employeeId,
+          action: 'BADGE_REPLACED',
+          fromStatus: oldBadge.status,
+          toStatus: 'DEACTIVATED' as BadgeStatus,
+          actorId: actor.id,
+          actorName: actor.name,
+          reason,
+          timestamp: now,
+          details: { replacedBy: badgeId }
+        });
+
+        const newHistoryId = doc(collection(db, 'companies', companyId, 'badge_history')).id;
+        transaction.set(doc(db, 'companies', companyId, 'badge_history', newHistoryId), {
+          id: newHistoryId,
+          badgeId: badgeId,
+          companyId,
+          employeeId: oldBadge.employeeId,
+          action: 'BADGE_ISSUED_AS_REPLACEMENT',
+          toStatus: 'ACTIVE' as BadgeStatus,
+          actorId: actor.id,
+          actorName: actor.name,
+          reason,
+          timestamp: now,
+          details: { replacedOldBadge: oldBadgeId }
+        });
+
+        return badgeId;
+      });
+    } catch (err) {
+      console.error('[FirestoreService] replaceBadge error:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Verifies a badge using QR or Badge Number
+   */
+  static async verifyBadge(
+    companyId: string,
+    identifier: string,
+    type: 'NUMBER' | 'QR'
+  ): Promise<{ status: 'VALID' | 'EXPIRED' | 'LOST' | 'DAMAGED' | 'RETURNED' | 'DEACTIVATED' | 'SUSPENDED' | 'INVALID', badge?: IdentityBadgeRecord, employee?: EmployeeRecord }> {
+    try {
+      const field = type === 'NUMBER' ? 'badgeNumber' : 'qrIdentifier';
+      const q = query(collection(db, 'companies', companyId, 'badges'), where(field, '==', identifier));
+      const snap = await getDocs(q);
+
+      if (snap.empty) return { status: 'INVALID' };
+      const badge = snap.docs[0].data() as IdentityBadgeRecord;
+
+      const empSnap = await getDoc(doc(db, 'companies', companyId, 'employees', badge.employeeId));
+      const employee = empSnap.exists() ? empSnap.data() as EmployeeRecord : undefined;
+
+      // Status Mappings
+      const statusMap: Record<BadgeStatus, string> = {
+        'ACTIVE': 'VALID',
+        'EXPIRED': 'EXPIRED',
+        'LOST': 'LOST',
+        'DAMAGED': 'DAMAGED',
+        'RETURNED': 'RETURNED',
+        'DEACTIVATED': 'DEACTIVATED',
+        'SUSPENDED': 'SUSPENDED',
+        'ISSUED': 'VALID', // Issued but not yet activated? Usually valid for check-in
+        'APPROVED': 'INVALID',
+        'REQUESTED': 'INVALID',
+        'REPLACEMENT_REQUESTED': 'VALID' // Still valid until replaced? Policy dependent.
+      };
+
+      let status = (statusMap[badge.status] || 'INVALID') as any;
+
+      // Secondary validation: Expiry
+      if (status === 'VALID' && badge.expiryDate && new Date(badge.expiryDate) < new Date()) {
+        status = 'EXPIRED';
+      }
+
+      // Secondary validation: Employee Exit
+      if (employee && employee.lifecycleStatus === 'EXITED') {
+        status = 'DEACTIVATED';
+      }
+
+      return { status, badge, employee };
+    } catch (err) {
+      console.error('[FirestoreService] verifyBadge error:', err);
+      return { status: 'INVALID' };
+    }
+  }
+
+  /**
+   * Gets the active badge for an employee
+   */
+  static async getEmployeeActiveBadge(companyId: string, employeeId: string): Promise<IdentityBadgeRecord | null> {
+    try {
+      const q = query(
+        collection(db, 'companies', companyId, 'badges'),
+        where('employeeId', '==', employeeId),
+        where('status', 'in', ['ACTIVE', 'ISSUED'])
+      );
+      const snap = await getDocs(q);
+      if (snap.empty) return null;
+      return snap.docs[0].data() as IdentityBadgeRecord;
+    } catch (err) {
+      console.error('[FirestoreService] getEmployeeActiveBadge error:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Adds record to badge history
+   */
+  private static async addBadgeHistory(companyId: string, badgeId: string, event: BadgeLifecycleEvent): Promise<void> {
+    try {
+      const historyId = doc(collection(db, 'companies', companyId, 'badge_history')).id;
+      await setDoc(doc(db, 'companies', companyId, 'badge_history', historyId), {
+        ...event,
+        id: historyId
+      });
+    } catch (err) {
+      console.error('[FirestoreService] addBadgeHistory error:', err);
+    }
+  }
+
+  /**
+   * Subscribe to all badges for a company
+   */
+  static subscribeToBadges(companyId: string, onData: (badges: IdentityBadgeRecord[]) => void): () => void {
+    const q = query(collection(db, 'companies', companyId, 'badges'), orderBy('updatedAt', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+      onData(snapshot.docs.map(d => d.data() as IdentityBadgeRecord));
+    });
+  }
+
+  /**
+   * Get history for a specific badge
+   */
+  static async getBadgeHistory(companyId: string, badgeId: string): Promise<BadgeLifecycleEvent[]> {
+    try {
+      const q = query(
+        collection(db, 'companies', companyId, 'badge_history'),
+        where('badgeId', '==', badgeId),
+        orderBy('timestamp', 'desc')
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(d => d.data() as BadgeLifecycleEvent);
+    } catch (err) {
+      console.error('[FirestoreService] getBadgeHistory error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * ============================================================
+   * DOCUMENT COMPLIANCE & EXPIRATION ALERTS
+   * ============================================================
+   */
+
+  static async getDocumentTypes(companyId: string): Promise<DocumentTypeConfig[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'document_types');
+      const q = query(colRef, where('status', '==', 'ACTIVE'), orderBy('name', 'asc'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => d.data() as DocumentTypeConfig);
+    } catch (err) {
+      console.warn('[FirestoreService] getDocumentTypes error:', err);
+      return [];
+    }
+  }
+
+  static async saveDocumentType(companyId: string, config: DocumentTypeConfig): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'document_types', config.id);
+      await setDoc(docRef, {
+        ...config,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] saveDocumentType error:', err);
+      return false;
+    }
+  }
+
+  static async getEmployeeDocuments(companyId: string, employeeId: string): Promise<EmployeeDocumentRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'employee_documents');
+      const q = query(
+        colRef, 
+        where('employeeId', '==', employeeId),
+        where('isLatest', '==', true)
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(d => d.data() as EmployeeDocumentRecord);
+    } catch (err) {
+      console.warn('[FirestoreService] getEmployeeDocuments error:', err);
+      return [];
+    }
+  }
+
+  static async saveEmployeeDocument(
+    companyId: string, 
+    document: EmployeeDocumentRecord, 
+    actor: { id: string, name: string }
+  ): Promise<boolean> {
+    try {
+      // If this is a new version/renewal, mark the previous one as not latest
+      if (document.previousDocumentId) {
+        const prevRef = doc(db, 'companies', companyId, 'employee_documents', document.previousDocumentId);
+        await setDoc(prevRef, { isLatest: false, updatedAt: new Date().toISOString() }, { merge: true });
+      }
+
+      const docRef = doc(db, 'companies', companyId, 'employee_documents', document.id);
+      await setDoc(docRef, {
+        ...document,
+        isLatest: true,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      // Record History
+      const historyId = `DOC_HIST_${Date.now()}`;
+      const historyRef = doc(db, 'companies', companyId, 'document_history', historyId);
+      await setDoc(historyRef, {
+        id: historyId,
+        documentId: document.id,
+        employeeId: document.employeeId,
+        action: document.previousDocumentId ? 'RENEWED' : 'UPLOADED',
+        status: document.status,
+        actorId: actor.id,
+        actorName: actor.name,
+        timestamp: new Date().toISOString(),
+        remarks: document.remarks
+      });
+
+      // Audit Log
+      await this.logAuditEvent(
+        companyId,
+        actor.id,
+        actor.name,
+        'DOCUMENT_UPLOADED',
+        `Uploaded document ${document.documentTypeCode} for employee ${document.employeeId}`,
+        document.employeeId
+      );
+
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] saveEmployeeDocument error:', err);
+      return false;
+    }
+  }
+
+  static async verifyDocument(
+    companyId: string,
+    employeeId: string,
+    documentId: string,
+    verification: { status: 'VERIFIED' | 'REJECTED'; reason?: string; remarks?: string },
+    actor: { id: string, name: string }
+  ): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'employee_documents', documentId);
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) return false;
+
+      const docData = snap.data() as EmployeeDocumentRecord;
+      
+      const newStatus: DocumentStatus = verification.status === 'VERIFIED' ? 'VERIFIED' : 'REJECTED';
+
+      await setDoc(docRef, {
+        status: newStatus,
+        verificationStatus: verification.status,
+        verifiedBy: actor.id,
+        verifiedByName: actor.name,
+        verifiedAt: new Date().toISOString(),
+        rejectionReason: verification.reason,
+        remarks: verification.remarks,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      // History
+      const historyId = `DOC_HIST_${Date.now()}`;
+      const historyRef = doc(db, 'companies', companyId, 'document_history', historyId);
+      await setDoc(historyRef, {
+        id: historyId,
+        documentId,
+        employeeId,
+        action: verification.status,
+        status: newStatus,
+        actorId: actor.id,
+        actorName: actor.name,
+        timestamp: new Date().toISOString(),
+        remarks: verification.remarks || verification.reason
+      });
+
+      // Audit
+      await this.logAuditEvent(
+        companyId,
+        actor.id,
+        actor.name,
+        verification.status === 'VERIFIED' ? 'DOCUMENT_VERIFIED' : 'DOCUMENT_REJECTED',
+        `${verification.status === 'VERIFIED' ? 'Verified' : 'Rejected'} document ${docData.documentTypeCode} for employee ${employeeId}`,
+        employeeId
+      );
+
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] verifyDocument error:', err);
+      return false;
+    }
+  }
+
+  static async getExpiringDocuments(companyId: string, daysThreshold: number): Promise<EmployeeDocumentRecord[]> {
+    try {
+      const expiryDateLimit = new Date();
+      expiryDateLimit.setDate(expiryDateLimit.getDate() + daysThreshold);
+      const expiryDateStr = expiryDateLimit.toISOString().split('T')[0];
+
+      const colRef = collection(db, 'companies', companyId, 'employee_documents');
+      const q = query(
+        colRef,
+        where('isLatest', '==', true),
+        where('expiryDate', '<=', expiryDateStr),
+        where('status', 'in', ['VERIFIED', 'EXPIRING_SOON'])
+      );
+      
+      const snap = await getDocs(q);
+      return snap.docs.map(d => d.data() as EmployeeDocumentRecord);
+    } catch (err) {
+      console.error('[FirestoreService] getExpiringDocuments error:', err);
+      return [];
+    }
+  }
+
+  static async checkAndTriggerExpirations(companyId: string): Promise<{ alerted: number; total: number }> {
+    try {
+      // 1. Get all doc types to know their thresholds
+      const docTypes = await this.getDocumentTypes(companyId);
+      let alertCount = 0;
+      let totalChecked = 0;
+
+      // 2. Query all latest verified/expiring documents
+      const colRef = collection(db, 'companies', companyId, 'employee_documents');
+      const q = query(
+        colRef,
+        where('isLatest', '==', true),
+        where('status', 'in', ['VERIFIED', 'EXPIRING_SOON'])
+      );
+      
+      const snap = await getDocs(q);
+      const docs = snap.docs.map(d => d.data() as EmployeeDocumentRecord);
+      totalChecked = docs.length;
+
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+
+      for (const docRec of docs) {
+        if (!docRec.expiryDate) continue;
+
+        const expiryDate = new Date(docRec.expiryDate);
+        const diffDays = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        const typeConfig = docTypes.find(t => t.code === docRec.documentTypeCode);
+        
+        if (!typeConfig) continue;
+
+        // Check against thresholds
+        const thresholds = typeConfig.expiryAlertThresholds.sort((a, b) => b - a);
+        const reachedThreshold = thresholds.find(t => diffDays <= t && (!docRec.lastThresholdReached || t < docRec.lastThresholdReached));
+
+        if (reachedThreshold !== undefined || diffDays <= 0) {
+          const isExpired = diffDays <= 0;
+          const newStatus: DocumentStatus = isExpired ? 'EXPIRED' : 'EXPIRING_SOON';
+          
+          // Update doc status
+          const docRef = doc(db, 'companies', companyId, 'employee_documents', docRec.id);
+          await setDoc(docRef, {
+            status: newStatus,
+            lastThresholdReached: reachedThreshold,
+            lastAlertSentAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+
+          // Send Notification
+          const notificationId = `NOTIF_EXP_${docRec.id}_${reachedThreshold || 'EXPIRED'}`;
+          const notifRef = doc(db, 'companies', companyId, 'notifications', notificationId);
+          await setDoc(notifRef, {
+            id: notificationId,
+            title: isExpired ? 'Document Expired' : 'Document Expiring Soon',
+            message: `${docRec.documentTypeCode} for employee ${docRec.employeeId} ${isExpired ? 'has expired' : `will expire in ${diffDays} days`}.`,
+            type: isExpired ? 'ALERT' : 'WARNING',
+            timestamp: new Date().toISOString(),
+            isRead: false,
+            roleScope: ['HR_ADMIN', 'COMPANY_ADMIN', 'OPS_MANAGER'],
+            actionRoute: 'COMPLIANCE'
+          });
+
+          // Audit Log
+          await this.logAuditEvent(
+            companyId,
+            'SYSTEM',
+            'Compliance Engine',
+            isExpired ? 'DOCUMENT_EXPIRED' : 'DOCUMENT_EXPIRY_ALERT',
+            `Threshold ${reachedThreshold} days reached for ${docRec.documentTypeCode} (Employee: ${docRec.employeeId})`,
+            docRec.employeeId
+          );
+
+          alertCount++;
+        }
+      }
+
+      return { alerted: alertCount, total: totalChecked };
+    } catch (err) {
+      console.error('[FirestoreService] checkAndTriggerExpirations error:', err);
+      return { alerted: 0, total: 0 };
+    }
+  }
+
+}
 
 // Indian Rupee Words Helper Function
 function numberToIndianRupeesWords(amount: number): string {
@@ -4039,5 +5911,6 @@ function numberToIndianRupeesWords(amount: number): string {
   if (remainder > 0) result += convertChunk(remainder) + ' ';
 
   return (result.trim() + ' Rupees Only').replace(/\s+/g, ' ');
-}
 
+
+}
