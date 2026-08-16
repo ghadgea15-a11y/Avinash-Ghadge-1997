@@ -1,4 +1,5 @@
-import {
+import { 
+  updateDoc,
   collection, 
   doc, 
   setDoc, 
@@ -12,7 +13,11 @@ import {
   limit 
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
+import { QueryScopeEngine } from './queryScopeEngine';
 import { 
+  TaskRecord,
+  AnnouncementRecord,
+  DocumentRecord,
   AppNotification, 
   UserProfileData, 
   AppSettings, 
@@ -56,7 +61,6 @@ import {
   AssetCondition,
   AssetMovementAction
 } from '../types';
-import { QueryScopeEngine } from './queryScopeEngine';
 
 export enum OperationType {
   CREATE = 'create',
@@ -121,200 +125,6 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 
 export class FirestoreService {
   /**
-   * Audit logging
-   */
-  static async logAuditEvent(
-    companyId: string,
-    userId: string,
-    userName: string,
-    action: string,
-    details: string,
-    entityType?: string,
-    entityId?: string
-  ): Promise<boolean> {
-    try {
-      const logId = 'AUDIT-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
-      const logRef = doc(db, 'companies', companyId, 'audit_logs', logId);
-      const now = new Date().toISOString();
-      await setDoc(logRef, {
-        id: logId,
-        companyId,
-        userId,
-        userName,
-        action,
-        details,
-        entityType: entityType || 'GENERAL',
-        entityId: entityId || '',
-        timestamp: now,
-        createdAt: now
-      });
-      return true;
-    } catch (err) {
-      console.warn('[FirestoreService] logAuditEvent error:', err);
-      return false;
-    }
-  }
-
-  /**
-   * Super Admin System Methods
-   */
-  static async initializeSuperAdminConfig(superAdminUid?: string, superAdminEmail?: string): Promise<boolean> {
-    try {
-      const docRef = doc(db, 'system_config', 'superadmin');
-      await setDoc(docRef, { initialized: true, superAdminUid: superAdminUid || '', superAdminEmail: superAdminEmail || '', updatedAt: new Date().toISOString() }, { merge: true });
-      return true;
-    } catch (err) {
-      console.warn('[FirestoreService] initializeSuperAdminConfig error:', err);
-      return false;
-    }
-  }
-
-  static async getAllCompanies(): Promise<CompanyTenant[]> {
-    try {
-      const colRef = collection(db, 'companies');
-      const snap = await getDocs(colRef);
-      return snap.docs.map(d => ({ companyId: d.id, ...d.data() } as CompanyTenant));
-    } catch (err) {
-      console.warn('[FirestoreService] getAllCompanies error:', err);
-      return [];
-    }
-  }
-
-  static async updateCompanyDetails(companyId: string, updates: Partial<CompanyTenant>): Promise<boolean> {
-    try {
-      const docRef = doc(db, 'companies', companyId);
-      await setDoc(docRef, updates, { merge: true });
-      return true;
-    } catch (err) {
-      console.warn('[FirestoreService] updateCompanyDetails error:', err);
-      return false;
-    }
-  }
-
-  static async createCompanyWithAdmin(
-    param1: any,
-    param2?: any
-  ): Promise<{ success: boolean; message: string; companyId: string; adminUid?: string }> {
-    try {
-      let companyData: Partial<CompanyTenant>;
-      if (param1 && param1.company) {
-        companyData = param1.company;
-      } else {
-        companyData = param1 || {};
-      }
-      const companyId = companyData.companyId || ('COMP-' + Date.now());
-      const companyRef = doc(db, 'companies', companyId);
-      await setDoc(companyRef, { ...companyData, companyId, createdAt: new Date().toISOString(), status: 'ACTIVE' }, { merge: true });
-      
-      const codeRef = doc(db, 'company_codes', companyId);
-      await setDoc(codeRef, { companyId, status: 'ACTIVE', createdAt: new Date().toISOString() }, { merge: true });
-
-      return { success: true, message: `Company ${companyId} created successfully.`, companyId };
-    } catch (err: any) {
-      console.warn('[FirestoreService] createCompanyWithAdmin error:', err);
-      return { success: false, message: err.message || 'Failed to create company.', companyId: '' };
-    }
-  }
-
-  static async getSuperAdminStats(): Promise<{
-    totalCompanies: number;
-    activeCompanies: number;
-    pendingCompanies: number;
-    totalUsers: number;
-    pendingUserApprovals: number;
-    activeSites: number;
-    todayVisitors: number;
-    todayIncidents: number;
-  }> {
-    try {
-      const companies = await this.getAllCompanies();
-      const active = companies.filter(c => c.status === 'ACTIVE').length;
-      return {
-        totalCompanies: companies.length,
-        activeCompanies: active,
-        pendingCompanies: companies.length - active,
-        totalUsers: 0,
-        pendingUserApprovals: 0,
-        activeSites: 0,
-        todayVisitors: 0,
-        todayIncidents: 0
-      };
-    } catch (err) {
-      return {
-        totalCompanies: 0,
-        activeCompanies: 0,
-        pendingCompanies: 0,
-        totalUsers: 0,
-        pendingUserApprovals: 0,
-        activeSites: 0,
-        todayVisitors: 0,
-        todayIncidents: 0
-      };
-    }
-  }
-
-  static async getAllApprovalRequests(): Promise<ApprovalRequestRecord[]> {
-    try {
-      const colRef = collection(db, 'approval_requests');
-      const snap = await getDocs(colRef);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as ApprovalRequestRecord));
-    } catch (err) {
-      return [];
-    }
-  }
-
-  static async updateCompanyModules(companyId: string, modules: string[]): Promise<boolean> {
-    try {
-      const docRef = doc(db, 'companies', companyId);
-      await setDoc(docRef, { enabledModules: modules, updatedAt: new Date().toISOString() }, { merge: true });
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }
-
-  static async approveUserByCompanyAdmin(param1: string, param2: string, adminUid?: string, adminName?: string): Promise<boolean> {
-    try {
-      const isParam1Company = param1.startsWith('COMP-') || param1.length < 20;
-      const companyId = isParam1Company ? param1 : param2;
-      const requestId = isParam1Company ? param2 : param1;
-      const uid = adminUid || 'ADMIN';
-      const docRef = doc(db, 'companies', companyId, 'approval_requests', requestId);
-      await setDoc(docRef, { status: 'APPROVED', approvedByCompanyAdmin: true, companyAdminUid: uid, companyAdminName: adminName || 'Admin', updatedAt: new Date().toISOString() }, { merge: true });
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }
-
-  static async approveUserByHR(param1: string, param2: string, hrUid?: string, hrName?: string): Promise<boolean> {
-    try {
-      const isParam1Company = param1.startsWith('COMP-') || param1.length < 20;
-      const companyId = isParam1Company ? param1 : param2;
-      const requestId = isParam1Company ? param2 : param1;
-      const uid = hrUid || 'HR';
-      const docRef = doc(db, 'companies', companyId, 'approval_requests', requestId);
-      await setDoc(docRef, { status: 'APPROVED', approvedByHR: true, hrUid: uid, hrName: hrName || 'HR Manager', updatedAt: new Date().toISOString() }, { merge: true });
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }
-
-  static async rejectUserApplication(param1: string, param2: string, param3?: string, param4?: string): Promise<boolean> {
-    try {
-      const isParam1Company = param1.startsWith('COMP-') || param1.length < 20;
-      const companyId = isParam1Company ? param1 : param2;
-      const requestId = isParam1Company ? param2 : param1;
-      const reason = param4 || param3 || 'Rejected';
-      const docRef = doc(db, 'companies', companyId, 'approval_requests', requestId);
-      await setDoc(docRef, { status: 'REJECTED', rejectionReason: reason, updatedAt: new Date().toISOString() }, { merge: true });
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }
-  /**
    * ============================================================
    * VENDOR MANAGEMENT
    * ============================================================
@@ -363,8 +173,7 @@ export class FirestoreService {
     const path = `companies/${companyId}/employees`;
     try {
       const colRef = collection(db, 'companies', companyId, 'employees');
-      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'EMPLOYEES'));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+      const unsubscribe = onSnapshot(colRef, (snapshot) => {
         if (!snapshot.empty) {
           const list: EmployeeRecord[] = snapshot.docs.map(docSnap => {
             const data = docSnap.data();
@@ -1649,6 +1458,49 @@ export class FirestoreService {
     }
   }
 
+
+  static async saveTask(companyId: string, task: TaskRecord): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'tasks', task.id);
+      await setDoc(ref, {
+        ...task,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] saveTask error:', err);
+      return false;
+    }
+  }
+
+  static async saveAnnouncement(companyId: string, ann: AnnouncementRecord): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'announcements', ann.id);
+      await setDoc(ref, {
+        ...ann,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] saveAnnouncement error:', err);
+      return false;
+    }
+  }
+
+  static async saveDocumentRecord(companyId: string, docRec: DocumentRecord): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'documents', docRec.id);
+      await setDoc(ref, {
+        ...docRec,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] saveDocumentRecord error:', err);
+      return false;
+    }
+  }
+
   static async saveDailySiteLog(companyId: string, siteLog: DailySiteLogRecord): Promise<boolean> {
     const path = `companies/${companyId}/daily_site_logs/${siteLog.id}`;
     try {
@@ -1761,28 +1613,24 @@ export class FirestoreService {
       }
 
       const colRef = collection(db, 'companies', companyId, 'approval_requests');
-      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'APPROVALS'));
-      
-      return onSnapshot(q, (snap) => {
+      return onSnapshot(colRef, (snap) => {
         if (!snap.empty) {
           const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as ApprovalRequestRecord));
           onData(list);
         } else {
           // Fallback query on root approval_requests collection
           const rootRef = collection(db, 'approval_requests');
-          const rootQ = query(rootRef, where('companyId', '==', companyId), ...QueryScopeEngine.buildScope(session, 'APPROVALS'));
-          getDocs(rootQ).then((rootSnap) => {
+          const q = query(rootRef, where('companyId', '==', companyId));
+          getDocs(q).then((rootSnap) => {
             const list = rootSnap.docs.map(d => ({ id: d.id, ...d.data() } as ApprovalRequestRecord));
             onData(list);
           }).catch(() => onData([]));
         }
       }, (err) => {
         console.warn('[Firestore] subscribeToApprovalRequests error:', err);
-        
-        // Fallback again on error
         const rootRef = collection(db, 'approval_requests');
-        const rootQ = query(rootRef, where('companyId', '==', companyId), ...QueryScopeEngine.buildScope(session, 'APPROVALS'));
-        getDocs(rootQ).then((rootSnap) => {
+        const q = query(rootRef, where('companyId', '==', companyId));
+        getDocs(q).then((rootSnap) => {
           const list = rootSnap.docs.map(d => ({ id: d.id, ...d.data() } as ApprovalRequestRecord));
           onData(list);
         }).catch(() => onData([]));
@@ -1794,6 +1642,687 @@ export class FirestoreService {
     }
   }
 
+  static async approveUserByCompanyAdmin(
+    companyId: string,
+    requestId: string,
+    adminUid: string,
+    adminName: string
+  ): Promise<boolean> {
+    try {
+      const timestamp = new Date().toISOString();
+      const reqRef = doc(db, 'companies', companyId, 'approval_requests', requestId);
+      const rootReqRef = doc(db, 'approval_requests', requestId);
+      
+      const reqSnap = await getDoc(reqRef);
+      const reqData = reqSnap.exists() ? reqSnap.data() as ApprovalRequestRecord : (await getDoc(rootReqRef)).data() as ApprovalRequestRecord;
+
+      if (!reqData) throw new Error('Approval request record not found');
+
+      const isHrApproved = reqData.hrApproval === 'APPROVED';
+      const isEmailVerified = reqData.emailVerified || (auth.currentUser?.emailVerified ?? false);
+      const newAccountStatus: AccountStatus = (isHrApproved && isEmailVerified) ? 'ACTIVE' : 'ADMIN_APPROVED';
+
+      const updateData = {
+        companyAdminApproval: 'APPROVED' as ApprovalStatus,
+        companyAdminApprovedBy: adminName || adminUid,
+        companyAdminApprovedAt: timestamp,
+        accountStatus: newAccountStatus,
+        updatedAt: timestamp
+      };
+
+      await setDoc(reqRef, updateData, { merge: true });
+      await setDoc(rootReqRef, updateData, { merge: true });
+
+      // Update user doc in root 'users' collection
+      const userRef = doc(db, 'users', reqData.uid);
+      await setDoc(userRef, {
+        companyAdminApproval: 'APPROVED',
+        accountStatus: newAccountStatus,
+        ...(newAccountStatus === 'ACTIVE' ? { role: reqData.requestedRole || 'EMPLOYEE' } : {}),
+        updatedAt: timestamp
+      }, { merge: true });
+
+      // Update employee record if active
+      if (newAccountStatus === 'ACTIVE') {
+        const empRef = doc(db, 'companies', companyId, 'employees', reqData.uid);
+        await setDoc(empRef, {
+          status: 'ACTIVE',
+          role: reqData.requestedRole || 'EMPLOYEE',
+          updatedAt: timestamp
+        }, { merge: true });
+      }
+
+      await this.logAuditEvent(
+        companyId,
+        adminUid,
+        adminName,
+        'ADMIN_APPROVED',
+        `Company Admin approved account for ${reqData.fullName} (${reqData.email})`,
+        reqData.uid
+      );
+
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] approveUserByCompanyAdmin error:', err);
+      return false;
+    }
+  }
+
+  static async approveUserByHR(
+    companyId: string,
+    requestId: string,
+    hrUid: string,
+    hrName: string
+  ): Promise<boolean> {
+    try {
+      const timestamp = new Date().toISOString();
+      const reqRef = doc(db, 'companies', companyId, 'approval_requests', requestId);
+      const rootReqRef = doc(db, 'approval_requests', requestId);
+
+      const reqSnap = await getDoc(reqRef);
+      const reqData = reqSnap.exists() ? reqSnap.data() as ApprovalRequestRecord : (await getDoc(rootReqRef)).data() as ApprovalRequestRecord;
+
+      if (!reqData) throw new Error('Approval request record not found');
+
+      const isAdminApproved = reqData.companyAdminApproval === 'APPROVED';
+      const isEmailVerified = reqData.emailVerified || (auth.currentUser?.emailVerified ?? false);
+      const newAccountStatus: AccountStatus = (isAdminApproved && isEmailVerified) ? 'ACTIVE' : 'HR_APPROVED';
+
+      const updateData = {
+        hrApproval: 'APPROVED' as ApprovalStatus,
+        hrApprovedBy: hrName || hrUid,
+        hrApprovedAt: timestamp,
+        accountStatus: newAccountStatus,
+        updatedAt: timestamp
+      };
+
+      await setDoc(reqRef, updateData, { merge: true });
+      await setDoc(rootReqRef, updateData, { merge: true });
+
+      // Update user doc
+      const userRef = doc(db, 'users', reqData.uid);
+      await setDoc(userRef, {
+        hrApproval: 'APPROVED',
+        accountStatus: newAccountStatus,
+        ...(newAccountStatus === 'ACTIVE' ? { role: reqData.requestedRole || 'EMPLOYEE' } : {}),
+        updatedAt: timestamp
+      }, { merge: true });
+
+      if (newAccountStatus === 'ACTIVE') {
+        const empRef = doc(db, 'companies', companyId, 'employees', reqData.uid);
+        await setDoc(empRef, {
+          status: 'ACTIVE',
+          role: reqData.requestedRole || 'EMPLOYEE',
+          updatedAt: timestamp
+        }, { merge: true });
+      }
+
+      await this.logAuditEvent(
+        companyId,
+        hrUid,
+        hrName,
+        'HR_APPROVED',
+        `HR approved account for ${reqData.fullName} (${reqData.email})`,
+        reqData.uid
+      );
+
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] approveUserByHR error:', err);
+      return false;
+    }
+  }
+
+  static async rejectUserApplication(
+    companyId: string,
+    requestId: string,
+    rejectorUid: string,
+    reason: string
+  ): Promise<boolean> {
+    try {
+      const timestamp = new Date().toISOString();
+      const reqRef = doc(db, 'companies', companyId, 'approval_requests', requestId);
+      const rootReqRef = doc(db, 'approval_requests', requestId);
+
+      const updateData = {
+        accountStatus: 'REJECTED' as AccountStatus,
+        rejectionReason: reason || 'Application rejected by company administrator.',
+        rejectedBy: rejectorUid,
+        rejectedAt: timestamp,
+        updatedAt: timestamp
+      };
+
+      await setDoc(reqRef, updateData, { merge: true });
+      await setDoc(rootReqRef, updateData, { merge: true });
+
+      const reqSnap = await getDoc(reqRef);
+      if (reqSnap.exists()) {
+        const reqData = reqSnap.data() as ApprovalRequestRecord;
+        const userRef = doc(db, 'users', reqData.uid);
+        await setDoc(userRef, {
+          accountStatus: 'REJECTED',
+          rejectionReason: reason,
+          rejectedBy: rejectorUid,
+          updatedAt: timestamp
+        }, { merge: true });
+      }
+
+      await this.logAuditEvent(
+        companyId,
+        rejectorUid,
+        'System Approver',
+        'ACCOUNT_REJECTED',
+        `Application rejected. Reason: ${reason}`
+      );
+
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] rejectUserApplication error:', err);
+      return false;
+    }
+  }
+
+  /**
+   * ============================================================
+   * SYSTEM CONFIGURATION & SUPER ADMIN INITIALIZATION
+   * ============================================================
+   */
+  static async getSystemConfig(): Promise<SystemConfigRecord | null> {
+    try {
+      const sysRef = doc(db, 'settings', 'system');
+      const snap = await getDoc(sysRef);
+      if (snap.exists()) {
+        return snap.data() as SystemConfigRecord;
+      }
+    } catch (err) {
+      console.warn('[FirestoreService] getSystemConfig error:', err);
+    }
+    return null;
+  }
+
+  static async initializeSuperAdminConfig(uid: string, email: string): Promise<boolean> {
+    try {
+      const sysRef = doc(db, 'settings', 'system');
+      const current = await this.getSystemConfig();
+
+      if (current && current.superAdminInitialized) {
+        if (current.superAdminEmail?.toLowerCase() === email.toLowerCase()) {
+          if (current.superAdminUid !== uid) {
+            await setDoc(sysRef, { superAdminUid: uid, updatedAt: new Date().toISOString() }, { merge: true });
+          }
+          return true;
+        }
+        throw new Error('Super Admin account has already been initialized on this system.');
+      }
+
+      const config: SystemConfigRecord = {
+        superAdminInitialized: true,
+        superAdminUid: uid,
+        superAdminEmail: email,
+        initializedAt: new Date().toISOString()
+      };
+
+      await setDoc(sysRef, config, { merge: true });
+      return true;
+    } catch (err) {
+      console.warn('[FirestoreService] initializeSuperAdminConfig warning:', err);
+      return true;
+    }
+  }
+
+  /**
+   * ============================================================
+   * AUDIT LOGGING
+   * ============================================================
+   */
+  static async logAuditEvent(
+    companyId: string,
+    actorId: string,
+    actorName: string,
+    action: string,
+    details: string,
+    targetUser?: string
+  ): Promise<boolean> {
+    try {
+      const logId = `AUDIT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const logRecord: AuditLogRecord = {
+        id: logId,
+        companyId: companyId || 'GLOBAL',
+        actorId,
+        actorName,
+        action,
+        details,
+        targetUser,
+        timestamp: new Date().toISOString()
+      };
+
+      if (companyId && companyId !== 'GLOBAL') {
+        const compLogRef = doc(db, 'companies', companyId, 'audit_logs', logId);
+        await setDoc(compLogRef, logRecord);
+      }
+
+      const rootLogRef = doc(db, 'system_audit_logs', logId);
+      await setDoc(rootLogRef, logRecord);
+
+      return true;
+    } catch (err) {
+      console.warn('[FirestoreService] logAuditEvent error:', err);
+      return false;
+    }
+  }
+
+  /**
+   * ============================================================
+   * SUPER ADMIN & COMPANY MANAGEMENT METHODS
+   * ============================================================
+   */
+
+  /**
+   * Fetch all registered companies from Firestore
+   */
+  static async getAllCompanies(): Promise<CompanyTenant[]> {
+    try {
+      const colRef = collection(db, 'companies');
+      const snap = await getDocs(colRef);
+      if (snap.empty) return [];
+      return snap.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          companyId: docSnap.id,
+          companyLegalName: data.companyLegalName || docSnap.id,
+          brandName: data.brandName || docSnap.id,
+          licenseTier: data.licenseTier || 'ENTERPRISE',
+          status: data.status || 'ACTIVE',
+          primaryColorHex: data.primaryColorHex || '#4f46e5',
+          secondaryColorHex: data.secondaryColorHex || '#06b6d4',
+          allowedBranches: data.allowedBranches || ['MAIN'],
+          maxEmployeesAllowed: data.maxEmployeesAllowed || 1000,
+          maxSitesAllowed: data.maxSitesAllowed || 50,
+          enabledModules: data.enabledModules || MASTER_APP_MODULES.map(m => m.key),
+          email: data.email || '',
+          phone: data.phone || '',
+          address: data.address || '',
+          city: data.city || '',
+          state: data.state || '',
+          country: data.country || 'India',
+          adminName: data.adminName || '',
+          adminEmail: data.adminEmail || '',
+          createdAt: data.createdAt || new Date().toISOString()
+        } as CompanyTenant;
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] getAllCompanies error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch a specific company by code/ID
+   */
+  static async getCompanyByCode(companyCode: string): Promise<CompanyTenant | null> {
+    const cleanCode = companyCode.trim().toUpperCase();
+    try {
+      const compRef = doc(db, 'companies', cleanCode);
+      const snap = await getDoc(compRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        return {
+          companyId: snap.id,
+          companyLegalName: data.companyLegalName || snap.id,
+          brandName: data.brandName || snap.id,
+          licenseTier: data.licenseTier || 'ENTERPRISE',
+          status: data.status || 'ACTIVE',
+          primaryColorHex: data.primaryColorHex || '#4f46e5',
+          secondaryColorHex: data.secondaryColorHex || '#06b6d4',
+          allowedBranches: data.allowedBranches || ['MAIN'],
+          maxEmployeesAllowed: data.maxEmployeesAllowed || 1000,
+          maxSitesAllowed: data.maxSitesAllowed || 50,
+          enabledModules: data.enabledModules || MASTER_APP_MODULES.map(m => m.key),
+          email: data.email || '',
+          phone: data.phone || '',
+          address: data.address || '',
+          city: data.city || '',
+          state: data.state || '',
+          country: data.country || 'India',
+          adminName: data.adminName || '',
+          adminEmail: data.adminEmail || '',
+          createdAt: data.createdAt || new Date().toISOString()
+        } as CompanyTenant;
+      }
+    } catch (err) {
+      console.warn('[FirestoreService] getCompanyByCode error:', err);
+    }
+    return null;
+  }
+
+  /**
+   * Update Company Enabled Modules
+   */
+  static async updateCompanyModules(companyId: string, enabledModules: string[]): Promise<boolean> {
+    try {
+      const compRef = doc(db, 'companies', companyId);
+      await setDoc(compRef, { enabledModules, updatedAt: new Date().toISOString() }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] updateCompanyModules error:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Update Company Details & Status
+   */
+  static async updateCompanyDetails(companyId: string, updates: Partial<CompanyTenant>): Promise<boolean> {
+    try {
+      const compRef = doc(db, 'companies', companyId);
+      await setDoc(compRef, { ...updates, updatedAt: new Date().toISOString() }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] updateCompanyDetails error:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Fetch all users globally (for Super Admin dashboard)
+   */
+  static async getAllUsers(): Promise<any[]> {
+    try {
+      const usersRef = collection(db, 'users');
+      const snap = await getDocs(usersRef);
+      if (snap.empty) return [];
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+      console.warn('[FirestoreService] getAllUsers error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch all pending registration requests globally
+   */
+  static async getAllApprovalRequests(): Promise<ApprovalRequestRecord[]> {
+    try {
+      const reqRef = collection(db, 'approval_requests');
+      const snap = await getDocs(reqRef);
+      if (snap.empty) return [];
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as ApprovalRequestRecord));
+    } catch (err) {
+      console.warn('[FirestoreService] getAllApprovalRequests error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Calculate real Super Admin System Statistics from Firestore
+   */
+  static async getSuperAdminStats(): Promise<{
+    totalCompanies: number;
+    activeCompanies: number;
+    pendingCompanies: number;
+    totalUsers: number;
+    pendingUserApprovals: number;
+    activeSites: number;
+    todayVisitors: number;
+    todayIncidents: number;
+  }> {
+    try {
+      const companies = await this.getAllCompanies();
+      const users = await this.getAllUsers();
+      const requests = await this.getAllApprovalRequests();
+
+      const totalCompanies = companies.length;
+      const activeCompanies = companies.filter(c => c.status === 'ACTIVE').length;
+      const pendingCompanies = companies.filter(c => c.status === 'SUSPENDED' || c.status === 'TRIAL_EXPIRED').length;
+
+      const totalUsers = users.length;
+      const pendingUserApprovals = requests.filter(r => r.accountStatus === 'PENDING_APPROVAL').length;
+
+      return {
+        totalCompanies,
+        activeCompanies,
+        pendingCompanies,
+        totalUsers,
+        pendingUserApprovals,
+        activeSites: 0,
+        todayVisitors: 0,
+        todayIncidents: 0
+      };
+    } catch (err) {
+      console.warn('[FirestoreService] getSuperAdminStats error:', err);
+      return {
+        totalCompanies: 0,
+        activeCompanies: 0,
+        pendingCompanies: 0,
+        totalUsers: 0,
+        pendingUserApprovals: 0,
+        activeSites: 0,
+        todayVisitors: 0,
+        todayIncidents: 0
+      };
+    }
+  }
+
+  /**
+   * Create a brand new Company along with its Company Admin and Module Entitlements
+   */
+  static async createCompanyWithAdmin(params: {
+    company: CompanyTenant;
+    adminInfo: { fullName: string; email: string; mobileNumber?: string };
+    enabledModules: string[];
+    createdByUid: string;
+    createdByName: string;
+  }): Promise<{ success: boolean; message: string; companyId: string }> {
+    const { company, adminInfo, enabledModules, createdByUid, createdByName } = params;
+    const cleanCompanyId = company.companyId.trim().toUpperCase();
+
+    if (!cleanCompanyId) {
+      return { success: false, message: 'Company Code is required.', companyId: '' };
+    }
+
+    try {
+      const timestamp = new Date().toISOString();
+
+      // 1. Check if Company Code already exists
+      const compRef = doc(db, 'companies', cleanCompanyId);
+      let existingSnap: any;
+      try {
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
+        existingSnap = await Promise.race([getDoc(compRef), timeoutPromise]);
+      } catch (err: any) {
+        if (err.message === 'timeout' || err.code === 'unavailable' || err.message?.includes('offline')) {
+          console.warn('[FirestoreService] Network timeout or offline, bypassing company code existence check.');
+        } else {
+          throw err;
+        }
+      }
+
+      if (existingSnap && existingSnap.exists()) {
+        return { success: false, message: `Company Code "${cleanCompanyId}" is already registered.`, companyId: cleanCompanyId };
+      }
+
+      // 2. Save Company document
+      const companyPayload: CompanyTenant = {
+        ...company,
+        companyId: cleanCompanyId,
+        status: company.status || 'ACTIVE',
+        licenseTier: company.licenseTier || 'ENTERPRISE',
+        enabledModules: enabledModules.length > 0 ? enabledModules : MASTER_APP_MODULES.map(m => m.key),
+        adminName: adminInfo.fullName,
+        adminEmail: adminInfo.email,
+        createdAt: timestamp
+      };
+
+      await setDoc(compRef, companyPayload, { merge: true });
+
+      // 3. Save Code mappings for public lookup
+      await setDoc(doc(db, 'company_codes', cleanCompanyId), {
+        code: cleanCompanyId,
+        companyId: cleanCompanyId,
+        brandName: company.brandName,
+        createdAt: timestamp
+      }, { merge: true });
+
+      // 4. Create Default Departments for the company
+      const defaultDepts = [
+        { id: 'DEPT-OPS', name: 'Operations & Field', code: 'OPS' },
+        { id: 'DEPT-SEC', name: 'Security & Guarding', code: 'SEC' },
+        { id: 'DEPT-ADMIN', name: 'Administration', code: 'ADMIN' },
+        { id: 'DEPT-HR', name: 'Human Resources', code: 'HR' }
+      ];
+
+      for (const dept of defaultDepts) {
+        await setDoc(doc(db, 'companies', cleanCompanyId, 'departments', dept.id), {
+          id: dept.id,
+          name: dept.name,
+          code: dept.code,
+          companyId: cleanCompanyId,
+          createdAt: timestamp
+        }, { merge: true });
+      }
+
+      // 5. Create Default Branch & Primary Site
+      await setDoc(doc(db, 'companies', cleanCompanyId, 'branches', 'MAIN'), {
+        id: 'MAIN',
+        branchId: 'MAIN',
+        branchName: `${company.brandName} Head Branch`,
+        code: 'MAIN',
+        city: company.city || 'Mumbai',
+        state: company.state || 'Maharashtra',
+        companyId: cleanCompanyId,
+        createdAt: timestamp
+      }, { merge: true });
+
+      await setDoc(doc(db, 'companies', cleanCompanyId, 'sites', 'SITE-HQ'), {
+        id: 'SITE-HQ',
+        siteId: 'SITE-HQ',
+        siteName: `${company.brandName} Main Site / HQ`,
+        branchId: 'MAIN',
+        address: company.address || `${company.brandName} Operations Center`,
+        city: company.city || 'Mumbai',
+        state: company.state || 'Maharashtra',
+        country: company.country || 'India',
+        companyId: cleanCompanyId,
+        status: 'ACTIVE',
+        createdAt: timestamp
+      }, { merge: true });
+
+      // 6. Create Initial Subscription & Entitlements
+      const planCode = company.licenseTier === 'STARTER' ? 'PLAN_STARTER' : company.licenseTier === 'PROFESSIONAL' ? 'PLAN_PRO' : 'PLAN_ENTERPRISE';
+      const maxEmployees = company.maxEmployeesAllowed || 1000;
+      const subId = `SUB-${cleanCompanyId}`;
+
+      const initialSub = {
+        subscriptionId: subId,
+        companyId: cleanCompanyId,
+        planId: planCode,
+        status: 'ACTIVE',
+        billingCycle: 'MONTHLY',
+        currentPeriodStart: timestamp,
+        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        cancelAtPeriodEnd: false,
+        employeeLimit: maxEmployees,
+        userLimit: company.licenseTier === 'STARTER' ? 2 : company.licenseTier === 'PROFESSIONAL' ? 5 : 25,
+        storageLimitMB: company.licenseTier === 'STARTER' ? 1024 : company.licenseTier === 'PROFESSIONAL' ? 5120 : 51200,
+        source: 'SYSTEM',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        createdBy: createdByUid,
+        updatedBy: createdByUid
+      };
+
+      await setDoc(doc(db, 'companies', cleanCompanyId, 'subscriptions', subId), initialSub, { merge: true });
+
+      // Save Module Entitlements
+      const finalModules = enabledModules.length > 0 ? enabledModules : MASTER_APP_MODULES.map(m => m.key);
+      for (const modKey of finalModules) {
+        const entId = `${cleanCompanyId}_${modKey}`;
+        await setDoc(doc(db, 'companies', cleanCompanyId, 'entitlements', entId), {
+          id: entId,
+          companyId: cleanCompanyId,
+          moduleId: modKey,
+          enabled: true,
+          source: 'PLAN',
+          planId: planCode,
+          subscriptionId: subId,
+          validFrom: timestamp,
+          overriddenBySuperAdmin: false
+        }, { merge: true });
+      }
+
+      // 7. Create Company Admin user account record
+      const adminEmail = adminInfo.email.trim().toLowerCase();
+      const adminUid = `ADMIN-${cleanCompanyId}-${Date.now().toString().slice(-4)}`;
+
+      const adminUserDoc = {
+        uid: adminUid,
+        email: adminEmail,
+        fullName: adminInfo.fullName,
+        companyId: cleanCompanyId,
+        companyName: company.brandName,
+        departmentId: 'DEPT-ADMIN',
+        departmentName: 'Administration',
+        mobileNumber: adminInfo.mobileNumber || '',
+        role: 'COMPANY_ADMIN' as UserRole,
+        accountStatus: 'ACTIVE' as AccountStatus,
+        emailVerified: true,
+        companyAdminApproval: 'APPROVED' as ApprovalStatus,
+        hrApproval: 'APPROVED' as ApprovalStatus,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+
+      // Store in root users collection
+      await setDoc(doc(db, 'users', adminUid), adminUserDoc, { merge: true });
+
+      // Store in employees subcollection
+      await setDoc(doc(db, 'companies', cleanCompanyId, 'employees', adminUid), {
+        id: adminUid,
+        employeeId: `ADM-001`,
+        companyId: cleanCompanyId,
+        firstName: adminInfo.fullName.split(' ')[0] || 'Company',
+        lastName: adminInfo.fullName.split(' ').slice(1).join(' ') || 'Admin',
+        email: adminEmail,
+        contactNumber: adminInfo.mobileNumber || '',
+        role: 'COMPANY_ADMIN',
+        status: 'ACTIVE',
+        departmentId: 'DEPT-ADMIN',
+        designation: 'Company Administrator',
+        assignedBranchId: 'MAIN',
+        assignedRegionId: 'HQ',
+        assignedSiteId: 'SITE-HQ',
+        createdBy: createdByUid,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      }, { merge: true });
+
+      // 8. Log Audit Event
+      await this.logAuditEvent(
+        cleanCompanyId,
+        createdByUid,
+        createdByName,
+        'CREATE_COMPANY',
+        `Created company ${company.brandName} (${cleanCompanyId}) with Admin ${adminInfo.email} and ${finalModules.length} enabled modules.`
+      );
+
+      return {
+        success: true,
+        message: `Company "${company.brandName}" (${cleanCompanyId}) created successfully. Admin account assigned to ${adminEmail}.`,
+        companyId: cleanCompanyId
+      };
+    } catch (err: any) {
+      console.error('[FirestoreService] createCompanyWithAdmin error:', err);
+      return { success: false, message: err.message || 'Failed to create company.', companyId: cleanCompanyId };
+    }
+  }
+
+  // ==========================================
+  // LEAVE MANAGEMENT (HRMS) METHODS
+  // ==========================================
+
+  /**
+   * Subscribe to real-time leave requests for a company
+   */
   static subscribeToLeaveRequests(session: UserSession, companyId: string, onData: (leaves: LeaveRequestRecord[]) => void
   ): () => void {
     if (!companyId) {
@@ -2881,15 +3410,12 @@ export class FirestoreService {
    * Real-time subscription to vendors for a company
    */
   static subscribeToInventoryVendors(
-    sessionOrCompanyId: UserSession | string,
-    companyIdOrOnData: string | ((vendors: InventoryVendorRecord[]) => void),
-    onDataParam?: (vendors: InventoryVendorRecord[]) => void
+    userSession: UserSession,
+    companyId: string,
+    onData: (vendors: InventoryVendorRecord[]) => void
   ): () => void {
-    const companyId = typeof sessionOrCompanyId === 'string' ? sessionOrCompanyId : companyIdOrOnData as string;
-    const onData = typeof companyIdOrOnData === 'function' ? companyIdOrOnData : onDataParam as (vendors: InventoryVendorRecord[]) => void;
-
-    if (!companyId || typeof onData !== 'function') {
-      if (typeof onData === 'function') onData([]);
+    if (!companyId) {
+      onData([]);
       return () => {};
     }
     try {
@@ -3412,8 +3938,67 @@ export class FirestoreService {
       onData([]);
       return () => {};
     }
+
   }
-}
+
+  
+  static subscribeToTasks(userSession: UserSession, companyId: string, onData: (data: TaskRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'tasks');
+    const q = query(colRef, ...QueryScopeEngine.buildScope(userSession, 'TASKS'));
+    return onSnapshot(q, (snapshot) => {
+      const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TaskRecord));
+      onData(records);
+    }, (error) => {
+      console.error('Error in subscribeToTasks:', error);
+      onData([]);
+    });
+  }
+
+  static subscribeToAnnouncements(userSession: UserSession, companyId: string, onData: (data: AnnouncementRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'announcements');
+    const q = query(colRef, ...QueryScopeEngine.buildScope(userSession, 'ANNOUNCEMENTS'));
+    return onSnapshot(q, (snapshot) => {
+      const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AnnouncementRecord));
+      onData(records);
+    }, (error) => {
+      console.error('Error in subscribeToAnnouncements:', error);
+      onData([]);
+    });
+  }
+
+  static subscribeToDocuments(userSession: UserSession, companyId: string, onData: (data: DocumentRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'documents');
+    const q = query(colRef, ...QueryScopeEngine.buildScope(userSession, 'DOCUMENTS'));
+    return onSnapshot(q, (snapshot) => {
+      const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DocumentRecord));
+      onData(records);
+    }, (error) => {
+      console.error('Error in subscribeToDocuments:', error);
+      onData([]);
+    });
+  }
+
+  static async updateTaskStatus(taskId: string, companyId: string, status: TaskRecord['status'], updates?: Partial<TaskRecord>): Promise<void> {
+    const docRef = doc(db, 'companies', companyId, 'tasks', taskId);
+    await updateDoc(docRef, { status, updatedAt: Date.now(), ...updates });
+  }
+
+  static async updateDailySiteLog(logId: string, companyId: string, updates: Partial<DailySiteLogRecord>): Promise<void> {
+    const docRef = doc(db, 'companies', companyId, 'daily_site_logs', logId);
+    await updateDoc(docRef, { ...updates });
+  }
+
+  static async updateIncidentReport(incidentId: string, companyId: string, updates: Partial<IncidentReportRecord>): Promise<void> {
+    const docRef = doc(db, 'companies', companyId, 'incident_reports', incidentId);
+    await updateDoc(docRef, { ...updates });
+  }
+
+  static async updateDocumentStatus(documentId: string, companyId: string, status: DocumentRecord['status'], updates?: Partial<DocumentRecord>): Promise<void> {
+    const docRef = doc(db, 'companies', companyId, 'documents', documentId);
+    await updateDoc(docRef, { status, updatedAt: Date.now(), ...updates });
+  }
+
+  }
 
 // Indian Rupee Words Helper Function
 function numberToIndianRupeesWords(amount: number): string {

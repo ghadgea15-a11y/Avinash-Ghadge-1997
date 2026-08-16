@@ -311,6 +311,60 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                   <ChevronRight className="w-3.5 h-3.5 opacity-50" />
                 </button>
 
+                
+                {RbacService.hasModuleAccess(userSession, 'SHIFTS') && (
+                  <button
+                    onClick={() => { onNavigate('TASK_MANAGEMENT'); onClose(); }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                      currentScreen === 'TASK_MANAGEMENT'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                        : isDark 
+                          ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                          : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <LayoutDashboard className="w-4 h-4 text-emerald-400" />
+                      <span>Task Management</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+                  </button>
+                )}
+
+                <button
+                  onClick={() => { onNavigate('MY_TASKS'); onClose(); }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                    currentScreen === 'MY_TASKS'
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                      : isDark 
+                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <UserCheck className="w-4 h-4 text-cyan-400" />
+                    <span>My Tasks</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+                </button>
+
+                <button
+                  onClick={() => { onNavigate('ANNOUNCEMENTS'); onClose(); }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                    currentScreen === 'ANNOUNCEMENTS'
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                      : isDark 
+                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-indigo-600'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Bell className="w-4 h-4 text-amber-400" />
+                    <span>Announcements</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+                </button>
+
                 {RbacService.hasModuleAccess(userSession, 'COMPANY_MANAGEMENT') && (
                   <button
                     onClick={() => { onNavigate('COMPANY_MANAGEMENT'); onClose(); }}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Clock, AlertTriangle, UserCheck, ShieldCheck, CheckSquare } from 'lucide-react';
+import { Users, Clock, AlertTriangle, UserCheck, ShieldCheck, CheckSquare, ClipboardList, TrendingUp } from 'lucide-react';
 import { 
   CompanyTenant, UserSession, PhaseAScreen, AttendanceLogRecord, 
-  EmployeeRecord, IncidentReportRecord 
+  EmployeeRecord, IncidentReportRecord, TaskRecord, DailySiteLogRecord 
 } from '../../../types';
 import { FirestoreService } from '../../../services/firestoreService';
 import { RbacService } from '../../../services/rbacService';
@@ -17,6 +17,8 @@ export const SupervisorDashboard: React.FC<DashboardProps> = ({ userSession, com
   const [attendance, setAttendance] = useState<AttendanceLogRecord[]>([]);
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [incidents, setIncidents] = useState<IncidentReportRecord[]>([]);
+  const [tasks, setTasks] = useState<TaskRecord[]>([]);
+  const [dailyLogs, setDailyLogs] = useState<DailySiteLogRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -125,19 +127,28 @@ export const SupervisorDashboard: React.FC<DashboardProps> = ({ userSession, com
         </div>
       </div>
 
-      {/* Missing Logic Scaffold for Ground Supervisors */}
-      <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-          <CheckSquare className="w-5 h-5 text-slate-400" /> Tactical Control (Missing Dependencies)
-        </h3>
-        <p className="text-sm text-slate-500">
-          Supervisors require granular task management. The following workflows are not implemented in the Phase A Firestore database layer:
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Daily Task Allocation</span>
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Shift Handover Register</span>
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Safety Observations (BBS)</span>
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Team Productivity Tracker</span>
+      {/* Supervisor Modules */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Task Allocation */}
+        <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+            <CheckSquare className="w-5 h-5 text-indigo-500" /> Daily Tasks
+          </h3>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">
+            {tasks.filter(t => t.status !== 'COMPLETED' && t.status !== 'CANCELLED').length}
+          </p>
+          <p className="text-sm text-slate-500">Pending tasks for team</p>
+        </div>
+
+        {/* Handover & Reports */}
+        <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 text-emerald-500" /> Shift Handovers
+          </h3>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">
+            {dailyLogs.filter(l => l.logType === 'HANDOVER' && l.date === new Date().toISOString().split('T')[0]).length}
+          </p>
+          <p className="text-sm text-slate-500">Handovers completed today</p>
         </div>
       </div>
     </div>

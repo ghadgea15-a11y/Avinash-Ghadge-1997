@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, AlertTriangle, CheckSquare, Wrench, Shield, MonitorSmartphone } from 'lucide-react';
 import { 
   CompanyTenant, UserSession, PhaseAScreen, AttendanceLogRecord, 
-  AssetRecord, IncidentReportRecord
+  AssetRecord, IncidentReportRecord, TaskRecord, AnnouncementRecord
 } from '../../../types';
 import { FirestoreService } from '../../../services/firestoreService';
 
@@ -16,6 +16,8 @@ export const SkilledStaffDashboard: React.FC<DashboardProps> = ({ userSession, c
   const [attendance, setAttendance] = useState<AttendanceLogRecord[]>([]);
   const [assets, setAssets] = useState<AssetRecord[]>([]);
   const [incidents, setIncidents] = useState<IncidentReportRecord[]>([]);
+  const [tasks, setTasks] = useState<TaskRecord[]>([]);
+  const [announcements, setAnnouncements] = useState<AnnouncementRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,6 +35,13 @@ export const SkilledStaffDashboard: React.FC<DashboardProps> = ({ userSession, c
       }),
       FirestoreService.subscribeToIncidentReports(userSession, company.companyId, (data) => {
         setIncidents(data.filter(i => i.reportedById === userSession.employeeId));
+      }),
+      FirestoreService.subscribeToTasks(userSession, company.companyId, (data) => {
+        setTasks(data.filter(t => t.assignedTo === userSession.employeeId));
+      }),
+      FirestoreService.subscribeToAnnouncements(userSession, company.companyId, (data) => {
+        // Just show all announcements scoped to them
+        setAnnouncements(data);
       })
     ];
     
@@ -97,18 +106,27 @@ export const SkilledStaffDashboard: React.FC<DashboardProps> = ({ userSession, c
         </div>
       </div>
 
-      {/* Missing Logic Scaffold */}
-      <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-          <Wrench className="w-5 h-5 text-slate-400" /> Ground Tasks (Missing Dependencies)
-        </h3>
-        <p className="text-sm text-slate-500">
-          Task assignment workflows for skilled technicians (e.g. Electricians, Mechanics) are not implemented in Phase A database.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Daily Assigned Maintenance</span>
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Task Checklists</span>
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Work Completion Logger</span>
+      {/* My Tasks */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-500">My Tasks</h3>
+            <CheckSquare className="w-5 h-5 text-blue-500" />
+          </div>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">
+            {tasks.filter(t => t.status === 'TODO' || t.status === 'IN_PROGRESS').length}
+          </p>
+          <p className="text-xs text-slate-500 mt-2">Active tasks assigned to me</p>
+        </div>
+
+        {/* Announcements */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-500">Announcements</h3>
+            <AlertTriangle className="w-5 h-5 text-emerald-500" />
+          </div>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">{announcements.length}</p>
+          <p className="text-xs text-slate-500 mt-2">Recent company announcements</p>
         </div>
       </div>
     </div>

@@ -115,8 +115,9 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     title: string;
     category: IncidentReportRecord['category'];
     severity: IncidentReportRecord['severity'];
+    type: 'INCIDENT' | 'COMPLAINT' | 'BBS_OBSERVATION';
     description: string;
-  }>({ siteId: '', title: '', category: 'SECURITY_BREACH', severity: 'MEDIUM', description: '' });
+  }>({ siteId: '', title: '', category: 'SECURITY_BREACH', severity: 'MEDIUM', description: '', type: 'INCIDENT' });
 
   // 3. Visitor Check-in Modal
   const [isVisitorModalOpen, setIsVisitorModalOpen] = useState<boolean>(false);
@@ -334,7 +335,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     if (ok) {
       setStatusMsg({ type: 'SUCCESS', text: `Incident '${newInc.title}' reported.` });
       setIsIncidentModalOpen(false);
-      setIncidentForm({ siteId: selectedSiteId, title: '', category: 'SECURITY_BREACH', severity: 'MEDIUM', description: '' });
+      setIncidentForm({ siteId: selectedSiteId, title: '', category: 'SECURITY_BREACH', severity: 'MEDIUM', description: '', type: 'INCIDENT' as const });
     } else {
       setStatusMsg({ type: 'ERROR', text: 'Failed to report incident.' });
     }
@@ -701,6 +702,17 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
         >
           <Truck className="w-4 h-4 text-amber-500" />
           <span>Material Pass Register ({materials.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('DAILY_LOGS')}
+          className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
+            activeTab === 'DAILY_LOGS'
+              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          <FileText className="w-4 h-4 text-emerald-500" />
+          <span>Daily Logs & Handovers</span>
         </button>
       </div>
 
@@ -1120,6 +1132,80 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
         </div>
       )}
 
+
+      {activeTab === 'DAILY_LOGS' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Daily Logs & Handovers</h3>
+              <p className="text-xs text-slate-500">Manage daily site inspections and shift handovers.</p>
+            </div>
+            <button
+              onClick={() => {
+                const log = {
+                  siteName: 'Unknown', supervisorId: userSession.employeeId || '', supervisorName: 'Unknown', guardsCountOnDuty: 0, totalPatrolsCompleted: 0, totalVisitorsLogged: 0, totalIncidentsReported: 0,
+                  id: crypto.randomUUID(),
+                  companyId,
+                  siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""),
+                  date: new Date().toISOString().split('T')[0],
+                  inspectorId: userSession.employeeId || '',
+                  logType: 'INSPECTION',
+                  notes: 'Routine site inspection completed.',
+                  createdAt: new Date().toISOString()
+                };
+                FirestoreService.saveDailySiteLog(companyId, log as DailySiteLogRecord);
+                setStatusMsg({ type: 'SUCCESS', text: 'Inspection log created.' });
+              }}
+              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Inspection</span>
+            </button>
+            <button
+              onClick={() => {
+                const log = {
+                  siteName: 'Unknown', supervisorId: userSession.employeeId || '', supervisorName: 'Unknown', guardsCountOnDuty: 0, totalPatrolsCompleted: 0, totalVisitorsLogged: 0, totalIncidentsReported: 0,
+                  id: crypto.randomUUID(),
+                  companyId,
+                  siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""),
+                  date: new Date().toISOString().split('T')[0],
+                  logType: 'HANDOVER',
+                  outgoingSupervisorId: userSession.employeeId || '',
+                  incomingSupervisorId: 'NEXT_SHIFT_USER',
+                  notes: 'Shift handover complete. All keys and radios transferred.',
+                  createdAt: new Date().toISOString()
+                };
+                FirestoreService.saveDailySiteLog(companyId, log as DailySiteLogRecord);
+                setStatusMsg({ type: 'SUCCESS', text: 'Handover log created.' });
+              }}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow flex items-center gap-2 ml-2"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Shift Handover</span>
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {dailySiteLogs.filter(d => selectedSiteId === "ALL" || d.siteId === selectedSiteId).map(log => (
+              <div key={log.id} className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-3`}>
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800">
+                    {log.logType || 'STANDARD'}
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400">{new Date(log.createdAt).toLocaleString()}</span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300">{log.notes}</p>
+                {log.logType === 'HANDOVER' && (
+                  <p className="text-[10px] text-slate-400">Outgoing: {log.outgoingSupervisorId}</p>
+                )}
+              </div>
+            ))}
+            {dailySiteLogs.length === 0 && (
+              <div className="col-span-full py-12 text-center text-slate-400">No daily logs found.</div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* MODAL 1: ADD CHECKPOINT */}
       {isCheckpointModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1195,6 +1281,20 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
                   required
                 />
+              </div>
+
+              
+              <div>
+                <label className="text-[10px] font-bold uppercase text-slate-500">Record Type</label>
+                <select
+                  value={incidentForm.type}
+                  onChange={e => setIncidentForm({ ...incidentForm, type: e.target.value as any })}
+                  className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                >
+                  <option value="INCIDENT">Incident</option>
+                  <option value="COMPLAINT">Complaint</option>
+                  <option value="BBS_OBSERVATION">BBS Observation</option>
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-2">

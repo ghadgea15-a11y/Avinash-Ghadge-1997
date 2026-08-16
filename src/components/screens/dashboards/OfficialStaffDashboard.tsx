@@ -5,6 +5,8 @@ import { FinanceDashboard } from './official/FinanceDashboard';
 import { AdminDashboard } from './official/AdminDashboard';
 import { ProcurementDashboard } from './official/ProcurementDashboard';
 import { EhsDashboard } from './official/EhsDashboard';
+import { DepartmentGenericDashboard } from './official/DepartmentGenericDashboard';
+
 
 interface DashboardProps { 
   userSession: UserSession; 
@@ -37,19 +39,7 @@ export const OfficialStaffDashboard: React.FC<DashboardProps> = (props) => {
     case 'CLIENT_MANAGEMENT':
     case 'IT':
     case 'OPERATIONS_OFFICE':
-      return (
-        <div className="p-8 text-center bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{role.replace('_', ' ')} Dashboard</h3>
-          <p className="text-sm text-slate-500">
-            This functional department's dashboard is scaffolded but awaiting core business logic and specific Firestore collection mappings.
-            <br/><br/>
-            Missing Dependencies: 
-            <span className="font-mono text-xs bg-slate-100 dark:bg-slate-900 p-1 ml-2 rounded text-indigo-500">
-              {role}_MODULE_BUSINESS_LOGIC
-            </span>
-          </p>
-        </div>
-      );
+      return <DepartmentGenericDashboard {...props} departmentName={role} />;
       
     default:
       return (

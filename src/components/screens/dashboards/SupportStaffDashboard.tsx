@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, AlertTriangle, ClipboardList } from 'lucide-react';
+import { Clock, AlertTriangle, ClipboardList, CheckSquare } from 'lucide-react';
 import { 
-  CompanyTenant, UserSession, PhaseAScreen, AttendanceLogRecord
+  CompanyTenant, UserSession, PhaseAScreen, AttendanceLogRecord, TaskRecord, AnnouncementRecord
 } from '../../../types';
 import { FirestoreService } from '../../../services/firestoreService';
 
@@ -13,6 +13,8 @@ interface DashboardProps {
 
 export const SupportStaffDashboard: React.FC<DashboardProps> = ({ userSession, company, onNavigate }) => {
   const [attendance, setAttendance] = useState<AttendanceLogRecord[]>([]);
+  const [tasks, setTasks] = useState<TaskRecord[]>([]);
+  const [announcements, setAnnouncements] = useState<AnnouncementRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,12 +23,20 @@ export const SupportStaffDashboard: React.FC<DashboardProps> = ({ userSession, c
       return;
     }
 
-    const unsub = FirestoreService.subscribeToAttendanceLogs(userSession, company.companyId, (data) => {
-      setAttendance(data.filter(a => a.employeeId === userSession.employeeId));
-    });
+    const unsubs = [
+      FirestoreService.subscribeToAttendanceLogs(userSession, company.companyId, (data) => {
+        setAttendance(data.filter(a => a.employeeId === userSession.employeeId));
+      }),
+      FirestoreService.subscribeToTasks(userSession, company.companyId, (data) => {
+        setTasks(data.filter(t => t.assignedTo === userSession.employeeId));
+      }),
+      FirestoreService.subscribeToAnnouncements(userSession, company.companyId, (data) => {
+        setAnnouncements(data);
+      })
+    ];
     
     setTimeout(() => setLoading(false), 800);
-    return () => unsub();
+    return () => unsubs.forEach(unsub => unsub());
   }, [company.companyId, userSession.employeeId]);
 
   if (!userSession.employeeId) {
@@ -64,18 +74,27 @@ export const SupportStaffDashboard: React.FC<DashboardProps> = ({ userSession, c
         </div>
       </div>
 
-      {/* Missing Logic Scaffold */}
-      <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-          <ClipboardList className="w-5 h-5 text-slate-400" /> Support Tasks (Missing Dependencies)
-        </h3>
-        <p className="text-sm text-slate-500">
-          Task tracking for Support Staff is not implemented in the Phase A database.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Daily Support Tasks</span>
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Supervisor Instructions</span>
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Work Completion Log</span>
+      {/* My Tasks */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-500">My Tasks</h3>
+            <CheckSquare className="w-5 h-5 text-blue-500" />
+          </div>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">
+            {tasks.filter(t => t.status === 'TODO' || t.status === 'IN_PROGRESS').length}
+          </p>
+          <p className="text-xs text-slate-500 mt-2">Active tasks assigned to me</p>
+        </div>
+
+        {/* Announcements */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-500">Announcements</h3>
+            <AlertTriangle className="w-5 h-5 text-emerald-500" />
+          </div>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">{announcements.length}</p>
+          <p className="text-xs text-slate-500 mt-2">Recent company announcements</p>
         </div>
       </div>
     </div>

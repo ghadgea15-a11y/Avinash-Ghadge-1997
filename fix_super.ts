@@ -1,0 +1,33 @@
+import * as fs from 'fs';
+
+let content = fs.readFileSync('src/components/screens/dashboards/SupervisorDashboard.tsx', 'utf-8');
+
+const scaffoldRegex = /\{\/\* Missing Logic Scaffold for Ground Supervisors \*\/\}[\s\S]*?<\/div>/g;
+
+const newUI = `{/* Supervisor Modules */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Task Allocation */}
+        <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+            <CheckSquare className="w-5 h-5 text-indigo-500" /> Daily Tasks
+          </h3>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">
+            {tasks.filter(t => t.status !== 'COMPLETED' && t.status !== 'CLOSED').length}
+          </p>
+          <p className="text-sm text-slate-500">Pending tasks for team</p>
+        </div>
+
+        {/* Handover & Reports */}
+        <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 text-emerald-500" /> Shift Handovers
+          </h3>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">
+            {dailyLogs.filter(l => l.logType === 'HANDOVER' && l.date === new Date().toISOString().split('T')[0]).length}
+          </p>
+          <p className="text-sm text-slate-500">Handovers completed today</p>
+        </div>
+      </div>`;
+
+content = content.replace(scaffoldRegex, newUI);
+fs.writeFileSync('src/components/screens/dashboards/SupervisorDashboard.tsx', content);

@@ -39,6 +39,11 @@ import { LeaveManagementScreen } from './components/screens/LeaveManagementScree
 import { PayrollCompensationScreen } from './components/screens/PayrollCompensationScreen';
 import { InventoryStockScreen } from './components/screens/InventoryStockScreen';
 import { AssetTrackingScreen } from './components/screens/AssetTrackingScreen';
+
+import { TaskManagementScreen } from './components/screens/TaskManagementScreen';
+import { AnnouncementsScreen } from './components/screens/AnnouncementsScreen';
+import { MyTasksScreen } from './components/screens/MyTasksScreen';
+
 import { ReportsAnalyticsScreen } from './components/screens/ReportsAnalyticsScreen';
 
 export function App() {
@@ -462,6 +467,31 @@ export function App() {
                       <InventoryStockScreen
                         userSession={userSession}
                         activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    
+                    {currentScreen === 'TASK_MANAGEMENT' && activeCompany && (
+                      <TaskManagementScreen
+                        userSession={userSession}
+                        company={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'ANNOUNCEMENTS' && activeCompany && (
+                      <AnnouncementsScreen
+                        userSession={userSession}
+                        company={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'MY_TASKS' && activeCompany && (
+                      <MyTasksScreen
+                        userSession={userSession}
+                        company={activeCompany}
                         onNavigate={setCurrentScreen}
                       />
                     )}

@@ -599,6 +599,11 @@ export interface PatrolLogRecord {
 }
 
 export interface IncidentReportRecord {
+  type?: 'INCIDENT' | 'COMPLAINT' | 'BBS_OBSERVATION';
+  slaDeadline?: string;
+  resolutionNotes?: string;
+  actionTaken?: string;
+  behaviorCategory?: string;
   id: string;
   companyId: string;
   siteId: string;
@@ -609,8 +614,7 @@ export interface IncidentReportRecord {
   category: 'SECURITY_BREACH' | 'FIRE_HAZARD' | 'PROPERTY_DAMAGE' | 'THEFT' | 'MEDICAL' | 'UNAUTHORIZED_ENTRY' | 'OTHER';
   severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   description: string;
-  status: 'OPEN' | 'UNDER_INVESTIGATION' | 'RESOLVED' | 'CLOSED';
-  resolutionNotes?: string;
+  status: 'OPEN' | 'UNDER_INVESTIGATION' | 'RESOLVED' | 'CLOSED' | 'IN_PROGRESS' | 'ESCALATED' | 'RECORDED' | 'ACTION_REQUIRED';
   resolvedById?: string;
   resolvedByName?: string;
   photoUrls?: string[];
@@ -662,6 +666,14 @@ export interface MaterialMovementRecord {
 }
 
 export interface DailySiteLogRecord {
+  logType?: 'STANDARD' | 'INSPECTION' | 'HANDOVER';
+  inspectorId?: string;
+  checklistData?: any[];
+  score?: number;
+  outgoingSupervisorId?: string;
+  incomingSupervisorId?: string;
+  inventoryStatus?: any;
+  notes?: string;
   id: string;
   companyId: string;
   siteId: string;
@@ -675,8 +687,8 @@ export interface DailySiteLogRecord {
   totalVisitorsLogged: number;
   totalIncidentsReported: number;
   generalNotes?: string;
-  status: 'DRAFT' | 'SUBMITTED' | 'VERIFIED';
   createdAt: string;
+  status?: 'DRAFT' | 'SUBMITTED' | 'VERIFIED' | 'REVIEWED' | 'INITIATED' | 'ACCEPTED' | 'DISPUTED';
 }
 
 export interface LeaveRequestRecord {
@@ -1065,7 +1077,10 @@ export type PhaseAScreen =
   | 'SUPER_ADMIN_USERS'
   | 'SUPER_ADMIN_PENDING_APPROVALS'
   | 'SUPER_ADMIN_MODULES'
-  | 'LEGAL_POLICIES';
+  | 'LEGAL_POLICIES'
+  | 'TASK_MANAGEMENT'
+  | 'ANNOUNCEMENTS'
+  | 'MY_TASKS';
 
 export type AppThemeMode = 'DARK' | 'LIGHT' | 'SYSTEM';
 
@@ -1132,3 +1147,49 @@ export const APP_MODULES = {
 } as const;
 
 export type AppModuleKey = keyof typeof APP_MODULES;
+
+export interface TaskRecord {
+  id: string;
+  companyId: string;
+  siteId?: string;
+  departmentTag?: string;
+  assignedTo: string;
+  assignedToName?: string;
+  createdBy: string;
+  createdByName?: string;
+  title: string;
+  description: string;
+  dueDate?: string;
+  slaDeadline?: string;
+  completionNotes?: string;
+  photoUrl?: string;
+  status: 'TODO' | 'IN_PROGRESS' | 'PENDING_VERIFICATION' | 'COMPLETED' | 'CANCELLED' | 'PENDING' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'RESOLVED';
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface AnnouncementRecord {
+  id: string;
+  companyId: string;
+  targetAudience: string;
+  message: string;
+  priority: 'NORMAL' | 'URGENT';
+  createdBy: string;
+  createdByName?: string;
+  createdAt: number;
+  expiresAt: number;
+}
+
+export interface DocumentRecord {
+  id: string;
+  companyId: string;
+  departmentTag: string;
+  title: string;
+  documentUrl?: string;
+  status: 'PENDING' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'RESOLVED';
+  createdBy: string;
+  createdByName?: string;
+  createdAt: number;
+  updatedAt: number;
+  payload?: any;
+}

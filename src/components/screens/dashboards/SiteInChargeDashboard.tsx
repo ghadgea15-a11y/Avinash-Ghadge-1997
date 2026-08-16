@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Building, Shield, Clock, AlertTriangle, Truck, UserCheck, HardDrive, Package, CheckSquare } from 'lucide-react';
+import { Users, Building, Shield, Clock, AlertTriangle, Truck, UserCheck, HardDrive, Package, CheckSquare, AlertCircle, ClipboardList } from 'lucide-react';
 import { 
   CompanyTenant, UserSession, PhaseAScreen, EmployeeRecord, 
   AttendanceLogRecord, IncidentReportRecord, VisitorLogRecord, 
-  MaterialMovementRecord, AssetRecord, InventoryItemRecord, PatrolLogRecord
+  MaterialMovementRecord, AssetRecord, InventoryItemRecord, PatrolLogRecord, TaskRecord, DailySiteLogRecord
 } from '../../../types';
 import { FirestoreService } from '../../../services/firestoreService';
 import { RbacService } from '../../../services/rbacService';
@@ -23,6 +23,8 @@ export const SiteInChargeDashboard: React.FC<DashboardProps> = ({ userSession, c
   const [assets, setAssets] = useState<AssetRecord[]>([]);
   const [inventory, setInventory] = useState<InventoryItemRecord[]>([]);
   const [patrols, setPatrols] = useState<PatrolLogRecord[]>([]);
+  const [tasks, setTasks] = useState<TaskRecord[]>([]);
+  const [dailyLogs, setDailyLogs] = useState<DailySiteLogRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,7 +43,9 @@ export const SiteInChargeDashboard: React.FC<DashboardProps> = ({ userSession, c
       FirestoreService.subscribeToMaterialLogs(userSession, company.companyId, (data) => setMaterials(data.filter(m => m.siteId === siteId))),
       FirestoreService.subscribeToAssets(userSession, company.companyId, (data) => setAssets(data.filter(a => a.siteId === siteId))),
       FirestoreService.subscribeToInventoryItems(userSession, company.companyId, (data) => setInventory(data.filter(i => i.siteId === siteId))),
-      FirestoreService.subscribeToPatrolLogs(userSession, company.companyId, (data) => setPatrols(data.filter(p => p.siteId === siteId)))
+      FirestoreService.subscribeToPatrolLogs(userSession, company.companyId, (data) => setPatrols(data.filter(p => p.siteId === siteId))),
+      FirestoreService.subscribeToTasks(userSession, company.companyId, (data) => setTasks(data.filter(t => t.siteId === siteId))),
+      FirestoreService.subscribeToDailySiteLogs(userSession, company.companyId, (data) => setDailyLogs(data.filter(d => d.siteId === siteId)))
     ];
     
     setTimeout(() => setLoading(false), 800);
@@ -158,19 +162,50 @@ export const SiteInChargeDashboard: React.FC<DashboardProps> = ({ userSession, c
         </div>
       </div>
 
-      {/* Missing Logic Scaffold */}
-      <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-          <CheckSquare className="w-5 h-5 text-slate-400" /> Site Operations (Missing Dependencies)
-        </h3>
-        <p className="text-sm text-slate-500">
-          Certain site management features cannot be rendered because their underlying backend business logic is not implemented in Phase A.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Complaints Engine</span>
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Work Status Tracker</span>
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">Site Inspections Checklist</span>
-          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded">SLA Monitors</span>
+      {/* Workflows implemented */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Complaints */}
+        <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-orange-500" /> Complaints Engine
+          </h3>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">
+            {incidents.filter(i => i.type === 'COMPLAINT' && i.status !== 'RESOLVED' && i.status !== 'CLOSED').length}
+          </p>
+          <p className="text-sm text-slate-500">Open Complaints</p>
+        </div>
+
+        {/* Inspections */}
+        <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 text-blue-500" /> Inspections
+          </h3>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">
+            {dailyLogs.filter(d => d.logType === 'INSPECTION' && d.date === today).length}
+          </p>
+          <p className="text-sm text-slate-500">Inspections Today</p>
+        </div>
+
+        {/* Work Status / Tasks */}
+        <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+            <CheckSquare className="w-5 h-5 text-emerald-500" /> Tasks Tracker
+          </h3>
+          <p className="text-3xl font-black text-slate-900 dark:text-white">
+            {tasks.filter(t => t.status === 'IN_PROGRESS' || t.status === 'PENDING_VERIFICATION').length}
+          </p>
+          <p className="text-sm text-slate-500">Active Tasks</p>
+        </div>
+
+        {/* SLA Monitors */}
+        <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-red-100 dark:border-red-900/30">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-red-500" /> SLA Monitors
+          </h3>
+          <p className="text-3xl font-black text-red-600 dark:text-red-400">
+            {tasks.filter(t => t.slaDeadline && new Date(t.slaDeadline).getTime() < Date.now() && !['COMPLETED', 'RESOLVED', 'CANCELLED'].includes(t.status)).length}
+          </p>
+          <p className="text-sm text-slate-500">Breached SLAs</p>
         </div>
       </div>
     </div>

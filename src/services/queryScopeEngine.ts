@@ -9,7 +9,7 @@ export class QueryScopeEngine {
    */
   static buildScope(
     session: UserSession,
-    collectionType: 'EMPLOYEES' | 'ATTENDANCE' | 'LEAVES' | 'ASSETS' | 'INCIDENTS' | 'VISITORS' | 'MATERIALS' | 'PAYROLL' | 'APPROVALS'
+    collectionType: 'EMPLOYEES' | 'ATTENDANCE' | 'LEAVES' | 'ASSETS' | 'INCIDENTS' | 'VISITORS' | 'MATERIALS' | 'PAYROLL' | 'APPROVALS' | 'TASKS' | 'ANNOUNCEMENTS' | 'DOCUMENTS' | 'LOGS'
   ): QueryConstraint[] {
     const authority = RbacService.getAuthorityLevel(session);
     const constraints: QueryConstraint[] = [];
@@ -28,7 +28,7 @@ export class QueryScopeEngine {
     if (authority === 'A4_REGIONAL_AREA_MANAGER' && session.assignedRegionId) {
       if (['EMPLOYEES'].includes(collectionType)) {
         constraints.push(where('assignedRegionId', '==', session.assignedRegionId));
-      } else if (['ATTENDANCE', 'INCIDENTS', 'VISITORS', 'MATERIALS', 'LEAVES', 'ASSETS'].includes(collectionType)) {
+      } else if (['ATTENDANCE', 'INCIDENTS', 'VISITORS', 'MATERIALS', 'LEAVES', 'ASSETS', 'TASKS', 'ANNOUNCEMENTS', 'DOCUMENTS', 'LOGS'].includes(collectionType)) {
         constraints.push(where('assignedRegionId', '==', session.assignedRegionId));
       }
       return constraints;
@@ -38,7 +38,7 @@ export class QueryScopeEngine {
     if (authority === 'A5_SITE_IN_CHARGE' && session.assignedSiteId) {
       if (['EMPLOYEES'].includes(collectionType)) {
         constraints.push(where('assignedSiteId', '==', session.assignedSiteId));
-      } else if (['ATTENDANCE', 'INCIDENTS', 'VISITORS', 'MATERIALS', 'LEAVES', 'ASSETS'].includes(collectionType)) {
+      } else if (['ATTENDANCE', 'INCIDENTS', 'VISITORS', 'MATERIALS', 'LEAVES', 'ASSETS', 'TASKS', 'ANNOUNCEMENTS', 'DOCUMENTS', 'LOGS'].includes(collectionType)) {
         constraints.push(where('siteId', '==', session.assignedSiteId));
       } else {
         return constraints;
@@ -50,7 +50,7 @@ export class QueryScopeEngine {
     if (authority === 'A6_SUPERVISOR' && session.assignedSiteId) {
       if (['EMPLOYEES'].includes(collectionType)) {
         constraints.push(where('assignedSiteId', '==', session.assignedSiteId));
-      } else if (['ATTENDANCE', 'INCIDENTS', 'VISITORS', 'MATERIALS', 'LEAVES', 'ASSETS'].includes(collectionType)) {
+      } else if (['ATTENDANCE', 'INCIDENTS', 'VISITORS', 'MATERIALS', 'LEAVES', 'ASSETS', 'TASKS', 'ANNOUNCEMENTS', 'DOCUMENTS', 'LOGS'].includes(collectionType)) {
         constraints.push(where('siteId', '==', session.assignedSiteId));
       } else {
         return constraints;
@@ -66,6 +66,10 @@ export class QueryScopeEngine {
         constraints.push(where('assignedEmployeeId', '==', session.employeeId));
       } else if (collectionType === 'INCIDENTS') {
         constraints.push(where('reportedById', '==', session.employeeId));
+      } else if (collectionType === 'ANNOUNCEMENTS') {
+        // Handled client side for target_audience
+      } else if (collectionType === 'TASKS') {
+        constraints.push(where('assignedTo', '==', session.employeeId));
       } else if (collectionType === 'APPROVALS') {
         // Approval doesn't have employeeId, it has 'uid'
         constraints.push(where('uid', '==', session.userId));
