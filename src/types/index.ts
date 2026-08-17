@@ -2591,3 +2591,4 @@ export interface AbsenceRegularizationRecord {
   createdAt: number;
   updatedAt: number;
 }
+

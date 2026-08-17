@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { UserSession, WorkOrderRecord, WorkOrderStatus } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { X, CheckCircle2, Play, Pause, FileText, Send, ArrowLeft, Clock, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
 
 interface WorkOrderDetailProps {
   workOrder: WorkOrderRecord;
@@ -13,6 +12,23 @@ interface WorkOrderDetailProps {
 
 export function WorkOrderDetail({ workOrder, companyId, userSession, onClose }: WorkOrderDetailProps) {
   const [loading, setLoading] = useState(false);
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch {
+      return dateStr;
+    }
+  };
 
   const handleUpdateStatus = async (status: WorkOrderStatus) => {
     setLoading(true);
@@ -59,7 +75,7 @@ export function WorkOrderDetail({ workOrder, companyId, userSession, onClose }: 
           </div>
           <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
             <span>ID: {workOrder.id}</span>
-            <span>Created: {format(new Date(workOrder.createdAt), 'MMM d, yyyy h:mm a')}</span>
+            <span>Created: {formatDate(workOrder.createdAt)}</span>
           </div>
         </div>
       </div>
