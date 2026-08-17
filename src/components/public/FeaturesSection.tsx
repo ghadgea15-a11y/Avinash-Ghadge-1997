@@ -1,430 +1,218 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Users, 
   ShieldCheck, 
-  Building2, 
-  Boxes, 
-  QrCode, 
-  BarChart3, 
-  CheckCircle2, 
+  FileCheck2, 
+  Settings,
   ArrowRight,
-  Clock,
-  MapPin,
-  FileSpreadsheet,
-  AlertTriangle,
-  Flame,
   Activity,
-  Layers,
-  FileCheck2
+  QrCode,
+  MapPin,
+  Clock,
+  Briefcase
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+
+const features = [
+  {
+    id: 'workforce',
+    title: 'Workforce & Muster',
+    subtitle: 'Precision Shift Roll-Call',
+    icon: Users,
+    color: 'from-blue-500/20 to-blue-600/5',
+    accent: 'text-blue-400',
+    borderHover: 'hover:border-blue-500/50',
+    summary: 'Eliminate paper attendance registers and ghost workers with live geo-verified shift roll-calls.',
+    deepDive: [
+      { icon: Clock, text: 'Multi-shift rotations & grace-period logic' },
+      { icon: MapPin, text: 'Geo-fenced attendance verification' },
+      { icon: Briefcase, text: 'Automated overtime & wage calculation' }
+    ]
+  },
+  {
+    id: 'security',
+    title: 'Security & VMS',
+    subtitle: 'Patrol SLA Integrity',
+    icon: ShieldCheck,
+    color: 'from-emerald-500/20 to-emerald-600/5',
+    accent: 'text-emerald-400',
+    borderHover: 'hover:border-emerald-500/50',
+    summary: 'Enforce strict security SLAs with QR checkpoints, guard patrol sequences, and live visitor logs.',
+    deepDive: [
+      { icon: QrCode, text: 'NFC & QR-based checkpoint scanning' },
+      { icon: Activity, text: 'Real-time patrol sequence telemetry' },
+      { icon: Users, text: 'Visitor ID badging & gate passes' }
+    ]
+  },
+  {
+    id: 'compliance',
+    title: 'Intelligence & Compliance',
+    subtitle: 'Statutory Auditing',
+    icon: FileCheck2,
+    color: 'from-purple-500/20 to-purple-600/5',
+    accent: 'text-purple-400',
+    borderHover: 'hover:border-purple-500/50',
+    summary: 'Consolidate field logs into executive dashboards and audit-ready statutory registers (Form II).',
+    deepDive: [
+      { icon: FileCheck2, text: 'Form II statutory wage ledger exports' },
+      { icon: ShieldCheck, text: 'Guard patrol SLA compliance metrics' },
+      { icon: Settings, text: 'Automated executive BI consolidations' }
+    ]
+  },
+  {
+    id: 'operations',
+    title: 'Operations & Assets',
+    subtitle: 'Facility Telemetry',
+    icon: Settings,
+    color: 'from-amber-500/20 to-amber-600/5',
+    accent: 'text-amber-400',
+    borderHover: 'hover:border-amber-500/50',
+    summary: 'Track DG sets, HVAC, pumps, and enterprise assets with unified lifecycle tracking.',
+    deepDive: [
+      { icon: Activity, text: 'Real-time DG & HVAC log sheets' },
+      { icon: QrCode, text: 'Waterproof QR asset tags' },
+      { icon: Briefcase, text: 'Consumable stock & PO tracking' }
+    ]
+  }
+];
 
 export const FeaturesSection: React.FC = () => {
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
   return (
-    <section id="capabilities" className="py-24 lg:py-32 bg-[#FBFBFA] space-y-32">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-32">
+    <section id="capabilities" className="py-24 lg:py-32 bg-[#0A0D14] relative overflow-hidden">
+      {/* Background ambient elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/5 blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/5 blur-[100px] rounded-full" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-20">
         
         {/* Section Header */}
-        <div className="max-w-3xl mx-auto text-center space-y-4">
-          <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600">
-            Core Capabilities
-          </span>
-          <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-[#0A0D14] tracking-tight">
-            ENGINEERED FOR OPERATIONAL PRECISION
-          </h2>
-          <p className="font-body text-sm sm:text-base text-[#52525B] leading-relaxed">
-            Five core disciplines orchestrated through dedicated operational workflows and auditable execution.
-          </p>
+        <div className="max-w-3xl mx-auto text-center space-y-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm text-xs font-mono font-bold tracking-widest text-white uppercase"
+          >
+            Module Highlights
+          </motion.div>
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="font-display text-4xl sm:text-5xl font-bold text-white tracking-tight"
+          >
+            Interactive Capability <span className="italic font-normal text-emerald-400">Deep-Dive</span>
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="font-body text-base sm:text-lg text-[#A1A1AA] leading-relaxed max-w-2xl mx-auto"
+          >
+            Hover over the core modules below to reveal micro-animations and architectural deep-dive details of the Log Sheet Muster platform.
+          </motion.p>
         </div>
 
-        {/* 01. WORKFORCE (Large Typography + Narrative + Shift Muster Timeline) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          
-          <div className="lg:col-span-6 space-y-6">
-            <div className="flex items-center gap-3">
-              <span className="font-display text-4xl sm:text-5xl font-extrabold text-[#0A0D14]">01</span>
-              <div className="h-8 w-px bg-[#E2E0D8]" />
-              <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600">
-                Workforce Management
-              </span>
-            </div>
+        {/* Interactive Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+          {features.map((feature, idx) => {
+            const Icon = feature.icon;
+            const isHovered = hoveredId === feature.id;
 
-            <h3 className="font-display text-2xl sm:text-4xl font-extrabold text-[#0A0D14] tracking-tight">
-              PRECISION SHIFT MUSTER & ATTENDANCE
-            </h3>
+            return (
+              <motion.div
+                key={feature.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                onMouseEnter={() => setHoveredId(feature.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                className={`relative rounded-3xl p-8 cursor-pointer overflow-hidden transition-all duration-500 border border-[#27272A] bg-[#18181B]/50 backdrop-blur-md shadow-lg ${feature.borderHover} hover:shadow-2xl hover:shadow-${feature.color.split('-')[1]}/10 group`}
+              >
+                {/* Dynamic Gradient Background on Hover */}
+                <div 
+                  className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 transition-opacity duration-500 ease-in-out ${isHovered ? 'opacity-100' : ''}`} 
+                />
 
-            <p className="font-body text-sm sm:text-base text-[#52525B] leading-relaxed">
-              Eliminate paper attendance registers, ghost workers, and delayed payroll reconciliations. Log Sheet Muster enables supervisors to conduct live shift roll-calls with geo-coordinates and Aadhaar KYC verification.
-            </p>
-
-            <div className="space-y-3 pt-4 border-t border-[#E8E7E3] font-body text-xs text-[#27272A]">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span><strong>Multi-Shift Rotations:</strong> General, Morning, Afternoon, and Night shifts with grace-period logic.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span><strong>Form II Statutory Export:</strong> Generate government-compliant muster ledgers in one click.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span><strong>Overtime & Wage Calculation:</strong> Direct automated sync between daily muster logs and monthly payroll.</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6">
-            <div className="p-8 rounded-3xl border border-[#E7E6E1] bg-white shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-4 border-b border-[#F0EFEB]">
-                <span className="font-mono text-xs font-bold uppercase text-[#0A0D14]">
-                  SHIFT MUSTER TIMELINE &bull; PUNE SITE A
-                </span>
-                <span className="font-mono text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
-                  ROLL-CALL ACTIVE
-                </span>
-              </div>
-
-              {/* Visual Shift Timeline Sequence */}
-              <div className="space-y-3 font-body">
-                <div className="p-3.5 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs font-bold text-[#0A0D14]">07:00 AM</span>
-                    <div>
-                      <strong className="text-xs text-[#0A0D14] block">Morning Shift Muster Assembly</strong>
-                      <span className="text-[11px] text-[#71717A]">42 Personnel Present &bull; 2 Relief Replaced</span>
+                <div className="relative z-10 flex flex-col h-full min-h-[300px]">
+                  
+                  {/* Card Header */}
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-4 rounded-2xl bg-[#0A0D14] border border-[#27272A] transition-colors duration-500 ${isHovered ? 'border-white/20' : ''}`}>
+                        <Icon className={`w-8 h-8 ${isHovered ? feature.accent : 'text-white'}`} />
+                      </div>
+                      <div>
+                        <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#71717A] group-hover:text-white/70 transition-colors duration-300">
+                          {feature.subtitle}
+                        </span>
+                        <h3 className="font-display text-2xl font-bold text-white mt-1">
+                          {feature.title}
+                        </h3>
+                      </div>
                     </div>
+                    
+                    <motion.div 
+                      animate={{ rotate: isHovered ? 45 : 0, scale: isHovered ? 1.1 : 1 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+                      className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center bg-white/5 text-white/50 group-hover:text-white group-hover:border-white/30"
+                    >
+                      <ArrowRight className="w-5 h-5" />
+                    </motion.div>
                   </div>
-                  <span className="text-[11px] font-mono font-bold text-emerald-600">VERIFIED</span>
-                </div>
 
-                <div className="p-3.5 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs font-bold text-[#0A0D14]">07:15 AM</span>
-                    <div>
-                      <strong className="text-xs text-[#0A0D14] block">Biometric & Geo-Tag Validation</strong>
-                      <span className="text-[11px] text-[#71717A]">Site Radius: 150m &bull; Accuracy: 4m</span>
-                    </div>
+                  {/* Summary Text */}
+                  <p className="font-body text-[#A1A1AA] leading-relaxed mb-8 group-hover:text-white/90 transition-colors duration-300">
+                    {feature.summary}
+                  </p>
+
+                  {/* Deep Dive Reveal */}
+                  <div className="mt-auto overflow-hidden">
+                    <AnimatePresence>
+                      {isHovered && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0, y: 20 }}
+                          animate={{ opacity: 1, height: 'auto', y: 0 }}
+                          exit={{ opacity: 0, height: 0, y: 20 }}
+                          transition={{ duration: 0.4, ease: "easeOut" }}
+                          className="pt-6 border-t border-white/10 space-y-4"
+                        >
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-400 block mb-2">
+                            Deep Dive Capabilities
+                          </span>
+                          {feature.deepDive.map((item, i) => {
+                            const ItemIcon = item.icon;
+                            return (
+                              <motion.div 
+                                key={i}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.3, delay: 0.1 + (i * 0.1) }}
+                                className="flex items-center gap-3 text-sm text-white/80 font-body bg-black/20 p-3 rounded-xl border border-white/5"
+                              >
+                                <div className="p-1.5 rounded-lg bg-white/10 text-white">
+                                  <ItemIcon className="w-4 h-4" />
+                                </div>
+                                {item.text}
+                              </motion.div>
+                            );
+                          })}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                  <span className="text-[11px] font-mono font-bold text-emerald-600">GEOFENCED</span>
+
                 </div>
-
-                <div className="p-3.5 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs font-bold text-[#0A0D14]">07:30 AM</span>
-                    <div>
-                      <strong className="text-xs text-[#0A0D14] block">Post Allocation & Duty Handover</strong>
-                      <span className="text-[11px] text-[#71717A]">12 Checkpoints Staffed &bull; Arms Log Signed</span>
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-mono font-bold text-emerald-600">DELEGATED</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* 02. SECURITY (Reversed Layout: Visual on Left, Text on Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          
-          <div className="lg:col-span-6 order-2 lg:order-1">
-            <div className="p-8 rounded-3xl border border-[#E7E6E1] bg-white shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-4 border-b border-[#F0EFEB]">
-                <span className="font-mono text-xs font-bold uppercase text-[#0A0D14]">
-                  PATROL ROUTE &bull; ZONE B NORTH PERIMETER
-                </span>
-                <span className="font-mono text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
-                  SCAN SEQUENCE 100%
-                </span>
-              </div>
-
-              {/* Patrol Route Visual */}
-              <div className="space-y-3 font-body">
-                <div className="p-3.5 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <QrCode className="w-4 h-4 text-[#0A0D14]" />
-                    <div>
-                      <strong className="text-xs text-[#0A0D14] block">CP-01 Main Server Room</strong>
-                      <span className="text-[11px] text-[#71717A]">Scanned 08:04:12 &bull; Temp: 21°C &bull; Normal</span>
-                    </div>
-                  </div>
-                  <span className="font-mono text-[11px] text-emerald-600 font-bold">ON TIME</span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <QrCode className="w-4 h-4 text-[#0A0D14]" />
-                    <div>
-                      <strong className="text-xs text-[#0A0D14] block">CP-02 High Voltage Transformer</strong>
-                      <span className="text-[11px] text-[#71717A]">Scanned 08:14:50 &bull; Lock Verified</span>
-                    </div>
-                  </div>
-                  <span className="font-mono text-[11px] text-emerald-600 font-bold">ON TIME</span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <QrCode className="w-4 h-4 text-[#0A0D14]" />
-                    <div>
-                      <strong className="text-xs text-[#0A0D14] block">CP-03 Emergency Exit Gate #4</strong>
-                      <span className="text-[11px] text-[#71717A]">Scanned 08:26:01 &bull; Photo Uploaded</span>
-                    </div>
-                  </div>
-                  <span className="font-mono text-[11px] text-emerald-600 font-bold">ON TIME</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6 order-1 lg:order-2 space-y-6">
-            <div className="flex items-center gap-3">
-              <span className="font-display text-4xl sm:text-5xl font-extrabold text-[#0A0D14]">02</span>
-              <div className="h-8 w-px bg-[#E2E0D8]" />
-              <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600">
-                Security & Patrol Operations
-              </span>
-            </div>
-
-            <h3 className="font-display text-2xl sm:text-4xl font-extrabold text-[#0A0D14] tracking-tight">
-              TAMPER-PROOF QR PATROLS & GATE PASSES
-            </h3>
-
-            <p className="font-body text-sm sm:text-base text-[#52525B] leading-relaxed">
-              Guarantee guard patrol accountability with cryptographically generated QR checkpoints. Track perimeter rounds, visitor digital badges, and material inward/outward gate passes in real-time.
-            </p>
-
-            <div className="space-y-3 pt-4 border-t border-[#E8E7E3] font-body text-xs text-[#27272A]">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span><strong>Sequential Route Enforcement:</strong> Prevents missed checkpoints and enforces mandatory scan intervals.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span><strong>Material Gate Passes:</strong> Inward, Outward Returnable, and Non-Returnable goods tracking with vehicle records.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span><strong>Incident Reporting:</strong> Instant photographic evidence, severity rating, and manager notification.</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* 03. OPERATIONS (Text on Left, Telemetry Visual on Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          
-          <div className="lg:col-span-6 space-y-6">
-            <div className="flex items-center gap-3">
-              <span className="font-display text-4xl sm:text-5xl font-extrabold text-[#0A0D14]">03</span>
-              <div className="h-8 w-px bg-[#E2E0D8]" />
-              <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600">
-                Facility Operations
-              </span>
-            </div>
-
-            <h3 className="font-display text-2xl sm:text-4xl font-extrabold text-[#0A0D14] tracking-tight">
-              EQUIPMENT LOG SHEETS & TELEMETRY
-            </h3>
-
-            <p className="font-body text-sm sm:text-base text-[#52525B] leading-relaxed">
-              Standardize hourly and daily equipment readings across Diesel Generator (DG) sets, HVAC chillers, water treatment plants, and electrical distribution panels.
-            </p>
-
-            <div className="space-y-3 pt-4 border-t border-[#E8E7E3] font-body text-xs text-[#27272A]">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span><strong>Threshold Violation Alerts:</strong> Auto-triggers incident work orders if oil pressure, voltage, or temperature exceed tolerance.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span><strong>Fuel & Energy Auditing:</strong> Exact diesel consumption vs. running hours calculation to prevent leakage.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span><strong>Preventive Maintenance Calendars:</strong> Automated reminder alerts for 250hr / 500hr service intervals.</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6">
-            <div className="p-8 rounded-3xl border border-[#E7E6E1] bg-white shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-4 border-b border-[#F0EFEB]">
-                <span className="font-mono text-xs font-bold uppercase text-[#0A0D14]">
-                  DG SET #01 LOG SHEET &bull; 500 KVA CUMMINS
-                </span>
-                <span className="font-mono text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
-                  OPTIMAL STATUS
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 font-body">
-                <div className="p-4 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3]">
-                  <span className="text-[11px] text-[#71717A] uppercase font-mono block">RUNNING HOURS</span>
-                  <strong className="text-lg font-bold font-display text-[#0A0D14]">1,482.4 Hrs</strong>
-                  <span className="text-[10px] text-emerald-600 font-mono block mt-1">+4.2 hrs today</span>
-                </div>
-                <div className="p-4 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3]">
-                  <span className="text-[11px] text-[#71717A] uppercase font-mono block">DIESEL TANK LEVEL</span>
-                  <strong className="text-lg font-bold font-display text-[#0A0D14]">420 Liters</strong>
-                  <span className="text-[10px] text-[#71717A] font-mono block mt-1">70% capacity</span>
-                </div>
-                <div className="p-4 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3]">
-                  <span className="text-[11px] text-[#71717A] uppercase font-mono block">OIL PRESSURE</span>
-                  <strong className="text-lg font-bold font-display text-[#0A0D14]">4.2 bar</strong>
-                  <span className="text-[10px] text-emerald-600 font-mono block mt-1">Within range (3.5 - 5.0)</span>
-                </div>
-                <div className="p-4 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3]">
-                  <span className="text-[11px] text-[#71717A] uppercase font-mono block">COOLANT TEMP</span>
-                  <strong className="text-lg font-bold font-display text-[#0A0D14]">82°C</strong>
-                  <span className="text-[10px] text-emerald-600 font-mono block mt-1">Normal operating temp</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* 04. ASSETS & INVENTORY (Full-Width Dual Composition) */}
-        <div className="p-8 sm:p-12 rounded-3xl border border-[#E7E6E1] bg-white shadow-sm space-y-8">
-          
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E8E7E3]">
-            <div>
-              <div className="flex items-center gap-3">
-                <span className="font-display text-4xl font-extrabold text-[#0A0D14]">04</span>
-                <div className="h-8 w-px bg-[#E2E0D8]" />
-                <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600">
-                  Enterprise Assets & Inventory
-                </span>
-              </div>
-              <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[#0A0D14] mt-2">
-                UNIFIED ASSET LIFECYCLE & PROCUREMENT PIPELINE
-              </h3>
-            </div>
-            <span className="font-mono text-xs text-[#71717A]">
-              EAM &bull; QR TRACKING &bull; POs &bull; GRN
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-body">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <QrCode className="w-5 h-5 text-[#0A0D14]" />
-                <h4 className="font-display text-base font-bold text-[#0A0D14]">Asset Lifecycle & Custody Tracking</h4>
-              </div>
-              <p className="text-xs sm:text-sm text-[#52525B] leading-relaxed">
-                Affix weatherproof QR stickers to every generator, pump, laptop, and security transceiver. Field technicians scan to instantly view service history, warranty status, and log breakdown tickets.
-              </p>
-              <div className="p-4 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-[#71717A]">Asset Tag:</span>
-                  <span className="font-mono font-bold text-[#0A0D14]">LSM-AST-2024-884</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#71717A]">Custody:</span>
-                  <span className="font-semibold text-[#0A0D14]">Security Supervisor &bull; Main Gate</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#71717A]">Next Preventive Maintenance:</span>
-                  <span className="font-mono text-emerald-600 font-bold">14 Days Remaining</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Boxes className="w-5 h-5 text-[#0A0D14]" />
-                <h4 className="font-display text-base font-bold text-[#0A0D14]">Consumable Stock & Goods Receipt Notes</h4>
-              </div>
-              <p className="text-xs sm:text-sm text-[#52525B] leading-relaxed">
-                Track site consumable balances (diesel, housekeeping chemicals, security batons, badges) with automated reorder alerts, Purchase Orders, and physical GRN stock reconciliation.
-              </p>
-              <div className="p-4 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-[#71717A]">Store Balance (Diesel):</span>
-                  <span className="font-mono font-bold text-[#0A0D14]">1,850 L (Safe Stock)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#71717A]">Latest PO #084:</span>
-                  <span className="font-semibold text-emerald-600">Approved &bull; GRN Inward Completed</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#71717A]">Supplier Rate Registry:</span>
-                  <span className="font-mono text-[#0A0D14]">12 Verified Vendors</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* 05. INTELLIGENCE (Analytics-Inspired Visual + Form II Compliance) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          
-          <div className="lg:col-span-6 space-y-6">
-            <div className="flex items-center gap-3">
-              <span className="font-display text-4xl sm:text-5xl font-extrabold text-[#0A0D14]">05</span>
-              <div className="h-8 w-px bg-[#E2E0D8]" />
-              <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600">
-                Executive Intelligence
-              </span>
-            </div>
-
-            <h3 className="font-display text-2xl sm:text-4xl font-extrabold text-[#0A0D14] tracking-tight">
-              CROSS-SITE AUDITING & STATUTORY COMPLIANCE
-            </h3>
-
-            <p className="font-body text-sm sm:text-base text-[#52525B] leading-relaxed">
-              Consolidate field muster logs, patrol SLA reports, and equipment maintenance metrics into executive dashboards and audit-ready statutory registers.
-            </p>
-
-            <div className="space-y-3 pt-4 border-t border-[#E8E7E3] font-body text-xs text-[#27272A]">
-              <div className="flex items-center gap-2">
-                <FileCheck2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span><strong>Statutory Form II Muster Registers:</strong> Instant printable muster exports matching labor regulations.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <FileCheck2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span><strong>Security Guard Patrol SLA Audits:</strong> Instant compliance percentages per post and shift.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <FileCheck2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span><strong>Equipment MTTR & Downtime Analysis:</strong> Mean Time to Repair analytics for facility assets.</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6">
-            <div className="p-8 rounded-3xl border border-[#E7E6E1] bg-white shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-4 border-b border-[#F0EFEB]">
-                <span className="font-mono text-xs font-bold uppercase text-[#0A0D14]">
-                  EXECUTIVE AUDIT SUMMARY &bull; MONTHLY CONSOLIDATION
-                </span>
-                <span className="font-mono text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
-                  AUDIT PASS
-                </span>
-              </div>
-
-              <div className="space-y-3 font-body">
-                <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3]">
-                  <span className="text-xs font-semibold text-[#0A0D14]">Muster Attendance Compliance</span>
-                  <span className="font-mono text-xs font-bold text-emerald-600">99.4% (Zero Ghost Records)</span>
-                </div>
-                <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3]">
-                  <span className="text-xs font-semibold text-[#0A0D14]">Guard Patrol Checkpoint SLA</span>
-                  <span className="font-mono text-xs font-bold text-emerald-600">98.8% Verified Rounds</span>
-                </div>
-                <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3]">
-                  <span className="text-xs font-semibold text-[#0A0D14]">Equipment Log Sheet Completion</span>
-                  <span className="font-mono text-xs font-bold text-emerald-600">100% (48/48 Daily Logs)</span>
-                </div>
-                <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3]">
-                  <span className="text-xs font-semibold text-[#0A0D14]">Statutory Wage Ledger Sync</span>
-                  <span className="font-mono text-xs font-bold text-[#0A0D14]">Form II Generated</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
+              </motion.div>
+            );
+          })}
         </div>
 
       </div>

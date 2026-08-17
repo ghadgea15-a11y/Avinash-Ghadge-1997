@@ -1,33 +1,28 @@
-# Production CI/CD Pipeline for Log Sheet Muster Web App
-# Deploys only static hosting assets to Firebase project: log-sheet-af97a
-
 name: Deploy to Firebase Hosting on Merge
-
 on:
   push:
     branches:
       - main
       - master
-
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'npm'
-
       - name: Install Dependencies
-        run: npm install
-
+        run: npm ci
       - name: Verify Build
         run: npm run build
-
       - name: Deploy to Firebase Hosting (Production Live)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:

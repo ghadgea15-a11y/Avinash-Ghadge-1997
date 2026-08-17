@@ -59,6 +59,7 @@ export const LandingPageScreen: React.FC<LandingPageScreenProps> = ({ onNavigate
           <div className="flex flex-col">
             <HeroSection onNavigate={onNavigate} onRequestDemoClick={handleRequestDemoClick} />
             <TrustValueStrip />
+            <FeaturesSection />
             <WebAndAndroidSection />
           </div>
         );
@@ -66,7 +67,6 @@ export const LandingPageScreen: React.FC<LandingPageScreenProps> = ({ onNavigate
         return (
           <div className="flex flex-col">
             <PlatformOverview />
-            <FeaturesSection />
             <ModuleExplorer />
           </div>
         );
