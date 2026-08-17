@@ -6,6 +6,8 @@ import { SessionManager } from './services/sessionManager';
 import { OfflineSyncService } from './services/offlineSyncService';
 import { FirestoreService } from './services/firestoreService';
 import { ThemeProvider } from './context/ThemeContext';
+import { getCurrentPathname, ROUTE_PATH_MAP, navigateToUrl } from './utils/publicRouter';
+import { updatePageSEO } from './utils/seo';
 import { NavigationDrawer } from './components/common/NavigationDrawer';
 import { MobileTopHeader } from './components/common/MobileTopHeader';
 import { TabletNavigationRail } from './components/common/TabletNavigationRail';
@@ -59,7 +61,17 @@ import { MyTasksScreen } from './components/screens/MyTasksScreen';
 import { ReportsAnalyticsScreen } from './components/screens/ReportsAnalyticsScreen';
 
 export function App() {
-  const [currentScreen, setCurrentScreen] = useState<PhaseAScreen>('LANDING');
+  // Initialize current screen from URL if landing on legal, auth, or public route
+  const getInitialScreen = (): PhaseAScreen => {
+    const path = getCurrentPathname();
+    const routeMatch = ROUTE_PATH_MAP[path];
+    if (routeMatch) {
+      return routeMatch.screen;
+    }
+    return 'LANDING';
+  };
+
+  const [currentScreen, setCurrentScreen] = useState<PhaseAScreen>(getInitialScreen);
   const [activeCompany, setActiveCompany] = useState<CompanyTenant | null>(null);
   const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(OfflineSyncService.isOnline());
@@ -67,6 +79,13 @@ export function App() {
   const [offlineQueueCount, setOfflineQueueCount] = useState<number>(OfflineSyncService.getQueue().length);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
+
+  // Sync route and SEO on screen changes
+  useEffect(() => {
+    const isPrivate = !['LANDING', 'LEGAL_POLICIES'].includes(currentScreen);
+    const path = getCurrentPathname();
+    updatePageSEO(path, isPrivate);
+  }, [currentScreen, userSession]);
 
   // Initialize network & storage sync
   useEffect(() => {

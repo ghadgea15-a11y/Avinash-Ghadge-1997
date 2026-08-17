@@ -1045,7 +1045,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                 onClick={() => handleExportCSV(
                   'Asset_Register',
                   ['Asset Code', 'Asset Name', 'Category', 'Serial #', 'Condition', 'Status', 'Custodian', 'Value (INR)'],
-                  assets.map(a => [a.assetCode, a.assetName, a.category, a.serialNumber, a.condition, a.status, a.assignedEmployeeName || 'Store', a.currentValue || a.purchaseCost || 0])
+                  assets.map(a => [a.assetCode, a.assetName, a.category || '', a.serialNumber || '', a.condition, a.status || '', a.assignedEmployeeName || 'Store', a.currentValue || a.purchaseCost || 0])
                 )}
                 className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow transition flex items-center gap-1.5"
               >
@@ -1078,7 +1078,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                           {asset.condition}
                         </span>
                       </td>
-                      <td className="p-3 font-mono font-bold">₹{(asset.currentValue || asset.purchaseCost || 0).toLocaleString()}</td>
+                      <td className="p-3 font-mono font-bold">₹{(asset.currentValue || 0 || asset.purchaseCost || 0).toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>

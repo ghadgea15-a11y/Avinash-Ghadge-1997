@@ -1279,29 +1279,105 @@ export interface IncidentReportRecord {
   updatedAt?: string;
 }
 
+export type VisitorType = 'CLIENT' | 'VENDOR' | 'CONTRACTOR' | 'CANDIDATE' | 'INTERVIEW_VISITOR' | 'DELIVERY' | 'SERVICE_TECHNICIAN' | 'GUEST' | 'OFFICIAL' | 'OTHER';
+export type VisitorStatus = 'EXPECTED' | 'APPROVED' | 'CHECKED_IN' | 'CHECKED_OUT' | 'CANCELLED' | 'OVERSTAY' | 'REJECTED';
+
 export interface VisitorLogRecord {
-  id: string;
+  id: string; // visitorId
   companyId: string;
+  siteId: string;
   assignedRegionId?: string;
   assignedBranchId?: string;
-  siteId: string;
   siteName?: string;
+  
   visitorName: string;
-  visitorPhone: string;
-  visitorCompany?: string;
+  visitorPhone: string; // mobile
+  visitorEmail?: string;
+  visitorCompany?: string; // organization
+  
+  identificationType?: string;
+  identificationReference?: string;
+  photoUrl?: string;
+  
   hostEmployeeId?: string;
   hostEmployeeName: string;
+  hostDepartmentId?: string;
+  
   purpose: string;
-  badgeNumber: string;
+  visitType?: VisitorType;
+  
+  expectedDate?: string;
+  expectedTime?: string;
+  expectedDuration?: number; // in minutes
+  
+  checkInTime?: string; // actualCheckIn
+  checkOutTime?: string; // actualCheckOut
+  
+  status: VisitorStatus;
+  
+  badgeNumber?: string; // passId
   vehicleNumber?: string;
-  checkInTime: string;
-  checkOutTime?: string;
-  status: 'IN_SITE' | 'CHECKED_OUT';
-  entryGateGuardId: string;
+  numberOfVisitors?: number;
+  notes?: string;
+  
+  entryGateGuardId?: string; // checkedInBy
+  checkoutGuardId?: string; // checkedOutBy
   badgeReturned?: boolean;
   checkoutNotes?: string;
-  photoUrl?: string;
+  
+  verifiedBy?: string;
+  verifiedAt?: string;
+  
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type HandoverStatus = 'DRAFT' | 'SUBMITTED' | 'ACKNOWLEDGED' | 'RETURNED' | 'CLOSED';
+export type HandoverExceptionType = 'MISSING_INFO' | 'TASK_NOT_COMPLETED' | 'INCIDENT_UNRESOLVED' | 'VISITOR_ON_SITE' | 'EQUIPMENT_ISSUE' | 'PATROL_ISSUE' | 'SECURITY_CONCERN' | 'OTHER';
+
+export interface ShiftHandoverException {
+  type: HandoverExceptionType;
+  description: string;
+  referenceId?: string;
+}
+
+export interface ShiftHandoverRecord {
+  id: string; // handoverId
+  companyId: string;
+  siteId: string;
+  shiftId: string;
+  
+  outgoingEmployeeId: string;
+  incomingEmployeeId?: string;
+  
+  outgoingShiftStart?: string;
+  outgoingShiftEnd?: string;
+  incomingShiftStart?: string;
+  incomingShiftEnd?: string;
+  
+  status: HandoverStatus;
+  
+  summary: string;
+  importantNotes?: string;
+  
+  openTasks?: string[];
+  openIncidents?: string[];
+  activeVisitors?: string[];
+  pendingWorkOrders?: string[];
+  
+  criticalObservations?: string;
+  exceptions?: ShiftHandoverException[];
+  
+  submittedAt?: string;
+  acknowledgedAt?: string;
+  acknowledgedBy?: string;
+  closedAt?: string;
+  
+  returnReason?: string;
+  
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface MaterialMovementRecord {
@@ -1536,60 +1612,93 @@ export interface InventoryVendorRecord {
 }
 
 export type AssetCategory = 
-  | 'SECURITY_EQUIPMENT' 
-  | 'ELECTRONICS_IT' 
-  | 'VEHICLES' 
-  | 'COMMUNICATION_RADIO' 
-  | 'WEAPONS_TACTICAL' 
-  | 'FACILITY_SAFETY' 
-  | 'FURNITURE_FIXTURES' 
-  | 'OFFICE_EQUIPMENT' 
+  | 'SECURITY_EQUIPMENT'
+  | 'CCTV'
+  | 'COMPUTER'
+  | 'MOBILE_DEVICE'
+  | 'FURNITURE'
+  | 'ELECTRICAL_EQUIPMENT'
+  | 'FIRE_SAFETY_EQUIPMENT'
+  | 'VEHICLE'
+  | 'TOOLS'
+  | 'MACHINERY'
+  | 'COMMUNICATION_EQUIPMENT'
+  | 'UNIFORM_EQUIPMENT'
   | 'OTHER';
 
 export type AssetStatus = 
-  | 'AVAILABLE' 
-  | 'ASSIGNED' 
-  | 'UNDER_MAINTENANCE' 
-  | 'DAMAGED' 
-  | 'DISPOSED' 
-  | 'LOST';
+  | 'AVAILABLE'
+  | 'ASSIGNED'
+  | 'DISPOSED'
+  | 'RESERVED'
+  | 'DEPLOYED'
+  | 'IN_CUSTODY'
+  | 'UNDER_MAINTENANCE'
+  | 'LOST'
+  | 'DAMAGED'
+  | 'RETURNED'
+  | 'RETIRED';
 
 export type AssetCondition = 
-  | 'NEW' 
-  | 'EXCELLENT' 
-  | 'GOOD' 
-  | 'FAIR' 
-  | 'POOR';
+  | 'NEW'
+  | 'EXCELLENT'
+  | 'POOR'
+  | 'GOOD'
+  | 'FAIR'
+  | 'DAMAGED'
+  | 'CRITICAL'
+  | 'UNUSABLE';
+
+export type AssetOwnershipType = 'OWNED' | 'LEASED' | 'CLIENT_PROVIDED';
+export type AssetCriticality = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export interface AssetRecord {
-  id: string;
+  id: string; // assetId
+  assetCode: string;
   companyId: string;
-  assetCode: string; // AST-2026-001
-  assetName: string;
-  category: AssetCategory;
-  brand: string;
-  model: string;
-  serialNumber: string;
-  barcodeOrQr: string;
-  purchaseDate: string; // YYYY-MM-DD
-  purchaseCost: number;
-  currentValue: number;
-  warrantyExpiryDate?: string;
-  status: AssetStatus;
-  condition: AssetCondition;
-  assignedEmployeeId?: string;
-  assignedEmployeeName?: string;
-  assignedDate?: string;
-  expectedReturnDate?: string;
+  regionId?: string;
+  branchId?: string;
   siteId?: string;
-  siteName?: string;
-  warehouseLocation?: string;
+  departmentId?: string;
+  categoryId?: AssetCategory;
+  category?: AssetCategory; // Keeping for backward compatibility temporarily
+  subCategoryId?: string;
+  assetName: string;
+  description?: string;
+  serialNumber?: string;
+  modelNumber?: string;
+  manufacturer?: string;
+  brand?: string; // Keeping for backward compatibility
+  model?: string; // Keeping for backward compatibility
+  barcodeOrQr?: string;
+  purchaseDate?: string;
+  purchaseCost?: number;
+  currentValue?: number;
+  currentStatus: AssetStatus;
+  status?: AssetStatus; // backward compat
+  currentCustodianId?: string; 
+  currentLocationId?: string;
+  ownershipType?: AssetOwnershipType;
+  condition: AssetCondition;
+  criticality?: AssetCriticality;
+  warrantyReference?: string;
+  warrantyExpiryDate?: string;
+  
+  assignedEmployeeId?: string; // backward compat
+  assignedEmployeeName?: string; // backward compat
+  assignedDate?: string; // backward compat
+  expectedReturnDate?: string; // backward compat
+  siteName?: string; // backward compat
+  warehouseLocation?: string; // backward compat
   lastAuditDate?: string;
   lastAuditedBy?: string;
   nextMaintenanceDate?: string;
   specifications?: string;
   notes?: string;
+
+  createdBy?: string;
   createdAt: string;
+  updatedBy?: string;
   updatedAt: string;
 }
 
@@ -1600,7 +1709,14 @@ export type AssetMovementAction =
   | 'MAINTENANCE_IN' 
   | 'SITE_TRANSFER' 
   | 'AUDIT_VERIFIED' 
-  | 'DISPOSAL';
+  | 'DISPOSAL'
+  | 'DEPLOYMENT'
+  | 'ASSIGNMENT'
+  | 'TRANSFER'
+  | 'RETURN'
+  | 'LOSS_REPORT'
+  | 'DAMAGE_REPORT'
+  | 'RETIREMENT';
 
 export interface AssetMovementHistoryRecord {
   id: string;
@@ -1618,6 +1734,17 @@ export interface AssetMovementHistoryRecord {
   performedByName: string;
   remarks?: string;
   timestamp: string;
+  
+  // New custody fields
+  fromCustodianId?: string;
+  toCustodianId?: string;
+  fromLocationId?: string;
+  toLocationId?: string;
+  expectedReturnDate?: string;
+  acknowledgementStatus?: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  acknowledgementTimestamp?: string;
+  evidenceUrls?: string[];
+  reason?: string;
 }
 
 export type AssetMaintenanceType = 
@@ -1627,6 +1754,8 @@ export type AssetMaintenanceType =
   | 'PARTS_REPLACEMENT';
 
 export interface AssetMaintenanceRecord {
+  createdAt?: string;
+  updatedAt?: string;
   id: string;
   companyId: string;
   assetId: string;
@@ -1642,7 +1771,6 @@ export interface AssetMaintenanceRecord {
   status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   loggedByUid: string;
   loggedByName: string;
-  createdAt: string;
 }
 
 export interface PayrollCycleRecord {
@@ -2592,3 +2720,4 @@ export interface AbsenceRegularizationRecord {
   updatedAt: number;
 }
 
+export * from './ops';

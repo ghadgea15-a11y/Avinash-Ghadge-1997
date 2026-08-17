@@ -495,8 +495,13 @@ service cloud.firestore {
 
       match /visitor_logs/{visitorId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
-        allow create: if (isSuperAdmin() || isManager(companyId) || sameCompany(companyId)) && isValidVisitorLog() && request.resource.data.companyId == companyId;
-        allow update: if (isSuperAdmin() || isManager(companyId) || sameCompany(companyId)) && isValidVisitorLog();
+        allow create, update: if (isSuperAdmin() || sameCompany(companyId)) && request.resource.data.companyId == companyId;
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /shift_handovers/{handoverId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if (isSuperAdmin() || sameCompany(companyId)) && request.resource.data.companyId == companyId;
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
@@ -509,6 +514,29 @@ service cloud.firestore {
 
 
       // 7. Tasks, Communication & System Settings
+
+      // SOS & GPS Tracking
+      match /sos_events/{sosId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if (isSuperAdmin() || sameCompany(companyId)) && request.resource.data.companyId == companyId;
+        allow update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      
+      match /tracking_sessions/{sessionId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if (isSuperAdmin() || sameCompany(companyId)) && request.resource.data.companyId == companyId;
+        allow update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      
+      match /gps_events/{eventId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if (isSuperAdmin() || sameCompany(companyId)) && request.resource.data.companyId == companyId;
+        allow update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
       match /tasks/{taskId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create: if (isSuperAdmin() || isManager(companyId)) && isValidTask() && request.resource.data.companyId == companyId;

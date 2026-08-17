@@ -1,4 +1,9 @@
 import { Pagination } from '../common/Pagination';
+import { VisitorManagement } from '../operations/VisitorManagement';
+import { ShiftHandover } from '../operations/ShiftHandover';
+import { EmergencySos } from '../operations/EmergencySos';
+import { GpsTracking } from '../operations/GpsTracking';
+import { ArrowRightLeft } from 'lucide-react';
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   ShieldAlert, 
@@ -84,7 +89,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   const companyId = activeCompany?.companyId || userSession.companyId;
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<'PATROLS' | 'INCIDENTS' | 'VISITORS' | 'MATERIALS' | 'DAILY_LOGS'>('PATROLS');
+  const [activeTab, setActiveTab] = useState<'PATROLS' | 'INCIDENTS' | 'VISITORS' | 'MATERIALS' | 'DAILY_LOGS' | 'HANDOVERS' | 'EMERGENCY' | 'TRACKING'>('PATROLS');
 
   // Data States
   const [sites, setSites] = useState<SiteRecord[]>([]);
@@ -828,7 +833,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
       badgeNumber,
       vehicleNumber: visitorForm.vehicleNumber.trim(),
       checkInTime: new Date().toISOString(),
-      status: 'IN_SITE',
+      status: 'CHECKED_IN',
       entryGateGuardId: userSession.employeeId,
       createdAt: new Date().toISOString()
     };
@@ -1083,7 +1088,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
       [
         selectedDate,
         sites.find(s => s.id === selectedSiteId)?.name || 'All Sites',
-        visitors.filter(v => v.status === 'IN_SITE').length,
+        visitors.filter(v => v.status === 'CHECKED_IN').length,
         incidents.length,
         patrolLogs.length,
         materials.length
@@ -1305,7 +1310,19 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
           }`}
         >
           <Users className="w-4 h-4 text-emerald-500" />
-          <span>Visitor Register ({visitors.filter(v => v.status === 'IN_SITE').length} In Site)</span>
+          <span>Visitor Register ({visitors.filter(v => v.status === 'CHECKED_IN').length} In Site)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('HANDOVERS')}
+          className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
+            activeTab === 'HANDOVERS'
+              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          <ArrowRightLeft className="w-4 h-4 text-indigo-500" />
+          <span>Shift Handovers</span>
         </button>
 
         <button
@@ -2203,111 +2220,36 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
       )}
 
       {/* ============================================================ */}
+      {/* ============================================================ */}
       {/* TAB 3: VISITORS REGISTER */}
       {/* ============================================================ */}
       {activeTab === 'VISITORS' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Gate Visitor Log Register</h3>
-              <p className="text-xs text-slate-500">Log entry/exit of guests, contractors, and corporate visitors with pass return validation.</p>
-            </div>
-
-            <button
-              onClick={() => { setVisitorForm(prev => ({ ...prev, siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "") })); setIsVisitorModalOpen(true); }}
-              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Visitor Gate Entry</span>
-            </button>
-          </div>
-
-          <div className={`rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm overflow-hidden`}>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${
-                    isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500'
-                  }`}>
-                    <th className="py-3 px-4">Badge #</th>
-                    <th className="py-3 px-4">Visitor</th>
-                    <th className="py-3 px-4">Company / Host</th>
-                    <th className="py-3 px-4">Check-In / Out</th>
-                    <th className="py-3 px-4">Status & Badge</th>
-                    <th className="py-3 px-4 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {filteredVisitors.length > 0 ? (
-                    <>
-                    {paginatedVisitors.map(v => (
-                      <tr key={v.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                        <td className="py-3 px-4 font-bold font-mono text-indigo-500">{v.badgeNumber}</td>
-                        <td className="py-3 px-4">
-                          <p className="font-bold text-slate-900 dark:text-slate-100">{v.visitorName}</p>
-                          <p className="text-[10px] text-slate-400">{v.visitorPhone}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="text-slate-700 dark:text-slate-300">{v.visitorCompany}</p>
-                          <p className="text-[10px] text-slate-400">Host: {v.hostEmployeeName}</p>
-                        </td>
-                        <td className="py-3 px-4 font-mono text-[11px]">
-                          <div>In: {new Date(v.checkInTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-                          {v.checkOutTime && (
-                            <div className="text-slate-400">Out: {new Date(v.checkOutTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex flex-col gap-1">
-                            <span className={`w-fit px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              v.status === 'IN_SITE' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-                            }`}>
-                              {v.status}
-                            </span>
-                            {v.status === 'CHECKED_OUT' && (
-                              <span className={`text-[10px] font-semibold ${v.badgeReturned ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                {v.badgeReturned ? '✓ Badge Returned' : '⚠ Badge Missing'}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          {v.status === 'IN_SITE' && (
-                            <button
-                              onClick={() => handleOpenVisitorCheckout(v)}
-                              className="px-2.5 py-1 rounded-lg bg-rose-600 text-white text-[10px] font-bold shadow hover:bg-rose-700 transition"
-                            >
-                              Check Out & Verify
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                    <tr>
-                      <td colSpan={6} className="p-0">
-                    <Pagination
-                      currentPage={currentPage}
-                      totalItems={filteredVisitors.length}
-                      itemsPerPage={itemsPerPage}
-                      onPageChange={setCurrentPage}
-                      onItemsPerPageChange={setItemsPerPage}
-                    />
-                      </td>
-                    </tr>
-                    </>
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400">No visitors logged today.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <VisitorManagement session={userSession} sites={sites} employees={employees} selectedSiteId={selectedSiteId} />
+      )}
+      
+      {/* ============================================================ */}
+      {/* TAB 7: EMERGENCY SOS */}
+      {/* ============================================================ */}
+      {activeTab === 'EMERGENCY' && (
+        <EmergencySos session={userSession} sites={sites} employees={employees} selectedSiteId={selectedSiteId} />
+      )}
+      
+      {/* ============================================================ */}
+      {/* TAB 8: GPS TRACKING */}
+      {/* ============================================================ */}
+      {activeTab === 'TRACKING' && (
+        <GpsTracking session={userSession} sites={sites} employees={employees} selectedSiteId={selectedSiteId} />
       )}
 
       {/* ============================================================ */}
+      {/* TAB 6: SHIFT HANDOVERS */}
+      {/* ============================================================ */}
+      {activeTab === 'HANDOVERS' && (
+        <ShiftHandover session={userSession} sites={sites} employees={employees} selectedSiteId={selectedSiteId} />
+      )}
+      
+      {/* ============================================================ */}
+
       {/* TAB 4: MATERIAL MOVEMENT REGISTER */}
       {/* ============================================================ */}
       {activeTab === 'MATERIALS' && (

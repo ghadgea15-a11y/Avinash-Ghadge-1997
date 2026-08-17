@@ -7,5 +7,21 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true
+  },
+  build: {
+    chunkSizeWarningLimit: 3000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('firebase')) return 'firebase';
+            if (id.includes('lucide-react')) return 'lucide';
+            if (id.includes('recharts')) return 'recharts';
+            if (id.includes('motion')) return 'motion';
+            return 'vendor';
+          }
+        }
+      }
+    }
   }
 });

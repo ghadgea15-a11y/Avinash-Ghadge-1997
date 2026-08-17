@@ -7812,7 +7812,182 @@ const allAttendances: any[] = [];
     }
   }
 
-}
+
+  // ==========================================
+  // SHIFT HANDOVER METHODS
+  // ==========================================
+  
+  static subscribeToShiftHandovers(session: import('../types').UserSession, companyId: string, onData: (handovers: import('../types').ShiftHandoverRecord[]) => void): () => void {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'shift_handovers');
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'ATTENDANCE'));
+      return onSnapshot(q, (snap) => {
+        const handovers = snap.docs.map(d => ({ id: d.id, ...d.data() } as import('../types').ShiftHandoverRecord));
+        onData(handovers);
+      }, (err) => {
+        console.warn('[Firestore] subscribeToShiftHandovers error:', err);
+        onData([]);
+      });
+    } catch (e) {
+      console.warn('[Firestore] subscribeToShiftHandovers exception:', e);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  static async submitHandover(companyId: string, handover: import('../types').ShiftHandoverRecord): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'shift_handovers', handover.id);
+      await setDoc(ref, {
+        ...handover,
+        status: 'SUBMITTED',
+        submittedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (e) {
+      console.error('Error submitting handover:', e);
+      return false;
+    }
+  }
+
+  static async acknowledgeHandover(companyId: string, handoverId: string, employeeId: string): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'shift_handovers', handoverId);
+      await updateDoc(ref, {
+        status: 'ACKNOWLEDGED',
+        acknowledgedBy: employeeId,
+        acknowledgedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      return true;
+    } catch (e) {
+      console.error('Error acknowledging handover:', e);
+      return false;
+    }
+  }
+
+  static async returnHandover(companyId: string, handoverId: string, reason: string): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'shift_handovers', handoverId);
+      await updateDoc(ref, {
+        status: 'RETURNED',
+        returnReason: reason,
+        updatedAt: new Date().toISOString()
+      });
+      return true;
+    } catch (e) {
+      console.error('Error returning handover:', e);
+      return false;
+    }
+  }
+
+  // ==========================================
+  // SOS & GPS TRACKING METHODS
+  // ==========================================
+  
+  static async triggerSos(companyId: string, event: import('../types').SosEventRecord): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'sos_events', event.id);
+      await setDoc(ref, event);
+      return true;
+    } catch (e) {
+      console.error('Error triggering SOS:', e);
+      return false;
+    }
+  }
+
+  static subscribeToActiveSos(session: import('../types').UserSession, companyId: string, onData: (events: import('../types').SosEventRecord[]) => void): () => void {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'sos_events');
+      const q = query(colRef, where('status', 'in', ['TRIGGERED', 'ACKNOWLEDGED', 'RESPONSE_STARTED']), ...QueryScopeEngine.buildScope(session, 'ATTENDANCE'));
+      return onSnapshot(q, (snap) => {
+        const events = snap.docs.map(d => ({ id: d.id, ...d.data() } as import('../types').SosEventRecord));
+        onData(events);
+      }, (err) => {
+        console.warn('[Firestore] subscribeToActiveSos error:', err);
+        onData([]);
+      });
+    } catch (e) {
+      console.warn('[Firestore] subscribeToActiveSos exception:', e);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  static async updateSosStatus(companyId: string, sosId: string, status: import('../types').SosStatus, updates: Partial<import('../types').SosEventRecord>): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'sos_events', sosId);
+      await updateDoc(ref, {
+        status,
+        updatedAt: new Date().toISOString(),
+        ...updates
+      });
+      return true;
+    } catch (e) {
+      console.error('Error updating SOS:', e);
+      return false;
+    }
+  }
+
+  static async startTrackingSession(companyId: string, sessionData: import('../types').TrackingSessionRecord): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'tracking_sessions', sessionData.id);
+      await setDoc(ref, sessionData);
+      return true;
+    } catch (e) {
+      console.error('Error starting tracking session:', e);
+      return false;
+    }
+  }
+
+  static async endTrackingSession(companyId: string, sessionId: string, endedBy: string): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'tracking_sessions', sessionId);
+      await updateDoc(ref, {
+        status: 'ENDED',
+        endedAt: new Date().toISOString(),
+        endedBy,
+        updatedAt: new Date().toISOString()
+      });
+      return true;
+    } catch (e) {
+      console.error('Error ending tracking session:', e);
+      return false;
+    }
+  }
+
+  static async recordGpsEvent(companyId: string, event: import('../types').GpsLocationEvent): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'gps_events', event.id);
+      await setDoc(ref, event);
+      return true;
+    } catch (e) {
+      console.error('Error recording GPS event:', e);
+      return false;
+    }
+  }
+
+  static subscribeToTrackingSessionEvents(session: import('../types').UserSession, companyId: string, trackingSessionId: string, onData: (events: import('../types').GpsLocationEvent[]) => void): () => void {
+     try {
+      const colRef = collection(db, 'companies', companyId, 'gps_events');
+      const q = query(colRef, where('trackingSessionId', '==', trackingSessionId), orderBy('sequenceNumber', 'asc'));
+      return onSnapshot(q, (snap) => {
+        const events = snap.docs.map(d => ({ id: d.id, ...d.data() } as import('../types').GpsLocationEvent));
+        onData(events);
+      }, (err) => {
+        console.warn('[Firestore] subscribeToTrackingSessionEvents error:', err);
+        onData([]);
+      });
+    } catch (e) {
+      console.warn('[Firestore] subscribeToTrackingSessionEvents exception:', e);
+      onData([]);
+      return () => {};
+    }
+  }
+} // <- this is the closing brace for the class
+
+
 
 // Indian Rupee Words Helper Function
 function numberToIndianRupeesWords(amount: number): string {

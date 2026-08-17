@@ -155,7 +155,7 @@ export async function runPhase5Verification(): Promise<{
       badgeNumber: 'VIS-404',
       vehicleNumber: 'KA-01-MJ-9988',
       checkInTime: new Date().toISOString(),
-      status: 'IN_SITE',
+      status: 'CHECKED_IN',
       entryGateGuardId: 'EMP-GUARD-01',
       createdAt: new Date().toISOString()
     };
@@ -182,7 +182,7 @@ export async function runPhase5Verification(): Promise<{
       purpose: 'Interview',
       badgeNumber: 'VIS-405',
       checkInTime: new Date().toISOString(),
-      status: 'IN_SITE',
+      status: 'CHECKED_IN',
       entryGateGuardId: 'EMP-GUARD-01',
       createdAt: new Date().toISOString()
     };

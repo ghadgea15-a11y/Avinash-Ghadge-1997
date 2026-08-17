@@ -72,7 +72,7 @@ export const SiteInChargeDashboard: React.FC<DashboardProps> = ({ userSession, c
   const absentToday = Math.max(0, activeEmployees - presentToday);
   
   const openIncidents = incidents.filter(i => i.status === 'OPEN' || i.status === 'UNDER_INVESTIGATION').length;
-  const activeVisitors = visitors.filter(v => v.status === 'IN_SITE').length;
+  const activeVisitors = visitors.filter(v => v.status === 'CHECKED_IN').length;
   const pendingMaterials = materials.filter(m => m.status === 'PENDING_APPROVAL').length;
   const lowStock = inventory.filter(i => i.currentStock <= i.minStockThreshold).length;
 
