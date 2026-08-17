@@ -1,6 +1,6 @@
 {
   "name": "Log Sheet Muster",
-  "description": "Enterprise-grade HRMS, Guard Duty Muster, and Facility Management System with Role-Based Access Control and Offline Sync.",
+  "description": "Log Sheet Muster connects workforce management, facility operations, security, assets, inventory, compliance and business intelligence into one unified enterprise platform.",
   "requestFramePermissions": ["camera", "geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
