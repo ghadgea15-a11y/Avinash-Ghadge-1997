@@ -27,6 +27,7 @@ import { ShiftRosterScreen } from './components/screens/ShiftRosterScreen';
 import { CompanyManagementScreen } from './components/screens/CompanyManagementScreen';
 import { AttendanceShiftsScreen } from './components/screens/AttendanceShiftsScreen';
 import { SiteOperationsScreen } from './components/screens/SiteOperationsScreen';
+import { WorkOrdersScreen } from './components/screens/WorkOrdersScreen';
 import { KotlinCodeViewer } from './components/screens/KotlinCodeViewer';
 import { SignUpScreen } from './components/screens/SignUpScreen';
 import { ApprovalPendingScreen } from './components/screens/ApprovalPendingScreen';
@@ -179,6 +180,7 @@ export function App() {
     'INVENTORY_STOCK',
     'ASSET_TRACKING',
     'SITE_OPERATIONS', 
+    'WORK_ORDERS',
     'REPORTS_ANALYTICS',
     'COMPANY_MANAGEMENT',
     'COMPANY_BILLING',
@@ -589,6 +591,14 @@ export function App() {
                         activeCompany={activeCompany}
                         isOnline={isOnline}
                         onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'WORK_ORDERS' && (
+                      <WorkOrdersScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany!}
+                        isOnline={isOnline}
                       />
                     )}
 

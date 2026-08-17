@@ -1,50 +1,65 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  DollarSign, 
-  CreditCard, 
-  Calendar, 
-  Plus, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle, 
-  Search, 
-  Download, 
-  FileText, 
-  Users, 
-  Check, 
-  X, 
-  Eye, 
+import {
+  DollarSign,
+  FileText,
+  Users,
+  Settings,
+  CreditCard,
+  Plus,
+  Search,
+  Filter,
+  Download,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Send,
+  Eye,
   RefreshCw,
-  TrendingUp,
-  Shield,
-  Building,
   Printer,
   ChevronRight,
-  Sliders,
-  Landmark,
-  ArrowDownCircle,
-  Clock,
+  Shield,
+  Layers,
+  ArrowUpRight,
+  TrendingUp,
+  FileSpreadsheet,
+  Edit3,
+  Calendar,
+  Lock,
+  Building2,
+  CheckSquare,
+  Square,
   Sparkles,
-  PieChart
+  Landmark,
+  ShieldCheck,
+  Ban,
+  ArrowRight
 } from 'lucide-react';
 import { 
   UserSession, 
-  CompanyTenant, 
-  PhaseAScreen, 
-  SalaryStructureRecord,
-  EmployeeSalaryProfileRecord,
-  SalaryAdvanceRecord,
-  PayrollCycleRecord,
-  SalarySlipRecord,
-  EmployeeRecord 
+  CompanyRecord, 
+  PayrollCycleRecord, 
+  SalarySlipRecord, 
+  SalaryStructureRecord, 
+  EmployeeSalaryProfileRecord, 
+  SalaryAdvanceRecord, 
+  EmployeeRecord,
+  PaymentBatchRecord,
+  CompanyBankAccountRecord,
+  BankExportFormat
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { PayslipService } from '../../services/payslipService';
+import { PayslipModal } from '../payroll/PayslipModal';
+import { BankExportModal } from '../payroll/BankExportModal';
+import { BankBatchDetailModal } from '../payroll/BankBatchDetailModal';
+import { CreateBankBatchModal } from '../payroll/CreateBankBatchModal';
+import { CompanyBankModal } from '../payroll/CompanyBankModal';
 
 interface PayrollCompensationScreenProps {
   userSession: UserSession;
-  activeCompany: CompanyTenant | null;
+  activeCompany: CompanyRecord | null;
   isOnline: boolean;
-  onNavigate: (screen: PhaseAScreen) => void;
+  onNavigate: (screen: any) => void;
 }
 
 export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps> = ({
@@ -59,52 +74,51 @@ export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps>
   const isHrAdmin = userSession.role === 'HR_ADMIN';
   const canManagePayroll = isSuperAdmin || isCompanyAdmin || isHrAdmin;
 
-  // Default tab based on role
-  const [activeTab, setActiveTab] = useState<'RUNS' | 'SLIPS' | 'ADVANCES' | 'STRUCTURES' | 'PROFILES'>(
-    canManagePayroll ? 'RUNS' : 'SLIPS'
+  // Tabs
+  const [activeTab, setActiveTab] = useState<'RUNS' | 'SLIPS' | 'BANK_EXPORT' | 'MY_SLIPS' | 'STRUCTURES' | 'PROFILES' | 'ADVANCES'>(
+    canManagePayroll ? 'RUNS' : 'MY_SLIPS'
   );
 
-  const [loading, setLoading] = useState<boolean>(true);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
-
-  // Firestore Data States
-  const [payrollCycles, setPayrollCycles] = useState<PayrollCycleRecord[]>([]);
-  const [salaryStructures, setSalaryStructures] = useState<SalaryStructureRecord[]>([]);
-  const [salaryProfiles, setSalaryProfiles] = useState<EmployeeSalaryProfileRecord[]>([]);
+  // Core Data States
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [cycles, setCycles] = useState<PayrollCycleRecord[]>([]);
+  const [structures, setStructures] = useState<SalaryStructureRecord[]>([]);
+  const [profiles, setProfiles] = useState<EmployeeSalaryProfileRecord[]>([]);
   const [advances, setAdvances] = useState<SalaryAdvanceRecord[]>([]);
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
-  const [selectedCycleSlips, setSelectedCycleSlips] = useState<SalarySlipRecord[]>([]);
-  const [employeeSlips, setEmployeeSlips] = useState<SalarySlipRecord[]>([]);
+  const [cycleSlips, setCycleSlips] = useState<SalarySlipRecord[]>([]);
+  const [mySlips, setMySlips] = useState<SalarySlipRecord[]>([]);
 
-  // Filters & Selected states
+  // Bank Batch Export States
+  const [paymentBatches, setPaymentBatches] = useState<PaymentBatchRecord[]>([]);
+  const [companyBanks, setCompanyBanks] = useState<CompanyBankAccountRecord[]>([]);
+  const [selectedBatchForDetail, setSelectedBatchForDetail] = useState<PaymentBatchRecord | null>(null);
+  const [selectedBatchForExport, setSelectedBatchForExport] = useState<PaymentBatchRecord | null>(null);
+  const [showCreateBatchModal, setShowCreateBatchModal] = useState(false);
+  const [showCompanyBankModal, setShowCompanyBankModal] = useState(false);
+  const [editingCompanyBank, setEditingCompanyBank] = useState<CompanyBankAccountRecord | null>(null);
+  const [batchStatusFilter, setBatchStatusFilter] = useState<'ALL' | 'DRAFT' | 'READY_FOR_APPROVAL' | 'APPROVED' | 'EXPORTED' | 'VALIDATION_FAILED' | 'CANCELLED'>('ALL');
+  const [batchSearchQuery, setBatchSearchQuery] = useState('');
+
+  // Selection & Filters
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('ALL');
+  const [publishStatusFilter, setPublishStatusFilter] = useState<'ALL' | 'PUBLISHED' | 'UNPUBLISHED'>('ALL');
+  const [selectedSlipIds, setSelectedSlipIds] = useState<string[]>([]);
   const [selectedSlipForModal, setSelectedSlipForModal] = useState<SalarySlipRecord | null>(null);
 
-  // Modal Triggers
-  const [showRunPayrollModal, setShowRunPayrollModal] = useState<boolean>(false);
-  const [showAdvanceModal, setShowAdvanceModal] = useState<boolean>(false);
-  const [showStructureModal, setShowStructureModal] = useState<boolean>(false);
-  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
-  const [selectedProfileForEdit, setSelectedProfileForEdit] = useState<EmployeeSalaryProfileRecord | null>(null);
-  const [processingAction, setProcessingAction] = useState<boolean>(false);
-
-  // Form States for Run Payroll
+  // Calculation Modal State
+  const [showCalcModal, setShowCalcModal] = useState(false);
   const currentDate = new Date();
-  const [runMonth, setRunMonth] = useState<number>(currentDate.getMonth() + 1);
-  const [runYear, setRunYear] = useState<number>(currentDate.getFullYear());
+  const [calcMonth, setCalcMonth] = useState(currentDate.getMonth() + 1);
+  const [calcYear, setCalcYear] = useState(currentDate.getFullYear());
+  const [calcFeedback, setCalcFeedback] = useState<{ success?: boolean; message?: string } | null>(null);
 
-  // Form States for Advance Request
-  const [advanceForm, setAdvanceForm] = useState({
-    employeeId: userSession.employeeId || userSession.userId,
-    employeeName: userSession.fullName || userSession.email,
-    amount: 5000,
-    reason: '',
-    monthlyDeductionAmount: 1000
-  });
-
-  // Form States for Structure Modal
-  const [editingStructure, setEditingStructure] = useState<Partial<SalaryStructureRecord>>({
+  // Salary Structure Modal State
+  const [showStructModal, setShowStructModal] = useState(false);
+  const [structForm, setStructForm] = useState<Partial<SalaryStructureRecord>>({
     name: 'Standard Security Staff Structure',
     code: 'SEC_STD',
     basicPercentage: 50,
@@ -119,31 +133,52 @@ export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps>
     status: 'ACTIVE'
   });
 
-  // 1. Real-time Subscriptions
+  // Profile Edit Modal State
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileForm, setProfileForm] = useState<Partial<EmployeeSalaryProfileRecord> | null>(null);
+
+  // Advance Request Modal State
+  const [showAdvanceModal, setShowAdvanceModal] = useState(false);
+  const [advanceForm, setAdvanceForm] = useState({
+    employeeId: userSession.employeeId || userSession.userId,
+    employeeName: userSession.fullName || userSession.email,
+    amount: 5000,
+    reason: '',
+    monthlyDeductionAmount: 1000
+  });
+
+  // Subscriptions & Initial Fetch
   useEffect(() => {
     if (!companyId) return;
     setLoading(true);
 
     const unsubCycles = FirestoreService.subscribeToPayrollCycles(userSession, companyId, (data) => {
-      setPayrollCycles(data);
+      setCycles(data);
       if (data.length > 0 && !selectedCycleId) {
         setSelectedCycleId(data[0].id);
       }
     });
 
-    const unsubStructures = FirestoreService.subscribeToSalaryStructures(userSession, companyId, (data) => {
-      setSalaryStructures(data);
+    const unsubStructs = FirestoreService.subscribeToSalaryStructures(userSession, companyId, (data) => {
+      setStructures(data);
     });
 
     const unsubProfiles = FirestoreService.subscribeToSalaryProfiles(userSession, companyId, (data) => {
-      setSalaryProfiles(data);
+      setProfiles(data);
     });
 
     const unsubAdvances = FirestoreService.subscribeToSalaryAdvances(userSession, companyId, (data) => {
       setAdvances(data);
     });
 
-    // Fetch Employees
+    const unsubBatches = FirestoreService.subscribePaymentBatches(companyId, (batches) => {
+      setPaymentBatches(batches);
+    });
+
+    FirestoreService.getCompanyBankAccounts(companyId).then((banks) => {
+      setCompanyBanks(banks);
+    }).catch(err => console.error('Failed to load company banks:', err));
+
     FirestoreService.getEmployees(companyId).then((emps) => {
       setEmployees(emps);
       setLoading(false);
@@ -151,1446 +186,1629 @@ export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps>
 
     return () => {
       unsubCycles();
-      unsubStructures();
+      unsubStructs();
       unsubProfiles();
       unsubAdvances();
+      unsubBatches();
     };
   }, [companyId]);
 
-  // 2. Fetch Slips when selected cycle changes
+  // Load Slips for Selected Cycle
   useEffect(() => {
     if (!companyId) return;
 
     if (selectedCycleId) {
       FirestoreService.getSalarySlips(companyId, selectedCycleId).then((slips) => {
-        setSelectedCycleSlips(slips);
+        setCycleSlips(slips);
+        setSelectedSlipIds([]);
       });
     }
 
-    // If regular employee, fetch personal slips
-    if (!canManagePayroll) {
-      const empId = userSession.employeeId || userSession.userId;
+    // Load My Slips (for logged-in user)
+    const empId = userSession.employeeId || userSession.userId;
+    if (empId) {
       FirestoreService.getEmployeeSalarySlips(companyId, empId).then((slips) => {
-        setEmployeeSlips(slips);
+        setMySlips(slips);
       });
     }
-  }, [companyId, selectedCycleId, canManagePayroll, userSession]);
+  }, [companyId, selectedCycleId, userSession]);
 
-  const handleRefresh = async () => {
-    if (!companyId) return;
-    setRefreshing(true);
+  const activeCycle = useMemo(() => {
+    return cycles.find(c => c.id === selectedCycleId);
+  }, [cycles, selectedCycleId]);
+
+  // Departments List
+  const departments = useMemo(() => {
+    const set = new Set<string>();
+    employees.forEach(e => {
+      if (e.departmentId) set.add(e.departmentId);
+    });
+    return Array.from(set);
+  }, [employees]);
+
+  // Filtered Cycle Slips
+  const filteredCycleSlips = useMemo(() => {
+    return cycleSlips.filter(slip => {
+      const matchesSearch = !searchQuery || 
+        slip.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (slip.employeeCode && slip.employeeCode.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        slip.employeeId.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesDept = departmentFilter === 'ALL' || slip.departmentName === departmentFilter;
+
+      let matchesPublish = true;
+      if (publishStatusFilter === 'PUBLISHED') matchesPublish = Boolean(slip.isPublished);
+      if (publishStatusFilter === 'UNPUBLISHED') matchesPublish = !slip.isPublished;
+
+      return matchesSearch && matchesDept && matchesPublish;
+    });
+  }, [cycleSlips, searchQuery, departmentFilter, publishStatusFilter]);
+
+  // Bulk Actions
+  const handleSelectAll = () => {
+    if (selectedSlipIds.length === filteredCycleSlips.length) {
+      setSelectedSlipIds([]);
+    } else {
+      setSelectedSlipIds(filteredCycleSlips.map(s => s.id));
+    }
+  };
+
+  const handleToggleSelectSlip = (id: string) => {
+    setSelectedSlipIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkPublish = async () => {
+    if (!companyId || selectedSlipIds.length === 0) return;
+    setProcessing(true);
     try {
-      const [cycles, structs, profs, advs, emps] = await Promise.all([
-        FirestoreService.getPayrollCycles(companyId),
-        FirestoreService.getSalaryStructures(companyId),
-        FirestoreService.getSalaryProfiles(companyId),
-        FirestoreService.getSalaryAdvances(companyId),
-        FirestoreService.getEmployees(companyId)
-      ]);
-      setPayrollCycles(cycles);
-      setSalaryStructures(structs);
-      setSalaryProfiles(profs);
-      setAdvances(advs);
-      setEmployees(emps);
-      if (selectedCycleId) {
-        const slips = await FirestoreService.getSalarySlips(companyId, selectedCycleId);
-        setSelectedCycleSlips(slips);
-      }
-    } catch (e) {
-      console.error(e);
+      await FirestoreService.publishSalarySlips(
+        companyId,
+        selectedCycleId,
+        selectedSlipIds,
+        { uid: userSession.userId, name: userSession.fullName || userSession.email }
+      );
+      const updated = await FirestoreService.getSalarySlips(companyId, selectedCycleId);
+      setCycleSlips(updated);
+      setSelectedSlipIds([]);
+    } catch (err) {
+      console.error('Bulk publish error:', err);
     } finally {
-      setRefreshing(false);
+      setProcessing(false);
+    }
+  };
+
+  const handleBulkPublishAll = async () => {
+    if (!companyId || cycleSlips.length === 0) return;
+    setProcessing(true);
+    try {
+      const allIds = cycleSlips.map(s => s.id);
+      await FirestoreService.publishSalarySlips(
+        companyId,
+        selectedCycleId,
+        allIds,
+        { uid: userSession.userId, name: userSession.fullName || userSession.email }
+      );
+      const updated = await FirestoreService.getSalarySlips(companyId, selectedCycleId);
+      setCycleSlips(updated);
+    } catch (err) {
+      console.error('Publish all error:', err);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleBulkDownloadPDFs = () => {
+    const slipsToDownload = selectedSlipIds.length > 0
+      ? cycleSlips.filter(s => selectedSlipIds.includes(s.id))
+      : cycleSlips;
+
+    if (slipsToDownload.length === 0) return;
+
+    slipsToDownload.forEach((slip, idx) => {
+      setTimeout(() => {
+        PayslipService.downloadPDF(slip, activeCompany);
+      }, idx * 300);
+    });
+  };
+
+  const handleExportCSV = () => {
+    if (cycleSlips.length === 0) return;
+    const label = activeCycle?.cycleLabel || selectedCycleId;
+    PayslipService.exportSummaryCSV(cycleSlips, label);
+  };
+
+  // Bank Batches Handlers & Filters
+  const filteredBatches = useMemo(() => {
+    return paymentBatches.filter(b => {
+      if (batchStatusFilter !== 'ALL' && b.status !== batchStatusFilter) return false;
+      if (batchSearchQuery.trim()) {
+        const q = batchSearchQuery.toLowerCase();
+        return (
+          b.batchNumber.toLowerCase().includes(q) ||
+          b.payrollCycleLabel.toLowerCase().includes(q) ||
+          (b.companyBankName || '').toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [paymentBatches, batchStatusFilter, batchSearchQuery]);
+
+  const bankMetrics = useMemo(() => {
+    const totalBatches = paymentBatches.length;
+    const readyForApproval = paymentBatches.filter(b => b.status === 'READY_FOR_APPROVAL').length;
+    const approvedCount = paymentBatches.filter(b => b.status === 'APPROVED').length;
+    const exportedCount = paymentBatches.filter(b => b.status === 'EXPORTED').length;
+    const totalExportedAmount = paymentBatches
+      .filter(b => b.status === 'EXPORTED')
+      .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+    const totalBatchAmount = paymentBatches
+      .filter(b => b.status !== 'CANCELLED')
+      .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+    return {
+      totalBatches,
+      readyForApproval,
+      approvedCount,
+      exportedCount,
+      totalExportedAmount,
+      totalBatchAmount
+    };
+  }, [paymentBatches]);
+
+  const handleApproveBatch = async (batch: PaymentBatchRecord) => {
+    if (!companyId) return;
+    setProcessing(true);
+    try {
+      const res = await FirestoreService.approvePaymentBatch(
+        companyId,
+        batch.id,
+        { uid: userSession.userId, name: userSession.fullName || userSession.email || 'Admin' }
+      );
+      if (res.success) {
+        const updated = await FirestoreService.getPaymentBatches(companyId);
+        setPaymentBatches(updated);
+        setSelectedBatchForDetail(null);
+      }
+    } catch (err) {
+      console.error('Approve batch error:', err);
+    } finally {
+      setProcessing(false);
     }
   };
 
   // Run Monthly Payroll
   const handleExecutePayroll = async () => {
     if (!companyId) return;
-    setProcessingAction(true);
+    setProcessing(true);
+    setCalcFeedback(null);
     try {
       const res = await FirestoreService.executeMonthlyPayrollCalculation(
         companyId,
-        runMonth,
-        runYear,
+        calcMonth,
+        calcYear,
         { uid: userSession.userId, name: userSession.fullName || userSession.email }
       );
       if (res.success) {
         setSelectedCycleId(res.cycleId);
-        setShowRunPayrollModal(false);
-        const slips = await FirestoreService.getSalarySlips(companyId, res.cycleId);
-        setSelectedCycleSlips(slips);
+        setCalcFeedback({ success: true, message: `Successfully computed payroll for ${res.totalSlips} employees.` });
+        setShowCalcModal(false);
+        const updated = await FirestoreService.getSalarySlips(companyId, res.cycleId);
+        setCycleSlips(updated);
+      } else {
+        setCalcFeedback({ success: false, message: 'Payroll calculation completed with errors. Check run log.' });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Payroll calculation failed:', err);
+      setCalcFeedback({ success: false, message: err?.message || 'Payroll computation failed.' });
     } finally {
-      setProcessingAction(false);
+      setProcessing(false);
     }
   };
 
   // Approve Cycle
   const handleApproveCycle = async (cycleId: string) => {
     if (!companyId) return;
-    setProcessingAction(true);
+    setProcessing(true);
     try {
-      await FirestoreService.updatePayrollCycleStatus(
-        companyId,
-        cycleId,
-        'APPROVED',
-        { uid: userSession.userId, name: userSession.fullName || userSession.email }
-      );
+      await FirestoreService.updatePayrollCycleStatus(companyId, cycleId, 'APPROVED', {
+        uid: userSession.userId,
+        name: userSession.fullName || userSession.email
+      });
+      const updated = await FirestoreService.getSalarySlips(companyId, cycleId);
+      setCycleSlips(updated);
     } finally {
-      setProcessingAction(false);
+      setProcessing(false);
     }
   };
 
   // Disburse Cycle
   const handleDisburseCycle = async (cycleId: string) => {
     if (!companyId) return;
-    setProcessingAction(true);
+    setProcessing(true);
     try {
-      await FirestoreService.updatePayrollCycleStatus(
-        companyId,
-        cycleId,
-        'DISBURSED',
-        { uid: userSession.userId, name: userSession.fullName || userSession.email }
-      );
+      await FirestoreService.updatePayrollCycleStatus(companyId, cycleId, 'DISBURSED', {
+        uid: userSession.userId,
+        name: userSession.fullName || userSession.email
+      });
+      const updated = await FirestoreService.getSalarySlips(companyId, cycleId);
+      setCycleSlips(updated);
     } finally {
-      setProcessingAction(false);
+      setProcessing(false);
     }
   };
 
-  // Save Structure
+  // Save Salary Structure
   const handleSaveStructure = async () => {
-    if (!companyId || !editingStructure.name) return;
-    setProcessingAction(true);
+    if (!companyId || !structForm.name) return;
+    setProcessing(true);
     try {
-      await FirestoreService.saveSalaryStructure(companyId, editingStructure as any);
-      setShowStructureModal(false);
+      await FirestoreService.saveSalaryStructure(companyId, structForm as SalaryStructureRecord);
+      setShowStructModal(false);
     } finally {
-      setProcessingAction(false);
+      setProcessing(false);
     }
   };
 
   // Save Profile
   const handleSaveProfile = async () => {
-    if (!companyId || !selectedProfileForEdit) return;
-    setProcessingAction(true);
+    if (!companyId || !profileForm?.employeeId) return;
+    setProcessing(true);
     try {
-      await FirestoreService.saveSalaryProfile(companyId, selectedProfileForEdit);
+      await FirestoreService.saveSalaryProfile(companyId, profileForm as EmployeeSalaryProfileRecord);
       setShowProfileModal(false);
-      setSelectedProfileForEdit(null);
     } finally {
-      setProcessingAction(false);
+      setProcessing(false);
     }
   };
 
-  // Request Advance
-  const handleCreateAdvance = async () => {
-    if (!companyId || advanceForm.amount <= 0 || !advanceForm.reason.trim()) return;
-    setProcessingAction(true);
-    try {
-      await FirestoreService.createSalaryAdvance(companyId, {
-        companyId,
-        employeeId: advanceForm.employeeId,
-        employeeName: advanceForm.employeeName,
-        amount: advanceForm.amount,
-        reason: advanceForm.reason,
-        requestedDate: new Date().toISOString().split('T')[0],
-        status: 'PENDING',
-        monthlyDeductionAmount: advanceForm.monthlyDeductionAmount
-      });
-      setShowAdvanceModal(false);
-      setAdvanceForm({
-        employeeId: userSession.employeeId || userSession.userId,
-        employeeName: userSession.fullName || userSession.email,
-        amount: 5000,
-        reason: '',
-        monthlyDeductionAmount: 1000
-      });
-    } finally {
-      setProcessingAction(false);
-    }
-  };
-
-  // Update Advance Status
-  const handleUpdateAdvanceStatus = async (advanceId: string, status: 'APPROVED' | 'REJECTED') => {
-    if (!companyId) return;
-    setProcessingAction(true);
-    try {
-      await FirestoreService.updateSalaryAdvanceStatus(
-        companyId,
-        advanceId,
-        status,
-        { uid: userSession.userId, name: userSession.fullName || userSession.email }
-      );
-    } finally {
-      setProcessingAction(false);
-    }
-  };
-
-  // CSV Export for Payroll Register
-  const handleExportPayrollRegisterCSV = () => {
-    if (selectedCycleSlips.length === 0) return;
-    const headers = [
-      'Slip ID', 'Employee ID', 'Employee Name', 'Department', 'Designation',
-      'Worked Days', 'LOP Days', 'Payable Days',
-      'Basic', 'HRA', 'DA', 'Conveyance', 'Medical', 'Special Allowance', 'Gross Pay',
-      'PF Deduction', 'ESIC Deduction', 'PT Deduction', 'Advance Deduction', 'Total Deductions',
-      'Net Pay', 'Bank Name', 'Account Number', 'IFSC Code', 'PAN Number', 'Status'
-    ];
-
-    const rows = selectedCycleSlips.map(s => [
-      s.id,
-      s.employeeId,
-      `"${s.employeeName}"`,
-      `"${s.departmentName || ''}"`,
-      `"${s.designation || ''}"`,
-      s.workedDays,
-      s.lopDays,
-      s.payableDays,
-      s.earnings.basic,
-      s.earnings.hra,
-      s.earnings.da,
-      s.earnings.conveyance,
-      s.earnings.medical,
-      s.earnings.specialAllowance,
-      s.earnings.totalGross,
-      s.deductions.pf,
-      s.deductions.esic,
-      s.deductions.pt,
-      s.deductions.advanceDeduction,
-      s.deductions.totalDeductions,
-      s.netPay,
-      `"${s.bankName || ''}"`,
-      `"${s.accountNumber || ''}"`,
-      `"${s.ifscCode || ''}"`,
-      `"${s.panNumber || ''}"`,
-      s.status
-    ]);
-
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Payroll_Register_${selectedCycleId || 'Export'}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // CSV Export for Bank NEFT Disbursal Statement
-  const handleExportBankTransferCSV = () => {
-    if (selectedCycleSlips.length === 0) return;
-    const headers = ['Beneficiary Name', 'Bank Name', 'Account Number', 'IFSC Code', 'Amount (INR)', 'Payment Mode', 'Remarks'];
-    const rows = selectedCycleSlips.map(s => [
-      `"${s.employeeName}"`,
-      `"${s.bankName || 'SBI'}"`,
-      `"${s.accountNumber || ''}"`,
-      `"${s.ifscCode || ''}"`,
-      s.netPay,
-      'NEFT',
-      `"Salary for ${selectedCycleId}"`
-    ]);
-
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Bank_Disbursal_NEFT_${selectedCycleId || 'Statement'}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // Metrics
-  const activeCycle = payrollCycles.find(c => c.id === selectedCycleId) || payrollCycles[0];
-  const totalEmployeesCount = employees.filter(e => e.status === 'ACTIVE').length;
-  const totalActiveAdvancesAmount = advances
-    .filter(a => a.status === 'APPROVED' && a.remainingAmount > 0)
-    .reduce((sum, a) => sum + a.remainingAmount, 0);
-
-  // Filtered Slips for View
-  const displayedSlips = useMemo(() => {
-    const list = canManagePayroll ? selectedCycleSlips : employeeSlips;
-    if (!searchQuery.trim()) return list;
-    const q = searchQuery.toLowerCase();
-    return list.filter(s => 
-      s.employeeName.toLowerCase().includes(q) ||
-      s.employeeId.toLowerCase().includes(q) ||
-      (s.departmentName && s.departmentName.toLowerCase().includes(q))
-    );
-  }, [canManagePayroll, selectedCycleSlips, employeeSlips, searchQuery]);
+  // My Slips Metrics
+  const mySlipsMetrics = useMemo(() => {
+    const totalEarned = mySlips.reduce((sum, s) => sum + (s.netPay || 0), 0);
+    const totalGross = mySlips.reduce((sum, s) => sum + (s.earnings?.totalGross || 0), 0);
+    const totalDeductions = mySlips.reduce((sum, s) => sum + (s.deductions?.totalDeductions || 0), 0);
+    const avgMonthly = mySlips.length > 0 ? Math.round(totalEarned / mySlips.length) : 0;
+    return { totalEarned, totalGross, totalDeductions, avgMonthly, count: mySlips.length };
+  }, [mySlips]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-16">
-      {/* Top Header */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                <DollarSign className="w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  Payroll & Compensation
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-semibold">
-                    HRMS Module
-                  </span>
-                </h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  <Building className="w-3.5 h-3.5" />
-                  {activeCompany?.brandName || activeCompany?.companyLegalName || 'Enterprise'} • Real-Time Statutory & Salary Engine
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                title="Refresh Data"
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              </button>
-
-              {canManagePayroll && (
-                <button
-                  onClick={() => setShowRunPayrollModal(true)}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-colors"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Run Payroll
-                </button>
-              )}
-
-              <button
-                onClick={() => setShowAdvanceModal(true)}
-                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-xs sm:text-sm flex items-center gap-1.5 shadow-sm transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Request Advance
-              </button>
-            </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-6 space-y-6">
+      
+      {/* Top Header Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
+            <DollarSign className="w-6 h-6" />
           </div>
-
-          {/* Navigation Tabs */}
-          <div className="flex space-x-1 border-t border-slate-100 dark:border-slate-700/60 overflow-x-auto scrollbar-none py-1">
-            {canManagePayroll && (
-              <button
-                onClick={() => setActiveTab('RUNS')}
-                className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
-                  activeTab === 'RUNS'
-                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Calendar className="w-4 h-4" />
-                Payroll Cycles ({payrollCycles.length})
-              </button>
-            )}
-
-            <button
-              onClick={() => setActiveTab('SLIPS')}
-              className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
-                activeTab === 'SLIPS'
-                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              {canManagePayroll ? 'Salary Slips & Register' : 'My Payslips'}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('ADVANCES')}
-              className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
-                activeTab === 'ADVANCES'
-                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <CreditCard className="w-4 h-4" />
-              Advances & Loans ({advances.length})
-            </button>
-
-            {canManagePayroll && (
-              <>
-                <button
-                  onClick={() => setActiveTab('STRUCTURES')}
-                  className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
-                    activeTab === 'STRUCTURES'
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <Sliders className="w-4 h-4" />
-                  Salary Structures ({salaryStructures.length})
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('PROFILES')}
-                  className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
-                    activeTab === 'PROFILES'
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <Landmark className="w-4 h-4" />
-                  Staff Salary Profiles ({salaryProfiles.length || employees.length})
-                </button>
-              </>
-            )}
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+                Payroll & Payslip Management
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                ERP Finance
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Authoritative salary computation, statutory compliance, and vector payslip publishing
+            </p>
           </div>
+        </div>
+
+        {/* Global Action Buttons */}
+        <div className="flex items-center gap-2.5">
+          {canManagePayroll && (
+            <button
+              type="button"
+              onClick={() => setShowCalcModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-colors"
+            >
+              <Sparkles className="w-4 h-4" />
+              Process Monthly Payroll
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              if (companyId) {
+                FirestoreService.getPayrollCycles(companyId).then(setCycles);
+                if (selectedCycleId) {
+                  FirestoreService.getSalarySlips(companyId, selectedCycleId).then(setCycleSlips);
+                }
+              }
+            }}
+            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            title="Refresh Data"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        {/* Top Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Staff on Payroll
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                <Users className="w-4 h-4" />
-              </div>
+      {/* Navigation Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-200 dark:border-slate-800">
+        {canManagePayroll && (
+          <>
+            <button
+              type="button"
+              onClick={() => setActiveTab('RUNS')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                activeTab === 'RUNS'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+              Payroll Runs ({cycles.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('SLIPS')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                activeTab === 'SLIPS'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              Payslips & Distribution
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('BANK_EXPORT')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                activeTab === 'BANK_EXPORT'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Landmark className="w-4 h-4" />
+              NEFT/RTGS Bank Export ({paymentBatches.length})
+            </button>
+          </>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('MY_SLIPS')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            activeTab === 'MY_SLIPS'
+              ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <CreditCard className="w-4 h-4" />
+          My Payslips ({mySlips.length})
+        </button>
+
+        {canManagePayroll && (
+          <>
+            <button
+              type="button"
+              onClick={() => setActiveTab('STRUCTURES')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                activeTab === 'STRUCTURES'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              Salary Structures ({structures.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('PROFILES')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                activeTab === 'PROFILES'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              Salary Profiles ({profiles.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('ADVANCES')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                activeTab === 'ADVANCES'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4" />
+              Advances & Deductions ({advances.length})
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* ============================================================ */}
+      {/* TAB 1: PAYROLL RUNS & CYCLES */}
+      {/* ============================================================ */}
+      {activeTab === 'RUNS' && canManagePayroll && (
+        <div className="space-y-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Payroll Cycles</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{cycles.length}</h3>
+              <p className="text-[11px] text-slate-400 mt-1">Active fiscal cycles</p>
             </div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-white mt-2">
-              {totalEmployeesCount}
+
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Latest Cycle Disbursed</p>
+              <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                {cycles.find(c => c.status === 'DISBURSED' || c.status === 'APPROVED')?.cycleLabel || 'None'}
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-1">Approved & Verified</p>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Active company workforce
-            </p>
+
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Active Staff in Payroll</p>
+              <h3 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{employees.length}</h3>
+              <p className="text-[11px] text-slate-400 mt-1">Enrolled profiles: {profiles.length}</p>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Statutory Compliance Slabs</p>
+              <h3 className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">PF / ESIC / PT / TDS</h3>
+              <p className="text-[11px] text-slate-400 mt-1">Auto computed via engine</p>
+            </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Monthly Net Disbursal
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                <DollarSign className="w-4 h-4" />
+          {/* Cycles Table */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Monthly Payroll Processing Runs</h3>
+                <p className="text-xs text-slate-500">Authoritative calculation cycles and approval logs</p>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowCalcModal(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold shadow-xs hover:opacity-90 transition-opacity"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                New Calculation Run
+              </button>
             </div>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
-              ₹{(activeCycle?.totalNetPay || 0).toLocaleString('en-IN')}
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {activeCycle ? activeCycle.cycleLabel : 'No cycle selected'}
-            </p>
-          </div>
 
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Gross & Deductions
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                <PieChart className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-xl font-bold text-slate-900 dark:text-white mt-2">
-              ₹{(activeCycle?.totalGrossPay || 0).toLocaleString('en-IN')}
-            </div>
-            <p className="text-xs text-rose-500 dark:text-rose-400 mt-1 font-medium">
-              -₹{(activeCycle?.totalDeductions || 0).toLocaleString('en-IN')} Statutory/Advances
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Outstanding Advances
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400">
-                <CreditCard className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-2">
-              ₹{totalActiveAdvancesAmount.toLocaleString('en-IN')}
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Active loan recovery balance
-            </p>
-          </div>
-        </div>
-
-        {/* ========================================================== */}
-        {/* TAB 1: PAYROLL RUNS / CYCLES */}
-        {/* ========================================================== */}
-        {activeTab === 'RUNS' && canManagePayroll && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-700/60 pb-4">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                    Payroll Processing Cycles
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Monthly computation records, approval workflow, and bank disbursal status
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowRunPayrollModal(true)}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm transition-colors self-start sm:self-auto"
-                >
-                  <Plus className="w-4 h-4" />
-                  Calculate New Cycle
-                </button>
-              </div>
-
-              {payrollCycles.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Calendar className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    No Payroll Cycles Processed Yet
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-4">
-                    Run the first monthly computation to generate payslips, calculate PF/ESIC deductions, and prepare bank statements.
-                  </p>
-                  <button
-                    onClick={() => setShowRunPayrollModal(true)}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium inline-flex items-center gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    Process First Payroll Run
-                  </button>
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100 dark:divide-slate-700/60 mt-2">
-                  {payrollCycles.map((cycle) => (
-                    <div
-                      key={cycle.id}
-                      className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/60 dark:hover:bg-slate-700/20 px-3 rounded-xl transition-colors"
-                    >
-                      <div className="flex items-start space-x-3.5">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold text-sm">
-                          {cycle.month}
-                        </div>
-                        <div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 uppercase font-semibold tracking-wider">
+                  <tr>
+                    <th className="px-5 py-3">Cycle Label</th>
+                    <th className="px-5 py-3">Employees</th>
+                    <th className="px-5 py-3">Total Gross</th>
+                    <th className="px-5 py-3">Total Deductions</th>
+                    <th className="px-5 py-3">Net Take Home</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3">Processed On</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {cycles.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-5 py-8 text-center text-slate-400">
+                        No payroll runs executed yet. Click &quot;Process Monthly Payroll&quot; to execute.
+                      </td>
+                    </tr>
+                  ) : (
+                    cycles.map((cycle) => (
+                      <tr key={cycle.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                        <td className="px-5 py-3.5 font-bold text-slate-900 dark:text-white">
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                              {cycle.cycleLabel}
-                            </h4>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              cycle.status === 'DISBURSED'
-                                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                                : cycle.status === 'APPROVED'
-                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                            }`}>
-                              {cycle.status}
-                            </span>
+                            <Calendar className="w-4 h-4 text-emerald-600" />
+                            {cycle.cycleLabel || cycle.id}
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            {cycle.totalEmployees} employees • Gross: ₹{cycle.totalGrossPay.toLocaleString('en-IN')} • Deductions: ₹{cycle.totalDeductions.toLocaleString('en-IN')}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between md:justify-end gap-3">
-                        <div className="text-right">
-                          <span className="text-xs text-slate-400 block">Total Net Pay</span>
-                          <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                            ₹{cycle.totalNetPay.toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-5 py-3.5 font-medium text-slate-600 dark:text-slate-300">
+                          {cycle.totalEmployees} staff
+                        </td>
+                        <td className="px-5 py-3.5 font-semibold text-slate-800 dark:text-slate-200">
+                          ₹ {(cycle.totalGrossPay || 0).toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-5 py-3.5 font-semibold text-rose-600 dark:text-rose-400">
+                          ₹ {(cycle.totalDeductions || 0).toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-5 py-3.5 font-bold text-emerald-600 dark:text-emerald-400">
+                          ₹ {(cycle.totalNetPay || 0).toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                            cycle.status === 'DISBURSED'
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+                              : cycle.status === 'APPROVED'
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
+                          }`}>
+                            {cycle.status === 'DISBURSED' && <CheckCircle2 className="w-3 h-3" />}
+                            {cycle.status === 'APPROVED' && <Shield className="w-3 h-3" />}
+                            {cycle.status}
                           </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-500 font-mono text-[11px]">
+                          {cycle.processedAt ? new Date(cycle.processedAt).toLocaleDateString() : '—'}
+                        </td>
+                        <td className="px-5 py-3.5 text-right space-x-2">
                           <button
+                            type="button"
                             onClick={() => {
                               setSelectedCycleId(cycle.id);
                               setActiveTab('SLIPS');
                             }}
-                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs"
                           >
-                            <Eye className="w-3.5 h-3.5" />
-                            View Slips
+                            View Payslips
                           </button>
 
                           {cycle.status === 'CALCULATED' && (
                             <button
-                              disabled={processingAction}
+                              type="button"
                               onClick={() => handleApproveCycle(cycle.id)}
-                              className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1 shadow-sm"
+                              disabled={processing}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-xs"
                             >
-                              <Check className="w-3.5 h-3.5" />
-                              Approve
+                              Approve Cycle
                             </button>
                           )}
 
                           {cycle.status === 'APPROVED' && (
                             <button
-                              disabled={processingAction}
+                              type="button"
                               onClick={() => handleDisburseCycle(cycle.id)}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1 shadow-sm"
+                              disabled={processing}
+                              className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-xs"
                             >
-                              <DollarSign className="w-3.5 h-3.5" />
-                              Disburse
+                              Mark Disbursed
                             </button>
                           )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ========================================================== */}
-        {/* TAB 2: SALARY SLIPS & REGISTER */}
-        {/* ========================================================== */}
-        {activeTab === 'SLIPS' && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
-              {/* Header Controls */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                    {canManagePayroll ? 'Salary Slips & Payroll Register' : 'My Generated Payslips'}
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Official payslips with statutory earnings, PF, ESIC, Professional Tax, and net disbursals
-                  </p>
+      {/* ============================================================ */}
+      {/* TAB 2: CENTRAL PAYSLIP MANAGEMENT (ADMIN / HR) */}
+      {/* ============================================================ */}
+      {activeTab === 'SLIPS' && canManagePayroll && (
+        <div className="space-y-6">
+          {/* Cycle Selector & Warning Banner if not approved */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300">
+                  <Calendar className="w-5 h-5" />
                 </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {canManagePayroll && payrollCycles.length > 0 && (
-                    <select
-                      value={selectedCycleId}
-                      onChange={(e) => setSelectedCycleId(e.target.value)}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200"
-                    >
-                      {payrollCycles.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.cycleLabel} ({c.status})
-                        </option>
-                      ))}
-                    </select>
-                  )}
-
-                  {canManagePayroll && (
-                    <>
-                      <button
-                        onClick={handleExportPayrollRegisterCSV}
-                        disabled={selectedCycleSlips.length === 0}
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        Register CSV
-                      </button>
-
-                      <button
-                        onClick={handleExportBankTransferCSV}
-                        disabled={selectedCycleSlips.length === 0}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold flex items-center gap-1.5"
-                      >
-                        <Landmark className="w-3.5 h-3.5" />
-                        Bank NEFT CSV
-                      </button>
-                    </>
-                  )}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Select Payroll Period
+                  </label>
+                  <select
+                    value={selectedCycleId}
+                    onChange={(e) => setSelectedCycleId(e.target.value)}
+                    className="mt-0.5 text-sm font-bold text-slate-900 dark:text-white bg-transparent border-none focus:ring-0 cursor-pointer p-0"
+                  >
+                    {cycles.map((c) => (
+                      <option key={c.id} value={c.id} className="text-slate-900">
+                        {c.cycleLabel || c.id} — ({c.status})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              {/* Search Bar */}
-              <div className="relative mb-4">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              {/* Cycle Status & Summary Metrics */}
+              {activeCycle && (
+                <div className="flex flex-wrap items-center gap-4 text-xs">
+                  <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <span className="text-slate-500">Total Slips:</span>{' '}
+                    <span className="font-bold text-slate-900 dark:text-white">{cycleSlips.length}</span>
+                  </div>
+                  <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <span className="text-slate-500">Published:</span>{' '}
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                      {cycleSlips.filter(s => s.isPublished).length}
+                    </span>
+                  </div>
+                  <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <span className="text-slate-500">Net Disbursed:</span>{' '}
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                      ₹ {(activeCycle.totalNetPay || 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Cycle Status Guard Warning */}
+            {activeCycle && activeCycle.status === 'CALCULATED' && (
+              <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 flex items-center justify-between text-xs text-amber-800 dark:text-amber-300">
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+                  <span>
+                    <strong>Cycle is in Calculated State:</strong> Please verify and click &quot;Approve Cycle&quot; before publishing authoritative payslips to employees.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleApproveCycle(activeCycle.id)}
+                  disabled={processing}
+                  className="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg shadow-xs"
+                >
+                  Approve Cycle Now
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Search, Filters, and Bulk Action Bar */}
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Search & Department Filter */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative min-w-[240px]">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search by Employee Name, ID, or Department..."
+                  placeholder="Search by name, ID or code..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full pl-9 pr-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 />
               </div>
 
-              {/* Slips Table */}
-              {displayedSlips.length === 0 ? (
-                <div className="py-12 text-center">
-                  <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    No Payslips Available
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1">
-                    {canManagePayroll
-                      ? 'Process a payroll cycle to generate payslips for all active employees.'
-                      : 'Your payslip will appear here once the monthly cycle is processed by HR.'}
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-                    <thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 font-semibold uppercase text-[10px] tracking-wider">
-                      <tr>
-                        <th className="py-3 px-4 rounded-l-lg">Staff Details</th>
-                        <th className="py-3 px-3">Attendance</th>
-                        <th className="py-3 px-3">Gross Salary</th>
-                        <th className="py-3 px-3">Deductions</th>
-                        <th className="py-3 px-3">Net Pay</th>
-                        <th className="py-3 px-3">Status</th>
-                        <th className="py-3 px-4 text-right rounded-r-lg">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
-                      {displayedSlips.map((slip) => (
-                        <tr key={slip.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-700/30 transition-colors">
-                          <td className="py-3.5 px-4">
-                            <div className="font-bold text-slate-900 dark:text-white text-xs">
-                              {slip.employeeName}
-                            </div>
-                            <div className="text-[11px] text-slate-400">
-                              {slip.employeeId} • {slip.designation || 'Staff'}
+              <select
+                value={departmentFilter}
+                onChange={(e) => setDepartmentFilter(e.target.value)}
+                className="px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              >
+                <option value="ALL">All Departments</option>
+                {departments.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+
+              <select
+                value={publishStatusFilter}
+                onChange={(e) => setPublishStatusFilter(e.target.value as any)}
+                className="px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              >
+                <option value="ALL">All Slips</option>
+                <option value="PUBLISHED">Published Only</option>
+                <option value="UNPUBLISHED">Unpublished Drafts</option>
+              </select>
+            </div>
+
+            {/* Bulk Action Buttons */}
+            <div className="flex items-center gap-2">
+              {selectedSlipIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleBulkPublish}
+                  disabled={processing}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs transition-colors"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  Publish Selected ({selectedSlipIds.length})
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleBulkPublishAll}
+                disabled={processing || cycleSlips.length === 0}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition-colors"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Publish All
+              </button>
+
+              <button
+                type="button"
+                onClick={handleBulkDownloadPDFs}
+                disabled={cycleSlips.length === 0}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-colors"
+                title="Download Vector PDFs"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Download PDFs
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                disabled={cycleSlips.length === 0}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-colors"
+                title="Export CSV Summary"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                Export CSV
+              </button>
+            </div>
+          </div>
+
+          {/* Payslips Table */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 uppercase font-semibold tracking-wider">
+                  <tr>
+                    <th className="px-4 py-3 w-10">
+                      <button
+                        type="button"
+                        onClick={handleSelectAll}
+                        className="text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      >
+                        {selectedSlipIds.length > 0 && selectedSlipIds.length === filteredCycleSlips.length ? (
+                          <CheckSquare className="w-4 h-4 text-emerald-600" />
+                        ) : (
+                          <Square className="w-4 h-4" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3">Employee Details</th>
+                    <th className="px-4 py-3">Worked / Days</th>
+                    <th className="px-4 py-3">Gross Earnings</th>
+                    <th className="px-4 py-3">Deductions</th>
+                    <th className="px-4 py-3">Net Take-Home</th>
+                    <th className="px-4 py-3">Publish Status</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {filteredCycleSlips.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                        No salary slips found matching criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredCycleSlips.map((slip) => {
+                      const isSelected = selectedSlipIds.includes(slip.id);
+                      return (
+                        <tr
+                          key={slip.id}
+                          className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors ${
+                            isSelected ? 'bg-emerald-50/30 dark:bg-emerald-950/20' : ''
+                          }`}
+                        >
+                          <td className="px-4 py-3.5">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleSelectSlip(slip.id)}
+                              className="text-slate-500 hover:text-slate-900"
+                            >
+                              {isSelected ? (
+                                <CheckSquare className="w-4 h-4 text-emerald-600" />
+                              ) : (
+                                <Square className="w-4 h-4" />
+                              )}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <div>
+                              <p className="font-bold text-slate-900 dark:text-white">{slip.employeeName}</p>
+                              <p className="text-[11px] text-slate-400 font-mono">
+                                {slip.employeeCode || slip.employeeId} • {slip.departmentName || 'Operations'}
+                              </p>
                             </div>
                           </td>
-
-                          <td className="py-3.5 px-3">
-                            <div className="font-semibold text-slate-700 dark:text-slate-300">
-                              {slip.payableDays} / {slip.totalMonthDays} Days
-                            </div>
+                          <td className="px-4 py-3.5">
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{slip.workedDays}</span>
+                            <span className="text-slate-400"> / {slip.totalMonthDays} days</span>
                             {slip.lopDays > 0 && (
-                              <span className="text-[10px] text-rose-500 font-medium">
-                                {slip.lopDays} Days LOP
+                              <p className="text-[10px] text-rose-500 font-medium">{slip.lopDays} LOP days</p>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 font-semibold text-slate-800 dark:text-slate-200">
+                            ₹ {(slip.earnings?.totalGross || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-4 py-3.5 font-semibold text-rose-600 dark:text-rose-400">
+                            ₹ {(slip.deductions?.totalDeductions || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-4 py-3.5 font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                            ₹ {(slip.netPay || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-4 py-3.5">
+                            {slip.isPublished ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                <CheckCircle2 className="w-3 h-3" /> Published
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                                <Clock className="w-3 h-3" /> Draft
                               </span>
                             )}
                           </td>
-
-                          <td className="py-3.5 px-3 font-semibold text-slate-800 dark:text-slate-200">
-                            ₹{slip.earnings.totalGross.toLocaleString('en-IN')}
-                          </td>
-
-                          <td className="py-3.5 px-3 font-medium text-rose-600 dark:text-rose-400">
-                            -₹{slip.deductions.totalDeductions.toLocaleString('en-IN')}
-                          </td>
-
-                          <td className="py-3.5 px-3">
-                            <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
-                              ₹{slip.netPay.toLocaleString('en-IN')}
-                            </span>
-                          </td>
-
-                          <td className="py-3.5 px-3">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              slip.status === 'PAID'
-                                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                                : slip.status === 'APPROVED'
-                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                            }`}>
-                              {slip.status}
-                            </span>
-                          </td>
-
-                          <td className="py-3.5 px-4 text-right">
+                          <td className="px-4 py-3.5 text-right space-x-1.5 whitespace-nowrap">
                             <button
+                              type="button"
                               onClick={() => setSelectedSlipForModal(slip)}
-                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs transition-colors"
+                              title="View / Preview Slip"
                             >
                               <Eye className="w-3.5 h-3.5" />
-                              View Payslip
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================== */}
-        {/* TAB 3: SALARY ADVANCES & LOANS */}
-        {/* ========================================================== */}
-        {activeTab === 'ADVANCES' && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-700/60 pb-4">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                    Salary Advances & Loan Recoveries
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Track emergency advances, approval workflows, and monthly salary deductions
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowAdvanceModal(true)}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm transition-colors self-start sm:self-auto"
-                >
-                  <Plus className="w-4 h-4" />
-                  New Advance Request
-                </button>
-              </div>
-
-              {advances.length === 0 ? (
-                <div className="py-12 text-center">
-                  <CreditCard className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    No Advance Records
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1">
-                    Staff advance requests and recovery schedules will appear here.
-                  </p>
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100 dark:divide-slate-700/60 mt-2">
-                  {advances.map((adv) => (
-                    <div
-                      key={adv.id}
-                      className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/60 dark:hover:bg-slate-700/20 px-3 rounded-xl transition-colors"
-                    >
-                      <div className="flex items-start space-x-3.5">
-                        <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold text-sm">
-                          <DollarSign className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                              {adv.employeeName}
-                            </h4>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              adv.status === 'APPROVED'
-                                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                                : adv.status === 'RECOVERED'
-                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                : adv.status === 'REJECTED'
-                                ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
-                                : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                            }`}>
-                              {adv.status}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            Reason: {adv.reason} • Applied on: {adv.requestedDate}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between md:justify-end gap-4">
-                        <div className="text-right">
-                          <span className="text-xs text-slate-400 block">Total / Remaining</span>
-                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            ₹{adv.amount.toLocaleString('en-IN')} / 
-                          </span>{' '}
-                          <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
-                            ₹{adv.remainingAmount.toLocaleString('en-IN')}
-                          </span>
-                          <span className="text-[10px] text-slate-400 block">
-                            ₹{adv.monthlyDeductionAmount}/mo EMI
-                          </span>
-                        </div>
-
-                        {canManagePayroll && adv.status === 'PENDING' && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              disabled={processingAction}
-                              onClick={() => handleUpdateAdvanceStatus(adv.id, 'APPROVED')}
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm"
-                            >
-                              <Check className="w-3.5 h-3.5" />
-                              Approve
+                              View
                             </button>
 
                             <button
-                              disabled={processingAction}
-                              onClick={() => handleUpdateAdvanceStatus(adv.id, 'REJECTED')}
-                              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm"
+                              type="button"
+                              onClick={() => PayslipService.downloadPDF(slip, activeCompany)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-semibold text-xs border border-emerald-200 dark:border-emerald-800 transition-colors"
+                              title="Download PDF"
                             >
-                              <X className="w-3.5 h-3.5" />
-                              Reject
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================== */}
-        {/* TAB 4: SALARY STRUCTURES */}
-        {/* ========================================================== */}
-        {activeTab === 'STRUCTURES' && canManagePayroll && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-700/60 pb-4">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                    Salary Structures & Statutory Rules
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Define Basic %, HRA %, PF (12%), ESIC (0.75%), and Professional Tax parameters
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setEditingStructure({
-                      name: '',
-                      code: '',
-                      basicPercentage: 50,
-                      hraPercentage: 20,
-                      daPercentage: 15,
-                      conveyanceAllowance: 1600,
-                      medicalAllowance: 1250,
-                      specialAllowance: 0,
-                      pfApplicable: true,
-                      esicApplicable: true,
-                      ptApplicable: true,
-                      status: 'ACTIVE'
-                    });
-                    setShowStructureModal(true);
-                  }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm transition-colors self-start sm:self-auto"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create Structure
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                {salaryStructures.map((str) => (
-                  <div
-                    key={str.id}
-                    className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40 hover:border-emerald-500 transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">
-                        {str.name}
-                      </h4>
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full">
-                        {str.code}
-                      </span>
-                    </div>
-
-                    <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 my-3">
-                      <div className="flex justify-between">
-                        <span>Basic Pay:</span>
-                        <span className="font-semibold text-slate-900 dark:text-white">{str.basicPercentage}% of Gross</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>HRA:</span>
-                        <span className="font-semibold text-slate-900 dark:text-white">{str.hraPercentage}% of Basic</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>DA:</span>
-                        <span className="font-semibold text-slate-900 dark:text-white">{str.daPercentage}% of Basic</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Conveyance + Medical:</span>
-                        <span className="font-semibold text-slate-900 dark:text-white">₹{str.conveyanceAllowance + str.medicalAllowance}/mo</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-200 dark:border-slate-700 flex flex-wrap gap-1.5">
-                      {str.pfApplicable && (
-                        <span className="text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded font-medium">
-                          PF (12%)
-                        </span>
-                      )}
-                      {str.esicApplicable && (
-                        <span className="text-[10px] bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded font-medium">
-                          ESIC (0.75%)
-                        </span>
-                      )}
-                      {str.ptApplicable && (
-                        <span className="text-[10px] bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded font-medium">
-                          PT (₹200)
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================== */}
-        {/* TAB 5: EMPLOYEE SALARY PROFILES */}
-        {/* ========================================================== */}
-        {activeTab === 'PROFILES' && canManagePayroll && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                    Staff Salary Profiles & Bank Details
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Individual monthly CTC, base wages, bank account, IFSC, PAN, and UAN mappings
-                  </p>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-                  <thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 font-semibold uppercase text-[10px] tracking-wider">
-                    <tr>
-                      <th className="py-3 px-4 rounded-l-lg">Employee</th>
-                      <th className="py-3 px-3">Monthly Base / CTC</th>
-                      <th className="py-3 px-3">Bank Details</th>
-                      <th className="py-3 px-3">PAN & UAN</th>
-                      <th className="py-3 px-3">Structure</th>
-                      <th className="py-3 px-4 text-right rounded-r-lg">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
-                    {employees.map((emp) => {
-                      const prof = salaryProfiles.find(p => p.employeeId === emp.id || p.id === emp.id);
-                      const baseSalary = prof?.baseMonthlySalary || 18000;
-                      const ctc = prof?.monthlyCtc || 21500;
-                      return (
-                        <tr key={emp.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-700/30 transition-colors">
-                          <td className="py-3.5 px-4">
-                            <div className="font-bold text-slate-900 dark:text-white text-xs">
-                              {emp.firstName} {emp.lastName}
-                            </div>
-                            <div className="text-[11px] text-slate-400">
-                              {emp.id} • {emp.designation || 'Staff'}
-                            </div>
-                          </td>
-
-                          <td className="py-3.5 px-3">
-                            <div className="font-bold text-slate-900 dark:text-white">
-                              ₹{baseSalary.toLocaleString('en-IN')} / mo
-                            </div>
-                            <div className="text-[10px] text-slate-400">
-                              CTC: ₹{ctc.toLocaleString('en-IN')}
-                            </div>
-                          </td>
-
-                          <td className="py-3.5 px-3">
-                            <div className="font-medium text-slate-800 dark:text-slate-200">
-                              {prof?.bankName || 'State Bank of India'}
-                            </div>
-                            <div className="text-[11px] text-slate-400 font-mono">
-                              {prof?.accountNumber || '••••••••1234'} • {prof?.ifscCode || 'SBIN0001234'}
-                            </div>
-                          </td>
-
-                          <td className="py-3.5 px-3 font-mono text-[11px]">
-                            <div>PAN: {prof?.panNumber || 'ABCDE1234F'}</div>
-                            <div className="text-slate-400">UAN: {prof?.uanNumber || '101234567890'}</div>
-                          </td>
-
-                          <td className="py-3.5 px-3">
-                            <span className="text-[10px] font-semibold px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full">
-                              Standard Structure
-                            </span>
-                          </td>
-
-                          <td className="py-3.5 px-4 text-right">
-                            <button
-                              onClick={() => {
-                                setSelectedProfileForEdit(prof || {
-                                  id: emp.id,
-                                  companyId,
-                                  employeeId: emp.id,
-                                  employeeName: `${emp.firstName} ${emp.lastName}`,
-                                  structureId: salaryStructures[0]?.id || 'STD',
-                                  monthlyCtc: 21500,
-                                  baseMonthlySalary: 18000,
-                                  bankName: 'State Bank of India',
-                                  accountNumber: '123456789012',
-                                  ifscCode: 'SBIN0001234',
-                                  panNumber: 'ABCDE1234F',
-                                  paymentMode: 'BANK_TRANSFER',
-                                  updatedAt: new Date().toISOString()
-                                });
-                                setShowProfileModal(true);
-                              }}
-                              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs font-semibold transition-colors"
-                            >
-                              Edit Profile
+                              <Download className="w-3.5 h-3.5" />
+                              PDF
                             </button>
                           </td>
                         </tr>
                       );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* ============================================================== */}
-      {/* MODAL 1: RUN MONTHLY PAYROLL */}
-      {/* ============================================================== */}
-      {showRunPayrollModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 animate-in fade-in zoom-in duration-150">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-emerald-600" />
-                Run Monthly Payroll
+      {/* ============================================================ */}
+      {/* TAB: NEFT / RTGS BANK BATCH EXPORT */}
+      {/* ============================================================ */}
+      {activeTab === 'BANK_EXPORT' && canManagePayroll && (
+        <div className="space-y-6">
+          {/* Top Metrics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Payment Batches</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                {bankMetrics.totalBatches}
               </h3>
-              <button
-                onClick={() => setShowRunPayrollModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <p className="text-[11px] text-slate-400 mt-1">
+                ₹ {bankMetrics.totalBatchAmount.toLocaleString('en-IN')} total batch value
+              </p>
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              This will calculate payable days, loss of pay (LOP), Basic, HRA, DA, PF (12%), ESIC, Professional Tax, and advance deductions for all active staff.
-            </p>
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Ready for Approval</p>
+              <h3 className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
+                {bankMetrics.readyForApproval}
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-1">Awaiting financial authorization</p>
+            </div>
 
-            <div className="space-y-4">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Exported to Bank</p>
+              <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                {bankMetrics.exportedCount}
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-1">
+                ₹ {bankMetrics.totalExportedAmount.toLocaleString('en-IN')} successfully generated
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Corporate Bank Accounts</p>
+              <h3 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
+                {companyBanks.length}
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-1">Disbursement source accounts</p>
+            </div>
+          </div>
+
+          {/* Action & Filter Bar */}
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search */}
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search batches, cycles..."
+                  value={batchSearchQuery}
+                  onChange={(e) => setBatchSearchQuery(e.target.value)}
+                  className="pl-9 pr-4 py-2 rounded-xl text-xs border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white w-56 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                {(['ALL', 'READY_FOR_APPROVAL', 'APPROVED', 'EXPORTED', 'CANCELLED'] as const).map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setBatchStatusFilter(st)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      batchStatusFilter === st
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {st === 'ALL' ? 'All Batches' : st.replace(/_/g, ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingCompanyBank(null);
+                  setShowCompanyBankModal(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-colors"
+              >
+                <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+                Manage Debit Bank Accounts
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowCreateBatchModal(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Prepare Bank Payment Batch
+              </button>
+            </div>
+          </div>
+
+          {/* Batches Table */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Select Month
-                </label>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Bank Payment Batches</h3>
+                <p className="text-xs text-slate-500">
+                  Direct corporate NEFT / RTGS disbursements from approved payroll runs
+                </p>
+              </div>
+              <span className="text-xs text-slate-500 font-mono">
+                {filteredBatches.length} of {paymentBatches.length} Batches
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 uppercase font-semibold tracking-wider text-[10px]">
+                  <tr>
+                    <th className="px-4 py-3">Batch Number</th>
+                    <th className="px-4 py-3">Payroll Cycle</th>
+                    <th className="px-4 py-3">Mode</th>
+                    <th className="px-4 py-3">Beneficiaries</th>
+                    <th className="px-4 py-3">Total Amount (INR)</th>
+                    <th className="px-4 py-3">Debit Bank</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {filteredBatches.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
+                        <Landmark className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                        <p className="font-semibold text-slate-600 dark:text-slate-400">No bank payment batches found</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Click "Prepare Bank Payment Batch" to create one from an approved payroll cycle.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredBatches.map((batch) => {
+                      const defaultBank = companyBanks.find(b => b.id === batch.companyBankAccountId) || companyBanks[0] || null;
+                      return (
+                        <tr key={batch.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                          <td className="px-4 py-3.5">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedBatchForDetail(batch)}
+                              className="font-mono font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 text-xs"
+                            >
+                              {batch.batchNumber}
+                            </button>
+                            <span className="text-[10px] text-slate-400">
+                              Created by {batch.createdByName || 'Admin'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <div className="font-semibold text-slate-900 dark:text-white">
+                              {batch.payrollCycleLabel}
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              Month {batch.month}/{batch.year}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className={`inline-flex px-2 py-0.5 rounded-md font-bold text-[10px] ${
+                              batch.paymentMethod === 'RTGS' 
+                                ? 'bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300' 
+                                : batch.paymentMethod === 'NEFT'
+                                ? 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300'
+                                : 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
+                            }`}>
+                              {batch.paymentMethod}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                              {batch.validBeneficiaryCount}
+                            </span>
+                            <span className="text-slate-400"> / {batch.beneficiaryCount}</span>
+                            {batch.beneficiaryCount - batch.validBeneficiaryCount > 0 && (
+                              <span className="text-[10px] text-rose-500 font-medium ml-1">
+                                ({batch.beneficiaryCount - batch.validBeneficiaryCount} invalid)
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 font-bold text-slate-900 dark:text-white text-sm">
+                            ₹ {batch.totalAmount.toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <div className="font-medium text-slate-800 dark:text-slate-200 truncate max-w-[120px]">
+                              {batch.companyBankName || defaultBank?.bankName || 'Company Account'}
+                            </div>
+                            <div className="text-[10px] font-mono text-slate-400">
+                              {batch.companyMaskedAccount || defaultBank?.maskedAccountNumber || '••••••••1234'}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            {batch.status === 'APPROVED' && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                <CheckCircle2 className="w-3 h-3" /> Approved
+                              </span>
+                            )}
+                            {batch.status === 'EXPORTED' && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                <Download className="w-3 h-3" /> Exported (v{batch.exportVersion || 1})
+                              </span>
+                            )}
+                            {batch.status === 'READY_FOR_APPROVAL' && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                <Clock className="w-3 h-3" /> Ready for Approval
+                              </span>
+                            )}
+                            {batch.status === 'VALIDATION_FAILED' && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                                <AlertCircle className="w-3 h-3" /> Validation Issues
+                              </span>
+                            )}
+                            {batch.status === 'CANCELLED' && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                <Ban className="w-3 h-3" /> Cancelled
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 text-right space-x-1.5 whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedBatchForDetail(batch)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs transition-colors"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              Inspect
+                            </button>
+
+                            {batch.status !== 'APPROVED' && batch.status !== 'EXPORTED' && batch.status !== 'CANCELLED' && (isSuperAdmin || isCompanyAdmin) && (
+                              <button
+                                type="button"
+                                onClick={() => handleApproveBatch(batch)}
+                                disabled={processing || batch.validBeneficiaryCount === 0}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-xs transition-colors"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Approve
+                              </button>
+                            )}
+
+                            {(batch.status === 'APPROVED' || batch.status === 'EXPORTED') && (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedBatchForExport(batch)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-xs transition-colors"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                Export File
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* TAB 3: MY PAYSLIPS (EMPLOYEE SELF-SERVICE) */}
+      {/* ============================================================ */}
+      {activeTab === 'MY_SLIPS' && (
+        <div className="space-y-6">
+          {/* Employee Annual Earnings Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Net Take-Home (YTD)</p>
+              <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                ₹ {mySlipsMetrics.totalEarned.toLocaleString('en-IN')}
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-1">Across {mySlipsMetrics.count} payslips</p>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Average Monthly Salary</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                ₹ {mySlipsMetrics.avgMonthly.toLocaleString('en-IN')}
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-1">Net compensation average</p>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Gross Earnings</p>
+              <h3 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">
+                ₹ {mySlipsMetrics.totalGross.toLocaleString('en-IN')}
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-1">Base + allowances + overtime</p>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Statutory Deductions</p>
+              <h3 className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
+                ₹ {mySlipsMetrics.totalDeductions.toLocaleString('en-IN')}
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-1">PF, ESIC, PT, TDS</p>
+            </div>
+          </div>
+
+          {/* My Slips History List */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Monthly Payslip Archive</h3>
+                <p className="text-xs text-slate-500">Official digitally verified salary statements for download</p>
+              </div>
+              <span className="text-xs text-slate-500 font-mono">
+                Employee: {userSession.fullName || userSession.email}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 uppercase font-semibold tracking-wider">
+                  <tr>
+                    <th className="px-5 py-3">Salary Month</th>
+                    <th className="px-5 py-3">Worked Days</th>
+                    <th className="px-5 py-3">Gross Salary</th>
+                    <th className="px-5 py-3">Deductions</th>
+                    <th className="px-5 py-3">Net Take-Home</th>
+                    <th className="px-5 py-3">Disbursement Status</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {mySlips.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-5 py-10 text-center text-slate-400">
+                        No published salary slips found for your account yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    mySlips.map((slip) => {
+                      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                      const mLabel = `${monthNames[(slip.month || 1) - 1]} ${slip.year}`;
+                      return (
+                        <tr key={slip.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                          <td className="px-5 py-4 font-bold text-slate-900 dark:text-white">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-emerald-600" />
+                              {mLabel}
+                            </div>
+                          </td>
+                          <td className="px-5 py-4 font-medium text-slate-700 dark:text-slate-300">
+                            {slip.workedDays} / {slip.totalMonthDays} days
+                          </td>
+                          <td className="px-5 py-4 font-semibold text-slate-800 dark:text-slate-200">
+                            ₹ {(slip.earnings?.totalGross || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-5 py-4 font-semibold text-rose-600 dark:text-rose-400">
+                            ₹ {(slip.deductions?.totalDeductions || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-5 py-4 font-black text-emerald-600 dark:text-emerald-400 text-sm">
+                            ₹ {(slip.netPay || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                              <CheckCircle2 className="w-3 h-3" /> Disbursed
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-right space-x-2">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedSlipForModal(slip)}
+                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors"
+                            >
+                              Preview
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => PayslipService.downloadPDF(slip, activeCompany)}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-xs transition-colors inline-flex items-center gap-1"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              Download PDF
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* TAB 4: SALARY STRUCTURES */}
+      {/* ============================================================ */}
+      {activeTab === 'STRUCTURES' && canManagePayroll && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Compensation Structures</h3>
+              <p className="text-xs text-slate-500">Define statutory component breakdown and allowance percentages</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowStructModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              Add Structure
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {structures.map((s) => (
+              <div key={s.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">{s.name}</h4>
+                  <span className="px-2 py-0.5 rounded-md font-mono text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                    {s.code}
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-xs divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="flex justify-between pt-1">
+                    <span className="text-slate-500">Basic Share:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{s.basicPercentage}%</span>
+                  </div>
+                  <div className="flex justify-between pt-1">
+                    <span className="text-slate-500">HRA Share:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{s.hraPercentage}%</span>
+                  </div>
+                  <div className="flex justify-between pt-1">
+                    <span className="text-slate-500">DA Share:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{s.daPercentage}%</span>
+                  </div>
+                  <div className="flex justify-between pt-1">
+                    <span className="text-slate-500">Conveyance Allowance:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">₹ {s.conveyanceAllowance || 0}</span>
+                  </div>
+                  <div className="flex justify-between pt-1">
+                    <span className="text-slate-500">Medical Allowance:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">₹ {s.medicalAllowance || 0}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  {s.pfApplicable && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                      PF Enabled
+                    </span>
+                  )}
+                  {s.esicApplicable && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                      ESIC Enabled
+                    </span>
+                  )}
+                  {s.ptApplicable && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300">
+                      PT Enabled
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* TAB 5: EMPLOYEE SALARY PROFILES */}
+      {/* ============================================================ */}
+      {activeTab === 'PROFILES' && canManagePayroll && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+          <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Staff Compensation Profiles</h3>
+              <p className="text-xs text-slate-500">Bank accounts, statutory IDs (PAN/UAN), and monthly CTC</p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 uppercase font-semibold tracking-wider">
+                <tr>
+                  <th className="px-5 py-3">Employee Name</th>
+                  <th className="px-5 py-3">Base Salary</th>
+                  <th className="px-5 py-3">Monthly CTC</th>
+                  <th className="px-5 py-3">Bank Details</th>
+                  <th className="px-5 py-3">PAN / UAN</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {employees.map((emp) => {
+                  const prof = profiles.find(p => p.employeeId === emp.id || p.id === emp.id);
+                  return (
+                    <tr key={emp.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <p className="font-bold text-slate-900 dark:text-white">{emp.firstName} {emp.lastName}</p>
+                        <p className="text-[11px] text-slate-400 font-mono">{emp.id} • {emp.designation || 'Staff'}</p>
+                      </td>
+                      <td className="px-5 py-3.5 font-semibold text-slate-800 dark:text-slate-200">
+                        ₹ {(prof?.baseMonthlySalary || 18000).toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-5 py-3.5 font-bold text-emerald-600 dark:text-emerald-400">
+                        ₹ {(prof?.monthlyCtc || 21500).toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-5 py-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                        {prof?.bankName || 'State Bank of India'}<br />
+                        <span className="text-slate-400">{prof?.accountNumber || '••••••••1234'} ({prof?.ifscCode || 'SBIN0001234'})</span>
+                      </td>
+                      <td className="px-5 py-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                        PAN: {prof?.panNumber || 'ABCDE1234F'}<br />
+                        UAN: {prof?.uanNumber || '100123456789'}
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileForm(prof || {
+                              id: emp.id,
+                              companyId,
+                              employeeId: emp.id,
+                              employeeName: `${emp.firstName} ${emp.lastName}`,
+                              structureId: structures[0]?.id || 'STD_SEC',
+                              monthlyCtc: 21500,
+                              baseMonthlySalary: 18000,
+                              bankName: 'State Bank of India',
+                              accountNumber: '12345678901',
+                              ifscCode: 'SBIN0001234',
+                              panNumber: 'ABCDE1234F',
+                              paymentMode: 'BANK_TRANSFER'
+                            });
+                            setShowProfileModal(true);
+                          }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          Edit Profile
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* TAB 6: ADVANCES & DEDUCTIONS */}
+      {/* ============================================================ */}
+      {activeTab === 'ADVANCES' && canManagePayroll && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Salary Advances & Loan Recoveries</h3>
+              <p className="text-xs text-slate-500">Track approved loans and automatic monthly payroll installment deductions</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAdvanceModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              Request Advance
+            </button>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 uppercase font-semibold tracking-wider">
+                  <tr>
+                    <th className="px-5 py-3">Employee</th>
+                    <th className="px-5 py-3">Requested Amount</th>
+                    <th className="px-5 py-3">Monthly Deduction</th>
+                    <th className="px-5 py-3">Remaining Balance</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3">Reason</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {advances.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
+                        No active salary advance requests.
+                      </td>
+                    </tr>
+                  ) : (
+                    advances.map((adv) => (
+                      <tr key={adv.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                        <td className="px-5 py-3.5 font-bold text-slate-900 dark:text-white">
+                          {adv.employeeName}
+                        </td>
+                        <td className="px-5 py-3.5 font-semibold text-slate-800 dark:text-slate-200">
+                          ₹ {(adv.amount || 0).toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-5 py-3.5 font-semibold text-rose-600 dark:text-rose-400">
+                          ₹ {(adv.monthlyDeductionAmount || 0).toLocaleString('en-IN')} / mo
+                        </td>
+                        <td className="px-5 py-3.5 font-bold text-emerald-600 dark:text-emerald-400">
+                          ₹ {(adv.remainingAmount || 0).toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                            adv.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {adv.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-500 max-w-xs truncate">
+                          {adv.reason || 'Personal necessity'}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL: INTERACTIVE PAYSLIP PREVIEW & PUBLISHING */}
+      {/* ============================================================ */}
+      {selectedSlipForModal && (
+        <PayslipModal
+          slip={selectedSlipForModal}
+          company={activeCompany}
+          userSession={userSession}
+          onClose={() => setSelectedSlipForModal(null)}
+          onStatusChange={async () => {
+            if (companyId && selectedCycleId) {
+              const updated = await FirestoreService.getSalarySlips(companyId, selectedCycleId);
+              setCycleSlips(updated);
+            }
+          }}
+        />
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL: PROCESS MONTHLY PAYROLL */}
+      {/* ============================================================ */}
+      {showCalcModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Run Monthly Payroll Engine</h3>
+                <p className="text-xs text-slate-500">Executes statutory deduction algorithms & attendance proration</p>
+              </div>
+            </div>
+
+            {calcFeedback && (
+              <div className={`p-3 rounded-xl text-xs font-semibold ${
+                calcFeedback.success ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
+              }`}>
+                {calcFeedback.message}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Month</label>
                 <select
-                  value={runMonth}
-                  onChange={(e) => setRunMonth(Number(e.target.value))}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
+                  value={calcMonth}
+                  onChange={(e) => setCalcMonth(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
                 >
-                  {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, idx) => (
-                    <option key={m} value={idx + 1}>{m}</option>
-                  ))}
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
+                    const mName = new Date(2026, m - 1, 1).toLocaleString('default', { month: 'long' });
+                    return <option key={m} value={m}>{mName}</option>;
+                  })}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Select Year
-                </label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Year</label>
                 <input
                   type="number"
-                  value={runYear}
-                  onChange={(e) => setRunYear(Number(e.target.value))}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
+                  value={calcYear}
+                  onChange={(e) => setCalcYear(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
                 />
-              </div>
-
-              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300">
-                <strong>{totalEmployeesCount} Employees</strong> will be processed for this cycle.
               </div>
             </div>
 
-            <div className="flex justify-end gap-2.5 mt-6">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 space-y-1">
+              <p className="font-semibold text-slate-800 dark:text-slate-200">Execution Checks:</p>
+              <p>• Verified attendance & approved leave records will be ingested.</p>
+              <p>• PF (12%), ESIC (0.75%), PT, and TDS statutory caps applied.</p>
+              <p>• Advances with remaining balance will have recovery deducted.</p>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2">
               <button
                 type="button"
-                onClick={() => setShowRunPayrollModal(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                onClick={() => setShowCalcModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                disabled={processingAction}
+                disabled={processing}
                 onClick={handleExecutePayroll}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-2 shadow-sm"
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20"
               >
-                {processingAction ? 'Calculating...' : 'Start Computation'}
+                {processing ? 'Calculating...' : 'Run Calculation'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ============================================================== */}
-      {/* MODAL 2: INTERACTIVE PRINTABLE PAYSLIP VIEWER */}
-      {/* ============================================================== */}
-      {selectedSlipForModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 my-8">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-700">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-emerald-600" />
-                <span className="font-bold text-slate-900 dark:text-white text-sm">
-                  Official Salary Slip • {selectedSlipForModal.payrollCycleId}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => window.print()}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  Print / PDF
-                </button>
-                <button
-                  onClick={() => setSelectedSlipForModal(null)}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
+      {/* ============================================================ */}
+      {/* MODAL: SALARY STRUCTURE CREATE/EDIT */}
+      {/* ============================================================ */}
+      {showStructModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Create Salary Structure</h3>
 
-            {/* Payslip Body */}
-            <div className="p-4 my-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-900/40 font-sans">
-              {/* Company Header */}
-              <div className="text-center pb-4 border-b border-slate-200 dark:border-slate-700">
-                <h2 className="text-base font-extrabold text-slate-900 dark:text-white tracking-wide uppercase">
-                  {activeCompany?.brandName || activeCompany?.companyLegalName || 'LOG SHEET MUSTER ENTERPRISE'}
-                </h2>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Registered Security & Facility Management Services • GSTIN: 27AABCU9603R1ZM
-                </p>
-                <span className="inline-block mt-1 px-3 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold rounded-full">
-                  PAYSLIP FOR {selectedSlipForModal.payrollCycleId}
-                </span>
-              </div>
-
-              {/* Employee & Bank Info Grid */}
-              <div className="grid grid-cols-2 gap-4 py-3 text-xs border-b border-slate-200 dark:border-slate-700">
-                <div>
-                  <div className="text-slate-400 text-[10px] uppercase font-bold">Employee Information</div>
-                  <div className="font-bold text-slate-900 dark:text-white text-sm">{selectedSlipForModal.employeeName}</div>
-                  <div className="text-slate-600 dark:text-slate-400">ID: {selectedSlipForModal.employeeId}</div>
-                  <div className="text-slate-600 dark:text-slate-400">Designation: {selectedSlipForModal.designation || 'Staff'}</div>
-                  <div className="text-slate-600 dark:text-slate-400">Department: {selectedSlipForModal.departmentName || 'Operations'}</div>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-slate-400 text-[10px] uppercase font-bold">Bank & Statutory</div>
-                  <div className="font-semibold text-slate-900 dark:text-white">{selectedSlipForModal.bankName || 'State Bank of India'}</div>
-                  <div className="text-slate-600 dark:text-slate-400 font-mono">A/C: {selectedSlipForModal.accountNumber || '••••••••1234'}</div>
-                  <div className="text-slate-600 dark:text-slate-400 font-mono">IFSC: {selectedSlipForModal.ifscCode || 'SBIN0001234'}</div>
-                  <div className="text-slate-600 dark:text-slate-400 font-mono">PAN: {selectedSlipForModal.panNumber || 'ABCDE1234F'}</div>
-                </div>
-              </div>
-
-              {/* Attendance Breakdown */}
-              <div className="py-2.5 px-3 bg-white dark:bg-slate-800 rounded-lg my-3 border border-slate-200 dark:border-slate-700 flex justify-between text-xs font-semibold">
-                <div>Total Month Days: <span className="text-slate-900 dark:text-white font-bold">{selectedSlipForModal.totalMonthDays}</span></div>
-                <div>Worked / Paid Days: <span className="text-emerald-600 dark:text-emerald-400 font-bold">{selectedSlipForModal.payableDays}</span></div>
-                <div>LOP (Unpaid): <span className="text-rose-500 font-bold">{selectedSlipForModal.lopDays}</span></div>
-              </div>
-
-              {/* Two Column Earnings vs Deductions */}
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                {/* Earnings */}
-                <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-3 bg-white dark:bg-slate-800">
-                  <div className="font-bold text-slate-900 dark:text-white pb-2 border-b border-slate-100 dark:border-slate-700 uppercase text-[10px] text-emerald-600">
-                    Earnings (उपार्जन)
-                  </div>
-                  <div className="space-y-1.5 pt-2 text-slate-700 dark:text-slate-300">
-                    <div className="flex justify-between"><span>Basic Pay</span><span className="font-semibold">₹{selectedSlipForModal.earnings.basic.toLocaleString('en-IN')}</span></div>
-                    <div className="flex justify-between"><span>HRA</span><span className="font-semibold">₹{selectedSlipForModal.earnings.hra.toLocaleString('en-IN')}</span></div>
-                    <div className="flex justify-between"><span>Dearness Allowance (DA)</span><span className="font-semibold">₹{selectedSlipForModal.earnings.da.toLocaleString('en-IN')}</span></div>
-                    <div className="flex justify-between"><span>Conveyance</span><span className="font-semibold">₹{selectedSlipForModal.earnings.conveyance.toLocaleString('en-IN')}</span></div>
-                    <div className="flex justify-between"><span>Medical Allowance</span><span className="font-semibold">₹{selectedSlipForModal.earnings.medical.toLocaleString('en-IN')}</span></div>
-                    {selectedSlipForModal.earnings.specialAllowance > 0 && (
-                      <div className="flex justify-between"><span>Special Allowance</span><span className="font-semibold">₹{selectedSlipForModal.earnings.specialAllowance.toLocaleString('en-IN')}</span></div>
-                    )}
-                  </div>
-                  <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-700 flex justify-between font-bold text-slate-900 dark:text-white">
-                    <span>Total Gross</span>
-                    <span>₹{selectedSlipForModal.earnings.totalGross.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-
-                {/* Deductions */}
-                <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-3 bg-white dark:bg-slate-800">
-                  <div className="font-bold text-slate-900 dark:text-white pb-2 border-b border-slate-100 dark:border-slate-700 uppercase text-[10px] text-rose-600">
-                    Deductions (कपात)
-                  </div>
-                  <div className="space-y-1.5 pt-2 text-slate-700 dark:text-slate-300">
-                    <div className="flex justify-between"><span>Provident Fund (PF)</span><span className="font-semibold">₹{selectedSlipForModal.deductions.pf.toLocaleString('en-IN')}</span></div>
-                    <div className="flex justify-between"><span>ESIC (0.75%)</span><span className="font-semibold">₹{selectedSlipForModal.deductions.esic.toLocaleString('en-IN')}</span></div>
-                    <div className="flex justify-between"><span>Professional Tax (PT)</span><span className="font-semibold">₹{selectedSlipForModal.deductions.pt.toLocaleString('en-IN')}</span></div>
-                    {selectedSlipForModal.deductions.advanceDeduction > 0 && (
-                      <div className="flex justify-between text-purple-600 font-semibold"><span>Advance Recovery</span><span>₹{selectedSlipForModal.deductions.advanceDeduction.toLocaleString('en-IN')}</span></div>
-                    )}
-                  </div>
-                  <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-700 flex justify-between font-bold text-rose-600">
-                    <span>Total Deductions</span>
-                    <span>-₹{selectedSlipForModal.deductions.totalDeductions.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Net Pay Highlight Banner */}
-              <div className="mt-4 p-4 rounded-xl bg-emerald-600 text-white flex items-center justify-between shadow-sm">
-                <div>
-                  <div className="text-[10px] uppercase font-bold tracking-wider opacity-90">Net Payable Amount (निव्वळ वेतन)</div>
-                  <div className="text-xl font-extrabold">₹{selectedSlipForModal.netPay.toLocaleString('en-IN')}</div>
-                  <div className="text-[11px] opacity-90 italic">{selectedSlipForModal.netPayInWords}</div>
-                </div>
-                <div className="text-right text-xs">
-                  <div className="font-bold">STATUS: {selectedSlipForModal.status}</div>
-                  <div className="text-[10px] opacity-80">Auto Generated System Payslip</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={() => setSelectedSlipForModal(null)}
-                className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-xs font-bold"
-              >
-                Close Payslip
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================== */}
-      {/* MODAL 3: REQUEST SALARY ADVANCE */}
-      {/* ============================================================== */}
-      {showAdvanceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-indigo-600" />
-                Request Salary Advance
-              </h3>
-              <button
-                onClick={() => setShowAdvanceModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {canManagePayroll && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Select Employee
-                  </label>
-                  <select
-                    value={advanceForm.employeeId}
-                    onChange={(e) => {
-                      const emp = employees.find(em => em.id === e.target.value);
-                      setAdvanceForm({
-                        ...advanceForm,
-                        employeeId: e.target.value,
-                        employeeName: emp ? `${emp.firstName} ${emp.lastName}` : userSession.fullName || ''
-                      });
-                    }}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
-                  >
-                    {employees.map(em => (
-                      <option key={em.id} value={em.id}>{em.firstName} {em.lastName} ({em.id})</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
+            <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Advance Amount (₹)
-                </label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Structure Name</label>
                 <input
-                  type="number"
-                  min="500"
-                  max="100000"
-                  value={advanceForm.amount}
-                  onChange={(e) => setAdvanceForm({ ...advanceForm, amount: Number(e.target.value) })}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
+                  type="text"
+                  value={structForm.name || ''}
+                  onChange={(e) => setStructForm({ ...structForm, name: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Monthly Deduction (₹ EMI per cycle)
-                </label>
-                <input
-                  type="number"
-                  min="500"
-                  max={advanceForm.amount}
-                  value={advanceForm.monthlyDeductionAmount}
-                  onChange={(e) => setAdvanceForm({ ...advanceForm, monthlyDeductionAmount: Number(e.target.value) })}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Reason for Advance
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Medical emergency, festival, family urgent expense..."
-                  value={advanceForm.reason}
-                  onChange={(e) => setAdvanceForm({ ...advanceForm, reason: e.target.value })}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2.5 mt-6">
-              <button
-                type="button"
-                onClick={() => setShowAdvanceModal(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={processingAction}
-                onClick={handleCreateAdvance}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-2 shadow-sm"
-              >
-                {processingAction ? 'Submitting...' : 'Submit Request'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================== */}
-      {/* MODAL 4: SALARY STRUCTURE CONFIGURATION */}
-      {/* ============================================================== */}
-      {showStructureModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 my-8">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Sliders className="w-5 h-5 text-emerald-600" />
-                Configure Salary Structure
-              </h3>
-              <button
-                onClick={() => setShowStructureModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Structure Name</label>
-                  <input
-                    type="text"
-                    value={editingStructure.name || ''}
-                    onChange={(e) => setEditingStructure({ ...editingStructure, name: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
-                    placeholder="e.g. Guard Tier 1"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Structure Code</label>
-                  <input
-                    type="text"
-                    value={editingStructure.code || ''}
-                    onChange={(e) => setEditingStructure({ ...editingStructure, code: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium uppercase"
-                    placeholder="e.g. SEC_T1"
-                  />
-                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
@@ -1598,143 +1816,102 @@ export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Basic %</label>
                   <input
                     type="number"
-                    value={editingStructure.basicPercentage || 50}
-                    onChange={(e) => setEditingStructure({ ...editingStructure, basicPercentage: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
+                    value={structForm.basicPercentage || 50}
+                    onChange={(e) => setStructForm({ ...structForm, basicPercentage: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">HRA % of Basic</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">HRA %</label>
                   <input
                     type="number"
-                    value={editingStructure.hraPercentage || 20}
-                    onChange={(e) => setEditingStructure({ ...editingStructure, hraPercentage: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
+                    value={structForm.hraPercentage || 20}
+                    onChange={(e) => setStructForm({ ...structForm, hraPercentage: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">DA % of Basic</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">DA %</label>
                   <input
                     type="number"
-                    value={editingStructure.daPercentage || 15}
-                    onChange={(e) => setEditingStructure({ ...editingStructure, daPercentage: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
+                    value={structForm.daPercentage || 15}
+                    onChange={(e) => setStructForm({ ...structForm, daPercentage: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Conveyance (₹/mo)</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Conveyance Allowance (₹)</label>
                   <input
                     type="number"
-                    value={editingStructure.conveyanceAllowance || 1600}
-                    onChange={(e) => setEditingStructure({ ...editingStructure, conveyanceAllowance: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
+                    value={structForm.conveyanceAllowance || 1600}
+                    onChange={(e) => setStructForm({ ...structForm, conveyanceAllowance: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Medical (₹/mo)</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Medical Allowance (₹)</label>
                   <input
                     type="number"
-                    value={editingStructure.medicalAllowance || 1250}
-                    onChange={(e) => setEditingStructure({ ...editingStructure, medicalAllowance: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
+                    value={structForm.medicalAllowance || 1250}
+                    onChange={(e) => setStructForm({ ...structForm, medicalAllowance: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
-
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-700 space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editingStructure.pfApplicable ?? true}
-                    onChange={(e) => setEditingStructure({ ...editingStructure, pfApplicable: e.target.checked })}
-                    className="w-4 h-4 text-emerald-600 rounded"
-                  />
-                  <span>Provident Fund (12% of Basic up to ₹15,000)</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editingStructure.esicApplicable ?? true}
-                    onChange={(e) => setEditingStructure({ ...editingStructure, esicApplicable: e.target.checked })}
-                    className="w-4 h-4 text-emerald-600 rounded"
-                  />
-                  <span>ESIC (0.75% of Gross if Gross ≤ ₹21,000)</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editingStructure.ptApplicable ?? true}
-                    onChange={(e) => setEditingStructure({ ...editingStructure, ptApplicable: e.target.checked })}
-                    className="w-4 h-4 text-emerald-600 rounded"
-                  />
-                  <span>Professional Tax (₹200 / ₹175 slab)</span>
-                </label>
-              </div>
             </div>
 
-            <div className="flex justify-end gap-2.5 mt-6">
+            <div className="flex justify-end gap-2.5 pt-4">
               <button
                 type="button"
-                onClick={() => setShowStructureModal(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                onClick={() => setShowStructModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                disabled={processingAction}
+                disabled={processing}
                 onClick={handleSaveStructure}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-2 shadow-sm"
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs"
               >
-                {processingAction ? 'Saving...' : 'Save Structure'}
+                Save Structure
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ============================================================== */}
-      {/* MODAL 5: EDIT EMPLOYEE SALARY PROFILE */}
-      {/* ============================================================== */}
-      {showProfileModal && selectedProfileForEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 my-8">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Landmark className="w-5 h-5 text-emerald-600" />
-                Staff Salary Profile: {selectedProfileForEdit.employeeName}
-              </h3>
-              <button
-                onClick={() => setShowProfileModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* ============================================================ */}
+      {/* MODAL: EDIT EMPLOYEE SALARY PROFILE */}
+      {/* ============================================================ */}
+      {showProfileModal && profileForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              Edit Salary Profile — {profileForm.employeeName}
+            </h3>
 
-            <div className="space-y-3.5 text-xs">
+            <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Base Monthly Salary (₹)</label>
                   <input
                     type="number"
-                    value={selectedProfileForEdit.baseMonthlySalary || 18000}
-                    onChange={(e) => setSelectedProfileForEdit({ ...selectedProfileForEdit, baseMonthlySalary: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
+                    value={profileForm.baseMonthlySalary || 18000}
+                    onChange={(e) => setProfileForm({ ...profileForm, baseMonthlySalary: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Monthly CTC (₹)</label>
                   <input
                     type="number"
-                    value={selectedProfileForEdit.monthlyCtc || 21500}
-                    onChange={(e) => setSelectedProfileForEdit({ ...selectedProfileForEdit, monthlyCtc: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
+                    value={profileForm.monthlyCtc || 21500}
+                    onChange={(e) => setProfileForm({ ...profileForm, monthlyCtc: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -1743,10 +1920,9 @@ export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Bank Name</label>
                 <input
                   type="text"
-                  value={selectedProfileForEdit.bankName || ''}
-                  onChange={(e) => setSelectedProfileForEdit({ ...selectedProfileForEdit, bankName: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
-                  placeholder="e.g. State Bank of India"
+                  value={profileForm.bankName || ''}
+                  onChange={(e) => setProfileForm({ ...profileForm, bankName: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
 
@@ -1755,18 +1931,18 @@ export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Account Number</label>
                   <input
                     type="text"
-                    value={selectedProfileForEdit.accountNumber || ''}
-                    onChange={(e) => setSelectedProfileForEdit({ ...selectedProfileForEdit, accountNumber: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono"
+                    value={profileForm.accountNumber || ''}
+                    onChange={(e) => setProfileForm({ ...profileForm, accountNumber: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
                   />
                 </div>
                 <div>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">IFSC Code</label>
                   <input
                     type="text"
-                    value={selectedProfileForEdit.ifscCode || ''}
-                    onChange={(e) => setSelectedProfileForEdit({ ...selectedProfileForEdit, ifscCode: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono uppercase"
+                    value={profileForm.ifscCode || ''}
+                    onChange={(e) => setProfileForm({ ...profileForm, ifscCode: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono uppercase"
                   />
                 </div>
               </div>
@@ -1776,43 +1952,211 @@ export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">PAN Number</label>
                   <input
                     type="text"
-                    value={selectedProfileForEdit.panNumber || ''}
-                    onChange={(e) => setSelectedProfileForEdit({ ...selectedProfileForEdit, panNumber: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono uppercase"
+                    value={profileForm.panNumber || ''}
+                    onChange={(e) => setProfileForm({ ...profileForm, panNumber: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono uppercase"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">UAN / PF Number</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">UAN Number</label>
                   <input
                     type="text"
-                    value={selectedProfileForEdit.uanNumber || ''}
-                    onChange={(e) => setSelectedProfileForEdit({ ...selectedProfileForEdit, uanNumber: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono"
+                    value={profileForm.uanNumber || ''}
+                    onChange={(e) => setProfileForm({ ...profileForm, uanNumber: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2.5 mt-6">
+            <div className="flex justify-end gap-2.5 pt-4">
               <button
                 type="button"
                 onClick={() => setShowProfileModal(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                disabled={processingAction}
+                disabled={processing}
                 onClick={handleSaveProfile}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-2 shadow-sm"
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs"
               >
-                {processingAction ? 'Saving...' : 'Save Profile'}
+                Save Profile
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* ============================================================ */}
+      {/* MODAL: REQUEST SALARY ADVANCE */}
+      {/* ============================================================ */}
+      {showAdvanceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Request Salary Advance</h3>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Advance Amount (₹)</label>
+                <input
+                  type="number"
+                  value={advanceForm.amount}
+                  onChange={(e) => setAdvanceForm({ ...advanceForm, amount: Number(e.target.value) })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Monthly Deduction / Installment (₹)</label>
+                <input
+                  type="number"
+                  value={advanceForm.monthlyDeductionAmount}
+                  onChange={(e) => setAdvanceForm({ ...advanceForm, monthlyDeductionAmount: Number(e.target.value) })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Reason</label>
+                <textarea
+                  value={advanceForm.reason}
+                  onChange={(e) => setAdvanceForm({ ...advanceForm, reason: e.target.value })}
+                  placeholder="Medical, family necessity, festival advance..."
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowAdvanceModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={processing}
+                onClick={async () => {
+                  if (!companyId) return;
+                  setProcessing(true);
+                  try {
+                    await FirestoreService.createSalaryAdvance(companyId, {
+                      companyId,
+                      employeeId: advanceForm.employeeId,
+                      employeeName: advanceForm.employeeName,
+                      amount: advanceForm.amount,
+                      monthlyDeductionAmount: advanceForm.monthlyDeductionAmount,
+                      reason: advanceForm.reason,
+                      status: 'APPROVED',
+                      requestedDate: new Date().toISOString()
+                    } as any);
+                    setShowAdvanceModal(false);
+                  } finally {
+                    setProcessing(false);
+                  }
+                }}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs"
+              >
+                Submit Advance
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL: CREATE PAYMENT BATCH */}
+      {/* ============================================================ */}
+      {showCreateBatchModal && companyId && (
+        <CreateBankBatchModal
+          companyId={companyId}
+          payrollCycles={cycles}
+          companyBanks={companyBanks}
+          session={userSession}
+          existingBatches={paymentBatches}
+          onClose={() => setShowCreateBatchModal(false)}
+          onSuccess={async (newBatchId) => {
+            setShowCreateBatchModal(false);
+            const updated = await FirestoreService.getPaymentBatches(companyId);
+            setPaymentBatches(updated);
+            const created = updated.find(b => b.id === newBatchId);
+            if (created) {
+              setSelectedBatchForDetail(created);
+            }
+          }}
+        />
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL: BANK BATCH DETAIL & AUDIT */}
+      {/* ============================================================ */}
+      {selectedBatchForDetail && (
+        <BankBatchDetailModal
+          batch={selectedBatchForDetail}
+          companyBank={companyBanks.find(b => b.id === selectedBatchForDetail.companyBankAccountId) || companyBanks[0] || null}
+          session={userSession}
+          canApprove={isSuperAdmin || isCompanyAdmin}
+          canExport={canManagePayroll}
+          onClose={() => setSelectedBatchForDetail(null)}
+          onApprove={handleApproveBatch}
+          onOpenExport={(batch) => {
+            setSelectedBatchForDetail(null);
+            setSelectedBatchForExport(batch);
+          }}
+          onRefresh={async () => {
+            if (companyId) {
+              const updated = await FirestoreService.getPaymentBatches(companyId);
+              setPaymentBatches(updated);
+            }
+          }}
+        />
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL: SECURE BANK FILE EXPORT */}
+      {/* ============================================================ */}
+      {selectedBatchForExport && companyId && (
+        <BankExportModal
+          batch={selectedBatchForExport}
+          companyBank={companyBanks.find(b => b.id === selectedBatchForExport.companyBankAccountId) || companyBanks[0] || null}
+          companyId={companyId}
+          actor={{ uid: userSession.userId, name: userSession.fullName || userSession.email || 'Admin' }}
+          onClose={() => setSelectedBatchForExport(null)}
+          onExportSuccess={async () => {
+            const updated = await FirestoreService.getPaymentBatches(companyId);
+            setPaymentBatches(updated);
+            setSelectedBatchForExport(null);
+          }}
+        />
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL: COMPANY BANK ACCOUNT */}
+      {/* ============================================================ */}
+      {showCompanyBankModal && companyId && (
+        <CompanyBankModal
+          companyId={companyId}
+          existingAccount={editingCompanyBank}
+          actor={{ uid: userSession.userId, name: userSession.fullName || userSession.email || 'Admin' }}
+          onClose={() => {
+            setShowCompanyBankModal(false);
+            setEditingCompanyBank(null);
+          }}
+          onSuccess={async () => {
+            setShowCompanyBankModal(false);
+            setEditingCompanyBank(null);
+            const banks = await FirestoreService.getCompanyBankAccounts(companyId);
+            setCompanyBanks(banks);
+          }}
+        />
+      )}
+
     </div>
   );
 };

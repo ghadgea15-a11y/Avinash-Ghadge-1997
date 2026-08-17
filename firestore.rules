@@ -91,9 +91,37 @@ service cloud.firestore {
 
     function isValidIncidentReport() {
       let data = request.resource.data;
-      return data.keys().hasAll(['id', 'companyId', 'type', 'siteId', 'reportedBy', 'status', 'createdAt'])
-        && data.type in ['COMPLAINT', 'BBS_OBSERVATION', 'INCIDENT', 'ACCIDENT']
-        && data.status in ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'ESCALATED', 'CLOSED'];
+      return data.keys().hasAll(['id', 'companyId', 'siteId', 'status'])
+        && data.id is string
+        && data.companyId is string;
+    }
+
+    function isValidPatrolPlan() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['id', 'companyId', 'siteId', 'planName', 'status'])
+        && data.id is string
+        && data.companyId is string;
+    }
+
+    function isValidPatrolTour() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['id', 'companyId', 'siteId', 'status'])
+        && data.id is string
+        && data.companyId is string;
+    }
+
+    function isValidPatrolCheckpoint() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['id', 'companyId', 'siteId', 'checkpointName', 'code', 'status'])
+        && data.id is string
+        && data.companyId is string;
+    }
+
+    function isValidPatrolLog() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['id', 'companyId', 'siteId', 'guardId', 'status'])
+        && data.id is string
+        && data.companyId is string;
     }
 
     function isValidDailySiteLog() {
@@ -266,6 +294,30 @@ service cloud.firestore {
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
+      match /overtime_policies/{policyId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /overtime_requests/{requestId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if isSuperAdmin() || sameCompany(companyId);
+        allow update: if isSuperAdmin() || isManager(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /overtime_adjustments/{adjustmentId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if isSuperAdmin() || isManager(companyId);
+        allow update: if isSuperAdmin() || isManager(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /attendance_exceptions/{exceptionId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isManager(companyId);
+      }
+
       match /attendance_logs/{attendanceId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create: if isSuperAdmin() || sameCompany(companyId);
@@ -331,6 +383,17 @@ service cloud.firestore {
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
+      match /bank_payment_batches/{batchId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow create, update: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow delete: if isSuperAdmin();
+      }
+
+      match /company_bank_accounts/{accountId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
 
       // 4. Inventory, Supply & Stock Subcollections
       match /inventory/{inventoryId} {
@@ -388,6 +451,34 @@ service cloud.firestore {
 
 
       // 6. Site Operations Logs, Safety, Incident & Visitors
+      match /patrol_plans/{planId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if (isSuperAdmin() || isManager(companyId)) && isValidPatrolPlan() && request.resource.data.companyId == companyId;
+        allow update: if (isSuperAdmin() || isManager(companyId)) && isValidPatrolPlan();
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /patrol_tours/{tourId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if (isSuperAdmin() || isManager(companyId) || sameCompany(companyId)) && isValidPatrolTour() && request.resource.data.companyId == companyId;
+        allow update: if (isSuperAdmin() || isManager(companyId) || sameCompany(companyId)) && isValidPatrolTour();
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /patrol_checkpoints/{checkpointId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if (isSuperAdmin() || isManager(companyId)) && isValidPatrolCheckpoint() && request.resource.data.companyId == companyId;
+        allow update: if (isSuperAdmin() || isManager(companyId)) && isValidPatrolCheckpoint();
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /patrol_logs/{logId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if (isSuperAdmin() || isManager(companyId) || sameCompany(companyId)) && isValidPatrolLog() && request.resource.data.companyId == companyId;
+        allow update: if (isSuperAdmin() || isManager(companyId) || sameCompany(companyId)) && isValidPatrolLog();
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
       match /daily_site_logs/{logId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create: if (isSuperAdmin() || isManager(companyId)) && isValidDailySiteLog() && request.resource.data.companyId == companyId;
@@ -422,6 +513,13 @@ service cloud.firestore {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create: if (isSuperAdmin() || isManager(companyId)) && isValidTask() && request.resource.data.companyId == companyId;
         allow update: if (isSuperAdmin() || isManager(companyId) || (signedIn() && request.resource.data.assignedTo == request.auth.uid)) && isValidTask();
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /work_orders/{workOrderId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if isSuperAdmin() || isManager(companyId);
+        allow update: if isSuperAdmin() || sameCompany(companyId); // Detailed access control handled in backend / UI logic
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 

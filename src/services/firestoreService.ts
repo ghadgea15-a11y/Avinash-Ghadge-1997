@@ -17,6 +17,7 @@ import { db, auth } from '../firebase';
 import { QueryScopeEngine } from './queryScopeEngine';
 import { 
   TaskRecord,
+  WorkOrderRecord,
   AnnouncementRecord,
   DocumentRecord,
   AppNotification, 
@@ -38,8 +39,15 @@ import {
   ShiftRecord,
   AttendanceRecord,
   PatrolCheckpointRecord,
+  PatrolPlanRecord,
+  PatrolTourRecord,
+  PatrolTourCheckpointScan,
+  PatrolTourStatus,
   PatrolLogRecord,
   IncidentReportRecord,
+  IncidentCategory,
+  IncidentSeverity,
+  IncidentStatus,
   VisitorLogRecord,
   MaterialMovementRecord,
   DailySiteLogRecord,
@@ -52,11 +60,20 @@ import {
   VendorRecord,
   LeaveRequestRecord,
   LeaveBalanceRecord,
+  OvertimePolicyRecord,
+  OvertimeRequestRecord,
+  OvertimeAdjustmentRecord,
+  AttendanceCalculationResult,
+  AttendanceExceptionType,
   SalaryStructureRecord,
   EmployeeSalaryProfileRecord,
   SalaryAdvanceRecord,
   PayrollCycleRecord,
   SalarySlipRecord,
+  PaymentBatchRecord,
+  PaymentBatchStatus,
+  CompanyBankAccountRecord,
+  BankExportFormat,
   InventoryItemRecord,
   StockTransactionRecord,
   InventoryVendorRecord,
@@ -90,6 +107,7 @@ import {
 } from '../types';
 import { WorkflowEngine } from './workflowEngine';
 import { WfmService } from './wfmService';
+import { AttendanceCalculationEngine } from './calculationEngine';
 
 export enum OperationType {
   CREATE = 'create',
@@ -1332,7 +1350,10 @@ export class FirestoreService {
     siteId: string,
     siteName: string,
     gps?: { latitude: number, longitude: number, accuracy?: number },
-    deviceInfo?: string
+    deviceInfo?: string,
+    biometricResult?: import('../types').BiometricVerificationResult,
+    geofenceOverrideRequested?: boolean,
+    geofenceOverrideReason?: string
   ): Promise<{ success: boolean; message: string; record?: AttendanceRecord }> {
     const date = new Date().toISOString().split('T')[0];
     const id = `ATT-${date}-${employeeId}`;
@@ -1340,6 +1361,48 @@ export class FirestoreService {
       const now = new Date().toISOString();
       const metrics = WfmService.calculateAttendanceMetrics(shift, date, now);
       
+      // Geo-Fence & Biometric Validation
+      const siteSnap = await getDoc(doc(db, 'companies', companyId, 'sites', siteId));
+      let geoVerification: import('../types').GeoVerificationData | undefined = undefined;
+      
+      if (siteSnap.exists()) {
+        const site = siteSnap.data() as SiteRecord;
+        if (gps) {
+          const { GeoUtils } = await import('../utils/geoUtils');
+          const suspiciousFlag = GeoUtils.detectTampering(gps.latitude, gps.longitude, Date.now()) || undefined;
+          
+          if (site.geofenceEnabled && site.latitude && site.longitude) {
+            const geoResult = GeoUtils.evaluateGeofence(
+              gps.latitude, gps.longitude, gps.accuracy || 0,
+              site.latitude, site.longitude, site.geofenceRadius || 100, site.accuracyThreshold || 50
+            );
+            
+            geoVerification = {
+              latitude: gps.latitude,
+              longitude: gps.longitude,
+              accuracy: gps.accuracy,
+              distanceFromSite: geoResult.distance,
+              verification: geoResult.result,
+              timestamp: now,
+              biometricVerification: biometricResult,
+              suspiciousFlag,
+              geofenceOverrideRequested,
+              geofenceOverrideReason,
+            };
+          } else {
+            geoVerification = {
+              latitude: gps.latitude,
+              longitude: gps.longitude,
+              accuracy: gps.accuracy,
+              verification: 'GEOFENCE_NOT_CONFIGURED',
+              timestamp: now,
+              biometricVerification: biometricResult,
+              suspiciousFlag
+            };
+          }
+        }
+      }
+
       const record: AttendanceRecord = {
         id,
         companyId,
@@ -1358,7 +1421,7 @@ export class FirestoreService {
         workedMinutes: 0,
         overtimeMinutes: 0,
         source: 'EMPLOYEE',
-        checkInGps: gps ? { ...gps, verification: 'NOT_AVAILABLE' } : undefined, // Placeholder for geofence check
+        checkInGps: geoVerification,
         deviceInfo,
         createdBy: employeeId,
         updatedBy: employeeId,
@@ -1378,7 +1441,10 @@ export class FirestoreService {
     companyId: string,
     attendanceId: string,
     shift: ShiftRecord,
-    gps?: { latitude: number, longitude: number, accuracy?: number }
+    gps?: { latitude: number, longitude: number, accuracy?: number },
+    biometricResult?: import('../types').BiometricVerificationResult,
+    geofenceOverrideRequested?: boolean,
+    geofenceOverrideReason?: string
   ): Promise<{ success: boolean; message: string }> {
     try {
       const ref = doc(db, 'companies', companyId, 'attendance', attendanceId);
@@ -1387,19 +1453,114 @@ export class FirestoreService {
 
       const record = snap.data() as AttendanceRecord;
       const now = new Date().toISOString();
-      const metrics = WfmService.calculateAttendanceMetrics(shift, record.attendanceDate, record.checkIn, now);
+      const policy = await this.getOvertimePolicy(companyId, record.siteId);
+      const calcResult = AttendanceCalculationEngine.calculate({
+        workDate: record.attendanceDate,
+        shift,
+        checkInIso: record.checkIn,
+        checkOutIso: now,
+        policy,
+        siteId: record.siteId
+      });
+
+      // Geo-Fence & Biometric Validation
+      const siteSnap = await getDoc(doc(db, 'companies', companyId, 'sites', record.siteId));
+      let geoVerification: import('../types').GeoVerificationData | undefined = undefined;
+      
+      if (siteSnap.exists()) {
+        const site = siteSnap.data() as SiteRecord;
+        if (gps) {
+          const { GeoUtils } = await import('../utils/geoUtils');
+          const suspiciousFlag = GeoUtils.detectTampering(gps.latitude, gps.longitude, Date.now()) || undefined;
+          
+          if (site.geofenceEnabled && site.latitude && site.longitude) {
+            const geoResult = GeoUtils.evaluateGeofence(
+              gps.latitude, gps.longitude, gps.accuracy || 0,
+              site.latitude, site.longitude, site.geofenceRadius || 100, site.accuracyThreshold || 50
+            );
+            
+            geoVerification = {
+              latitude: gps.latitude,
+              longitude: gps.longitude,
+              accuracy: gps.accuracy,
+              distanceFromSite: geoResult.distance,
+              verification: geoResult.result,
+              timestamp: now,
+              biometricVerification: biometricResult,
+              suspiciousFlag,
+              geofenceOverrideRequested,
+              geofenceOverrideReason,
+            };
+          } else {
+            geoVerification = {
+              latitude: gps.latitude,
+              longitude: gps.longitude,
+              accuracy: gps.accuracy,
+              verification: 'GEOFENCE_NOT_CONFIGURED',
+              timestamp: now,
+              biometricVerification: biometricResult,
+              suspiciousFlag
+            };
+          }
+        }
+      }
 
       const updates: Partial<AttendanceRecord> = {
         checkOut: now,
-        status: metrics.status,
-        earlyDepartureMinutes: metrics.earlyDepartureMinutes,
-        workedMinutes: metrics.workedMinutes,
-        overtimeMinutes: metrics.overtimeMinutes,
-        checkOutGps: gps ? { ...gps, verification: 'NOT_AVAILABLE' } : undefined,
+        status: calcResult.status,
+        lateMinutes: calcResult.lateMinutes,
+        earlyDepartureMinutes: calcResult.earlyDepartureMinutes,
+        workedMinutes: calcResult.workedMinutes,
+        overtimeMinutes: calcResult.calculatedOvertimeMinutes,
+        scheduledMinutes: calcResult.scheduledMinutes,
+        breakMinutes: calcResult.breakMinutes,
+        netWorkedMinutes: calcResult.netWorkedMinutes,
+        shortfallMinutes: calcResult.shortfallMinutes,
+        approvedOvertimeMinutes: calcResult.approvedOvertimeMinutes,
+        unapprovedOvertimeMinutes: calcResult.unapprovedOvertimeMinutes,
+        overtimeStatus: calcResult.calculatedOvertimeMinutes > 0 
+          ? (calcResult.approvedOvertimeMinutes > 0 ? 'APPROVED' : 'PENDING_APPROVAL')
+          : undefined,
+        calculationExplanation: calcResult.humanExplanation,
+        exceptions: calcResult.exceptions,
+        requiresReview: calcResult.requiresReview,
+        checkOutGps: geoVerification,
         updatedAt: now
       };
 
       await setDoc(ref, updates, { merge: true });
+
+      // Automatically create Overtime Request if Overtime exists
+      if (calcResult.calculatedOvertimeMinutes > 0) {
+        await this.createOrSyncOvertimeRequest(companyId, {
+          attendanceId,
+          employeeId: record.employeeId,
+          employeeName: record.employeeName,
+          siteId: record.siteId,
+          siteName: record.siteName,
+          workDate: record.attendanceDate,
+          shiftId: shift.id,
+          shiftName: shift.shiftName,
+          shiftStart: shift.startTime,
+          shiftEnd: shift.endTime,
+          actualCheckIn: record.checkIn,
+          actualCheckOut: now,
+          scheduledMinutes: calcResult.scheduledMinutes,
+          workedMinutes: calcResult.workedMinutes,
+          breakMinutes: calcResult.breakMinutes,
+          netWorkedMinutes: calcResult.netWorkedMinutes,
+          rawOvertimeMinutes: calcResult.rawOvertimeMinutes,
+          roundedOvertimeMinutes: calcResult.calculatedOvertimeMinutes,
+          approvedOvertimeMinutes: calcResult.approvedOvertimeMinutes,
+          status: calcResult.approvedOvertimeMinutes > 0 ? 'APPROVED' : 'PENDING_APPROVAL',
+          calculationBreakdown: calcResult.breakdownSteps.join('\n'),
+          exceptionFlags: calcResult.exceptions,
+          requestedBy: record.employeeId,
+          requestedByName: record.employeeName,
+          requestedAt: now
+        });
+      }
+
       return { success: true, message: 'Check-out successful' };
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `attendance/${attendanceId}`);
@@ -1423,9 +1584,17 @@ export class FirestoreService {
     const id = `ATT-${date}-${employeeId}`;
     try {
       const now = new Date().toISOString();
+      const policy = await this.getOvertimePolicy(companyId, siteId);
       
       if (action === 'IN') {
-        const metrics = WfmService.calculateAttendanceMetrics(shift, date, now);
+        const calcResult = AttendanceCalculationEngine.calculate({
+          workDate: date,
+          shift,
+          checkInIso: now,
+          policy,
+          siteId
+        });
+
         const record: AttendanceRecord = {
           id,
           companyId,
@@ -1438,11 +1607,20 @@ export class FirestoreService {
           siteName,
           attendanceDate: date,
           checkIn: now,
-          status: metrics.status,
-          lateMinutes: metrics.lateMinutes,
+          status: calcResult.status,
+          lateMinutes: calcResult.lateMinutes,
           earlyDepartureMinutes: 0,
           workedMinutes: 0,
           overtimeMinutes: 0,
+          scheduledMinutes: calcResult.scheduledMinutes,
+          breakMinutes: calcResult.breakMinutes,
+          netWorkedMinutes: 0,
+          shortfallMinutes: 0,
+          approvedOvertimeMinutes: 0,
+          unapprovedOvertimeMinutes: 0,
+          calculationExplanation: calcResult.humanExplanation,
+          exceptions: calcResult.exceptions,
+          requiresReview: calcResult.requiresReview,
           source: 'SUPERVISOR',
           remarks: remarks || 'Supervisor Punch-In',
           createdBy: supervisorId,
@@ -1457,18 +1635,70 @@ export class FirestoreService {
         if (!snap.exists()) return false;
         
         const record = snap.data() as AttendanceRecord;
-        const metrics = WfmService.calculateAttendanceMetrics(shift, record.attendanceDate, record.checkIn, now);
+        const calcResult = AttendanceCalculationEngine.calculate({
+          workDate: record.attendanceDate,
+          shift,
+          checkInIso: record.checkIn,
+          checkOutIso: now,
+          policy,
+          siteId
+        });
         
         await setDoc(ref, {
           checkOut: now,
-          status: metrics.status,
-          earlyDepartureMinutes: metrics.earlyDepartureMinutes,
-          workedMinutes: metrics.workedMinutes,
-          overtimeMinutes: metrics.overtimeMinutes,
+          status: calcResult.status,
+          lateMinutes: calcResult.lateMinutes,
+          earlyDepartureMinutes: calcResult.earlyDepartureMinutes,
+          workedMinutes: calcResult.workedMinutes,
+          overtimeMinutes: calcResult.calculatedOvertimeMinutes,
+          scheduledMinutes: calcResult.scheduledMinutes,
+          breakMinutes: calcResult.breakMinutes,
+          netWorkedMinutes: calcResult.netWorkedMinutes,
+          shortfallMinutes: calcResult.shortfallMinutes,
+          approvedOvertimeMinutes: calcResult.approvedOvertimeMinutes,
+          unapprovedOvertimeMinutes: calcResult.unapprovedOvertimeMinutes,
+          overtimeStatus: calcResult.calculatedOvertimeMinutes > 0 
+            ? (calcResult.approvedOvertimeMinutes > 0 ? 'APPROVED' : 'PENDING_APPROVAL')
+            : undefined,
+          calculationExplanation: calcResult.humanExplanation,
+          exceptions: calcResult.exceptions,
+          requiresReview: calcResult.requiresReview,
           remarks: (record.remarks ? record.remarks + '; ' : '') + (remarks || 'Supervisor Punch-Out'),
           updatedAt: now,
           updatedBy: supervisorId
         }, { merge: true });
+
+        // Automatically create Overtime Request if Overtime exists
+        if (calcResult.calculatedOvertimeMinutes > 0) {
+          await this.createOrSyncOvertimeRequest(companyId, {
+            attendanceId: id,
+            employeeId,
+            employeeName,
+            siteId,
+            siteName,
+            workDate: record.attendanceDate,
+            shiftId: shift.id,
+            shiftName: shift.shiftName,
+            shiftStart: shift.startTime,
+            shiftEnd: shift.endTime,
+            actualCheckIn: record.checkIn,
+            actualCheckOut: now,
+            scheduledMinutes: calcResult.scheduledMinutes,
+            workedMinutes: calcResult.workedMinutes,
+            breakMinutes: calcResult.breakMinutes,
+            netWorkedMinutes: calcResult.netWorkedMinutes,
+            rawOvertimeMinutes: calcResult.rawOvertimeMinutes,
+            roundedOvertimeMinutes: calcResult.calculatedOvertimeMinutes,
+            approvedOvertimeMinutes: calcResult.approvedOvertimeMinutes,
+            status: calcResult.approvedOvertimeMinutes > 0 ? 'APPROVED' : 'PENDING_APPROVAL',
+            calculationBreakdown: calcResult.breakdownSteps.join('\n'),
+            exceptionFlags: calcResult.exceptions,
+            requestedBy: supervisorId,
+            requestedByName: 'Supervisor',
+            requestedAt: now
+          });
+        }
+
         return true;
       }
     } catch (err) {
@@ -1820,6 +2050,29 @@ export class FirestoreService {
     }
   }
 
+  static subscribeToPatrolCheckpoints(
+    session: UserSession,
+    companyId: string,
+    onData: (checkpoints: PatrolCheckpointRecord[]) => void
+  ): () => void {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'patrol_checkpoints');
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'SITE_OPERATIONS'));
+      return onSnapshot(q, (snap) => {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as PatrolCheckpointRecord));
+        list.sort((a, b) => (a.sequenceOrder || 0) - (b.sequenceOrder || 0));
+        onData(list);
+      }, (err) => {
+        console.warn('[Firestore] subscribeToPatrolCheckpoints error:', err);
+        onData([]);
+      });
+    } catch (e) {
+      console.warn('[Firestore] subscribeToPatrolCheckpoints exception:', e);
+      onData([]);
+      return () => {};
+    }
+  }
+
   static async getPatrolCheckpoints(companyId: string, siteId?: string): Promise<PatrolCheckpointRecord[]> {
     try {
       const colRef = collection(db, 'companies', companyId, 'patrol_checkpoints');
@@ -1843,7 +2096,7 @@ export class FirestoreService {
         ...checkpoint,
         companyId,
         createdAt: checkpoint.createdAt || new Date().toISOString(),
-        updatedAt: Date.now()
+        updatedAt: new Date().toISOString()
       }, { merge: true });
 
       // Audit Log
@@ -1852,12 +2105,350 @@ export class FirestoreService {
         'SYSTEM',
         'Management',
         'PATROL_CHECKPOINT_UPDATED',
-        `Patrol Checkpoint updated: ${checkpoint.checkpointName}. Site: ${checkpoint.siteName || checkpoint.siteId}`
+        `Patrol Checkpoint updated: ${checkpoint.checkpointName} (${checkpoint.code}). Site: ${checkpoint.siteName || checkpoint.siteId}`
       );
 
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, path);
+      return false;
+    }
+  }
+
+  static async deletePatrolCheckpoint(companyId: string, checkpointId: string, checkpointName?: string): Promise<boolean> {
+    const path = `companies/${companyId}/patrol_checkpoints/${checkpointId}`;
+    try {
+      const ref = doc(db, 'companies', companyId, 'patrol_checkpoints', checkpointId);
+      await deleteDoc(ref);
+
+      await this.logAuditEvent(
+        companyId,
+        'SYSTEM',
+        'Management',
+        'PATROL_CHECKPOINT_DELETED',
+        `Patrol Checkpoint deleted: ${checkpointName || checkpointId}`
+      );
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, path);
+      return false;
+    }
+  }
+
+  /**
+   * ============================================================
+   * SITE OPERATIONS: PATROL PLANS & ROUTES
+   * ============================================================
+   */
+  static subscribeToPatrolPlans(
+    session: UserSession,
+    companyId: string,
+    onData: (plans: PatrolPlanRecord[]) => void
+  ): () => void {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'patrol_plans');
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'SITE_OPERATIONS'));
+      return onSnapshot(q, (snap) => {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as PatrolPlanRecord));
+        onData(list);
+      }, (err) => {
+        console.warn('[Firestore] subscribeToPatrolPlans error:', err);
+        onData([]);
+      });
+    } catch (e) {
+      console.warn('[Firestore] subscribeToPatrolPlans exception:', e);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  static async getPatrolPlans(companyId: string, siteId?: string): Promise<PatrolPlanRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'patrol_plans');
+      const snap = await getDocs(colRef);
+      let list = snap.docs.map(d => ({ id: d.id, ...d.data() } as PatrolPlanRecord));
+      if (siteId && siteId !== 'ALL') {
+        list = list.filter(p => p.siteId === siteId);
+      }
+      return list;
+    } catch (err) {
+      console.warn('[Firestore] getPatrolPlans error:', err);
+      return [];
+    }
+  }
+
+  static async savePatrolPlan(companyId: string, plan: PatrolPlanRecord): Promise<boolean> {
+    const path = `companies/${companyId}/patrol_plans/${plan.id}`;
+    try {
+      const ref = doc(db, 'companies', companyId, 'patrol_plans', plan.id);
+      await setDoc(ref, {
+        ...plan,
+        companyId,
+        createdAt: plan.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        plan.createdBy || 'SYSTEM',
+        plan.createdByName || 'Management',
+        'PATROL_PLAN_SAVED',
+        `Patrol Plan saved: ${plan.planName} (${plan.frequency}). Site: ${plan.siteName || plan.siteId}`
+      );
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, path);
+      return false;
+    }
+  }
+
+  static async deletePatrolPlan(companyId: string, planId: string, planName?: string): Promise<boolean> {
+    const path = `companies/${companyId}/patrol_plans/${planId}`;
+    try {
+      const ref = doc(db, 'companies', companyId, 'patrol_plans', planId);
+      await deleteDoc(ref);
+
+      await this.logAuditEvent(
+        companyId,
+        'SYSTEM',
+        'Management',
+        'PATROL_PLAN_DELETED',
+        `Patrol Plan deleted: ${planName || planId}`
+      );
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, path);
+      return false;
+    }
+  }
+
+  /**
+   * ============================================================
+   * SITE OPERATIONS: PATROL TOURS (LIVE & HISTORICAL)
+   * ============================================================
+   */
+  static subscribeToPatrolTours(
+    session: UserSession,
+    companyId: string,
+    onData: (tours: PatrolTourRecord[]) => void
+  ): () => void {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'patrol_tours');
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'SITE_OPERATIONS'));
+      return onSnapshot(q, (snap) => {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as PatrolTourRecord));
+        // Sort descending by actualStart or createdAt
+        list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        onData(list);
+      }, (err) => {
+        console.warn('[Firestore] subscribeToPatrolTours error:', err);
+        onData([]);
+      });
+    } catch (e) {
+      console.warn('[Firestore] subscribeToPatrolTours exception:', e);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  static async getPatrolTours(companyId: string, siteId?: string): Promise<PatrolTourRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'patrol_tours');
+      const snap = await getDocs(colRef);
+      let list = snap.docs.map(d => ({ id: d.id, ...d.data() } as PatrolTourRecord));
+      if (siteId && siteId !== 'ALL') {
+        list = list.filter(t => t.siteId === siteId);
+      }
+      return list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    } catch (err) {
+      console.warn('[Firestore] getPatrolTours error:', err);
+      return [];
+    }
+  }
+
+  static async savePatrolTour(companyId: string, tour: PatrolTourRecord): Promise<boolean> {
+    const path = `companies/${companyId}/patrol_tours/${tour.id}`;
+    try {
+      const ref = doc(db, 'companies', companyId, 'patrol_tours', tour.id);
+      await setDoc(ref, {
+        ...tour,
+        companyId,
+        createdAt: tour.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, path);
+      return false;
+    }
+  }
+
+  static async recordTourCheckpointScan(
+    companyId: string,
+    tourId: string,
+    scan: PatrolTourCheckpointScan,
+    currentTour: PatrolTourRecord
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/patrol_tours/${tourId}`;
+    try {
+      const existingScans = currentTour.checkpointScans || [];
+      const updatedScans = [...existingScans.filter(s => s.checkpointId !== scan.checkpointId), scan];
+      const completedCount = updatedScans.filter(s => s.status === 'COMPLETED').length;
+      const totalCheckpoints = currentTour.totalCheckpoints || 1;
+      const completionPercentage = Math.round((completedCount / totalCheckpoints) * 100);
+
+      const exceptions = [...(currentTour.exceptionsDetected || [])];
+      if (scan.sequenceStatus === 'OUT_OF_SEQUENCE' && !exceptions.includes('OUT_OF_SEQUENCE_SCAN')) {
+        exceptions.push('OUT_OF_SEQUENCE_SCAN');
+      }
+      if (scan.geofenceStatus === 'OUTSIDE_GEOFENCE' && !exceptions.includes('OUTSIDE_GEOFENCE_SCAN')) {
+        exceptions.push('OUTSIDE_GEOFENCE_SCAN');
+      }
+
+      const updates: Partial<PatrolTourRecord> = {
+        checkpointScans: updatedScans,
+        completedCheckpointsCount: completedCount,
+        completionPercentage,
+        exceptionsDetected: exceptions,
+        updatedAt: new Date().toISOString()
+      };
+
+      const ref = doc(db, 'companies', companyId, 'patrol_tours', tourId);
+      await setDoc(ref, updates, { merge: true });
+
+      // Audit Log for checkpoint scan
+      await this.logAuditEvent(
+        companyId,
+        scan.scannedByUid || 'SYSTEM',
+        scan.scannedByName || 'Guard',
+        'PATROL_CHECKPOINT_SCANNED',
+        `Checkpoint scanned: ${scan.checkpointName} (${scan.code}) - ${scan.geofenceStatus} - Tour: ${currentTour.tourNumber}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, path);
+      return false;
+    }
+  }
+
+  static async completePatrolTour(
+    companyId: string,
+    tourId: string,
+    tour: PatrolTourRecord,
+    remarks?: string,
+    endGps?: { latitude: number; longitude: number; accuracy?: number }
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/patrol_tours/${tourId}`;
+    try {
+      const total = tour.totalCheckpoints || 1;
+      const completed = tour.completedCheckpointsCount || (tour.checkpointScans?.filter(s => s.status === 'COMPLETED').length || 0);
+      const percentage = Math.round((completed / total) * 100);
+      const isComplete = percentage >= 100;
+      const status: PatrolTourStatus = isComplete ? 'COMPLETED' : 'INCOMPLETE';
+
+      const updates: Partial<PatrolTourRecord> = {
+        status,
+        actualEnd: new Date().toISOString(),
+        completionPercentage: percentage,
+        remarks: remarks || tour.remarks || '',
+        endGps,
+        updatedAt: new Date().toISOString()
+      };
+
+      const ref = doc(db, 'companies', companyId, 'patrol_tours', tourId);
+      await setDoc(ref, updates, { merge: true });
+
+      // Also persist legacy patrol log for compatibility
+      const legacyLogRef = doc(db, 'companies', companyId, 'patrol_logs', tourId);
+      await setDoc(legacyLogRef, {
+        id: tourId,
+        companyId,
+        assignedRegionId: tour.assignedRegionId,
+        assignedBranchId: tour.assignedBranchId,
+        siteId: tour.siteId,
+        siteName: tour.siteName,
+        patrolName: tour.patrolPlanName || `Patrol Tour ${tour.tourNumber}`,
+        guardId: tour.assignedGuardId,
+        guardName: tour.assignedGuardName,
+        startTime: tour.actualStart || tour.createdAt,
+        endTime: updates.actualEnd,
+        checkpointsVisited: (tour.checkpointScans || []).map(s => s.checkpointId),
+        totalCheckpoints: tour.totalCheckpoints,
+        status: isComplete ? 'COMPLETED' : 'INCOMPLETE',
+        remarks: remarks || tour.remarks || '',
+        gpsLocation: endGps ? { latitude: endGps.latitude, longitude: endGps.longitude } : undefined,
+        createdAt: tour.createdAt || new Date().toISOString()
+      }, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        tour.assignedGuardId || 'SYSTEM',
+        tour.assignedGuardName || 'Security Guard',
+        'PATROL_TOUR_COMPLETED',
+        `Patrol Tour ${tour.tourNumber} finished as ${status} (${percentage}% checkpoints completed). Site: ${tour.siteName}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, path);
+      return false;
+    }
+  }
+
+  static async overridePatrolTour(
+    companyId: string,
+    tourId: string,
+    overrideReason: string,
+    supervisorSession: UserSession
+  ): Promise<boolean> {
+    return this.supervisorOverrideTour(
+      companyId,
+      tourId,
+      supervisorSession.userId,
+      supervisorSession.fullName,
+      overrideReason
+    );
+  }
+
+  static async supervisorOverrideTour(
+    companyId: string,
+    tourId: string,
+    supervisorUid: string,
+    supervisorName: string,
+    overrideReason: string
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/patrol_tours/${tourId}`;
+    try {
+      const ref = doc(db, 'companies', companyId, 'patrol_tours', tourId);
+      const updates: Partial<PatrolTourRecord> = {
+        isOverridden: true,
+        overrideReason,
+        overriddenByUid: supervisorUid,
+        overriddenByName: supervisorName,
+        overriddenAt: new Date().toISOString(),
+        supervisorOverride: {
+          reason: overrideReason,
+          overriddenByUid: supervisorUid,
+          overriddenByName: supervisorName,
+          overriddenAt: new Date().toISOString()
+        },
+        status: 'COMPLETED',
+        updatedAt: new Date().toISOString()
+      };
+      await setDoc(ref, updates, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        supervisorUid,
+        supervisorName,
+        'PATROL_TOUR_OVERRIDDEN',
+        `Patrol Tour ${tourId} overridden to COMPLETED by supervisor. Reason: ${overrideReason}`
+      );
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, path);
       return false;
     }
   }
@@ -1891,16 +2482,20 @@ export class FirestoreService {
 
   /**
    * ============================================================
-   * SITE OPERATIONS: INCIDENT REPORTS
+   * SITE OPERATIONS: INCIDENT REPORTS & INVESTIGATION WORKFLOW
    * ============================================================
    */
-  static subscribeToIncidentReports(session: UserSession, companyId: string, onData: (reports: IncidentReportRecord[]) => void
+  static subscribeToIncidentReports(
+    session: UserSession, 
+    companyId: string, 
+    onData: (reports: IncidentReportRecord[]) => void
   ): () => void {
     try {
       const colRef = collection(db, 'companies', companyId, 'incident_reports');
       const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'INCIDENTS'));
       return onSnapshot(q, (snap) => {
         const reports = snap.docs.map(d => ({ id: d.id, ...d.data() } as IncidentReportRecord));
+        reports.sort((a, b) => new Date(b.reportedAt || 0).getTime() - new Date(a.reportedAt || 0).getTime());
         onData(reports);
       }, (err) => {
         console.warn('[Firestore] subscribeToIncidentReports error:', err);
@@ -1917,12 +2512,27 @@ export class FirestoreService {
     const path = `companies/${companyId}/incident_reports/${report.id}`;
     try {
       const ref = doc(db, 'companies', companyId, 'incident_reports', report.id);
-      await setDoc(ref, {
+      const isNew = !report.createdAt;
+      
+      const payload: IncidentReportRecord = {
         ...report,
         companyId,
+        incidentNumber: report.incidentNumber || `INC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
         reportedAt: report.reportedAt || new Date().toISOString(),
-        updatedAt: Date.now()
-      }, { merge: true });
+        createdAt: report.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        timeline: report.timeline || [
+          {
+            timestamp: new Date().toISOString(),
+            actorId: report.reportedById || 'SYSTEM',
+            actorName: report.reportedByName || 'Reporter',
+            action: 'INCIDENT_LOGGED',
+            notes: `Incident reported: ${report.title} (${report.severity})`
+          }
+        ]
+      };
+
+      await setDoc(ref, payload, { merge: true });
 
       // Audit Log
       await this.logAuditEvent(
@@ -1951,14 +2561,146 @@ export class FirestoreService {
     const path = `companies/${companyId}/incident_reports/${reportId}`;
     try {
       const ref = doc(db, 'companies', companyId, 'incident_reports', reportId);
+      const snap = await getDoc(ref);
+      const current = snap.exists() ? snap.data() as IncidentReportRecord : null;
+      
+      const timeline = current?.timeline || [];
+      timeline.push({
+        timestamp: new Date().toISOString(),
+        actorId: resolverId || 'SYSTEM',
+        actorName: resolverName || 'User',
+        action: `STATUS_UPDATED_${status}`,
+        notes: resolutionNotes || `Status updated to ${status}`
+      });
+
       const updates: Partial<IncidentReportRecord> = {
         status,
-        resolutionNotes,
-        resolvedById: resolverId,
-        resolvedByName: resolverName,
-        resolvedAt: status === 'RESOLVED' || status === 'CLOSED' ? new Date().toISOString() : undefined
+        resolutionNotes: resolutionNotes || current?.resolutionNotes,
+        resolvedById: resolverId || current?.resolvedById,
+        resolvedByName: resolverName || current?.resolvedByName,
+        resolvedAt: status === 'RESOLVED' || status === 'CLOSED' ? (current?.resolvedAt || new Date().toISOString()) : undefined,
+        closedById: status === 'CLOSED' ? (resolverId || current?.closedById) : undefined,
+        closedByName: status === 'CLOSED' ? (resolverName || current?.closedByName) : undefined,
+        closedAt: status === 'CLOSED' ? new Date().toISOString() : undefined,
+        timeline,
+        updatedAt: new Date().toISOString()
       };
       await setDoc(ref, updates, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        resolverId || 'SYSTEM',
+        resolverName || 'User',
+        'INCIDENT_STATUS_CHANGED',
+        `Incident ${reportId} updated to ${status}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, path);
+      return false;
+    }
+  }
+
+  static async investigateIncident(
+    companyId: string,
+    reportId: string,
+    investigation: {
+      investigatorId: string;
+      investigatorName: string;
+      rootCause?: string;
+      immediateAction?: string;
+      correctiveAction?: string;
+      preventiveAction?: string;
+      notes?: string;
+    }
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/incident_reports/${reportId}`;
+    try {
+      const ref = doc(db, 'companies', companyId, 'incident_reports', reportId);
+      const snap = await getDoc(ref);
+      const current = snap.exists() ? snap.data() as IncidentReportRecord : null;
+      
+      const timeline = current?.timeline || [];
+      timeline.push({
+        timestamp: new Date().toISOString(),
+        actorId: investigation.investigatorId,
+        actorName: investigation.investigatorName,
+        action: 'INVESTIGATION_UPDATED',
+        notes: investigation.notes || 'Root cause and corrective actions documented'
+      });
+
+      const updates: Partial<IncidentReportRecord> = {
+        assignedInvestigatorId: investigation.investigatorId,
+        assignedInvestigatorName: investigation.investigatorName,
+        rootCause: investigation.rootCause,
+        immediateAction: investigation.immediateAction,
+        correctiveAction: investigation.correctiveAction,
+        preventiveAction: investigation.preventiveAction,
+        status: 'UNDER_INVESTIGATION',
+        timeline,
+        updatedAt: new Date().toISOString()
+      };
+      await setDoc(ref, updates, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        investigation.investigatorId,
+        investigation.investigatorName,
+        'INCIDENT_INVESTIGATED',
+        `Incident ${reportId} investigation updated with root cause and corrective actions.`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, path);
+      return false;
+    }
+  }
+
+  static async verifyAndCloseIncident(
+    companyId: string,
+    reportId: string,
+    verifierSession: UserSession,
+    verificationNotes?: string
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/incident_reports/${reportId}`;
+    try {
+      const ref = doc(db, 'companies', companyId, 'incident_reports', reportId);
+      const snap = await getDoc(ref);
+      const current = snap.exists() ? snap.data() as IncidentReportRecord : null;
+
+      const timeline = current?.timeline || [];
+      timeline.push({
+        timestamp: new Date().toISOString(),
+        actorId: verifierSession.userId,
+        actorName: verifierSession.fullName,
+        action: 'INCIDENT_VERIFIED_AND_CLOSED',
+        notes: verificationNotes || 'Resolution verified by supervisor/manager and marked CLOSED'
+      });
+
+      const updates: Partial<IncidentReportRecord> = {
+        status: 'CLOSED',
+        verifiedById: verifierSession.userId,
+        verifiedByName: verifierSession.fullName,
+        verifiedAt: new Date().toISOString(),
+        closedById: verifierSession.userId,
+        closedByName: verifierSession.fullName,
+        closedAt: new Date().toISOString(),
+        timeline,
+        updatedAt: new Date().toISOString()
+      };
+
+      await setDoc(ref, updates, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        verifierSession.userId,
+        verifierSession.fullName,
+        'INCIDENT_CLOSED',
+        `Incident ${reportId} verified and closed.`
+      );
+
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, path);
@@ -2155,6 +2897,30 @@ export class FirestoreService {
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, path);
+      return false;
+    }
+  }
+
+  static async saveWorkOrder(companyId: string, workOrder: WorkOrderRecord): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'work_orders', workOrder.id);
+      await setDoc(ref, {
+        ...workOrder,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      // Log Audit Event
+      await this.logAuditEvent(
+        companyId,
+        workOrder.createdBy,
+        'System',
+        'WORK_ORDER_CREATED',
+        `New work order created: ${workOrder.title}. Priority: ${workOrder.priority}`
+      );
+
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] saveWorkOrder error:', err);
       return false;
     }
   }
@@ -3251,6 +4017,628 @@ export class FirestoreService {
   }
 
   // ==========================================
+  // OVERTIME & LATE CALCULATION (WFM) METHODS
+  // ==========================================
+
+  /**
+   * Subscribe to Overtime & Late policies for a company
+   */
+  static subscribeToOvertimePolicies(
+    session: UserSession,
+    companyId: string,
+    onData: (policies: OvertimePolicyRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const colRef = collection(db, 'companies', companyId, 'overtime_policies');
+      return onSnapshot(colRef, (snapshot) => {
+        const list: OvertimePolicyRecord[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as OvertimePolicyRecord);
+        });
+        if (list.length === 0) {
+          list.push(AttendanceCalculationEngine.getDefaultPolicy(companyId));
+        }
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToOvertimePolicies error:', err);
+        onData([AttendanceCalculationEngine.getDefaultPolicy(companyId)]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToOvertimePolicies exception:', err);
+      onData([AttendanceCalculationEngine.getDefaultPolicy(companyId)]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Get all overtime policies for a company
+   */
+  static async getOvertimePolicies(companyId: string): Promise<OvertimePolicyRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'overtime_policies');
+      const snap = await getDocs(colRef);
+      const list: OvertimePolicyRecord[] = [];
+      snap.forEach((d) => list.push({ id: d.id, ...d.data() } as OvertimePolicyRecord));
+      if (list.length === 0) {
+        return [AttendanceCalculationEngine.getDefaultPolicy(companyId)];
+      }
+      return list;
+    } catch (err) {
+      console.warn('[FirestoreService] getOvertimePolicies fallback:', err);
+      return [AttendanceCalculationEngine.getDefaultPolicy(companyId)];
+    }
+  }
+
+  /**
+   * Get matching overtime policy for a specific site or department
+   */
+  static async getOvertimePolicy(companyId: string, siteId?: string, departmentId?: string): Promise<OvertimePolicyRecord> {
+    try {
+      const policies = await this.getOvertimePolicies(companyId);
+      if (siteId) {
+        const siteSpecific = policies.find(p => p.applicableSiteIds && p.applicableSiteIds.includes(siteId));
+        if (siteSpecific) return siteSpecific;
+      }
+      if (departmentId) {
+        const deptSpecific = policies.find(p => p.applicableDepartmentIds && p.applicableDepartmentIds.includes(departmentId));
+        if (deptSpecific) return deptSpecific;
+      }
+      const defaultPol = policies.find(p => p.isDefault);
+      return defaultPol || policies[0] || AttendanceCalculationEngine.getDefaultPolicy(companyId);
+    } catch (err) {
+      return AttendanceCalculationEngine.getDefaultPolicy(companyId);
+    }
+  }
+
+  /**
+   * Save or update an overtime policy
+   */
+  static async saveOvertimePolicy(
+    companyId: string,
+    policy: Partial<OvertimePolicyRecord> & { id?: string },
+    actorId: string = 'SYSTEM'
+  ): Promise<boolean> {
+    try {
+      const now = new Date().toISOString();
+      const id = policy.id || `OTPOL_${Date.now()}`;
+      const docRef = doc(db, 'companies', companyId, 'overtime_policies', id);
+
+      const payload: OvertimePolicyRecord = {
+        ...AttendanceCalculationEngine.getDefaultPolicy(companyId),
+        ...policy,
+        id,
+        companyId,
+        updatedAt: now,
+        updatedBy: actorId,
+        createdAt: policy.createdAt || now,
+        createdBy: policy.createdBy || actorId
+      };
+
+      await setDoc(docRef, payload, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        actorId,
+        actorId,
+        'OVERTIME_POLICY_SAVED',
+        `Overtime policy '${payload.policyName}' (${id}) was saved/updated.`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/overtime_policies`);
+      return false;
+    }
+  }
+
+  /**
+   * Subscribe to Overtime Requests
+   */
+  static subscribeToOvertimeRequests(
+    session: UserSession,
+    companyId: string,
+    onData: (requests: OvertimeRequestRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const colRef = collection(db, 'companies', companyId, 'overtime_requests');
+      return onSnapshot(colRef, (snapshot) => {
+        const list: OvertimeRequestRecord[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as OvertimeRequestRecord);
+        });
+        list.sort((a, b) => (b.workDate || '').localeCompare(a.workDate || '') || (b.createdAt || '').localeCompare(a.createdAt || ''));
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToOvertimeRequests error:', err);
+        onData([]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToOvertimeRequests exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Get all overtime requests
+   */
+  static async getOvertimeRequests(companyId: string, startDate?: string, endDate?: string): Promise<OvertimeRequestRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'overtime_requests');
+      const snap = await getDocs(colRef);
+      let list: OvertimeRequestRecord[] = [];
+      snap.forEach((d) => list.push({ id: d.id, ...d.data() } as OvertimeRequestRecord));
+
+      if (startDate) list = list.filter(r => r.workDate >= startDate);
+      if (endDate) list = list.filter(r => r.workDate <= endDate);
+
+      return list.sort((a, b) => (b.workDate || '').localeCompare(a.workDate || ''));
+    } catch (err) {
+      console.warn('[FirestoreService] getOvertimeRequests error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Create or synchronize an Overtime Request record for an attendance entry
+   */
+  static async createOrSyncOvertimeRequest(
+    companyId: string,
+    request: Omit<OvertimeRequestRecord, 'id' | 'companyId' | 'createdAt' | 'updatedAt'>
+  ): Promise<string | null> {
+    try {
+      const id = `OTREQ_${request.workDate}_${request.employeeId}`;
+      const docRef = doc(db, 'companies', companyId, 'overtime_requests', id);
+      const now = new Date().toISOString();
+
+      const existingSnap = await getDoc(docRef);
+      const isExisting = existingSnap.exists();
+      const existingData = isExisting ? (existingSnap.data() as OvertimeRequestRecord) : null;
+
+      // If already manually approved or rejected, preserve status unless explicitly recalculating
+      const status = existingData?.status === 'APPROVED' || existingData?.status === 'REJECTED'
+        ? existingData.status
+        : request.status;
+
+      const payload: OvertimeRequestRecord = {
+        ...request,
+        id,
+        companyId,
+        status,
+        createdAt: existingData?.createdAt || now,
+        updatedAt: now
+      };
+
+      await setDoc(docRef, payload, { merge: true });
+
+      // Create in-app notification if pending approval
+      if (status === 'PENDING_APPROVAL') {
+        await this.createNotification({
+          id: `NOTIF_OT_${Date.now()}`,
+          title: 'Overtime Approval Pending',
+          message: `${request.employeeName} has ${AttendanceCalculationEngine.formatDuration(request.roundedOvertimeMinutes)} of overtime on ${request.workDate} pending approval.`,
+          type: 'INFO',
+          timestamp: now,
+          isRead: false
+        });
+      }
+
+      return id;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/overtime_requests`);
+      return null;
+    }
+  }
+
+  /**
+   * Update Overtime Request status (Approve, Reject, Cancel)
+   */
+  static async updateOvertimeRequestStatus(
+    companyId: string,
+    requestId: string,
+    status: 'APPROVED' | 'REJECTED' | 'CANCELLED',
+    reviewer: {
+      uid: string;
+      name: string;
+      reason?: string;
+      approvedMinutes?: number;
+    }
+  ): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'overtime_requests', requestId);
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) return false;
+
+      const otReq = snap.data() as OvertimeRequestRecord;
+      const now = new Date().toISOString();
+      const approvedMinutes = status === 'APPROVED' 
+        ? (reviewer.approvedMinutes !== undefined ? reviewer.approvedMinutes : otReq.roundedOvertimeMinutes)
+        : 0;
+
+      const updateData: Partial<OvertimeRequestRecord> = {
+        status,
+        approvedOvertimeMinutes: approvedMinutes,
+        approvedBy: status === 'APPROVED' ? reviewer.uid : undefined,
+        approvedByName: status === 'APPROVED' ? reviewer.name : undefined,
+        approvedAt: status === 'APPROVED' ? now : undefined,
+        rejectionReason: status === 'REJECTED' ? (reviewer.reason || 'Rejected by supervisor') : undefined,
+        updatedAt: now
+      };
+
+      await setDoc(docRef, updateData, { merge: true });
+
+      // Also update linked Attendance record
+      if (otReq.attendanceId) {
+        const attRef = doc(db, 'companies', companyId, 'attendance', otReq.attendanceId);
+        const attSnap = await getDoc(attRef);
+        if (attSnap.exists()) {
+          await setDoc(attRef, {
+            approvedOvertimeMinutes: approvedMinutes,
+            unapprovedOvertimeMinutes: status === 'APPROVED' ? 0 : otReq.roundedOvertimeMinutes,
+            overtimeStatus: status,
+            updatedAt: now,
+            updatedBy: reviewer.uid
+          }, { merge: true });
+        }
+      }
+
+      // Log audit
+      await this.logAuditEvent(
+        companyId,
+        reviewer.uid,
+        reviewer.name,
+        `OVERTIME_${status}`,
+        `Overtime request ${requestId} for ${otReq.employeeName} (${AttendanceCalculationEngine.formatDuration(otReq.roundedOvertimeMinutes)}) was ${status.toLowerCase()} by ${reviewer.name}. ${reviewer.reason ? `Reason: ${reviewer.reason}` : ''}`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/overtime_requests/${requestId}`);
+      return false;
+    }
+  }
+
+  /**
+   * Subscribe to Overtime Adjustments
+   */
+  static subscribeToOvertimeAdjustments(
+    session: UserSession,
+    companyId: string,
+    onData: (adjustments: OvertimeAdjustmentRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const colRef = collection(db, 'companies', companyId, 'overtime_adjustments');
+      return onSnapshot(colRef, (snapshot) => {
+        const list: OvertimeAdjustmentRecord[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as OvertimeAdjustmentRecord);
+        });
+        list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        onData(list);
+      }, (err) => {
+        console.warn('[FirestoreService] subscribeToOvertimeAdjustments error:', err);
+        onData([]);
+      });
+    } catch (err) {
+      console.warn('[FirestoreService] subscribeToOvertimeAdjustments exception:', err);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  /**
+   * Create an Overtime / Attendance Adjustment request
+   */
+  static async createOvertimeAdjustment(
+    companyId: string,
+    adjustment: Omit<OvertimeAdjustmentRecord, 'id' | 'companyId' | 'status' | 'createdAt' | 'updatedAt'>
+  ): Promise<string | null> {
+    try {
+      const id = `OTADJ_${Date.now()}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      const now = new Date().toISOString();
+      const docRef = doc(db, 'companies', companyId, 'overtime_adjustments', id);
+
+      const payload: OvertimeAdjustmentRecord = {
+        ...adjustment,
+        id,
+        companyId,
+        status: 'PENDING',
+        createdAt: now,
+        updatedAt: now
+      };
+
+      await setDoc(docRef, payload);
+
+      await this.logAuditEvent(
+        companyId,
+        adjustment.requestedBy,
+        adjustment.requestedByName,
+        'OVERTIME_ADJUSTMENT_REQUESTED',
+        `Adjustment requested for ${adjustment.employeeName} (${adjustment.adjustmentType}: ${adjustment.originalMinutes}m -> ${adjustment.requestedMinutes}m). Reason: ${adjustment.reason}`
+      );
+
+      return id;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `companies/${companyId}/overtime_adjustments`);
+      return null;
+    }
+  }
+
+  /**
+   * Resolve an Overtime Adjustment (Approve or Reject)
+   */
+  static async resolveOvertimeAdjustment(
+    companyId: string,
+    adjustmentId: string,
+    status: 'APPROVED' | 'REJECTED',
+    reviewer: {
+      uid: string;
+      name: string;
+      reason?: string;
+    }
+  ): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'overtime_adjustments', adjustmentId);
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) return false;
+
+      const adj = snap.data() as OvertimeAdjustmentRecord;
+      const now = new Date().toISOString();
+
+      await setDoc(docRef, {
+        status,
+        approvedBy: reviewer.uid,
+        approvedByName: reviewer.name,
+        approvedAt: now,
+        rejectionReason: status === 'REJECTED' ? reviewer.reason : undefined,
+        updatedAt: now
+      }, { merge: true });
+
+      // If approved, update underlying Attendance and Overtime request
+      if (status === 'APPROVED' && adj.attendanceId) {
+        const attRef = doc(db, 'companies', companyId, 'attendance', adj.attendanceId);
+        const attSnap = await getDoc(attRef);
+        if (attSnap.exists()) {
+          const updateField: any = { updatedAt: now, updatedBy: reviewer.uid };
+          if (adj.adjustmentType === 'OVERTIME') {
+            updateField.overtimeMinutes = adj.requestedMinutes;
+            updateField.approvedOvertimeMinutes = adj.requestedMinutes;
+            updateField.unapprovedOvertimeMinutes = 0;
+            updateField.overtimeStatus = 'APPROVED';
+          } else if (adj.adjustmentType === 'LATE') {
+            updateField.lateMinutes = adj.requestedMinutes;
+          } else if (adj.adjustmentType === 'EARLY_DEPARTURE') {
+            updateField.earlyDepartureMinutes = adj.requestedMinutes;
+          } else if (adj.adjustmentType === 'WORKED_MINUTES') {
+            updateField.workedMinutes = adj.requestedMinutes;
+          }
+          await setDoc(attRef, updateField, { merge: true });
+        }
+      }
+
+      await this.logAuditEvent(
+        companyId,
+        reviewer.uid,
+        reviewer.name,
+        `OVERTIME_ADJUSTMENT_${status}`,
+        `Overtime adjustment ${adjustmentId} for ${adj.employeeName} was ${status.toLowerCase()} by ${reviewer.name}.`
+      );
+
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/overtime_adjustments/${adjustmentId}`);
+      return false;
+    }
+  }
+
+  /**
+   * Recalculate attendance, late and overtime for a specific attendance record
+   */
+  static async recalculateAttendanceRecord(
+    companyId: string,
+    attendanceId: string,
+    customPolicy?: OvertimePolicyRecord,
+    actorId: string = 'SYSTEM'
+  ): Promise<AttendanceCalculationResult | null> {
+    try {
+      const attRef = doc(db, 'companies', companyId, 'attendance', attendanceId);
+      const attSnap = await getDoc(attRef);
+      if (!attSnap.exists()) return null;
+
+      const record = attSnap.data() as AttendanceRecord;
+      const policy = customPolicy || await this.getOvertimePolicy(companyId, record.siteId);
+
+      // Fetch shift
+      let shift: ShiftRecord | undefined;
+      if (record.shiftId) {
+        const shiftRef = doc(db, 'companies', companyId, 'shifts', record.shiftId);
+        const shiftSnap = await getDoc(shiftRef);
+        if (shiftSnap.exists()) shift = shiftSnap.data() as ShiftRecord;
+      }
+
+      // Fetch any approved leaves for this date
+      const leaves = await this.getLeaveRequests(companyId);
+      const matchingLeave = leaves.find(l => 
+        l.employeeId === record.employeeId && 
+        l.status === 'APPROVED' && 
+        l.startDate <= record.attendanceDate && 
+        l.endDate >= record.attendanceDate
+      );
+
+      const calcResult = AttendanceCalculationEngine.calculate({
+        workDate: record.attendanceDate,
+        shift,
+        checkInIso: record.checkIn,
+        checkOutIso: record.checkOut,
+        policy,
+        approvedLeave: matchingLeave,
+        siteId: record.siteId
+      });
+
+      const now = new Date().toISOString();
+      const updates: Partial<AttendanceRecord> = {
+        status: calcResult.status,
+        lateMinutes: calcResult.lateMinutes,
+        earlyDepartureMinutes: calcResult.earlyDepartureMinutes,
+        workedMinutes: calcResult.workedMinutes,
+        overtimeMinutes: calcResult.calculatedOvertimeMinutes,
+        scheduledMinutes: calcResult.scheduledMinutes,
+        breakMinutes: calcResult.breakMinutes,
+        netWorkedMinutes: calcResult.netWorkedMinutes,
+        shortfallMinutes: calcResult.shortfallMinutes,
+        approvedOvertimeMinutes: calcResult.approvedOvertimeMinutes,
+        unapprovedOvertimeMinutes: calcResult.unapprovedOvertimeMinutes,
+        overtimeStatus: calcResult.calculatedOvertimeMinutes > 0 
+          ? (calcResult.approvedOvertimeMinutes > 0 ? 'APPROVED' : 'PENDING_APPROVAL')
+          : undefined,
+        calculationExplanation: calcResult.humanExplanation,
+        exceptions: calcResult.exceptions,
+        requiresReview: calcResult.requiresReview,
+        updatedAt: now,
+        updatedBy: actorId
+      };
+
+      await setDoc(attRef, updates, { merge: true });
+
+      if (calcResult.calculatedOvertimeMinutes > 0 && shift) {
+        await this.createOrSyncOvertimeRequest(companyId, {
+          attendanceId,
+          employeeId: record.employeeId,
+          employeeName: record.employeeName,
+          siteId: record.siteId,
+          siteName: record.siteName,
+          workDate: record.attendanceDate,
+          shiftId: shift.id,
+          shiftName: shift.shiftName,
+          shiftStart: shift.startTime,
+          shiftEnd: shift.endTime,
+          actualCheckIn: record.checkIn,
+          actualCheckOut: record.checkOut,
+          scheduledMinutes: calcResult.scheduledMinutes,
+          workedMinutes: calcResult.workedMinutes,
+          breakMinutes: calcResult.breakMinutes,
+          netWorkedMinutes: calcResult.netWorkedMinutes,
+          rawOvertimeMinutes: calcResult.rawOvertimeMinutes,
+          roundedOvertimeMinutes: calcResult.calculatedOvertimeMinutes,
+          approvedOvertimeMinutes: calcResult.approvedOvertimeMinutes,
+          status: calcResult.approvedOvertimeMinutes > 0 ? 'APPROVED' : 'PENDING_APPROVAL',
+          calculationBreakdown: calcResult.breakdownSteps.join('\n'),
+          exceptionFlags: calcResult.exceptions,
+          requestedBy: actorId,
+          requestedByName: 'System Recalculation',
+          requestedAt: now
+        });
+      }
+
+      return calcResult;
+    } catch (err) {
+      console.error('[FirestoreService] recalculateAttendanceRecord error:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Batch recalculate attendance records within a date range
+   */
+  static async batchRecalculateAttendance(
+    companyId: string,
+    startDate: string,
+    endDate: string,
+    siteId?: string,
+    actorId: string = 'SYSTEM'
+  ): Promise<{ processed: number; successCount: number; errorsCount: number }> {
+    try {
+      const attCol = collection(db, 'companies', companyId, 'attendance');
+      const snap = await getDocs(attCol);
+      let records: AttendanceRecord[] = [];
+      snap.forEach(d => records.push({ id: d.id, ...d.data() } as AttendanceRecord));
+
+      records = records.filter(r => r.attendanceDate >= startDate && r.attendanceDate <= endDate);
+      if (siteId) {
+        records = records.filter(r => r.siteId === siteId);
+      }
+
+      let successCount = 0;
+      let errorsCount = 0;
+
+      for (const rec of records) {
+        const res = await this.recalculateAttendanceRecord(companyId, rec.id, undefined, actorId);
+        if (res) successCount++;
+        else errorsCount++;
+      }
+
+      await this.logAuditEvent(
+        companyId,
+        actorId,
+        actorId,
+        'ATTENDANCE_BATCH_RECALCULATED',
+        `Batch recalculated ${records.length} attendance records from ${startDate} to ${endDate}. (${successCount} succeeded, ${errorsCount} failed).`
+      );
+
+      return { processed: records.length, successCount, errorsCount };
+    } catch (err) {
+      console.error('[FirestoreService] batchRecalculateAttendance error:', err);
+      return { processed: 0, successCount: 0, errorsCount: 0 };
+    }
+  }
+
+
+  // ==========================================
+  // STATUTORY CONFIGURATIONS
+  // ==========================================
+  static async getStatutoryConfigs(companyId: string): Promise<import('../types').StatutoryConfigRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'statutory_configs');
+      const snap = await getDocs(colRef);
+      const list: import('../types').StatutoryConfigRecord[] = [];
+      snap.forEach((docSnap) => {
+        list.push({
+          id: docSnap.id,
+          ...docSnap.data()
+        } as import('../types').StatutoryConfigRecord);
+      });
+      return list;
+    } catch (err) {
+      console.error('[FirestoreService] getStatutoryConfigs error:', err);
+      return [];
+    }
+  }
+
+  static async saveStatutoryConfig(
+    companyId: string, 
+    config: import('../types').StatutoryConfigRecord,
+    actor: { uid: string, name: string }
+  ): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'statutory_configs', config.id);
+      await setDoc(ref, {
+        ...config,
+        companyId,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      
+      await this.logAuditEvent(companyId, actor.uid, actor.name, 'STATUTORY_RULE_UPDATED', `Updated ${config.type} statutory rules (Version: ${config.version})`);
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] saveStatutoryConfig error:', err);
+      handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/statutory_configs`);
+      return false;
+    }
+  }
+
+  // ==========================================
   // PAYROLL & COMPENSATION (HRMS) METHODS
   // ==========================================
 
@@ -3626,6 +5014,7 @@ export class FirestoreService {
       const profiles = await this.getSalaryProfiles(companyId);
       const structures = await this.getSalaryStructures(companyId);
       const leaves = await this.getLeaveRequests(companyId);
+      const statutoryConfigs = await this.getStatutoryConfigs(companyId);
       const colAdv = collection(db, 'companies', companyId, 'advances_and_deductions');
       const snapAdv = await getDocs(colAdv);
       const advances: SalaryAdvanceRecord[] = [];
@@ -3659,6 +5048,23 @@ export class FirestoreService {
       let totalNetPay = 0;
       let slipCount = 0;
 
+      const attendancesCol = collection(db, 'companies', companyId, 'attendance');
+      const attSnap = await getDocs(attendancesCol);
+const allAttendances: any[] = [];
+      
+      const advancesSnap = await getDocs(query(collection(db, 'companies', companyId, 'advances_and_deductions'), where('status', '==', 'APPROVED')));
+
+      attSnap.forEach(d => {
+        const att = d.data();
+        if (att.attendanceDate && att.attendanceDate.startsWith(`${year}-${String(month).padStart(2, '0')}`)) {
+          allAttendances.push(att);
+        }
+      });
+
+      const { PayrollEngine } = await import('./payrollEngine');
+
+      const allErrors: string[] = [];
+
       // 2. Compute slips for active employees
       for (const emp of employees) {
         if (emp.status === 'TERMINATED') continue;
@@ -3683,39 +5089,21 @@ export class FirestoreService {
         const struct = structures.find(s => s.id === empProfile.structureId) || defaultStruct;
 
         // Calculate leave deductions (Loss of Pay / Unpaid)
-        const empLeavesInMonth = leaves.filter(l => 
-          (l.employeeId === emp.id || l.employeeName === `${emp.firstName} ${emp.lastName}`) &&
-          l.status === 'APPROVED' &&
-          l.leaveType === 'UNPAID' &&
-          l.startDate.startsWith(`${year}-${String(month).padStart(2, '0')}`)
-        );
-        const lopDays = empLeavesInMonth.reduce((sum, l) => sum + (l.daysCount || 0), 0);
-        const payableDays = Math.max(0, daysInMonth - lopDays);
-
-        // Earnings
-        const baseRate = empProfile.baseMonthlySalary || 18000;
-        const proratedBase = Math.round((baseRate / daysInMonth) * payableDays);
-
-        const basic = Math.round((proratedBase * (struct.basicPercentage || 50)) / 100);
-        const hra = Math.round((basic * (struct.hraPercentage || 20)) / 100);
-        const da = Math.round((basic * (struct.daPercentage || 15)) / 100);
-        const conveyance = Math.round(((struct.conveyanceAllowance || 1600) / daysInMonth) * payableDays);
-        const medical = Math.round(((struct.medicalAllowance || 1250) / daysInMonth) * payableDays);
-        const specialAllowance = Math.max(0, proratedBase - (basic + hra + da + conveyance + medical));
-        const totalGross = basic + hra + da + conveyance + medical + specialAllowance;
-
-        // Deductions
-        const pf = struct.pfApplicable ? Math.round(Math.min(basic, 15000) * 0.12) : 0;
-        const esic = (struct.esicApplicable && totalGross <= 21000) ? Math.round(totalGross * 0.0075) : 0;
-        const pt = struct.ptApplicable ? (totalGross > 10000 ? 200 : (totalGross > 7500 ? 175 : 0)) : 0;
         
-        // Active advance recovery
-        const empAdvance = advances.find(a => a.employeeId === emp.id && a.status === 'APPROVED' && a.remainingAmount > 0);
-        const advanceDeduction = empAdvance ? Math.min(empAdvance.monthlyDeductionAmount || 2000, empAdvance.remainingAmount) : 0;
-        const lopDeduction = Math.round((baseRate / daysInMonth) * lopDays);
+        
+        const empAttendances = allAttendances.filter(a => a.employeeId === emp.id);
+        const empAdvance = advances.find((a: any) => a.employeeId === emp.id && a.remainingAmount > 0) as any;
+        const advanceDeduction = empAdvance ? Math.min(empAdvance.monthlyDeductionAmount || 0, empAdvance.remainingAmount || 0) : 0;
 
-        const slipTotalDeductions = pf + esic + pt + advanceDeduction;
-        const netPay = Math.max(0, totalGross - slipTotalDeductions);
+        const calc = PayrollEngine.calculate(month, year, emp as any, empProfile as any, struct as any, statutoryConfigs, leaves, empAttendances as any, advanceDeduction);
+        
+        if (calc.errors && calc.errors.length > 0) {
+          allErrors.push(`[${emp.firstName} ${emp.lastName}] ${calc.errors.join(', ')}`);
+        }
+        if (calc.netPay < 0) {
+          allErrors.push(`[${emp.firstName} ${emp.lastName}] Negative net pay (${calc.netPay})`);
+        }
+
 
         const slipId = `SLIP_${cycleId}_${emp.id}`;
         const slipPayload: SalarySlipRecord = {
@@ -3726,42 +5114,49 @@ export class FirestoreService {
           year,
           employeeId: emp.id,
           employeeName: `${emp.firstName} ${emp.lastName}`,
+          employeeCode: (emp as any).employeeCode || emp.id,
           departmentName: emp.departmentId || 'Operations',
           designation: emp.designation || 'Security Officer',
+          dateOfJoining: (emp as any).joiningDate || (emp as any).createdAt,
           bankName: empProfile.bankName,
           accountNumber: empProfile.accountNumber,
           ifscCode: empProfile.ifscCode,
           panNumber: empProfile.panNumber,
           uanNumber: empProfile.uanNumber,
+          pfNumber: (empProfile as any).pfNumber || empProfile.uanNumber,
+          esicNumber: (empProfile as any).esicNumber,
           totalMonthDays: daysInMonth,
-          workedDays: payableDays,
-          paidLeaveDays: daysInMonth - payableDays,
-          lopDays,
-          payableDays,
+          workedDays: calc.payableDays,
+          paidLeaveDays: daysInMonth - calc.payableDays,
+          lopDays: calc.lopDays,
+          payableDays: calc.payableDays,
           earnings: {
-            basic,
-            hra,
-            da,
-            conveyance,
-            medical,
-            specialAllowance,
-            overtimePay: 0,
+            basic: calc.earnings.basic,
+            hra: calc.earnings.hra,
+            da: calc.earnings.da,
+            conveyance: calc.earnings.conveyance,
+            medical: calc.earnings.medical,
+            specialAllowance: calc.earnings.specialAllowance,
+            overtimePay: calc.earnings.overtimePay,
             bonus: 0,
-            totalGross
+            totalGross: calc.totalGross
           },
           deductions: {
-            pf,
-            esic,
-            pt,
-            tds: 0,
-            advanceDeduction,
-            lopDeduction,
+            pf: calc.deductions.pf,
+            esic: calc.deductions.esic,
+            pt: calc.deductions.pt,
+            tds: calc.deductions.tds,
+            advanceDeduction: calc.deductions.advanceDeduction,
+            lopDeduction: calc.deductions.lopDeduction,
             otherDeductions: 0,
-            totalDeductions: slipTotalDeductions
+            totalDeductions: calc.totalDeductions
           },
-          netPay,
-          netPayInWords: numberToIndianRupeesWords(netPay),
+          netPay: calc.netPay,
+          netPayInWords: numberToIndianRupeesWords(calc.netPay),
           status: 'GENERATED',
+          isPublished: false,
+          downloadCount: 0,
+          verificationHash: `LSM-PAY-${cycleId}-${emp.id.slice(-4).toUpperCase()}`,
           generatedAt: new Date().toISOString(),
           createdAt: new Date().toISOString()
         };
@@ -3779,14 +5174,14 @@ export class FirestoreService {
           }, { merge: true });
         }
 
-        totalGrossPay += totalGross;
-        totalDeductions += slipTotalDeductions;
-        totalNetPay += netPay;
+        totalGrossPay += calc.totalGross;
+        totalDeductions += calc.totalDeductions;
+        totalNetPay += calc.netPay;
         slipCount++;
       }
 
       // Save Cycle Record
-      const cyclePayload: PayrollCycleRecord = {
+      const cyclePayload: import('../types').PayrollCycleRecord & { validationErrors?: string[] } = {
         id: cycleId,
         companyId,
         month,
@@ -3796,7 +5191,8 @@ export class FirestoreService {
         totalGrossPay,
         totalDeductions,
         totalNetPay,
-        status: 'CALCULATED',
+        status: allErrors.length > 0 ? 'DRAFT' : 'CALCULATED',
+        validationErrors: allErrors,
         processedAt: new Date().toISOString(),
         processedBy: actor.uid,
         processedByName: actor.name,
@@ -3827,7 +5223,7 @@ export class FirestoreService {
   static async updatePayrollCycleStatus(
     companyId: string,
     cycleId: string,
-    status: 'APPROVED' | 'DISBURSED',
+    status: 'PENDING_APPROVAL' | 'APPROVED' | 'LOCKED' | 'CANCELLED' | 'DISBURSED',
     actor: { uid: string; name: string }
   ): Promise<boolean> {
     try {
@@ -3837,6 +5233,8 @@ export class FirestoreService {
       };
       if (status === 'APPROVED') {
         updateData.approvedAt = now;
+      } else if (status === 'LOCKED') {
+        updateData.lockedAt = now;
       } else if (status === 'DISBURSED') {
         updateData.disbursedAt = now;
       }
@@ -3862,6 +5260,525 @@ export class FirestoreService {
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/payroll/${cycleId}`);
+      return false;
+    }
+  }
+
+  /**
+   * Publish Salary Slips to Employees
+   */
+  static async publishSalarySlips(
+    companyId: string,
+    cycleId: string,
+    slipIds: string[],
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    try {
+      const now = new Date().toISOString();
+      for (const slipId of slipIds) {
+        await setDoc(doc(db, 'companies', companyId, 'salary_slips', slipId), {
+          isPublished: true,
+          status: 'PUBLISHED',
+          publishedAt: now,
+          publishedBy: actor.uid
+        }, { merge: true });
+      }
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'PAYSLIP_PUBLISHED',
+        `Published ${slipIds.length} payslips for payroll cycle ${cycleId} by ${actor.name}`
+      );
+
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] publishSalarySlips error:', err);
+      handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/salary_slips`);
+      return false;
+    }
+  }
+
+  /**
+   * Unpublish / Revert Salary Slips to Draft
+   */
+  static async unpublishSalarySlips(
+    companyId: string,
+    cycleId: string,
+    slipIds: string[],
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    try {
+      for (const slipId of slipIds) {
+        await setDoc(doc(db, 'companies', companyId, 'salary_slips', slipId), {
+          isPublished: false,
+          status: 'APPROVED'
+        }, { merge: true });
+      }
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'PAYSLIP_UNPUBLISHED',
+        `Unpublished ${slipIds.length} payslips for payroll cycle ${cycleId} by ${actor.name}`
+      );
+
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] unpublishSalarySlips error:', err);
+      handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/salary_slips`);
+      return false;
+    }
+  }
+
+  /**
+   * Log Payslip Download Audit Event and increment counter
+   */
+  static async logPayslipDownload(
+    companyId: string,
+    slipId: string,
+    actor: { uid: string; name: string }
+  ): Promise<void> {
+    try {
+      const now = new Date().toISOString();
+      const slipRef = doc(db, 'companies', companyId, 'salary_slips', slipId);
+      const snap = await getDoc(slipRef);
+      if (snap.exists()) {
+        const currentCount = snap.data()?.downloadCount || 0;
+        await setDoc(slipRef, {
+          downloadCount: currentCount + 1,
+          lastDownloadedAt: now
+        }, { merge: true });
+      }
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'PAYSLIP_DOWNLOADED',
+        `Payslip ${slipId} downloaded by ${actor.name}`
+      );
+    } catch (err) {
+      console.warn('[FirestoreService] logPayslipDownload warning:', err);
+    }
+  }
+
+  /**
+   * ============================================================
+   * NEFT / RTGS BANK PAYMENT BATCH & DISBURSEMENT METHODS
+   * ============================================================
+   */
+
+  /**
+   * Real-time subscription to bank payment batches for a company
+   */
+  static subscribePaymentBatches(
+    companyId: string,
+    onData: (batches: PaymentBatchRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const colRef = collection(db, 'companies', companyId, 'bank_payment_batches');
+      return onSnapshot(colRef, (snapshot) => {
+        const list: PaymentBatchRecord[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as PaymentBatchRecord;
+          list.push({ ...data, id: docSnap.id });
+        });
+        list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        onData(list);
+      }, (err) => {
+        console.error('[FirestoreService] subscribePaymentBatches snapshot error:', err);
+        handleFirestoreError(err, OperationType.LIST, `companies/${companyId}/bank_payment_batches`);
+      });
+    } catch (err) {
+      console.error('[FirestoreService] subscribePaymentBatches error:', err);
+      return () => {};
+    }
+  }
+
+  /**
+   * Get all bank payment batches for a company
+   */
+  static async getPaymentBatches(companyId: string): Promise<PaymentBatchRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'bank_payment_batches');
+      const snap = await getDocs(colRef);
+      const list: PaymentBatchRecord[] = [];
+      snap.forEach((docSnap) => {
+        const data = docSnap.data() as PaymentBatchRecord;
+        list.push({ ...data, id: docSnap.id });
+      });
+      list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+      return list;
+    } catch (err) {
+      console.error('[FirestoreService] getPaymentBatches error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Get a single bank payment batch
+   */
+  static async getPaymentBatch(companyId: string, batchId: string): Promise<PaymentBatchRecord | null> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'bank_payment_batches', batchId);
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) return null;
+      return { ...(snap.data() as PaymentBatchRecord), id: snap.id };
+    } catch (err) {
+      console.error('[FirestoreService] getPaymentBatch error:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Create a new Bank Payment Batch with Idempotency and Duplicate Payment Validation
+   */
+  static async createPaymentBatch(
+    companyId: string,
+    batchPayload: PaymentBatchRecord,
+    actor: { uid: string; name: string }
+  ): Promise<{ success: boolean; batchId: string; error?: string }> {
+    try {
+      if (!companyId || !batchPayload.payrollCycleId) {
+        return { success: false, batchId: '', error: 'Missing company ID or Payroll Cycle reference' };
+      }
+
+      // 1. Verify Payroll Cycle Status is APPROVED or LOCKED
+      const cycleRef = doc(db, 'companies', companyId, 'payroll', batchPayload.payrollCycleId);
+      const cycleSnap = await getDoc(cycleRef);
+      if (!cycleSnap.exists()) {
+        return { success: false, batchId: '', error: 'Referenced Payroll Cycle does not exist' };
+      }
+      const cycleData = cycleSnap.data() as PayrollCycleRecord;
+      if (!['APPROVED', 'LOCKED', 'DISBURSED'].includes(cycleData.status)) {
+        return { 
+          success: false, 
+          batchId: '', 
+          error: `Payroll cycle is currently in '${cycleData.status}' status. Bank Payment batch can only be generated from APPROVED or LOCKED payroll.` 
+        };
+      }
+
+      // 2. Duplicate Payment / Idempotency Check
+      const existingBatches = await this.getPaymentBatches(companyId);
+      const activeBatches = existingBatches.filter(b => 
+        b.payrollCycleId === batchPayload.payrollCycleId && 
+        b.status !== 'CANCELLED' && 
+        b.id !== batchPayload.id
+      );
+
+      const alreadyExportedSlipIds = new Set<string>();
+      activeBatches.forEach(b => {
+        b.items.filter(item => item.validationStatus === 'VALID').forEach(item => {
+          alreadyExportedSlipIds.add(item.salarySlipId);
+        });
+      });
+
+      const duplicateSlips = batchPayload.items.filter(i => alreadyExportedSlipIds.has(i.salarySlipId));
+      if (duplicateSlips.length > 0 && batchPayload.items.length === duplicateSlips.length) {
+        return {
+          success: false,
+          batchId: '',
+          error: `Duplicate Payment Blocked: All ${duplicateSlips.length} employees in this cycle are already included in active payment batches.`
+        };
+      }
+
+      // 3. Batch Total Integrity Check
+      const calculatedSum = batchPayload.items
+        .filter(i => i.validationStatus === 'VALID')
+        .reduce((sum, i) => sum + (i.netPay || 0), 0);
+
+      if (Math.abs(calculatedSum - batchPayload.totalAmount) > 0.01) {
+        return {
+          success: false,
+          batchId: '',
+          error: `Batch total mismatch: Stored total (₹${batchPayload.totalAmount}) does not equal sum of valid items (₹${calculatedSum})`
+        };
+      }
+
+      // 4. Save to Firestore
+      const batchDocRef = doc(db, 'companies', companyId, 'bank_payment_batches', batchPayload.id);
+      await setDoc(batchDocRef, batchPayload);
+
+      // 5. Audit Logging & Notification
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'BANK_PAYMENT_BATCH_CREATED',
+        `Created ${batchPayload.paymentMethod} bank payment batch ${batchPayload.batchNumber} for ${batchPayload.payrollCycleLabel}. Total: ₹${batchPayload.totalAmount.toLocaleString('en-IN')}, Beneficiaries: ${batchPayload.validBeneficiaryCount}`
+      );
+
+      await this.createNotification({
+        id: `NOTIF_BATCH_${batchPayload.id}`,
+        title: `Bank Payment Batch Created: ${batchPayload.batchNumber}`,
+        message: `Payment batch for ${batchPayload.payrollCycleLabel} (₹${batchPayload.totalAmount.toLocaleString('en-IN')}) is ready for finance review.`,
+        type: 'INFO',
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        actionRoute: 'PAYROLL_COMPENSATION'
+      });
+
+      return { success: true, batchId: batchPayload.id };
+    } catch (err: any) {
+      console.error('[FirestoreService] createPaymentBatch error:', err);
+      handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/bank_payment_batches`);
+      return { success: false, batchId: '', error: err?.message || 'Failed to create payment batch' };
+    }
+  }
+
+  /**
+   * Approve a Bank Payment Batch
+   */
+  static async approvePaymentBatch(
+    companyId: string,
+    batchId: string,
+    actor: { uid: string; name: string }
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const batchRef = doc(db, 'companies', companyId, 'bank_payment_batches', batchId);
+      const snap = await getDoc(batchRef);
+      if (!snap.exists()) {
+        return { success: false, error: 'Payment batch not found' };
+      }
+
+      const batch = snap.data() as PaymentBatchRecord;
+      if (batch.status === 'APPROVED' || batch.status === 'EXPORTED') {
+        return { success: true };
+      }
+      if (batch.status === 'CANCELLED') {
+        return { success: false, error: 'Cannot approve a cancelled payment batch' };
+      }
+
+      // Check valid beneficiaries count > 0
+      if (batch.validBeneficiaryCount <= 0 || batch.totalAmount <= 0) {
+        return { success: false, error: 'Cannot approve batch with 0 valid beneficiaries or zero total amount' };
+      }
+
+      const now = new Date().toISOString();
+      await setDoc(batchRef, {
+        status: 'APPROVED',
+        approvedBy: actor.uid,
+        approvedByName: actor.name,
+        approvedAt: now,
+        updatedAt: now
+      }, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'BANK_PAYMENT_APPROVED',
+        `Approved bank payment batch ${batch.batchNumber} (₹${batch.totalAmount.toLocaleString('en-IN')}) for export by ${actor.name}`
+      );
+
+      await this.createNotification({
+        id: `NOTIF_APPV_BATCH_${batch.id}`,
+        title: `Payment Batch Approved: ${batch.batchNumber}`,
+        message: `Batch ${batch.batchNumber} has been approved by ${actor.name} and is ready for bank export.`,
+        type: 'SUCCESS',
+        timestamp: now,
+        isRead: false,
+        actionRoute: 'PAYROLL_COMPENSATION'
+      });
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('[FirestoreService] approvePaymentBatch error:', err);
+      handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/bank_payment_batches/${batchId}`);
+      return { success: false, error: err?.message || 'Failed to approve payment batch' };
+    }
+  }
+
+  /**
+   * Record Bank Payment Batch Export event
+   */
+  static async recordPaymentBatchExport(
+    companyId: string,
+    batchId: string,
+    format: BankExportFormat,
+    fileName: string,
+    actor: { uid: string; name: string }
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const batchRef = doc(db, 'companies', companyId, 'bank_payment_batches', batchId);
+      const snap = await getDoc(batchRef);
+      if (!snap.exists()) {
+        return { success: false, error: 'Payment batch not found' };
+      }
+
+      const batch = snap.data() as PaymentBatchRecord;
+      const now = new Date().toISOString();
+      const currentCount = batch.exportCount || 0;
+      const currentVersion = batch.exportVersion || 1;
+
+      await setDoc(batchRef, {
+        status: 'EXPORTED',
+        exportedBy: actor.uid,
+        exportedByName: actor.name,
+        exportedAt: now,
+        exportCount: currentCount + 1,
+        exportVersion: currentCount > 0 ? currentVersion + 1 : currentVersion,
+        lastExportFormat: format,
+        lastExportFileName: fileName,
+        updatedAt: now
+      }, { merge: true });
+
+      // If all slips are exported, optionally mark cycle as DISBURSED or keep locked
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'BANK_PAYMENT_EXPORTED',
+        `Exported bank batch ${batch.batchNumber} format [${format}] file [${fileName}] containing ${batch.validBeneficiaryCount} records totaling ₹${batch.totalAmount.toLocaleString('en-IN')}`
+      );
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('[FirestoreService] recordPaymentBatchExport error:', err);
+      handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/bank_payment_batches/${batchId}`);
+      return { success: false, error: err?.message || 'Failed to record batch export' };
+    }
+  }
+
+  /**
+   * Cancel a Bank Payment Batch
+   */
+  static async cancelPaymentBatch(
+    companyId: string,
+    batchId: string,
+    reason: string,
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    try {
+      const batchRef = doc(db, 'companies', companyId, 'bank_payment_batches', batchId);
+      const now = new Date().toISOString();
+
+      await setDoc(batchRef, {
+        status: 'CANCELLED',
+        cancellationReason: reason,
+        updatedAt: now
+      }, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'BANK_PAYMENT_CANCELLED',
+        `Payment batch ${batchId} was cancelled by ${actor.name}. Reason: ${reason}`
+      );
+
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] cancelPaymentBatch error:', err);
+      handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/bank_payment_batches/${batchId}`);
+      return false;
+    }
+  }
+
+  /**
+   * Real-time subscription to Company Bank Accounts
+   */
+  static subscribeCompanyBankAccounts(
+    companyId: string,
+    onData: (accounts: CompanyBankAccountRecord[]) => void
+  ): () => void {
+    if (!companyId) {
+      onData([]);
+      return () => {};
+    }
+    try {
+      const colRef = collection(db, 'companies', companyId, 'company_bank_accounts');
+      return onSnapshot(colRef, (snapshot) => {
+        const list: CompanyBankAccountRecord[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as CompanyBankAccountRecord;
+          list.push({ ...data, id: docSnap.id });
+        });
+        list.sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
+        onData(list);
+      }, (err) => {
+        console.error('[FirestoreService] subscribeCompanyBankAccounts snapshot error:', err);
+      });
+    } catch (err) {
+      console.error('[FirestoreService] subscribeCompanyBankAccounts error:', err);
+      return () => {};
+    }
+  }
+
+  /**
+   * Get all Company Bank Accounts
+   */
+  static async getCompanyBankAccounts(companyId: string): Promise<CompanyBankAccountRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'company_bank_accounts');
+      const snap = await getDocs(colRef);
+      const list: CompanyBankAccountRecord[] = [];
+      snap.forEach((docSnap) => {
+        const data = docSnap.data() as CompanyBankAccountRecord;
+        list.push({ ...data, id: docSnap.id });
+      });
+      return list;
+    } catch (err) {
+      console.error('[FirestoreService] getCompanyBankAccounts error:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Save or Update a Company Bank Account
+   */
+  static async saveCompanyBankAccount(
+    companyId: string,
+    bankData: Partial<CompanyBankAccountRecord>,
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    try {
+      const id = bankData.id || `BANK_${Date.now()}`;
+      const now = new Date().toISOString();
+
+      const { BankExportEngine } = await import('./bankExportEngine');
+      const masked = BankExportEngine.maskAccountNumber(bankData.accountNumber);
+
+      const payload: CompanyBankAccountRecord = {
+        id,
+        companyId,
+        bankName: bankData.bankName || 'Company Bank',
+        accountHolderName: bankData.accountHolderName || 'Company Legal Entity',
+        accountNumber: bankData.accountNumber?.trim() || '',
+        maskedAccountNumber: masked,
+        ifscCode: (bankData.ifscCode || '').trim().toUpperCase(),
+        branchName: bankData.branchName || '',
+        accountType: bankData.accountType || 'CURRENT',
+        isDefault: bankData.isDefault ?? true,
+        status: bankData.status || 'ACTIVE',
+        paymentReferencePrefix: bankData.paymentReferencePrefix || 'SAL',
+        createdAt: bankData.createdAt || now,
+        updatedAt: now,
+        createdBy: bankData.createdBy || actor.uid
+      };
+
+      const docRef = doc(db, 'companies', companyId, 'company_bank_accounts', id);
+      await setDoc(docRef, payload, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        actor.uid,
+        actor.name,
+        'COMPANY_BANK_ACCOUNT_UPDATED',
+        `Configured company disbursement bank account: ${payload.bankName} (${masked}) by ${actor.name}`
+      );
+
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] saveCompanyBankAccount error:', err);
+      handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/company_bank_accounts`);
       return false;
     }
   }
@@ -4689,6 +6606,17 @@ export class FirestoreService {
   }
 
   
+  static subscribeToWorkOrders(userSession: UserSession, companyId: string, onData: (data: WorkOrderRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'work_orders');
+    return onSnapshot(colRef, (snapshot) => {
+      const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WorkOrderRecord));
+      onData(records);
+    }, (error) => {
+      console.error('Error in subscribeToWorkOrders:', error);
+      onData([]);
+    });
+  }
+  
   static subscribeToTasks(userSession: UserSession, companyId: string, onData: (data: TaskRecord[]) => void): () => void {
     const colRef = collection(db, 'companies', companyId, 'tasks');
     const q = query(colRef, ...QueryScopeEngine.buildScope(userSession, 'TASKS'));
@@ -4723,6 +6651,20 @@ export class FirestoreService {
       console.error('Error in subscribeToDocuments:', error);
       onData([]);
     });
+  }
+
+  static async updateWorkOrderStatus(workOrderId: string, companyId: string, status: WorkOrderRecord['status'], updates?: Partial<WorkOrderRecord>): Promise<void> {
+    const docRef = doc(db, 'companies', companyId, 'work_orders', workOrderId);
+    await updateDoc(docRef, { status, updatedAt: new Date().toISOString(), ...updates });
+
+    // Log Audit Event
+    await this.logAuditEvent(
+      companyId,
+      'SYSTEM',
+      'Operations Engine',
+      'WORK_ORDER_STATUS_UPDATED',
+      `Work Order ${workOrderId} status changed to ${status}`
+    );
   }
 
   static async updateTaskStatus(taskId: string, companyId: string, status: TaskRecord['status'], updates?: Partial<TaskRecord>): Promise<void> {

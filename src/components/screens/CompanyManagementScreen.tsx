@@ -1,3 +1,4 @@
+import { Edit3 } from "lucide-react";
 import { Pagination } from "../common/Pagination";
 import React, { useState, useEffect } from 'react';
 import { 
@@ -446,6 +447,181 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
           <span className="whitespace-nowrap">Vendors ({vendors.length})</span>
         </button>
       </div>
+
+      {/* TAB: SITES */}
+      {activeTab === 'SITES' && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold">Sites & Geofencing</h3>
+              <p className="text-xs text-slate-400">Manage deployment sites, location geofences, and attendance modes.</p>
+            </div>
+            <button
+              onClick={() => setEditingSite({ status: 'ACTIVE', geofenceRadius: 100, attendanceMode: 'STANDARD', geofenceEnabled: false, accuracyThreshold: 50 })}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-2 transition shadow-md shadow-indigo-600/20"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New Site</span>
+            </button>
+          </div>
+
+          {editingSite && (
+            <div className={`p-5 rounded-2xl border ${isDark ? 'bg-indigo-950/20 border-indigo-500/30' : 'bg-indigo-50/50 border-indigo-200'} space-y-4`}>
+              <h4 className="text-sm font-bold text-indigo-400">{editingSite.id ? 'Edit Site' : 'Create New Site'}</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label className="block text-slate-400 mb-1">Site Name *</label>
+                  <input
+                    type="text"
+                    value={editingSite.name || ''}
+                    onChange={e => setEditingSite({...editingSite, name: e.target.value})}
+                    placeholder="e.g. Westside Tech Park"
+                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">Branch Association *</label>
+                  <select
+                    value={editingSite.branchId || ''}
+                    onChange={e => setEditingSite({...editingSite, branchId: e.target.value})}
+                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
+                  >
+                    <option value="">-- Select Branch --</option>
+                    {branches.map(b => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">Attendance Mode *</label>
+                  <select
+                    value={editingSite.attendanceMode || 'STANDARD'}
+                    onChange={e => setEditingSite({...editingSite, attendanceMode: e.target.value as any})}
+                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
+                  >
+                    <option value="STANDARD">Standard (Any Location)</option>
+                    <option value="GEO_FENCE">Geo-Fence Required</option>
+                    <option value="BIOMETRIC">Biometric Required</option>
+                    <option value="GEO_FENCE_AND_BIOMETRIC">Geo-Fence + Biometric</option>
+                    <option value="SUPERVISOR_MUSTER">Supervisor Muster Only</option>
+                  </select>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-bold mb-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={editingSite.geofenceEnabled || false} 
+                      onChange={e => setEditingSite({...editingSite, geofenceEnabled: e.target.checked})} 
+                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" 
+                    />
+                    Enable Location Geo-Fencing
+                  </label>
+                  
+                  {editingSite.geofenceEnabled && (
+                    <div className={`p-4 rounded-xl border grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 ${isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-white border-slate-200'}`}>
+                      <div>
+                        <label className="block text-slate-400 mb-1">Latitude</label>
+                        <input
+                          type="number"
+                          step="0.0000001"
+                          value={editingSite.latitude || ''}
+                          onChange={e => setEditingSite({...editingSite, latitude: parseFloat(e.target.value)})}
+                          className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 mb-1">Longitude</label>
+                        <input
+                          type="number"
+                          step="0.0000001"
+                          value={editingSite.longitude || ''}
+                          onChange={e => setEditingSite({...editingSite, longitude: parseFloat(e.target.value)})}
+                          className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 mb-1">Radius (meters)</label>
+                        <input
+                          type="number"
+                          value={editingSite.geofenceRadius || ''}
+                          onChange={e => setEditingSite({...editingSite, geofenceRadius: parseInt(e.target.value, 10)})}
+                          className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 mb-1">Accuracy Threshold (m)</label>
+                        <input
+                          type="number"
+                          value={editingSite.accuracyThreshold || 50}
+                          onChange={e => setEditingSite({...editingSite, accuracyThreshold: parseInt(e.target.value, 10)})}
+                          className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end pt-2">
+                <button
+                  onClick={() => setEditingSite(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveSite}
+                  disabled={!editingSite.name || !editingSite.branchId || (editingSite.geofenceEnabled && (!editingSite.latitude || !editingSite.longitude))}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold disabled:opacity-50"
+                >
+                  Save Site
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sites.map(s => (
+              <div key={s.id} className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900 border-slate-800 hover:border-indigo-500/50' : 'bg-white border-slate-200 hover:border-indigo-400'} transition flex flex-col justify-between group`}>
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{s.name}</h4>
+                      <p className="text-[10px] font-medium text-slate-400">Branch: {branches.find(b => b.id === s.branchId)?.name || s.branchId}</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                      s.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
+                    }`}>
+                      {s.status}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-slate-500">Mode: <span className="font-semibold text-slate-700 dark:text-slate-300">{s.attendanceMode || 'STANDARD'}</span></p>
+                    {s.geofenceEnabled && (
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                        Geofence Active: {s.geofenceRadius}m radius
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => setEditingSite(s)}
+                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            {sites.length === 0 && !editingSite && (
+              <div className="col-span-full py-12 text-center text-slate-400 italic bg-slate-50/50 dark:bg-slate-900/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                No sites configured yet. Add your first deployment site.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {activeTab === 'MEMBERSHIPS' && (
         <div className="space-y-4">

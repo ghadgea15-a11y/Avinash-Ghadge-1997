@@ -76,6 +76,17 @@ export class OfflineSyncService {
         } else if (item.actionType === 'PATROL_CHECK') {
           const { companyId, data } = item.payload as any;
           if (companyId && data) await FirestoreService.savePatrolCheckpoint(companyId, data);
+        } else if (item.actionType === 'PATROL_PLAN') {
+          const { companyId, data } = item.payload as any;
+          if (companyId && data) await FirestoreService.savePatrolPlan(companyId, data);
+        } else if (item.actionType === 'PATROL_TOUR_START' || item.actionType === 'PATROL_TOUR_COMPLETE' || item.actionType === 'PATROL_OVERRIDE') {
+          const { companyId, data } = item.payload as any;
+          if (companyId && data) await FirestoreService.savePatrolTour(companyId, data);
+        } else if (item.actionType === 'PATROL_SCAN') {
+          const { companyId, tourId, scan, currentTour } = item.payload as any;
+          if (companyId && tourId && scan && currentTour) {
+            await FirestoreService.recordTourCheckpointScan(companyId, tourId, scan, currentTour);
+          }
         } else if (item.actionType === 'PATROL_TOUR_LOG') {
           const { companyId, data } = item.payload as any;
           if (companyId && data) await FirestoreService.savePatrolLog(companyId, data);

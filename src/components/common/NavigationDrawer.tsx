@@ -22,7 +22,8 @@ import {
   Award,
   Bell,
   IdCard,
-  ShieldAlert
+  ShieldAlert,
+  ListTodo
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -118,7 +119,8 @@ export function NavigationDrawer({
             <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
               Operations & Supply Chain
             </span>
-            <NavItem icon={ShieldCheck} label="4. Site Operations (Patrol/Log)" screen="SITE_OPERATIONS" />
+            <NavItem icon={ListTodo} label="4a. Work Orders & Tasks" screen="WORK_ORDERS" />
+            <NavItem icon={ShieldCheck} label="4b. Site Operations (Patrol/Log)" screen="SITE_OPERATIONS" />
             <NavItem icon={QrCode} label="5. EAM Asset Tracking" screen="ASSET_TRACKING" />
             <NavItem icon={Boxes} label="6. SCM Inventory & Stock" screen="INVENTORY_STOCK" />
             <NavItem icon={Building2} label="7. CRM Client Accounts" screen="CLIENT_MANAGEMENT" />

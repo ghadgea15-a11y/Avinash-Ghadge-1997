@@ -24,7 +24,8 @@ import {
   GraduationCap,
   ShoppingCart,
   IdCard,
-  ShieldAlert
+  ShieldAlert,
+  ListTodo
 } from 'lucide-react';
 import { PhaseAScreen, UserSession, UserRole } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -71,6 +72,7 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
     { screen: 'COMPLIANCE' as PhaseAScreen, label: 'Compliance', icon: ShieldAlert, badge: 0 },
     { screen: 'ATTENDANCE_SHIFTS' as PhaseAScreen, label: 'WFM Roster', icon: Clock, badge: 0 },
     { screen: 'PAYROLL_COMPENSATION' as PhaseAScreen, label: 'Payroll', icon: DollarSign, badge: 0 },
+    { screen: 'WORK_ORDERS' as PhaseAScreen, label: 'Work Orders', icon: ListTodo, badge: 0 },
     { screen: 'SITE_OPERATIONS' as PhaseAScreen, label: 'Operations', icon: ShieldCheck, badge: 0 },
     { screen: 'ASSET_TRACKING' as PhaseAScreen, label: 'EAM Assets', icon: QrCode, badge: 0 },
     { screen: 'INVENTORY_STOCK' as PhaseAScreen, label: 'SCM Stock', icon: Boxes, badge: 0 },

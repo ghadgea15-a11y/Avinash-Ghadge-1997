@@ -190,13 +190,26 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
                       )}
                     </td>
                     <td className="p-4">
-                      <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase tracking-wider ${
-                        att?.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-700' :
-                        att?.status === 'LATE' ? 'bg-amber-100 text-amber-700' :
-                        'bg-slate-100 text-slate-400'
-                      }`}>
-                        {att?.status || 'PENDING'}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase tracking-wider w-fit ${
+                          att?.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' :
+                          att?.status === 'LATE' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300' :
+                          att?.status === 'HALF_DAY' ? 'bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300' :
+                          'bg-slate-100 text-slate-400 dark:bg-slate-800'
+                        }`}>
+                          {att?.status || 'PENDING'}
+                        </span>
+                        {att?.lateMinutes ? (
+                          <span className="text-[10px] font-bold text-amber-600">
+                            Late: {att.lateMinutes}m
+                          </span>
+                        ) : null}
+                        {att?.overtimeMinutes ? (
+                          <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                            OT: {Math.floor(att.overtimeMinutes / 60)}h {att.overtimeMinutes % 60}m
+                          </span>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex justify-end gap-1">

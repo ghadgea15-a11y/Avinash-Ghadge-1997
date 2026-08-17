@@ -178,12 +178,185 @@
         "createdAt": { "type": "number" }
       },
       "required": ["id", "companyId", "date", "status", "createdAt"]
+    },
+    "SalarySlip": {
+      "title": "Salary Slip",
+      "description": "Authoritative monthly employee payslip derived from locked payroll run",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "payrollCycleId": { "type": "string" },
+        "month": { "type": "number" },
+        "year": { "type": "number" },
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "netPay": { "type": "number" },
+        "status": { "type": "string", "enum": ["GENERATED", "APPROVED", "PUBLISHED", "PAID"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "companyId", "payrollCycleId", "employeeId", "month", "year", "netPay", "status", "createdAt"]
+    },
+    "PayrollCycle": {
+      "title": "Payroll Cycle",
+      "description": "Monthly payroll execution and approval cycle",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "month": { "type": "number" },
+        "year": { "type": "number" },
+        "cycleLabel": { "type": "string" },
+        "totalEmployees": { "type": "number" },
+        "totalNetPay": { "type": "number" },
+        "status": { "type": "string", "enum": ["DRAFT", "PROCESSING", "CALCULATED", "PENDING_APPROVAL", "APPROVED", "LOCKED", "CANCELLED", "DISBURSED"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "companyId", "month", "year", "status", "createdAt"]
+    },
+    "PaymentBatch": {
+      "title": "Bank Payment Batch",
+      "description": "NEFT/RTGS payment batch disbursement records from locked payroll",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "batchNumber": { "type": "string" },
+        "companyId": { "type": "string" },
+        "payrollCycleId": { "type": "string" },
+        "paymentMethod": { "type": "string", "enum": ["NEFT", "RTGS", "AUTO"] },
+        "beneficiaryCount": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["DRAFT", "VALIDATING", "VALIDATION_FAILED", "READY_FOR_APPROVAL", "APPROVED", "EXPORTED", "SUBMITTED", "COMPLETED", "FAILED", "CANCELLED"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "batchNumber", "companyId", "payrollCycleId", "paymentMethod", "totalAmount", "status", "createdAt"]
+    },
+    "WorkOrder": {
+      "title": "Work Order",
+      "description": "Operations workflow dispatch and execution record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "siteId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "priority": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+        "status": { "type": "string", "enum": ["DRAFT", "SUBMITTED", "APPROVED", "DISPATCHED", "ACCEPTED", "IN_PROGRESS", "PAUSED", "COMPLETED", "VERIFIED", "CLOSED", "CANCELLED", "REJECTED", "OVERDUE"] },
+        "assignedTo": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["id", "companyId", "title", "status", "createdAt", "updatedAt"]
+    },
+    "CompanyBankAccount": {
+      "title": "Company Bank Account",
+      "description": "Corporate disbursement bank accounts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "bankName": { "type": "string" },
+        "accountHolderName": { "type": "string" },
+        "accountNumber": { "type": "string" },
+        "ifscCode": { "type": "string" },
+        "accountType": { "type": "string", "enum": ["CURRENT", "OVERDRAFT", "SAVINGS"] },
+        "isDefault": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "companyId", "bankName", "accountNumber", "ifscCode", "createdAt"]
+    },
+    "PatrolPlan": {
+      "title": "Patrol Plan",
+      "description": "Configurable site patrol plan and checkpoint routing rules",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "siteId": { "type": "string" },
+        "planName": { "type": "string" },
+        "frequency": { "type": "string", "enum": ["HOURLY", "DAILY", "PER_SHIFT", "CUSTOM_INTERVAL"] },
+        "checkpointIds": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "companyId", "siteId", "planName", "frequency", "checkpointIds", "status", "createdAt"]
+    },
+    "PatrolTour": {
+      "title": "Patrol Tour",
+      "description": "Execution instance of guard patrol tour with checkpoint verifications and exception tracking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tourNumber": { "type": "string" },
+        "companyId": { "type": "string" },
+        "siteId": { "type": "string" },
+        "assignedGuardId": { "type": "string" },
+        "status": { "type": "string", "enum": ["SCHEDULED", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "INCOMPLETE", "MISSED", "ABORTED", "CANCELLED"] },
+        "totalCheckpoints": { "type": "number" },
+        "completedCheckpointsCount": { "type": "number" },
+        "completionPercentage": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "tourNumber", "companyId", "siteId", "assignedGuardId", "status", "totalCheckpoints", "createdAt"]
+    },
+    "PatrolCheckpoint": {
+      "title": "Patrol Checkpoint",
+      "description": "Geotagged QR checkpoint location for site security patrols",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "siteId": { "type": "string" },
+        "checkpointName": { "type": "string" },
+        "code": { "type": "string" },
+        "qrCode": { "type": "string" },
+        "sequenceOrder": { "type": "number" },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] }
+      },
+      "required": ["id", "companyId", "siteId", "checkpointName", "code", "qrCode", "sequenceOrder", "status"]
     }
   },
   "firestore": {
     "/companies/{companyId}": {
       "schema": { "$ref": "#/entities/Company" },
       "description": "Company Tenant document"
+    },
+    "/companies/{companyId}/patrol_plans/{planId}": {
+      "schema": { "$ref": "#/entities/PatrolPlan" },
+      "description": "Configurable site patrol plans"
+    },
+    "/companies/{companyId}/patrol_tours/{tourId}": {
+      "schema": { "$ref": "#/entities/PatrolTour" },
+      "description": "Live and completed patrol tours"
+    },
+    "/companies/{companyId}/patrol_checkpoints/{checkpointId}": {
+      "schema": { "$ref": "#/entities/PatrolCheckpoint" },
+      "description": "Patrol QR checkpoints"
+    },
+    "/companies/{companyId}/payroll/{cycleId}": {
+      "schema": { "$ref": "#/entities/PayrollCycle" },
+      "description": "Payroll calculation cycles"
+    },
+    "/companies/{companyId}/salary_slips/{slipId}": {
+      "schema": { "$ref": "#/entities/SalarySlip" },
+      "description": "Authoritative salary slips for employees"
+    },
+    "/companies/{companyId}/bank_payment_batches/{batchId}": {
+      "schema": { "$ref": "#/entities/PaymentBatch" },
+      "description": "NEFT/RTGS payment batches"
+    },
+    "/companies/{companyId}/work_orders/{workOrderId}": {
+      "schema": { "$ref": "#/entities/WorkOrder" },
+      "description": "Operations work orders for dispatch and execution"
+    },
+    "/companies/{companyId}/company_bank_accounts/{accountId}": {
+      "schema": { "$ref": "#/entities/CompanyBankAccount" },
+      "description": "Company disbursement bank accounts"
     },
     "/companies/{companyId}/employees/{employeeId}": {
       "schema": { "$ref": "#/entities/Employee" },

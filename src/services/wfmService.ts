@@ -1,9 +1,12 @@
 import { 
   ShiftRecord, 
   AttendanceRecord, 
-  AttendanceStatus,
-  RosterRecord
+  AttendanceStatus, 
+  RosterRecord,
+  OvertimePolicyRecord,
+  AttendanceCalculationResult
 } from '../types';
+import { AttendanceCalculationEngine } from './calculationEngine';
 
 export class WfmService {
   /**
@@ -44,70 +47,65 @@ export class WfmService {
   }
 
   /**
-   * Calculates late and early departure minutes
+   * Comprehensive attendance, late, early departure and overtime calculation
    */
   static calculateAttendanceMetrics(
     shift: ShiftRecord, 
     date: string,
     checkInIso?: string, 
-    checkOutIso?: string
+    checkOutIso?: string,
+    policy?: OvertimePolicyRecord
   ): {
     lateMinutes: number;
     earlyDepartureMinutes: number;
     workedMinutes: number;
     overtimeMinutes: number;
+    scheduledMinutes?: number;
+    breakMinutes?: number;
+    netWorkedMinutes?: number;
+    shortfallMinutes?: number;
+    approvedOvertimeMinutes?: number;
+    unapprovedOvertimeMinutes?: number;
     status: AttendanceStatus;
+    humanExplanation?: string;
+    exceptions?: string[];
   } {
-    let lateMinutes = 0;
-    let earlyDepartureMinutes = 0;
-    let workedMinutes = 0;
-    let overtimeMinutes = 0;
-    let status: AttendanceStatus = 'SCHEDULED';
+    const res = AttendanceCalculationEngine.calculate({
+      workDate: date,
+      shift,
+      checkInIso,
+      checkOutIso,
+      policy
+    });
 
-    const shiftStart = new Date(`${date}T${shift.startTime}:00`);
-    let shiftEnd = new Date(`${date}T${shift.endTime}:00`);
-    
-    if (shift.isCrossMidnight) {
-      shiftEnd = new Date(shiftEnd.getTime() + 24 * 60 * 60 * 1000);
-    }
-
-    if (checkInIso) {
-      const checkIn = new Date(checkInIso);
-      const diff = Math.floor((checkIn.getTime() - shiftStart.getTime()) / (1000 * 60));
-      
-      if (diff > shift.gracePeriodMinutes) {
-        lateMinutes = diff;
-        status = 'LATE';
-      } else {
-        status = 'PRESENT';
-      }
-    }
-
-    if (checkOutIso && checkInIso) {
-      const checkOut = new Date(checkOutIso);
-      workedMinutes = this.calculateDurationMinutes(checkInIso, checkOutIso);
-      
-      const earlyDiff = Math.floor((shiftEnd.getTime() - checkOut.getTime()) / (1000 * 60));
-      if (earlyDiff > shift.earlyDepartureThresholdMinutes) {
-        earlyDepartureMinutes = earlyDiff;
-        if (status === 'PRESENT') status = 'EARLY_DEPARTURE';
-      }
-
-      const totalScheduledMinutes = shift.shiftDurationMinutes;
-      if (workedMinutes > totalScheduledMinutes) {
-        overtimeMinutes = workedMinutes - totalScheduledMinutes;
-      }
-    }
-
-    return { lateMinutes, earlyDepartureMinutes, workedMinutes, overtimeMinutes, status };
+    return {
+      lateMinutes: res.lateMinutes,
+      earlyDepartureMinutes: res.earlyDepartureMinutes,
+      workedMinutes: res.workedMinutes,
+      overtimeMinutes: res.calculatedOvertimeMinutes,
+      scheduledMinutes: res.scheduledMinutes,
+      breakMinutes: res.breakMinutes,
+      netWorkedMinutes: res.netWorkedMinutes,
+      shortfallMinutes: res.shortfallMinutes,
+      approvedOvertimeMinutes: res.approvedOvertimeMinutes,
+      unapprovedOvertimeMinutes: res.unapprovedOvertimeMinutes,
+      status: res.status,
+      humanExplanation: res.humanExplanation,
+      exceptions: res.exceptions
+    };
   }
 
   /**
-   * Formats minutes to HH:mm
+   * Formats minutes to HH:mm or Xh Ym
    */
   static formatMinutes(minutes: number): string {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
   }
+
+  static formatDuration(minutes: number): string {
+    return AttendanceCalculationEngine.formatDuration(minutes);
+  }
 }
+

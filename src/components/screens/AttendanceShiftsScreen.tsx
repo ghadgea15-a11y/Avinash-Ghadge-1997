@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { UserSession, CompanyTenant, PhaseAScreen } from '../../types';
-import { LayoutDashboard, Users, Fingerprint } from 'lucide-react';
+import { LayoutDashboard, Users, Fingerprint, TrendingUp } from 'lucide-react';
 import { AttendanceDashboard } from '../wfm/AttendanceDashboard';
 import { MusterRegister } from '../wfm/MusterRegister';
 import { EmployeePunch } from '../wfm/EmployeePunch';
+import { OvertimeDashboard } from '../wfm/OvertimeDashboard';
 
 interface AttendanceShiftsScreenProps {
   userSession: UserSession;
@@ -19,7 +20,7 @@ export const AttendanceShiftsScreen: React.FC<AttendanceShiftsScreenProps> = ({
   onNavigate
 }) => {
   const company = activeCompany || ({ companyId: userSession.companyId } as CompanyTenant);
-  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'MUSTER' | 'PUNCH'>('DASHBOARD');
+  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'MUSTER' | 'PUNCH' | 'OVERTIME'>('DASHBOARD');
 
   return (
     <div className="flex-1 flex flex-col w-full h-full overflow-hidden bg-slate-50 dark:bg-slate-950">
@@ -51,6 +52,18 @@ export const AttendanceShiftsScreen: React.FC<AttendanceShiftsScreenProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab('OVERTIME')}
+            className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${
+              activeTab === 'OVERTIME'
+                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" />
+            Overtime & Late Engine
+          </button>
+
+          <button
             onClick={() => setActiveTab('PUNCH')}
             className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'PUNCH'
@@ -72,6 +85,9 @@ export const AttendanceShiftsScreen: React.FC<AttendanceShiftsScreenProps> = ({
           )}
           {activeTab === 'MUSTER' && (
             <MusterRegister userSession={userSession} activeCompany={company} />
+          )}
+          {activeTab === 'OVERTIME' && (
+            <OvertimeDashboard userSession={userSession} activeCompany={company} />
           )}
           {activeTab === 'PUNCH' && (
             <EmployeePunch userSession={userSession} activeCompany={company} />

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Clock, CheckCircle2, XCircle, ShieldCheck, AlertTriangle, Fingerprint, Loader2 } from 'lucide-react';
-import { UserSession, CompanyTenant, ShiftRecord, RosterRecord, AttendanceRecord, SiteRecord } from '../../types';
+import { UserSession, CompanyTenant, ShiftRecord, RosterRecord, AttendanceRecord, SiteRecord, BiometricVerificationResult } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { GeoUtils } from '../../utils/geoUtils';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Props {
@@ -20,26 +21,25 @@ export const EmployeePunch: React.FC<Props> = ({ userSession, activeCompany }) =
   const [gpsError, setGpsError] = useState<string | null>(null);
 
   const [message, setMessage] = useState<{ type: 'SUCCESS' | 'ERROR', text: string } | null>(null);
+  
+  // Override State
+  const [overrideModal, setOverrideModal] = useState<{ isOpen: boolean; type: 'IN' | 'OUT'; reason: string }>({ isOpen: false, type: 'IN', reason: '' });
 
   const date = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     const fetchContext = async () => {
-      // 1. Get Sites (for geofencing)
       const siteList = await FirestoreService.getSites(activeCompany.companyId);
       setSites(siteList);
 
-      // 2. Get Shifts
       const shiftList = await FirestoreService.getShifts(activeCompany.companyId);
       setShifts(shiftList);
 
-      // 3. Get Today's Roster
       const unsubRoster = FirestoreService.subscribeToRosters(userSession, activeCompany.companyId, (data) => {
         const found = data.find(r => r.date === date && r.employeeId === userSession.employeeId);
         setTodayRoster(found || null);
       });
 
-      // 4. Get Today's Attendance
       const unsubAttendance = FirestoreService.subscribeToAttendance(userSession, activeCompany.companyId, (data) => {
         const found = data.find(a => a.attendanceDate === date && a.employeeId === userSession.employeeId);
         setAttendance(found || null);
@@ -62,18 +62,74 @@ export const EmployeePunch: React.FC<Props> = ({ userSession, activeCompany }) =
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      (pos) => setGps({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+      (pos) => {
+        setGps({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy });
+        setGpsError(null);
+      },
       (err) => setGpsError('GPS permission denied'),
       { enableHighAccuracy: true }
     );
   };
 
-  const handlePunchIn = async () => {
+  const simulateBiometric = async (): Promise<BiometricVerificationResult> => {
+    // Note: In a real Web environment, we'd use WebAuthn navigator.credentials.get()
+    return new Promise(resolve => {
+      setTimeout(() => resolve('SUCCESS'), 800);
+    });
+  };
+
+  const validatePunch = async (type: 'IN' | 'OUT', overrideReason?: string) => {
+    if (!todayRoster) return;
+    const site = sites.find(s => s.id === todayRoster.siteId);
+    if (!site) {
+      setMessage({ type: 'ERROR', text: 'Invalid site assignment.' });
+      return false;
+    }
+
+    if (site.geofenceEnabled) {
+      if (!gps) {
+        setMessage({ type: 'ERROR', text: 'Location is required for this site.' });
+        return false;
+      }
+      if (site.latitude && site.longitude) {
+        const result = GeoUtils.evaluateGeofence(
+          gps.latitude, gps.longitude, gps.accuracy || 0,
+          site.latitude, site.longitude, site.geofenceRadius || 100, site.accuracyThreshold || 50
+        );
+
+        if (result.result !== 'WITHIN_GEOFENCE' && !overrideReason) {
+          setOverrideModal({ isOpen: true, type, reason: '' });
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
+  const handlePunchIn = async (overrideReason?: string) => {
     if (!todayRoster) return;
     const shift = shifts.find(s => s.id === todayRoster.shiftId);
     if (!shift) return;
 
     setIsProcessing(true);
+    const isValid = await validatePunch('IN', overrideReason);
+    if (!isValid) {
+      setIsProcessing(false);
+      return;
+    }
+
+    const site = sites.find(s => s.id === todayRoster.siteId);
+    let bioResult: BiometricVerificationResult = 'NOT_REQUIRED';
+    if (site?.attendanceMode === 'BIOMETRIC' || site?.attendanceMode === 'GEO_FENCE_AND_BIOMETRIC') {
+      bioResult = await simulateBiometric();
+      if (bioResult !== 'SUCCESS') {
+        setMessage({ type: 'ERROR', text: 'Biometric verification failed.' });
+        setIsProcessing(false);
+        return;
+      }
+    }
+
     const res = await FirestoreService.punchIn(
       activeCompany.companyId,
       userSession.employeeId,
@@ -83,28 +139,53 @@ export const EmployeePunch: React.FC<Props> = ({ userSession, activeCompany }) =
       todayRoster.siteId,
       todayRoster.siteName,
       gps || undefined,
-      navigator.userAgent
+      navigator.userAgent,
+      bioResult,
+      !!overrideReason,
+      overrideReason
     );
     
     setMessage({ type: res.success ? 'SUCCESS' : 'ERROR', text: res.message });
     setIsProcessing(false);
+    setOverrideModal({ isOpen: false, type: 'IN', reason: '' });
   };
 
-  const handlePunchOut = async () => {
+  const handlePunchOut = async (overrideReason?: string) => {
     if (!attendance || !todayRoster) return;
     const shift = shifts.find(s => s.id === todayRoster.shiftId);
     if (!shift) return;
 
     setIsProcessing(true);
+    const isValid = await validatePunch('OUT', overrideReason);
+    if (!isValid) {
+      setIsProcessing(false);
+      return;
+    }
+
+    const site = sites.find(s => s.id === todayRoster.siteId);
+    let bioResult: BiometricVerificationResult = 'NOT_REQUIRED';
+    if (site?.attendanceMode === 'BIOMETRIC' || site?.attendanceMode === 'GEO_FENCE_AND_BIOMETRIC') {
+      bioResult = await simulateBiometric();
+      if (bioResult !== 'SUCCESS') {
+        setMessage({ type: 'ERROR', text: 'Biometric verification failed.' });
+        setIsProcessing(false);
+        return;
+      }
+    }
+
     const res = await FirestoreService.punchOut(
       activeCompany.companyId,
       attendance.id,
       shift,
-      gps || undefined
+      gps || undefined,
+      bioResult,
+      !!overrideReason,
+      overrideReason
     );
 
     setMessage({ type: res.success ? 'SUCCESS' : 'ERROR', text: res.message });
     setIsProcessing(false);
+    setOverrideModal({ isOpen: false, type: 'OUT', reason: '' });
   };
 
   if (isLoading) return (
@@ -115,13 +196,15 @@ export const EmployeePunch: React.FC<Props> = ({ userSession, activeCompany }) =
   );
 
   const activeShift = todayRoster ? shifts.find(s => s.id === todayRoster.shiftId) : null;
+  const activeSite = todayRoster ? sites.find(s => s.id === todayRoster.siteId) : null;
 
   return (
-    <div className="max-w-md mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-md mx-auto space-y-6 animate-fade-in relative">
       {/* Shift Context Card */}
       <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-8 shadow-xl shadow-indigo-600/5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4">
-          <div className={`w-3 h-3 rounded-full animate-pulse ${gps ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+        <div className="absolute top-0 right-0 p-4 flex gap-2">
+          {activeSite?.attendanceMode?.includes('GEO') && <MapPin className="w-4 h-4 text-emerald-500" />}
+          {activeSite?.attendanceMode?.includes('BIOMETRIC') && <Fingerprint className="w-4 h-4 text-emerald-500" />}
         </div>
 
         <div className="space-y-6 text-center">
@@ -165,7 +248,7 @@ export const EmployeePunch: React.FC<Props> = ({ userSession, activeCompany }) =
             {!attendance ? (
               <button
                 disabled={!todayRoster || isProcessing}
-                onClick={handlePunchIn}
+                onClick={() => handlePunchIn()}
                 className="w-full aspect-square max-w-[200px] mx-auto bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-full flex flex-col items-center justify-center gap-3 shadow-2xl shadow-indigo-600/40 transition-all active:scale-95 group"
               >
                 {isProcessing ? (
@@ -180,7 +263,7 @@ export const EmployeePunch: React.FC<Props> = ({ userSession, activeCompany }) =
             ) : !attendance.checkOut ? (
               <button
                 disabled={isProcessing}
-                onClick={handlePunchOut}
+                onClick={() => handlePunchOut()}
                 className="w-full aspect-square max-w-[200px] mx-auto bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white rounded-full flex flex-col items-center justify-center gap-3 shadow-2xl shadow-rose-600/40 transition-all active:scale-95 group"
               >
                 {isProcessing ? (
@@ -239,6 +322,49 @@ export const EmployeePunch: React.FC<Props> = ({ userSession, activeCompany }) =
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Override Modal */}
+      {overrideModal.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2rem] p-6 shadow-2xl space-y-6">
+            <div className="text-center space-y-2">
+              <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-full flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Outside Geofence</h3>
+              <p className="text-xs text-slate-500">You are outside the configured site radius. If authorized, request an override.</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Override Reason</label>
+              <textarea
+                value={overrideModal.reason}
+                onChange={e => setOverrideModal(prev => ({ ...prev, reason: e.target.value }))}
+                placeholder="Client meeting, perimeter check, etc."
+                className="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setOverrideModal({ isOpen: false, type: 'IN', reason: '' })}
+                className="flex-1 p-3 text-sm font-bold text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={!overrideModal.reason}
+                onClick={() => {
+                  if (overrideModal.type === 'IN') handlePunchIn(overrideModal.reason);
+                  else handlePunchOut(overrideModal.reason);
+                }}
+                className="flex-1 p-3 text-sm font-bold bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white rounded-xl transition-colors"
+              >
+                Submit Punch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

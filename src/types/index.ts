@@ -232,7 +232,13 @@ export interface CompanyTenant {
   adminName?: string;
   adminEmail?: string;
   createdAt?: string;
+  cinNumber?: string;
+  gstNumber?: string;
+  name?: string;
+  legalName?: string;
 }
+
+export type CompanyRecord = CompanyTenant;
 
 export interface AppModule {
   key: string;
@@ -253,6 +259,7 @@ export const MASTER_APP_MODULES: AppModule[] = [
   { key: 'BILLING', name: 'Client Billing & Invoices', description: 'Client invoicing, contracts, and payments', category: 'FINANCE', icon: 'Receipt' },
   { key: 'NOTIFICATIONS', name: 'Notifications & Alerts', description: 'Broadcast messages and push notifications', category: 'SYSTEM', icon: 'Bell' },
   { key: 'REPORTS', name: 'Reports & Analytics', description: 'Exportable operational and muster reports', category: 'CORE', icon: 'BarChart3' },
+  { key: 'WORK_ORDERS', name: 'Work Orders & Tasks', description: 'Operations workflow dispatch and execution', category: 'CORE', icon: 'ListTodo' },
   { key: 'GUARD_PATROL', name: 'Guard Patrol Tour', description: 'Live guard tour tracking and route patrols', category: 'SECURITY', icon: 'ShieldCheck' },
   { key: 'QR_CHECKPOINTS', name: 'QR Checkpoints', description: 'QR code checkpoint scanning & verification', category: 'SECURITY', icon: 'QrCode' },
   { key: 'SECURITY_INCIDENTS', name: 'Security Incident Register', description: 'Real-time incident reporting and investigation', category: 'SECURITY', icon: 'AlertTriangle' },
@@ -364,7 +371,7 @@ export interface SystemConfigRecord {
 
 export interface OfflineQueueItem {
   id: string;
-  actionType: 'PUNCH_IN' | 'PUNCH_OUT' | 'PATROL_CHECK' | 'PATROL_TOUR_LOG' | 'INCIDENT_REPORT' | 'VISITOR_LOG' | 'VISITOR_CHECK_OUT' | 'MATERIAL_PASS' | 'MATERIAL_APPROVE' | 'CREATE_EMPLOYEE' | 'UPDATE_EMPLOYEE_STATUS' | 'CREATE_ROSTER' | 'DELETE_ROSTER';
+  actionType: 'PUNCH_IN' | 'PUNCH_OUT' | 'PATROL_CHECK' | 'PATROL_TOUR_LOG' | 'PATROL_PLAN' | 'PATROL_TOUR_START' | 'PATROL_SCAN' | 'PATROL_TOUR_SCAN' | 'PATROL_TOUR_COMPLETE' | 'PATROL_OVERRIDE' | 'INCIDENT_REPORT' | 'VISITOR_LOG' | 'VISITOR_CHECK_OUT' | 'MATERIAL_PASS' | 'MATERIAL_APPROVE' | 'CREATE_EMPLOYEE' | 'UPDATE_EMPLOYEE_STATUS' | 'CREATE_ROSTER' | 'DELETE_ROSTER';
   payload: Record<string, unknown>;
   timestamp: number;
   status: 'PENDING' | 'SYNCED' | 'FAILED';
@@ -646,13 +653,21 @@ export interface SiteRecord {
   name: string;
   siteName?: string;
   companyId?: string;
+  regionId?: string;
+  assignedRegionId?: string;
   branchId: string;
+  assignedBranchId?: string;
   clientName: string;
   address: string;
   status: 'ACTIVE' | 'INACTIVE';
   latitude?: number;
   longitude?: number;
-  geofenceRadius?: number;
+  geofenceRadius?: number; // in meters
+  geoFenceRadiusMeters?: number; // in meters
+  geoCoordinates?: { latitude: number; longitude: number };
+  geofenceEnabled?: boolean;
+  accuracyThreshold?: number; // in meters
+  attendanceMode?: 'STANDARD' | 'GEO_FENCE' | 'BIOMETRIC' | 'GEO_FENCE_AND_BIOMETRIC' | 'SUPERVISOR_MUSTER';
   createdAt?: string;
 }
 
@@ -789,6 +804,177 @@ export type AttendanceStatus =
 
 export type AttendanceSource = 'EMPLOYEE' | 'SUPERVISOR' | 'ADMIN' | 'IMPORT' | 'SYSTEM';
 
+export type OvertimeRoundingRule = 
+  | 'EXACT' 
+  | 'NEAREST_5' 
+  | 'NEAREST_10' 
+  | 'NEAREST_15' 
+  | 'NEAREST_30' 
+  | 'FLOOR_15' 
+  | 'FLOOR_30' 
+  | 'CEILING_15' 
+  | 'CEILING_30';
+
+export type LateCalculationMode = 'FROM_SHIFT_START' | 'FROM_GRACE_END';
+
+export type OvertimeStatus = 
+  | 'CALCULATED' 
+  | 'PENDING_APPROVAL' 
+  | 'APPROVED' 
+  | 'REJECTED' 
+  | 'ADJUSTED' 
+  | 'CANCELLED';
+
+export type AttendanceExceptionType = 
+  | 'LATE' 
+  | 'EARLY_DEPARTURE' 
+  | 'LATE_AND_EARLY' 
+  | 'MAX_DAILY_OT_EXCEEDED' 
+  | 'MAX_WEEKLY_OT_EXCEEDED' 
+  | 'MAX_MONTHLY_OT_EXCEEDED' 
+  | 'MISSING_CHECK_IN' 
+  | 'MISSING_CHECK_OUT' 
+  | 'INVALID_PUNCH_ORDER' 
+  | 'UNROSTERED_ATTENDANCE' 
+  | 'SHORTFALL' 
+  | 'INELIGIBLE_OVERTIME' 
+  | 'REQUIRES_REVIEW'
+  | 'NORMAL';
+
+export interface OvertimePolicyRecord {
+  id: string;
+  companyId: string;
+  policyName: string;
+  isDefault: boolean;
+  applicableSiteIds?: string[];
+  applicableDepartmentIds?: string[];
+  applicableWorkforceCategories?: WorkforceCategory[];
+  applicableRoles?: UserRole[];
+  gracePeriodMinutes: number;
+  lateCalculationMode: LateCalculationMode;
+  lateDeductionThresholdMinutes: number;
+  earlyDepartureGraceMinutes: number;
+  earlyDepartureThresholdMinutes: number;
+  overtimeThresholdMinutes: number;
+  overtimeRoundingRule: OvertimeRoundingRule;
+  maxDailyOvertimeMinutes: number;
+  maxWeeklyOvertimeMinutes: number;
+  maxMonthlyOvertimeMinutes: number;
+  requireApprovalForOvertime: boolean;
+  autoApproveUnderMinutes?: number;
+  includeBreakInWorkedTime: boolean;
+  defaultBreakMinutes: number;
+  allowCrossMidnight: boolean;
+  eligibleForOvertime: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
+}
+
+export interface OvertimeRequestRecord {
+  id: string;
+  companyId: string;
+  attendanceId: string;
+  employeeId: string;
+  employeeName: string;
+  siteId: string;
+  siteName: string;
+  departmentId?: string;
+  workDate: string; // YYYY-MM-DD
+  shiftId: string;
+  shiftName: string;
+  shiftStart: string;
+  shiftEnd: string;
+  actualCheckIn?: string;
+  actualCheckOut?: string;
+  scheduledMinutes: number;
+  workedMinutes: number;
+  breakMinutes: number;
+  netWorkedMinutes: number;
+  rawOvertimeMinutes: number;
+  roundedOvertimeMinutes: number;
+  approvedOvertimeMinutes: number;
+  status: OvertimeStatus;
+  calculationBreakdown: string;
+  reason?: string;
+  exceptionFlags?: AttendanceExceptionType[];
+  requestedBy: string;
+  requestedByName: string;
+  requestedAt: string;
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OvertimeAdjustmentRecord {
+  id: string;
+  companyId: string;
+  overtimeRequestId?: string;
+  attendanceId: string;
+  employeeId: string;
+  employeeName: string;
+  workDate?: string;
+  originalMinutes: number;
+  requestedMinutes: number;
+  adjustmentType: 'OVERTIME' | 'LATE' | 'EARLY_DEPARTURE' | 'WORKED_MINUTES';
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  requestedBy: string;
+  requestedByName: string;
+  requestedAt: string;
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AttendanceCalculationResult {
+  attendanceId: string;
+  workDate: string;
+  scheduledMinutes: number;
+  workedMinutes: number;
+  breakMinutes: number;
+  netWorkedMinutes: number;
+  lateMinutes: number;
+  earlyDepartureMinutes: number;
+  shortfallMinutes: number;
+  rawOvertimeMinutes: number;
+  calculatedOvertimeMinutes: number;
+  approvedOvertimeMinutes: number;
+  unapprovedOvertimeMinutes: number;
+  status: AttendanceStatus;
+  isEligibleForOvertime: boolean;
+  exceptions: AttendanceExceptionType[];
+  requiresReview: boolean;
+  humanExplanation: string;
+  breakdownSteps: string[];
+}
+
+export type GeoVerificationResult = 'WITHIN_GEOFENCE' | 'OUTSIDE_GEOFENCE' | 'LOCATION_UNAVAILABLE' | 'LOW_ACCURACY' | 'GEOFENCE_NOT_CONFIGURED';
+export type BiometricVerificationResult = 'SUCCESS' | 'FAILED' | 'UNAVAILABLE' | 'NOT_REQUIRED';
+
+export interface GeoVerificationData {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  distanceFromSite?: number;
+  verification: GeoVerificationResult;
+  timestamp: string;
+  biometricVerification?: BiometricVerificationResult;
+  suspiciousFlag?: string;
+  geofenceOverrideRequested?: boolean;
+  geofenceOverrideApproved?: boolean;
+  geofenceOverrideReason?: string;
+  geofenceOverrideApproverId?: string;
+  geofenceOverrideApproverName?: string;
+}
+
 export interface AttendanceRecord {
   id: string;
   companyId: string;
@@ -807,19 +993,19 @@ export interface AttendanceRecord {
   earlyDepartureMinutes: number;
   workedMinutes: number;
   overtimeMinutes: number;
+  scheduledMinutes?: number;
+  breakMinutes?: number;
+  netWorkedMinutes?: number;
+  shortfallMinutes?: number;
+  approvedOvertimeMinutes?: number;
+  unapprovedOvertimeMinutes?: number;
+  overtimeStatus?: OvertimeStatus;
+  calculationExplanation?: string;
+  exceptions?: AttendanceExceptionType[];
+  requiresReview?: boolean;
   source: AttendanceSource;
-  checkInGps?: { 
-    latitude: number; 
-    longitude: number; 
-    accuracy?: number;
-    verification?: 'WITHIN_GEOFENCE' | 'OUTSIDE_GEOFENCE' | 'NOT_AVAILABLE';
-  };
-  checkOutGps?: { 
-    latitude: number; 
-    longitude: number; 
-    accuracy?: number;
-    verification?: 'WITHIN_GEOFENCE' | 'OUTSIDE_GEOFENCE' | 'NOT_AVAILABLE';
-  };
+  checkInGps?: GeoVerificationData;
+  checkOutGps?: GeoVerificationData;
   deviceInfo?: string;
   remarks?: string;
   regularizationRequested?: boolean;
@@ -852,8 +1038,131 @@ export interface PatrolCheckpointRecord {
   locationDescription?: string;
   sequenceOrder: number;
   gpsCoordinates?: { latitude: number; longitude: number };
+  latitude?: number;
+  longitude?: number;
+  geofenceRadius?: number;
+  geofenceRadiusMeters?: number;
   status: 'ACTIVE' | 'INACTIVE';
   createdAt?: string;
+  updatedAt?: string;
+}
+
+export type PatrolFrequency = 'HOURLY' | 'DAILY' | 'PER_SHIFT' | 'CUSTOM_INTERVAL';
+
+export interface PatrolPlanRecord {
+  id: string;
+  companyId: string;
+  assignedRegionId?: string;
+  assignedBranchId?: string;
+  siteId: string;
+  siteName?: string;
+  planName: string;
+  description?: string;
+  frequency: PatrolFrequency;
+  intervalMinutes?: number;
+  shiftId?: string;
+  shiftName?: string;
+  assignedRole?: string;
+  assignedEmployeeIds?: string[];
+  checkpointIds: string[]; // Ordered list of checkpoint IDs
+  requireGeofence?: boolean;
+  geofenceRequired?: boolean;
+  enforceSequence?: boolean;
+  strictSequenceEnforced?: boolean;
+  minCompletionPercentage: number;
+  status: 'ACTIVE' | 'INACTIVE';
+  createdBy: string;
+  createdByName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PatrolVerificationMethod = 'QR_SCAN' | 'MANUAL_CODE' | 'NFC' | 'SUPERVISOR_VERIFIED';
+export type PatrolScanStatus = 'COMPLETED' | 'LATE' | 'SKIPPED' | 'INVALID';
+export type PatrolGeofenceStatus = 'WITHIN_GEOFENCE' | 'OUTSIDE_GEOFENCE' | 'LOW_ACCURACY' | 'NO_GPS' | 'GEOFENCE_NOT_CONFIGURED' | 'NO_GEOFENCE_DATA';
+
+export interface PatrolTourCheckpointScan {
+  checkpointId: string;
+  checkpointName: string;
+  code: string;
+  sequenceOrder: number;
+  scannedAt: string;
+  scannedByUid: string;
+  scannedByName: string;
+  verificationMethod: PatrolVerificationMethod;
+  gpsLatitude?: number;
+  gpsLongitude?: number;
+  gpsAccuracy?: number;
+  gpsLocation?: { latitude: number; longitude: number; accuracy?: number };
+  geofenceStatus: PatrolGeofenceStatus;
+  distanceMeters?: number;
+  distanceFromTargetMeters?: number;
+  sequenceStatus: 'IN_SEQUENCE' | 'OUT_OF_SEQUENCE';
+  outOfSequence?: boolean;
+  outsideGeofence?: boolean;
+  scanMethod?: string;
+  status: PatrolScanStatus;
+  notes?: string;
+  remarks?: string;
+  reportedIncidentId?: string;
+}
+
+export type PatrolTourStatus = 
+  | 'SCHEDULED' 
+  | 'ASSIGNED' 
+  | 'IN_PROGRESS' 
+  | 'COMPLETED' 
+  | 'INCOMPLETE' 
+  | 'MISSED' 
+  | 'ABORTED' 
+  | 'CANCELLED'
+  | 'INTERRUPTED';
+
+export interface PatrolTourRecord {
+  id: string;
+  tourNumber: string; // e.g. PTR-2026-0001
+  patrolPlanId?: string;
+  patrolPlanName?: string;
+  companyId: string;
+  assignedRegionId?: string;
+  assignedBranchId?: string;
+  siteId: string;
+  siteName: string;
+  shiftId?: string;
+  shiftName?: string;
+  assignedGuardId: string;
+  assignedGuardName: string;
+  scheduledStart?: string;
+  scheduledEnd?: string;
+  actualStart?: string;
+  actualEnd?: string;
+  status: PatrolTourStatus;
+  totalCheckpoints: number;
+  completedCheckpointsCount: number;
+  completionPercentage: number;
+  checkpointScans: PatrolTourCheckpointScan[];
+  missedCheckpointIds: string[];
+  exceptionsDetected: string[];
+  enforceSequence?: boolean;
+  strictSequenceEnforced?: boolean;
+  isOverridden?: boolean;
+  overrideReason?: string;
+  overriddenByUid?: string;
+  overriddenByName?: string;
+  overriddenAt?: string;
+  supervisorOverride?: {
+    reason?: string;
+    overriddenByUid?: string;
+    overriddenByName?: string;
+    overriddenAt?: string;
+  };
+  startGps?: { latitude: number; longitude: number; accuracy?: number };
+  endGps?: { latitude: number; longitude: number; accuracy?: number };
+  startGeofenceResult?: PatrolGeofenceStatus;
+  remarks?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PatrolLogRecord {
@@ -876,31 +1185,98 @@ export interface PatrolLogRecord {
   createdAt: string;
 }
 
+export type IncidentCategory = 
+  | 'SECURITY_BREACH' 
+  | 'FIRE_HAZARD' 
+  | 'PROPERTY_DAMAGE' 
+  | 'THEFT' 
+  | 'MEDICAL' 
+  | 'UNAUTHORIZED_ENTRY' 
+  | 'ACCESS_CONTROL' 
+  | 'EQUIPMENT_FAILURE' 
+  | 'POLICY_VIOLATION' 
+  | 'SAFETY' 
+  | 'OTHER';
+
+export type IncidentSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export type IncidentStatus = 
+  | 'OPEN' 
+  | 'REPORTED' 
+  | 'ACKNOWLEDGED' 
+  | 'UNDER_INVESTIGATION' 
+  | 'INVESTIGATING' 
+  | 'ACTION_REQUIRED' 
+  | 'RESOLVED' 
+  | 'VERIFIED' 
+  | 'CLOSED' 
+  | 'REJECTED' 
+  | 'CANCELLED' 
+  | 'IN_PROGRESS' 
+  | 'ESCALATED' 
+  | 'RECORDED';
+
+export interface IncidentTimelineEvent {
+  timestamp: string;
+  actorId: string;
+  actorName: string;
+  action: string;
+  notes?: string;
+}
+
 export interface IncidentReportRecord {
-  type?: 'INCIDENT' | 'COMPLAINT' | 'BBS_OBSERVATION';
-  slaDeadline?: string;
-  resolutionNotes?: string;
-  actionTaken?: string;
-  behaviorCategory?: string;
   id: string;
   companyId: string;
+  incidentNumber?: string;
   assignedRegionId?: string;
   assignedBranchId?: string;
   siteId: string;
   siteName?: string;
+  locationDescription?: string;
   reportedById: string;
   reportedByName: string;
+  reportedAt: string;
+  type?: 'INCIDENT' | 'COMPLAINT' | 'BBS_OBSERVATION' | 'ACCIDENT' | 'SAFETY_HAZARD';
   title: string;
-  category: 'SECURITY_BREACH' | 'FIRE_HAZARD' | 'PROPERTY_DAMAGE' | 'THEFT' | 'MEDICAL' | 'UNAUTHORIZED_ENTRY' | 'OTHER';
-  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  category: IncidentCategory;
+  severity: IncidentSeverity;
   description: string;
-  status: 'OPEN' | 'UNDER_INVESTIGATION' | 'RESOLVED' | 'CLOSED' | 'IN_PROGRESS' | 'ESCALATED' | 'RECORDED' | 'ACTION_REQUIRED';
+  status: IncidentStatus;
+  slaDeadline?: string;
+  behaviorCategory?: string;
+  
+  // Investigation & Root Cause
+  assignedInvestigatorId?: string;
+  assignedInvestigatorName?: string;
+  immediateAction?: string;
+  rootCause?: string;
+  correctiveAction?: string;
+  preventiveAction?: string;
+  actionTaken?: string;
+  resolutionNotes?: string;
+  
+  // Resolution & Verification
   resolvedById?: string;
   resolvedByName?: string;
+  resolvedAt?: string;
+  verifiedById?: string;
+  verifiedByName?: string;
+  verifiedAt?: string;
+  closedById?: string;
+  closedByName?: string;
+  closedAt?: string;
+  
+  // Operational Linkage
+  relatedPatrolTourId?: string;
+  relatedCheckpointId?: string;
+  relatedWorkOrderId?: string;
+  
+  // Attachments & Coordinates
   photoUrls?: string[];
   gpsLocation?: { latitude: number; longitude: number };
-  reportedAt: string;
-  resolvedAt?: string;
+  timeline?: IncidentTimelineEvent[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface VisitorLogRecord {
@@ -980,6 +1356,8 @@ export interface DailySiteLogRecord {
 }
 
 export interface LeaveRequestRecord {
+  isHalfDay?: boolean;
+  leaveTypeName?: string;
   id: string;
   companyId: string;
   employeeId: string;
@@ -992,7 +1370,7 @@ export interface LeaveRequestRecord {
   reason: string;
   contactDuringLeave?: string;
   handoverEmployeeId?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'WITHDRAWN' | 'PENDING_APPROVAL';
   appliedAt: string;
   approvedBy?: string;
   approvedByName?: string;
@@ -1010,10 +1388,11 @@ export interface LeaveBalanceRecord {
   employeeId: string;
   employeeName: string;
   year: number;
-  casualLeave: { total: number; used: number; remaining: number };
-  sickLeave: { total: number; used: number; remaining: number };
-  earnedLeave: { total: number; used: number; remaining: number };
-  unpaidLeave: { used: number };
+  balances?: LeaveBalanceDetail[];
+  casualLeave?: { total: number; used: number; remaining: number };
+  sickLeave?: { total: number; used: number; remaining: number };
+  earnedLeave?: { total: number; used: number; remaining: number };
+  unpaidLeave?: { used: number };
   updatedAt: string;
 }
 
@@ -1276,12 +1655,43 @@ export interface PayrollCycleRecord {
   totalGrossPay: number;
   totalDeductions: number;
   totalNetPay: number;
-  status: 'DRAFT' | 'CALCULATED' | 'APPROVED' | 'DISBURSED';
+  status: 'DRAFT' | 'PROCESSING' | 'CALCULATED' | 'PENDING_APPROVAL' | 'APPROVED' | 'LOCKED' | 'CANCELLED' | 'DISBURSED';
   processedAt?: string;
   processedBy?: string;
   processedByName?: string;
   approvedAt?: string;
+  lockedAt?: string;
   disbursedAt?: string;
+  createdAt: string;
+}
+
+export interface StatutoryConfigRecord {
+  id: string;
+  companyId: string;
+  type: 'PF' | 'ESIC' | 'PT' | 'TDS';
+  version: string; // e.g. 'v1'
+  effectiveDate: string; // YYYY-MM-DD
+  status: 'ACTIVE' | 'ARCHIVED';
+  
+  // For PF
+  pfEmployerShare?: number;
+  pfEmployeeShare?: number;
+  pfWageLimit?: number;
+  
+  // For ESIC
+  esicEmployerShare?: number;
+  esicEmployeeShare?: number;
+  esicWageLimit?: number;
+  
+  // For PT (Configured by State typically, we can store slabs)
+  ptState?: string;
+  ptSlabs?: { min: number, max: number, amount: number, gender?: string }[];
+  
+  // For TDS (Simplified tax brackets/slabs)
+  tdsRegime?: string;
+  tdsSlabs?: { min: number, max: number, percentage: number }[];
+  
+  createdBy: string;
   createdAt: string;
 }
 
@@ -1293,18 +1703,23 @@ export interface SalarySlipRecord {
   year: number;
   employeeId: string;
   employeeName: string;
+  employeeCode?: string;
   departmentName?: string;
   designation?: string;
+  dateOfJoining?: string;
   bankName?: string;
   accountNumber?: string;
   ifscCode?: string;
   panNumber?: string;
   uanNumber?: string;
+  pfNumber?: string;
+  esicNumber?: string;
   totalMonthDays: number;
   workedDays: number;
   paidLeaveDays: number;
   lopDays: number;
   payableDays: number;
+  overtimeHours?: number;
   earnings: {
     basic: number;
     hra: number;
@@ -1328,9 +1743,149 @@ export interface SalarySlipRecord {
   };
   netPay: number;
   netPayInWords: string;
-  status: 'GENERATED' | 'APPROVED' | 'PAID';
+  status: 'GENERATED' | 'APPROVED' | 'PUBLISHED' | 'PAID';
+  isPublished?: boolean;
+  publishedAt?: string;
+  publishedBy?: string;
+  downloadCount?: number;
+  lastDownloadedAt?: string;
+  verificationHash?: string;
+  pdfUrl?: string;
   generatedAt: string;
   createdAt: string;
+}
+
+// ----------------------------------------------------
+// NEFT / RTGS BANK PAYMENT BATCH & EXPORT TYPES
+// ----------------------------------------------------
+
+export type BankExportFormat = 
+  | 'STANDARD_CSV' 
+  | 'HDFC_CMS' 
+  | 'SBI_CORP' 
+  | 'ICICI_E_BANKING' 
+  | 'KOTAK_CMS' 
+  | 'AXIS_BULK'
+  | 'PIPE_DELIMITED_TXT';
+
+export type PaymentBatchMethod = 'NEFT' | 'RTGS' | 'AUTO';
+
+export type PaymentBatchStatus = 
+  | 'DRAFT'
+  | 'VALIDATING'
+  | 'VALIDATION_FAILED'
+  | 'READY_FOR_APPROVAL'
+  | 'APPROVED'
+  | 'EXPORTED'
+  | 'SUBMITTED'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'CANCELLED';
+
+export interface CompanyBankAccountRecord {
+  id: string;
+  companyId: string;
+  bankName: string;
+  accountHolderName: string;
+  accountNumber: string;
+  maskedAccountNumber: string;
+  ifscCode: string;
+  branchName?: string;
+  accountType: 'CURRENT' | 'OVERDRAFT' | 'SAVINGS';
+  isDefault: boolean;
+  status: 'ACTIVE' | 'INACTIVE';
+  paymentReferencePrefix?: string;
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: string;
+}
+
+export interface PaymentBatchItemRecord {
+  id: string;
+  salarySlipId: string;
+  employeeId: string;
+  employeeName: string;
+  employeeCode?: string;
+  departmentName?: string;
+  designation?: string;
+  bankName: string;
+  accountNumber: string;
+  maskedAccountNumber: string;
+  ifscCode: string;
+  netPay: number; // Authoritative from locked SalarySlipRecord
+  paymentMethod: 'NEFT' | 'RTGS';
+  paymentReference: string;
+  validationStatus: 'VALID' | 'INVALID';
+  validationErrors: string[];
+  isEligible: boolean;
+}
+
+export interface PaymentBatchValidationSummary {
+  totalItems: number;
+  totalValid: number;
+  totalInvalid: number;
+  totalAmount: number;
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  validatedAt: string;
+}
+
+export interface PaymentBatchRecord {
+  id: string;
+  batchNumber: string; // e.g. "BATCH-2026-08-NEFT-001"
+  companyId: string;
+  payrollCycleId: string;
+  month: number;
+  year: number;
+  payrollCycleLabel: string;
+  paymentMethod: PaymentBatchMethod;
+  companyBankAccountId?: string;
+  companyBankName?: string;
+  companyMaskedAccount?: string;
+  debitAccountReference?: string;
+  beneficiaryCount: number;
+  validBeneficiaryCount: number;
+  totalAmount: number; // Exact sum of valid items
+  currency: string; // 'INR'
+  status: PaymentBatchStatus;
+  items: PaymentBatchItemRecord[];
+  validationSummary?: PaymentBatchValidationSummary;
+  rejectionReason?: string;
+  cancellationReason?: string;
+  
+  // Lifecycle timestamps & actors
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  
+  validatedAt?: string;
+  
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  
+  exportedBy?: string;
+  exportedByName?: string;
+  exportedAt?: string;
+  exportCount: number;
+  exportVersion: number;
+  lastExportFormat?: BankExportFormat;
+  lastExportFileName?: string;
+  
+  updatedAt: string;
+}
+
+export interface BankExportFileResult {
+  fileName: string;
+  fileContent: string;
+  mimeType: string;
+  format: BankExportFormat;
+  recordCount: number;
+  totalAmount: number;
+  generatedAt: string;
+  batchNumber: string;
+  checksum?: string;
 }
 
 export type PhaseAScreen = 
@@ -1373,6 +1928,7 @@ export type PhaseAScreen =
   | 'ID_BADGES'
   | 'ANNOUNCEMENTS'
   | 'MY_TASKS'
+  | 'WORK_ORDERS'
   | 'SERVICE_DESK'
   | 'TALENT_ACQUISITION'
   | 'TRAINING_LMS'
@@ -1445,10 +2001,85 @@ export const APP_MODULES = {
   GUARD_PATROL: 'GUARD_PATROL',
   SECURITY_INCIDENTS: 'SECURITY_INCIDENTS',
   ID_BADGES: 'ID_BADGES',
-  COMPLIANCE: 'COMPLIANCE'
+  COMPLIANCE: 'COMPLIANCE',
+  WORK_ORDERS: 'WORK_ORDERS'
 } as const;
 
 export type AppModuleKey = keyof typeof APP_MODULES;
+
+export type WorkOrderStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'DISPATCHED' | 'ACCEPTED' | 'IN_PROGRESS' | 'PAUSED' | 'COMPLETED' | 'VERIFIED' | 'CLOSED' | 'CANCELLED' | 'REJECTED' | 'OVERDUE';
+export type WorkOrderPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type LocationRequirementMode = 'NONE' | 'SITE_ONLY' | 'GEOFENCE_REQUIRED';
+
+export interface WorkOrderChecklistItem {
+  id: string;
+  text: string;
+  isCompleted: boolean;
+  isRequired: boolean;
+  completedAt?: string;
+  completedBy?: string;
+}
+
+export interface WorkOrderActivity {
+  id: string;
+  action: string;
+  status: WorkOrderStatus;
+  timestamp: string;
+  actorId: string;
+  actorName: string;
+  reason?: string;
+  notes?: string;
+}
+
+export interface WorkOrderRecord {
+  id: string; // Used as workOrderId
+  companyId: string;
+  regionId?: string;
+  branchId?: string;
+  siteId?: string;
+  departmentId?: string;
+  
+  title: string;
+  description: string;
+  category: string;
+  priority: WorkOrderPriority;
+  status: WorkOrderStatus;
+  
+  requestedBy?: string;
+  assignedTo?: string; // Employee ID
+  assignedTeam?: string; // Team/Group ID
+
+  // Schedule & Timestamps
+  createdAt: string;
+  scheduledStart?: string;
+  scheduledEnd?: string;
+  actualStart?: string;
+  actualEnd?: string;
+  dueAt?: string;
+  closedAt?: string;
+  
+  // Execution
+  completionPercentage?: number;
+  checklist?: WorkOrderChecklistItem[];
+  
+  // Requirements
+  locationRequirement: LocationRequirementMode;
+  evidenceRequirement: boolean;
+  approvalRequirement: boolean;
+  
+  // Status/Audit
+  verificationStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  closedBy?: string; // Actor ID
+  createdBy: string; // Actor ID
+  updatedBy: string; // Actor ID
+  updatedAt: string;
+  
+  // Evidence references (URLs)
+  evidenceUrls?: string[];
+  
+  // Timeline/Activity
+  activityTimeline?: WorkOrderActivity[];
+}
 
 export interface TaskRecord {
   id: string;
@@ -1914,3 +2545,49 @@ export interface ThreeWayMatchRecord {
   updatedAt: string;
 }
 
+
+export interface LeavePolicyRecord {
+  id: string;
+  companyId: string;
+  leaveCode: string;
+  leaveName: string;
+  description?: string;
+  annualEntitlement: number;
+  maxCarryForward: number;
+  isPaid: boolean;
+  requiresApproval: boolean;
+  genderRestriction?: 'ALL' | 'MALE' | 'FEMALE';
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: string;
+}
+
+export interface HolidayRecord {
+  id: string;
+  companyId: string;
+  name: string;
+  date: string; // YYYY-MM-DD
+  type: 'NATIONAL' | 'FESTIVAL' | 'OTHER';
+}
+
+export interface LeaveBalanceDetail {
+  leaveCode: string;
+  leaveName: string;
+  openingBalance: number;
+  accrued: number;
+  used: number;
+  pending: number;
+  adjusted: number;
+  carriedForward: number;
+  encashed: number;
+  availableBalance: number;
+}
+export interface AbsenceRegularizationRecord {
+  id: string;
+  employeeId: string;
+  companyId: string;
+  date: string;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: number;
+  updatedAt: number;
+}

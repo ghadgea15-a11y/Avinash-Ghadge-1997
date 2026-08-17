@@ -30,7 +30,16 @@ import {
   Flame, 
   ShieldCheck, 
   Lock, 
-  Layers
+  Layers,
+  Play,
+  Compass,
+  Printer,
+  Radio,
+  FileCheck,
+  AlertOctagon,
+  ArrowRight,
+  ListOrdered,
+  Crosshair
 } from 'lucide-react';
 import { 
   UserSession, 
@@ -38,17 +47,25 @@ import {
   PhaseAScreen, 
   SiteRecord, 
   PatrolCheckpointRecord, 
+  PatrolPlanRecord,
+  PatrolTourRecord,
+  PatrolTourCheckpointScan,
   PatrolLogRecord, 
   IncidentReportRecord, 
   VisitorLogRecord, 
   MaterialMovementRecord, 
   DailySiteLogRecord,
-  EmployeeRecord 
+  EmployeeRecord,
+  ShiftRecord
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { StorageService } from '../../services/storageService';
 import { OfflineSyncService } from '../../services/offlineSyncService';
 import { useTheme } from '../../context/ThemeContext';
+import { PatrolPlanModal } from '../operations/PatrolPlanModal';
+import { PatrolTourRunnerModal } from '../operations/PatrolTourRunnerModal';
+import { PatrolTourDetailModal } from '../operations/PatrolTourDetailModal';
+import { CheckpointQRCodeModal } from '../operations/CheckpointQRCodeModal';
 
 interface SiteOperationsScreenProps {
   userSession: UserSession;
@@ -101,13 +118,36 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   // Modals & Form States
   // 1. Checkpoint Modal
   const [isCheckpointModalOpen, setIsCheckpointModalOpen] = useState<boolean>(false);
+  const [editingCheckpoint, setEditingCheckpoint] = useState<PatrolCheckpointRecord | null>(null);
   const [checkpointForm, setCheckpointForm] = useState<{
+    id?: string;
     siteId: string;
     checkpointName: string;
     code: string;
     locationDescription: string;
     sequenceOrder: number;
-  }>({ siteId: '', checkpointName: '', code: '', locationDescription: '', sequenceOrder: 1 });
+    latitude?: number;
+    longitude?: number;
+    geofenceRadius?: number;
+  }>({ siteId: '', checkpointName: '', code: '', locationDescription: '', sequenceOrder: 1, geofenceRadius: 50 });
+
+  // 1.1 Patrol Plans & Tours State
+  const [patrolSubTab, setPatrolSubTab] = useState<'LIVE_TOURS' | 'PATROL_PLANS' | 'CHECKPOINTS' | 'TOUR_HISTORY'>('LIVE_TOURS');
+  const [patrolPlans, setPatrolPlans] = useState<PatrolPlanRecord[]>([]);
+  const [patrolTours, setPatrolTours] = useState<PatrolTourRecord[]>([]);
+  const [shifts, setShifts] = useState<ShiftRecord[]>([]);
+
+  const [isPatrolPlanModalOpen, setIsPatrolPlanModalOpen] = useState<boolean>(false);
+  const [selectedPlanForEdit, setSelectedPlanForEdit] = useState<PatrolPlanRecord | null>(null);
+
+  const [isTourRunnerModalOpen, setIsTourRunnerModalOpen] = useState<boolean>(false);
+  const [activeTour, setActiveTour] = useState<PatrolTourRecord | null>(null);
+
+  const [isTourDetailModalOpen, setIsTourDetailModalOpen] = useState<boolean>(false);
+  const [selectedTourForDetail, setSelectedTourForDetail] = useState<PatrolTourRecord | null>(null);
+
+  const [isCheckpointQrModalOpen, setIsCheckpointQrModalOpen] = useState<boolean>(false);
+  const [selectedCheckpointForQr, setSelectedCheckpointForQr] = useState<PatrolCheckpointRecord | null>(null);
 
   // 2. Incident Modal
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState<boolean>(false);
@@ -122,6 +162,8 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     behaviorCategory?: string;
     slaDeadline?: string;
     photoFile?: File | null;
+    relatedPatrolTourId?: string;
+    relatedCheckpointId?: string;
   }>({ siteId: '', title: '', category: 'SECURITY_BREACH', severity: 'MEDIUM', description: '', type: 'INCIDENT' });
 
   // 3. Visitor Check-in Modal
@@ -207,10 +249,6 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     notes: 'Shift handover complete. All equipment, master keys, and muster logs verified.'
   });
 
-  // Active Patrol Simulation
-  const [activePatrolCheckpointsVisited, setActivePatrolCheckpointsVisited] = useState<string[]>([]);
-  const [isPatrolActive, setIsPatrolActive] = useState<boolean>(false);
-
   // User Role checks
   const isSuperAdmin = userSession.role === 'SUPER_ADMIN';
   const isCompanyAdmin = userSession.role === 'COMPANY_ADMIN';
@@ -231,6 +269,10 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     FirestoreService.subscribeToEmployees(userSession, companyId, setEmployees);
 
     const unsubPatrols = FirestoreService.subscribeToPatrolLogs(userSession, companyId, logs => setPatrolLogs(logs));
+    const unsubPatrolPlans = FirestoreService.subscribeToPatrolPlans(userSession, companyId, plans => setPatrolPlans(plans));
+    const unsubPatrolTours = FirestoreService.subscribeToPatrolTours(userSession, companyId, tours => setPatrolTours(tours));
+    const unsubCheckpoints = FirestoreService.subscribeToPatrolCheckpoints(userSession, companyId, cps => setCheckpoints(cps));
+    const unsubShifts = FirestoreService.subscribeToShifts(userSession, companyId, sList => setShifts(sList));
     const unsubIncidents = FirestoreService.subscribeToIncidentReports(userSession, companyId, reps => setIncidents(reps));
     const unsubVisitors = FirestoreService.subscribeToVisitorLogs(userSession, companyId, vList => setVisitors(vList));
     const unsubMaterials = FirestoreService.subscribeToMaterialLogs(userSession, companyId, mList => setMaterials(mList));
@@ -238,9 +280,12 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
     setIsLoading(false);
 
-  
-  return () => {
+    return () => {
       unsubPatrols();
+      unsubPatrolPlans();
+      unsubPatrolTours();
+      unsubCheckpoints();
+      unsubShifts();
       unsubIncidents();
       unsubVisitors();
       unsubMaterials();
@@ -248,14 +293,24 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     };
   }, [companyId]);
 
-  // Load Checkpoints when site changes
+  // Load Checkpoints when site changes (direct refresh backup)
   useEffect(() => {
     if (!companyId) return;
     FirestoreService.getPatrolCheckpoints(companyId, selectedSiteId).then(setCheckpoints);
   }, [companyId, selectedSiteId]);
 
+  // Keep activeTour synced with real-time patrolTours updates if open in Runner
+  useEffect(() => {
+    if (activeTour) {
+      const updated = patrolTours.find(t => t.id === activeTour.id);
+      if (updated) {
+        setActiveTour(updated);
+      }
+    }
+  }, [patrolTours]);
+
   // ----------------------------------------------------
-  // HANDLERS: CHECKPOINTS & PATROL TOUR
+  // HANDLERS: CHECKPOINTS & PATROL PLANS & TOURS
   // ----------------------------------------------------
   const handleSaveCheckpoint = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -266,98 +321,344 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
       return;
     }
 
+    const siteObj = sites.find(s => s.id === finalSiteId);
     const code = checkpointForm.code || `CP-${Math.floor(100 + Math.random() * 900)}`;
+    const cpId = checkpointForm.id || `CP-${Date.now()}`;
+    
     const newCp: PatrolCheckpointRecord = {
-      id: `CP-${Date.now()}`,
+      id: cpId,
       companyId,
-      assignedRegionId: userSession.assignedRegionId,
-      assignedBranchId: userSession.assignedBranchId,
+      assignedRegionId: siteObj?.regionId || userSession.assignedRegionId,
+      assignedBranchId: siteObj?.branchId || userSession.assignedBranchId,
       siteId: finalSiteId,
+      siteName: siteObj?.name || 'Main Site',
       checkpointName: checkpointForm.checkpointName.trim(),
       code,
       qrCode: `LSM-QR-${code}`,
-      locationDescription: checkpointForm.locationDescription,
+      locationDescription: checkpointForm.locationDescription || '',
       sequenceOrder: Number(checkpointForm.sequenceOrder) || 1,
+      latitude: checkpointForm.latitude,
+      longitude: checkpointForm.longitude,
+      geofenceRadius: Number(checkpointForm.geofenceRadius) || 50,
       status: 'ACTIVE',
-      createdAt: new Date().toISOString()
+      createdAt: editingCheckpoint ? editingCheckpoint.createdAt : new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     setIsLoading(true);
     if (!isOnline) {
       OfflineSyncService.queueAction('PATROL_CHECK', { companyId, data: newCp });
-      setCheckpoints(prev => [...prev, newCp]);
+      setCheckpoints(prev => {
+        const idx = prev.findIndex(c => c.id === cpId);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = newCp;
+          return next;
+        }
+        return [...prev, newCp];
+      });
       setIsCheckpointModalOpen(false);
-      setStatusMsg({ type: 'INFO', text: 'Offline: Checkpoint creation queued.' });
+      setEditingCheckpoint(null);
+      setStatusMsg({ type: 'INFO', text: 'Offline: Checkpoint save queued.' });
+      setIsLoading(false);
       return;
     }
+
     const ok = await FirestoreService.savePatrolCheckpoint(companyId, newCp);
     setIsLoading(false);
 
     if (ok) {
-      setStatusMsg({ type: 'SUCCESS', text: `Checkpoint '${newCp.checkpointName}' added successfully.` });
+      setStatusMsg({ type: 'SUCCESS', text: `Checkpoint '${newCp.checkpointName}' saved successfully.` });
       setIsCheckpointModalOpen(false);
-      setCheckpointForm({ siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""), checkpointName: '', code: '', locationDescription: '', sequenceOrder: checkpoints.length + 1 });
+      setEditingCheckpoint(null);
+      setCheckpointForm({ siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""), checkpointName: '', code: '', locationDescription: '', sequenceOrder: checkpoints.length + 1, geofenceRadius: 50 });
       FirestoreService.getPatrolCheckpoints(companyId, selectedSiteId).then(setCheckpoints);
     } else {
       setStatusMsg({ type: 'ERROR', text: 'Failed to save checkpoint.' });
     }
   };
 
-  const handleStartPatrol = () => {
-    if (isLoading) return;
-    if (checkpoints.length === 0) {
-      setStatusMsg({ type: 'INFO', text: 'Please add at least one checkpoint before starting patrol tour.' });
-      return;
-    }
-    setIsPatrolActive(true);
-    setActivePatrolCheckpointsVisited([]);
-    setStatusMsg({ type: 'INFO', text: 'Patrol Tour started. Scan QR code checkpoints in sequence.' });
-  };
-
-  const handleScanCheckpoint = (cpId: string) => {
-    if (!activePatrolCheckpointsVisited.includes(cpId)) {
-      setActivePatrolCheckpointsVisited(prev => [...prev, cpId]);
-      setStatusMsg({ type: 'SUCCESS', text: 'Checkpoint verified & GPS logged.' });
-    }
-  };
-
-  const handleCompletePatrol = async () => {
-    if (isLoading) return;
+  const handleDeleteCheckpoint = async (cpId: string, cpName?: string) => {
     if (!companyId) return;
-
-    const siteObj = sites.find(s => s.id === selectedSiteId);
-    const isFinished = activePatrolCheckpointsVisited.length === checkpoints.length;
-
-    const patrolLog: PatrolLogRecord = {
-      id: `PATROL-${Date.now()}`,
-      companyId,
-      assignedRegionId: userSession.assignedRegionId,
-      assignedBranchId: userSession.assignedBranchId,
-      siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""),
-      siteName: siteObj?.name || 'Main Site',
-      patrolName: `Routine Patrol #${patrolLogs.length + 1}`,
-      guardId: userSession.employeeId,
-      guardName: userSession.fullName,
-      startTime: new Date().toISOString(),
-      endTime: new Date().toISOString(),
-      checkpointsVisited: activePatrolCheckpointsVisited,
-      totalCheckpoints: checkpoints.length,
-      status: isFinished ? 'COMPLETED' : 'INCOMPLETE',
-      remarks: isFinished ? 'All checkpoints verified in order.' : 'Patrol ended early.',
-      createdAt: new Date().toISOString()
-    };
+    if (!confirm(`Are you sure you want to delete checkpoint '${cpName || cpId}'?`)) return;
 
     setIsLoading(true);
-    const ok = await FirestoreService.savePatrolLog(companyId, patrolLog);
+    const ok = await FirestoreService.deletePatrolCheckpoint(companyId, cpId, cpName);
     setIsLoading(false);
 
     if (ok) {
-      setStatusMsg({ type: 'SUCCESS', text: `Patrol Tour logged as ${patrolLog.status}.` });
-      setIsPatrolActive(false);
-      setActivePatrolCheckpointsVisited([]);
+      setCheckpoints(prev => prev.filter(c => c.id !== cpId));
+      setStatusMsg({ type: 'SUCCESS', text: `Checkpoint deleted.` });
     } else {
-      setStatusMsg({ type: 'ERROR', text: 'Failed to save patrol log.' });
+      setStatusMsg({ type: 'ERROR', text: 'Failed to delete checkpoint.' });
     }
+  };
+
+  const handleSavePatrolPlan = async (plan: PatrolPlanRecord): Promise<boolean> => {
+    if (!companyId) return false;
+    setIsLoading(true);
+
+    if (!isOnline) {
+      OfflineSyncService.queueAction('PATROL_PLAN', { companyId, data: plan });
+      setPatrolPlans(prev => {
+        const idx = prev.findIndex(p => p.id === plan.id);
+        if (idx >= 0) {
+          const n = [...prev];
+          n[idx] = plan;
+          return n;
+        }
+        return [...prev, plan];
+      });
+      setIsPatrolPlanModalOpen(false);
+      setSelectedPlanForEdit(null);
+      setStatusMsg({ type: 'INFO', text: 'Offline: Patrol Plan saved locally and queued.' });
+      setIsLoading(false);
+      return true;
+    }
+
+    const ok = await FirestoreService.savePatrolPlan(companyId, plan);
+    setIsLoading(false);
+
+    if (ok) {
+      setStatusMsg({ type: 'SUCCESS', text: `Patrol Plan '${plan.planName}' saved successfully.` });
+      setIsPatrolPlanModalOpen(false);
+      setSelectedPlanForEdit(null);
+      return true;
+    } else {
+      setStatusMsg({ type: 'ERROR', text: 'Failed to save Patrol Plan.' });
+      return false;
+    }
+  };
+
+  const handleDeletePatrolPlan = async (planId: string, planName?: string) => {
+    if (!companyId) return;
+    if (!confirm(`Are you sure you want to delete patrol plan '${planName || planId}'?`)) return;
+
+    setIsLoading(true);
+    const ok = await FirestoreService.deletePatrolPlan(companyId, planId, planName);
+    setIsLoading(false);
+
+    if (ok) {
+      setPatrolPlans(prev => prev.filter(p => p.id !== planId));
+      setStatusMsg({ type: 'SUCCESS', text: 'Patrol Plan deleted.' });
+    } else {
+      setStatusMsg({ type: 'ERROR', text: 'Failed to delete patrol plan.' });
+    }
+  };
+
+  const handleStartNewTourFromPlan = async (plan: PatrolPlanRecord) => {
+    if (!companyId) return;
+    const siteObj = sites.find(s => s.id === plan.siteId);
+    const siteCps = checkpoints.filter(c => c.siteId === plan.siteId && (plan.checkpointIds?.includes(c.id) || !plan.checkpointIds?.length));
+
+    const totalCps = plan.checkpointIds?.length || siteCps.length;
+    if (totalCps === 0) {
+      setStatusMsg({ type: 'ERROR', text: 'Cannot start patrol: No checkpoints assigned to this site or plan.' });
+      return;
+    }
+
+    const newTour: PatrolTourRecord = {
+      id: `TOUR-${Date.now()}`,
+      tourNumber: `PTR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      patrolPlanId: plan.id,
+      patrolPlanName: plan.planName,
+      companyId,
+      assignedRegionId: plan.assignedRegionId || siteObj?.regionId || userSession.assignedRegionId,
+      assignedBranchId: plan.assignedBranchId || siteObj?.branchId || userSession.assignedBranchId,
+      siteId: plan.siteId,
+      siteName: plan.siteName || siteObj?.name || 'Main Site',
+      shiftId: plan.shiftId,
+      shiftName: plan.shiftName,
+      assignedGuardId: userSession.employeeId || userSession.userId,
+      assignedGuardName: userSession.fullName,
+      actualStart: new Date().toISOString(),
+      status: 'IN_PROGRESS',
+      totalCheckpoints: totalCps,
+      completedCheckpointsCount: 0,
+      completionPercentage: 0,
+      checkpointScans: [],
+      missedCheckpointIds: [],
+      exceptionsDetected: [],
+      createdBy: userSession.employeeId || userSession.userId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setIsLoading(true);
+    if (!isOnline) {
+      OfflineSyncService.queueAction('PATROL_TOUR_START', { companyId, data: newTour });
+      setPatrolTours(prev => [newTour, ...prev]);
+    } else {
+      await FirestoreService.savePatrolTour(companyId, newTour);
+    }
+    setIsLoading(false);
+
+    setActiveTour(newTour);
+    setIsTourRunnerModalOpen(true);
+    setStatusMsg({ type: 'SUCCESS', text: `Patrol Tour ${newTour.tourNumber} started.` });
+  };
+
+  const handleStartAdHocTour = async () => {
+    if (!companyId) return;
+    const targetSiteId = selectedSiteId !== 'ALL' ? selectedSiteId : (sites[0]?.id || '');
+    if (!targetSiteId) {
+      setStatusMsg({ type: 'ERROR', text: 'Please select a site first.' });
+      return;
+    }
+
+    const siteObj = sites.find(s => s.id === targetSiteId);
+    const siteCps = checkpoints.filter(c => c.siteId === targetSiteId);
+    if (siteCps.length === 0) {
+      setStatusMsg({ type: 'ERROR', text: 'No checkpoints found for this site. Please add checkpoints first.' });
+      return;
+    }
+
+    const newTour: PatrolTourRecord = {
+      id: `TOUR-${Date.now()}`,
+      tourNumber: `PTR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      patrolPlanName: `Ad-hoc Patrol - ${siteObj?.name || 'Site'}`,
+      companyId,
+      assignedRegionId: siteObj?.regionId || userSession.assignedRegionId,
+      assignedBranchId: siteObj?.branchId || userSession.assignedBranchId,
+      siteId: targetSiteId,
+      siteName: siteObj?.name || 'Main Site',
+      assignedGuardId: userSession.employeeId || userSession.userId,
+      assignedGuardName: userSession.fullName,
+      actualStart: new Date().toISOString(),
+      status: 'IN_PROGRESS',
+      totalCheckpoints: siteCps.length,
+      completedCheckpointsCount: 0,
+      completionPercentage: 0,
+      checkpointScans: [],
+      missedCheckpointIds: [],
+      exceptionsDetected: [],
+      createdBy: userSession.employeeId || userSession.userId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setIsLoading(true);
+    if (!isOnline) {
+      OfflineSyncService.queueAction('PATROL_TOUR_START', { companyId, data: newTour });
+      setPatrolTours(prev => [newTour, ...prev]);
+    } else {
+      await FirestoreService.savePatrolTour(companyId, newTour);
+    }
+    setIsLoading(false);
+
+    setActiveTour(newTour);
+    setIsTourRunnerModalOpen(true);
+    setStatusMsg({ type: 'SUCCESS', text: `Ad-hoc Patrol Tour ${newTour.tourNumber} started.` });
+  };
+
+  const handleRecordTourScan = async (scan: PatrolTourCheckpointScan): Promise<boolean> => {
+    if (!companyId || !activeTour) return false;
+    
+    // Update active tour in state and backend
+    const updatedTour: PatrolTourRecord = {
+      ...activeTour,
+      checkpointScans: [...(activeTour.checkpointScans || []), scan],
+      completedCheckpointsCount: (activeTour.completedCheckpointsCount || 0) + 1,
+      completionPercentage: Math.round((((activeTour.completedCheckpointsCount || 0) + 1) / (activeTour.totalCheckpoints || 1)) * 100),
+      exceptionsDetected: [
+        ...(activeTour.exceptionsDetected || []),
+        ...(scan.outOfSequence || scan.sequenceStatus === 'OUT_OF_SEQUENCE' ? ['OUT_OF_SEQUENCE' as const] : []),
+        ...(scan.outsideGeofence || scan.geofenceStatus === 'OUTSIDE_GEOFENCE' ? ['OUTSIDE_GEOFENCE' as const] : [])
+      ],
+      updatedAt: new Date().toISOString()
+    };
+
+    setActiveTour(updatedTour);
+
+    if (!isOnline) {
+      OfflineSyncService.queueAction('PATROL_TOUR_SCAN', {
+        companyId,
+        tourId: activeTour.id,
+        scan
+      });
+      setPatrolTours(prev => prev.map(t => t.id === activeTour.id ? updatedTour : t));
+      setStatusMsg({ type: 'SUCCESS', text: `Checkpoint scan logged (${scan.scanMethod || scan.verificationMethod}).` });
+      return true;
+    } else {
+      const ok = await FirestoreService.recordTourCheckpointScan(companyId, activeTour.id, scan, activeTour);
+      if (ok) {
+        setStatusMsg({ type: 'SUCCESS', text: `Checkpoint scan logged (${scan.scanMethod || scan.verificationMethod}).` });
+        return true;
+      } else {
+        setStatusMsg({ type: 'ERROR', text: 'Failed to record checkpoint scan.' });
+        return false;
+      }
+    }
+  };
+
+  const handleCompleteTour = async (remarks: string, endGps?: { latitude: number; longitude: number; accuracy?: number }): Promise<boolean> => {
+    if (!companyId || !activeTour) return false;
+
+    setIsLoading(true);
+    let ok = false;
+    if (!isOnline) {
+      const completed: PatrolTourRecord = {
+        ...activeTour,
+        actualEnd: new Date().toISOString(),
+        status: (activeTour.completedCheckpointsCount >= (activeTour.totalCheckpoints || 1)) ? 'COMPLETED' : 'INTERRUPTED',
+        completionPercentage: Math.round(((activeTour.completedCheckpointsCount || 0) / (activeTour.totalCheckpoints || 1)) * 100),
+        remarks,
+        endGps,
+        updatedAt: new Date().toISOString()
+      };
+      OfflineSyncService.queueAction('PATROL_TOUR_COMPLETE', {
+        companyId,
+        tourId: activeTour.id,
+        remarks,
+        endGps
+      });
+      setPatrolTours(prev => prev.map(t => t.id === activeTour.id ? completed : t));
+      ok = true;
+    } else {
+      ok = await FirestoreService.completePatrolTour(companyId, activeTour.id, activeTour, remarks, endGps);
+    }
+    setIsLoading(false);
+
+    if (ok) {
+      setIsTourRunnerModalOpen(false);
+      setActiveTour(null);
+      setStatusMsg({ type: 'SUCCESS', text: 'Patrol Tour completed and audit trail secured.' });
+      return true;
+    } else {
+      setStatusMsg({ type: 'ERROR', text: 'Failed to complete patrol tour.' });
+      return false;
+    }
+  };
+
+  const handleOverrideTour = async (tourId: string, reason: string): Promise<boolean> => {
+    if (!companyId) return false;
+    setIsLoading(true);
+    const ok = await FirestoreService.supervisorOverrideTour(companyId, tourId, userSession.userId, userSession.fullName, reason);
+    setIsLoading(false);
+
+    if (ok) {
+      setStatusMsg({ type: 'SUCCESS', text: 'Supervisor override applied successfully.' });
+      setIsTourDetailModalOpen(false);
+      setSelectedTourForDetail(null);
+      return true;
+    } else {
+      setStatusMsg({ type: 'ERROR', text: 'Failed to apply supervisor override.' });
+      return false;
+    }
+  };
+
+  const handleReportIncidentFromTour = (checkpoint: PatrolCheckpointRecord, tourId: string) => {
+    setIncidentForm({
+      siteId: checkpoint.siteId,
+      title: `Security Exception at ${checkpoint.checkpointName}`,
+      category: 'SECURITY_BREACH',
+      severity: 'HIGH',
+      type: 'INCIDENT',
+      description: `Incident observed during Patrol Tour [${tourId}] at checkpoint ${checkpoint.checkpointName} (${checkpoint.code}).`,
+      relatedPatrolTourId: tourId,
+      relatedCheckpointId: checkpoint.id
+    });
+    setIsIncidentModalOpen(true);
   };
 
   // ----------------------------------------------------
@@ -805,15 +1106,57 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   // --- PAGINATION & FILTER LOGIC ---
   const filteredCheckpoints = useMemo(() => {
     return checkpoints.filter(cp => {
+      const matchSite = selectedSiteId === 'ALL' || cp.siteId === selectedSiteId;
       const matchSearch = cp.checkpointName.toLowerCase().includes(searchQuery.toLowerCase()) || cp.code.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchSearch;
+      return matchSite && matchSearch;
     }).sort((a, b) => a.sequenceOrder - b.sequenceOrder);
-  }, [checkpoints, searchQuery]);
+  }, [checkpoints, selectedSiteId, searchQuery]);
 
   const paginatedCheckpoints = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredCheckpoints.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredCheckpoints, currentPage, itemsPerPage]);
+
+  const filteredPatrolPlans = useMemo(() => {
+    return patrolPlans.filter(p => {
+      const matchSite = selectedSiteId === 'ALL' || p.siteId === selectedSiteId;
+      const matchSearch = p.planName.toLowerCase().includes(searchQuery.toLowerCase()) || (p.siteName || '').toLowerCase().includes(searchQuery.toLowerCase());
+      return matchSite && matchSearch;
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [patrolPlans, selectedSiteId, searchQuery]);
+
+  const paginatedPatrolPlans = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredPatrolPlans.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredPatrolPlans, currentPage, itemsPerPage]);
+
+  const filteredPatrolTours = useMemo(() => {
+    return patrolTours.filter(t => {
+      const matchSite = selectedSiteId === 'ALL' || t.siteId === selectedSiteId;
+      const matchSearch = t.tourNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.patrolPlanName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.assignedGuardName || '').toLowerCase().includes(searchQuery.toLowerCase());
+      return matchSite && matchSearch;
+    }).sort((a, b) => new Date(b.actualStart || b.createdAt).getTime() - new Date(a.actualStart || a.createdAt).getTime());
+  }, [patrolTours, selectedSiteId, searchQuery]);
+
+  const paginatedPatrolTours = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredPatrolTours.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredPatrolTours, currentPage, itemsPerPage]);
+
+  const liveTours = useMemo(() => {
+    return patrolTours.filter(t => t.status === 'IN_PROGRESS' && (selectedSiteId === 'ALL' || t.siteId === selectedSiteId));
+  }, [patrolTours, selectedSiteId]);
+
+  const completedToursToday = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    return patrolTours.filter(t => t.status === 'COMPLETED' && (t.actualEnd || t.createdAt).startsWith(todayStr) && (selectedSiteId === 'ALL' || t.siteId === selectedSiteId));
+  }, [patrolTours, selectedSiteId]);
+
+  const exceptionTours = useMemo(() => {
+    return patrolTours.filter(t => (t.exceptionsDetected && t.exceptionsDetected.length > 0) || t.status === 'INTERRUPTED' || t.status === 'MISSED');
+  }, [patrolTours]);
 
   const filteredPatrolLogs = useMemo(() => {
     return patrolLogs.filter(p => {
@@ -1009,155 +1352,698 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
       {activeTab === 'PATROLS' && (
         <div className="space-y-6">
-          {/* Active Patrol Runner Widget */}
-          <div className={`p-5 rounded-3xl border ${isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-4`}>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Live Guard Patrol System</span>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  Site Checkpoint Tour Simulator
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Scan assigned site QR checkpoints in sequence during guard shift rounds.
-                </p>
+          {/* Patrol Sub-Navigation Tabs */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setPatrolSubTab('LIVE_TOURS')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                  patrolSubTab === 'LIVE_TOURS'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : isDark ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                <Radio className={`w-3.5 h-3.5 ${liveTours.length > 0 ? 'animate-pulse text-rose-300' : ''}`} />
+                <span>Active & Live Tours</span>
+                {liveTours.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-extrabold">
+                    {liveTours.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setPatrolSubTab('PATROL_PLANS')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                  patrolSubTab === 'PATROL_PLANS'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : isDark ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Patrol Plans & Routes</span>
+                <span className="opacity-70 text-[10px]">({patrolPlans.length})</span>
+              </button>
+
+              <button
+                onClick={() => setPatrolSubTab('CHECKPOINTS')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                  patrolSubTab === 'CHECKPOINTS'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : isDark ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                <span>Site Checkpoints & QR Tags</span>
+                <span className="opacity-70 text-[10px]">({checkpoints.length})</span>
+              </button>
+
+              <button
+                onClick={() => setPatrolSubTab('TOUR_HISTORY')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                  patrolSubTab === 'TOUR_HISTORY'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : isDark ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                <FileCheck className="w-3.5 h-3.5" />
+                <span>Tour Logs & Historical Audit</span>
+                <span className="opacity-70 text-[10px]">({patrolTours.length})</span>
+              </button>
+            </div>
+
+            {/* Quick Action Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setSelectedPlanForEdit(null);
+                  setIsPatrolPlanModalOpen(true);
+                }}
+                className={`px-3 py-2 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 ${
+                  isDark ? 'border-slate-700 hover:bg-slate-800 text-slate-200' : 'border-slate-300 hover:bg-slate-100 text-slate-700'
+                }`}
+              >
+                <Plus className="w-3.5 h-3.5 text-indigo-500" />
+                <span>New Plan</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setEditingCheckpoint(null);
+                  setCheckpointForm({
+                    siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""),
+                    checkpointName: '',
+                    code: '',
+                    locationDescription: '',
+                    sequenceOrder: checkpoints.length + 1,
+                    geofenceRadius: 50
+                  });
+                  setIsCheckpointModalOpen(true);
+                }}
+                className={`px-3 py-2 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 ${
+                  isDark ? 'border-slate-700 hover:bg-slate-800 text-slate-200' : 'border-slate-300 hover:bg-slate-100 text-slate-700'
+                }`}
+              >
+                <Plus className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Add Checkpoint</span>
+              </button>
+
+              <button
+                onClick={handleStartAdHocTour}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow flex items-center gap-1.5"
+              >
+                <Play className="w-3.5 h-3.5" />
+                <span>Start Instant Tour</span>
+              </button>
+            </div>
+          </div>
+
+          {/* SUB-TAB 1: LIVE & ACTIVE TOURS */}
+          {patrolSubTab === 'LIVE_TOURS' && (
+            <div className="space-y-6">
+              {/* Operations Metrics Bar */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
+                  <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                    <span className="font-semibold">Live Tours Running</span>
+                    <Radio className="w-4 h-4 text-emerald-500 animate-pulse" />
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 dark:text-slate-100">{liveTours.length}</div>
+                  <div className="text-[10px] text-slate-400 mt-1">Real-time GPS guard tracking</div>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
+                  <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                    <span className="font-semibold">Tours Completed Today</span>
+                    <CheckCircle2 className="w-4 h-4 text-indigo-500" />
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 dark:text-slate-100">{completedToursToday.length}</div>
+                  <div className="text-[10px] text-slate-400 mt-1">Verified checkpoint rounds</div>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
+                  <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                    <span className="font-semibold">Exception Alerts</span>
+                    <AlertTriangle className="w-4 h-4 text-rose-500" />
+                  </div>
+                  <div className="text-2xl font-black text-rose-600">{exceptionTours.length}</div>
+                  <div className="text-[10px] text-slate-400 mt-1">Sequence / Geofence breaks</div>
+                </div>
+
+                <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
+                  <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                    <span className="font-semibold">Active Patrol Plans</span>
+                    <Layers className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
+                    {patrolPlans.filter(p => p.status === 'ACTIVE').length}
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-1">Scheduled site routes</div>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                {!isPatrolActive ? (
-                  <button
-                    onClick={handleStartPatrol}
-                    className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow flex items-center gap-2"
-                  >
-                    <QrCode className="w-4 h-4" />
-                    <span>Start Guard Patrol</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleCompletePatrol}
-                    className="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow flex items-center gap-2"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Complete Patrol Tour</span>
-                  </button>
-                )}
+              {/* Active Tours List */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <span>Live Patrol Runs</span>
+                    {liveTours.length > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                        {liveTours.length} Active Now
+                      </span>
+                    )}
+                  </h3>
+                  <span className="text-xs text-slate-500">Auto-synced with GPS & QR Scans</span>
+                </div>
 
+                {liveTours.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {liveTours.map(tour => {
+                      const completedCount = tour.completedCheckpointsCount || 0;
+                      const totalCount = tour.totalCheckpoints || 1;
+                      const pct = Math.round((completedCount / totalCount) * 100);
+                      const hasExceptions = tour.exceptionsDetected && tour.exceptionsDetected.length > 0;
+
+                      return (
+                        <div
+                          key={tour.id}
+                          className={`p-5 rounded-3xl border transition shadow-sm space-y-4 ${
+                            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                                  {tour.tourNumber}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 animate-pulse">
+                                  LIVE IN PROGRESS
+                                </span>
+                              </div>
+                              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1">
+                                {tour.patrolPlanName}
+                              </h4>
+                              <p className="text-xs text-slate-500">
+                                Site: <span className="font-semibold text-slate-700 dark:text-slate-300">{tour.siteName}</span>
+                                {tour.shiftName && <span> • Shift: {tour.shiftName}</span>}
+                              </p>
+                            </div>
+
+                            <div className="text-right text-xs">
+                              <span className="text-slate-400">Guard On Duty:</span>
+                              <p className="font-bold text-slate-900 dark:text-slate-100">{tour.assignedGuardName}</p>
+                            </div>
+                          </div>
+
+                          {/* Progress Section */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-slate-500 font-medium">Checkpoint Scan Progress</span>
+                              <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                                {completedCount} / {totalCount} ({pct}%)
+                              </span>
+                            </div>
+                            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                              <div
+                                className="bg-indigo-600 h-full rounded-full transition-all duration-300"
+                                style={{ width: `${Math.min(100, Math.max(5, pct))}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Exceptions Notification */}
+                          {hasExceptions && (
+                            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/50 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300">
+                              <AlertOctagon className="w-4 h-4 flex-shrink-0" />
+                              <span>Exceptions: {tour.exceptionsDetected?.join(', ')}</span>
+                            </div>
+                          )}
+
+                          {/* Action Buttons */}
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>Started {new Date(tour.actualStart || tour.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedTourForDetail(tour);
+                                  setIsTourDetailModalOpen(true);
+                                }}
+                                className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                              >
+                                View Audit
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setActiveTour(tour);
+                                  setIsTourRunnerModalOpen(true);
+                                }}
+                                className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow flex items-center gap-1.5 transition"
+                              >
+                                <Play className="w-3.5 h-3.5" />
+                                <span>Resume Runner</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className={`p-10 rounded-3xl border text-center space-y-4 ${
+                    isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                    <div className="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
+                      <Radio className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">No Guard Patrol Tours Currently in Progress</h4>
+                      <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
+                        Guards can start scheduled shift rounds from configured Patrol Plans, or launch an Instant Tour anytime.
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-center gap-3 pt-2">
+                      <button
+                        onClick={handleStartAdHocTour}
+                        className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow flex items-center gap-2"
+                      >
+                        <Play className="w-4 h-4" />
+                        <span>Launch Instant Patrol Tour</span>
+                      </button>
+                      <button
+                        onClick={() => setPatrolSubTab('PATROL_PLANS')}
+                        className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800"
+                      >
+                        View Patrol Plans
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* SUB-TAB 2: PATROL PLANS & ROUTING */}
+          {patrolSubTab === 'PATROL_PLANS' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Patrol Plans & Route Configurations</h3>
+                  <p className="text-xs text-slate-500">Define shift-based guard patrol schedules, sequence strictness, and minimum completion tolerances.</p>
+                </div>
                 <button
-                  onClick={() => { setCheckpointForm(prev => ({ ...prev, siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || "") })); setIsCheckpointModalOpen(true); }}
-                  className="px-3.5 py-2.5 rounded-2xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-2"
+                  onClick={() => {
+                    setSelectedPlanForEdit(null);
+                    setIsPatrolPlanModalOpen(true);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create Patrol Plan</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paginatedPatrolPlans.map(plan => {
+                  const planCheckpoints = checkpoints.filter(c => c.siteId === plan.siteId && (plan.checkpointIds?.includes(c.id) || !plan.checkpointIds?.length));
+                  const isSeqStrict = plan.strictSequenceEnforced;
+                  const isGeofence = plan.geofenceRequired;
+
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`p-5 rounded-3xl border transition shadow-sm space-y-4 flex flex-col justify-between ${
+                        isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300">
+                              {plan.frequency || 'SHIFT_BASED'}
+                            </span>
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1.5">
+                              {plan.planName}
+                            </h4>
+                            <p className="text-xs text-slate-500">
+                              Site: <span className="font-semibold text-slate-700 dark:text-slate-300">{plan.siteName}</span>
+                            </p>
+                          </div>
+
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            plan.status === 'ACTIVE'
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
+                              : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                          }`}>
+                            {plan.status}
+                          </span>
+                        </div>
+
+                        {plan.description && (
+                          <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                            {plan.description}
+                          </p>
+                        )}
+
+                        {/* Rules Badges */}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          <span className={`px-2 py-0.5 rounded-lg text-[10px] font-medium border ${
+                            isSeqStrict 
+                              ? 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300' 
+                              : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
+                          }`}>
+                            {isSeqStrict ? 'Strict Sequence' : 'Flexible Order'}
+                          </span>
+
+                          <span className={`px-2 py-0.5 rounded-lg text-[10px] font-medium border ${
+                            isGeofence 
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300' 
+                              : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
+                          }`}>
+                            {isGeofence ? 'Geofence Guarded' : 'GPS Optional'}
+                          </span>
+
+                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-medium border bg-slate-50 border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
+                            Min {plan.minCompletionPercentage || 80}% Complete
+                          </span>
+                        </div>
+
+                        <div className="text-xs text-slate-500 pt-1">
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">{plan.checkpointIds?.length || planCheckpoints.length} Checkpoints</span> assigned
+                          {plan.shiftName && <span> • Shift: {plan.shiftName}</span>}
+                        </div>
+                      </div>
+
+                      {/* Footer Actions */}
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              setSelectedPlanForEdit(plan);
+                              setIsPatrolPlanModalOpen(true);
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+                            title="Edit Plan"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePatrolPlan(plan.id, plan.planName)}
+                            className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400"
+                            title="Delete Plan"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => handleStartNewTourFromPlan(plan)}
+                          className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow flex items-center gap-1.5"
+                        >
+                          <Play className="w-3.5 h-3.5" />
+                          <span>Run Tour Now</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {filteredPatrolPlans.length === 0 && (
+                  <div className="col-span-full py-12 text-center text-slate-400 italic">
+                    No patrol plans configured yet. Click "Create Patrol Plan" to schedule standard rounds.
+                  </div>
+                )}
+              </div>
+
+              {filteredPatrolPlans.length > itemsPerPage && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalItems={filteredPatrolPlans.length}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                />
+              )}
+            </div>
+          )}
+
+          {/* SUB-TAB 3: CHECKPOINTS & QR TAGS */}
+          {patrolSubTab === 'CHECKPOINTS' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Site Checkpoints & Physical QR Tags</h3>
+                  <p className="text-xs text-slate-500">Maintain physical QR code locations, sequence ordering, and geofence coordinates.</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingCheckpoint(null);
+                    setCheckpointForm({
+                      siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""),
+                      checkpointName: '',
+                      code: '',
+                      locationDescription: '',
+                      sequenceOrder: checkpoints.length + 1,
+                      geofenceRadius: 50
+                    });
+                    setIsCheckpointModalOpen(true);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Checkpoint</span>
                 </button>
               </div>
-            </div>
 
-            {/* Checkpoints Sequence Tracker */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
-              {filteredCheckpoints.length > 0 ? (
-                <>
-                {paginatedCheckpoints.map((cp, idx) => {
-                  const isScanned = activePatrolCheckpointsVisited.includes(cp.id);
-                  return (
-                    <div 
-                      key={cp.id}
-                      className={`p-3.5 rounded-2xl border transition ${
-                        isScanned 
-                          ? 'bg-emerald-50 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800' 
-                          : isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'
-                      }`}
-                    >
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {paginatedCheckpoints.map(cp => (
+                  <div
+                    key={cp.id}
+                    className={`p-4 rounded-2xl border transition shadow-sm space-y-3 flex flex-col justify-between ${
+                      isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
+                    }`}
+                  >
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold font-mono text-indigo-500">#{cp.sequenceOrder} • {cp.code}</span>
-                        {isScanned ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        ) : (
-                          <Clock className="w-4 h-4 text-slate-400" />
-                        )}
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-bold">
+                          Seq #{cp.sequenceOrder} • {cp.code}
+                        </span>
+                        <span className={`w-2 h-2 rounded-full ${cp.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                       </div>
 
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-1">{cp.checkpointName}</h4>
-                      <p className="text-[10px] text-slate-500 truncate">{cp.locationDescription || 'No description'}</p>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                        {cp.checkpointName}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 line-clamp-2">
+                        {cp.locationDescription || 'No description entered'}
+                      </p>
 
-                      {isPatrolActive && !isScanned && (
-                        <button
-                          onClick={() => handleScanCheckpoint(cp.id)}
-                          className="mt-3 w-full py-1.5 rounded-xl bg-indigo-600 text-white text-[10px] font-bold shadow hover:bg-indigo-700 transition"
-                        >
-                          Simulate Scan QR
-                        </button>
-                      )}
+                      <div className="text-[10px] text-slate-400 flex items-center gap-1 font-mono pt-1">
+                        <Compass className="w-3 h-3 text-slate-400" />
+                        <span>
+                          {cp.latitude && cp.longitude
+                            ? `${cp.latitude.toFixed(4)}, ${cp.longitude.toFixed(4)} (±${cp.geofenceRadius || 50}m)`
+                            : 'No GPS coords bound'}
+                        </span>
+                      </div>
                     </div>
-                  );
-                })}
-                <div className="col-span-full">
-                  <Pagination currentPage={currentPage} totalItems={filteredCheckpoints.length} itemsPerPage={itemsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={setItemsPerPage} />
+
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
+                      <button
+                        onClick={() => {
+                          setSelectedCheckpointForQr(cp);
+                          setIsCheckpointQrModalOpen(true);
+                        }}
+                        className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1"
+                      >
+                        <Printer className="w-3 h-3 text-indigo-500" />
+                        <span>View / Print QR</span>
+                      </button>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            setEditingCheckpoint(cp);
+                            setCheckpointForm({
+                              id: cp.id,
+                              siteId: cp.siteId,
+                              checkpointName: cp.checkpointName,
+                              code: cp.code,
+                              locationDescription: cp.locationDescription || '',
+                              sequenceOrder: cp.sequenceOrder,
+                              latitude: cp.latitude,
+                              longitude: cp.longitude,
+                              geofenceRadius: cp.geofenceRadius || 50
+                            });
+                            setIsCheckpointModalOpen(true);
+                          }}
+                          className="p-1 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                          title="Edit Checkpoint"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCheckpoint(cp.id, cp.checkpointName)}
+                          className="p-1 text-rose-500 hover:text-rose-700"
+                          title="Delete Checkpoint"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {filteredCheckpoints.length === 0 && (
+                  <div className="col-span-full py-12 text-center text-slate-400 italic">
+                    No checkpoints found. Click "Add Checkpoint" to define site points.
+                  </div>
+                )}
+              </div>
+
+              {filteredCheckpoints.length > itemsPerPage && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalItems={filteredCheckpoints.length}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                />
+              )}
+            </div>
+          )}
+
+          {/* SUB-TAB 4: TOUR LOGS & HISTORICAL AUDIT */}
+          {patrolSubTab === 'TOUR_HISTORY' && (
+            <div className={`rounded-3xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm overflow-hidden space-y-4`}>
+              <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Patrol Tour Execution & Audit Logs</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Chronological record of all guard tours, checkpoint scans, and supervisor overrides.</p>
                 </div>
-                </>
-              ) : (
-                <div className="col-span-full py-6 text-center text-xs text-slate-400 italic">
-                  No patrol checkpoints configured for this site. Click "Add Checkpoint" to define site rounds.
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${
+                      isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500'
+                    }`}>
+                      <th className="py-3 px-4">Tour # & Plan</th>
+                      <th className="py-3 px-4">Site</th>
+                      <th className="py-3 px-4">Guard</th>
+                      <th className="py-3 px-4">Start / End Time</th>
+                      <th className="py-3 px-4">Scans / Total</th>
+                      <th className="py-3 px-4">Completion %</th>
+                      <th className="py-3 px-4">Status & Exceptions</th>
+                      <th className="py-3 px-4 text-right">Audit</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                    {paginatedPatrolTours.map(tour => {
+                      const hasExceptions = tour.exceptionsDetected && tour.exceptionsDetected.length > 0;
+                      const hasOverride = !!tour.supervisorOverride;
+
+                      return (
+                        <tr key={tour.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                          <td className="py-3 px-4">
+                            <div className="font-bold text-slate-900 dark:text-slate-100">{tour.tourNumber}</div>
+                            <div className="text-[10px] text-slate-500 truncate max-w-[140px]">{tour.patrolPlanName}</div>
+                          </td>
+                          <td className="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium">
+                            {tour.siteName}
+                          </td>
+                          <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
+                            {tour.assignedGuardName}
+                          </td>
+                          <td className="py-3 px-4 text-slate-500 text-[11px]">
+                            <div>{new Date(tour.actualStart || tour.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                            {tour.actualEnd && (
+                              <div className="text-[10px] text-slate-400">
+                                to {new Date(tour.actualEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-slate-100">
+                            {tour.completedCheckpointsCount || 0} / {tour.totalCheckpoints || 1}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className={`font-bold font-mono text-xs ${
+                                (tour.completionPercentage || 0) >= 80 ? 'text-emerald-600' : 'text-amber-600'
+                              }`}>
+                                {tour.completionPercentage || 0}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                tour.status === 'COMPLETED'
+                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
+                                  : tour.status === 'IN_PROGRESS'
+                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300'
+                                  : 'bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300'
+                              }`}>
+                                {tour.status}
+                              </span>
+
+                              {hasExceptions && (
+                                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+                                  Exception
+                                </span>
+                              )}
+
+                              {hasOverride && (
+                                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300">
+                                  Overridden
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <button
+                              onClick={() => {
+                                setSelectedTourForDetail(tour);
+                                setIsTourDetailModalOpen(true);
+                              }}
+                              className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                            >
+                              Audit Details
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                    {paginatedPatrolTours.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="py-12 text-center text-slate-400 italic">
+                          No patrol tour logs recorded matching filters.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {filteredPatrolTours.length > itemsPerPage && (
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalItems={filteredPatrolTours.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={setItemsPerPage}
+                  />
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Patrol History Table */}
-          <div className={`rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm overflow-hidden`}>
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Guard Patrol Tour Logs</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${
-                    isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500'
-                  }`}>
-                    <th className="py-3 px-4">Patrol Name</th>
-                    <th className="py-3 px-4">Guard</th>
-                    <th className="py-3 px-4">Checkpoints Visited</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4">Time</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {filteredPatrolLogs.length > 0 ? (
-                    <>
-                    {paginatedPatrolLogs.map(p => (
-                      <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                        <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">{p.patrolName}</td>
-                        <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{p.guardName}</td>
-                        <td className="py-3 px-4 font-mono">{p.checkpointsVisited.length} / {p.totalCheckpoints}</td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            p.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                          }`}>
-                            {p.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-slate-500">{new Date(p.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
-                      </tr>
-                    ))}
-                    <tr>
-                      <td colSpan={5} className="p-0">
-                    <Pagination
-                      currentPage={currentPage}
-                      totalItems={filteredPatrolLogs.length}
-                      itemsPerPage={itemsPerPage}
-                      onPageChange={setCurrentPage}
-                      onItemsPerPageChange={setItemsPerPage}
-                    />
-                      </td>
-                    </tr>
-                    </>
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-400">No patrol tour logs recorded today.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -1624,12 +2510,17 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
         </div>
       )}
 
-      {/* MODAL 1: ADD CHECKPOINT */}
+      {/* MODAL 1: ADD / EDIT CHECKPOINT */}
       {isCheckpointModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-md p-6 rounded-3xl border shadow-2xl ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} space-y-4`}>
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Add Patrol Checkpoint</h3>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {editingCheckpoint ? 'Edit Patrol Checkpoint' : 'Add Patrol Checkpoint'}
+                </h3>
+                <p className="text-xs text-slate-500">Configure checkpoint physical location & QR scan credentials</p>
+              </div>
               <button onClick={() => setIsCheckpointModalOpen(false)} className="opacity-60 hover:opacity-100">
                 <X className="w-4 h-4" />
               </button>
@@ -1642,37 +2533,122 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   value={checkpointForm.siteId || ''}
                   onChange={e => setCheckpointForm({ ...checkpointForm, siteId: e.target.value })}
                   className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                  required
                 >
-                  <option value="">-- Select a Site --</option>{sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  <option value="">-- Select a Site --</option>
+                  {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
 
-              <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500">Checkpoint Name</label>
-                <input
-                  type="text"
-                  value={checkpointForm.checkpointName || ''}
-                  onChange={e => setCheckpointForm({ ...checkpointForm, checkpointName: e.target.value })}
-                  placeholder="e.g. Main Gate South Boundary"
-                  className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
-                  required
-                />
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <label className="text-[10px] font-bold uppercase text-slate-500">Checkpoint Name</label>
+                  <input
+                    type="text"
+                    value={checkpointForm.checkpointName || ''}
+                    onChange={e => setCheckpointForm({ ...checkpointForm, checkpointName: e.target.value })}
+                    placeholder="e.g. South Perimeter Fence"
+                    className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500">Seq #</label>
+                  <input
+                    type="number"
+                    value={checkpointForm.sequenceOrder ?? 1}
+                    onChange={e => setCheckpointForm({ ...checkpointForm, sequenceOrder: Number(e.target.value) })}
+                    className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                    required
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500">Sequence Number</label>
+                <label className="text-[10px] font-bold uppercase text-slate-500">Location Notes</label>
                 <input
-                  type="number"
-                  value={checkpointForm.sequenceOrder ?? 1}
-                  onChange={e => setCheckpointForm({ ...checkpointForm, sequenceOrder: Number(e.target.value) })}
+                  type="text"
+                  value={checkpointForm.locationDescription || ''}
+                  onChange={e => setCheckpointForm({ ...checkpointForm, locationDescription: e.target.value })}
+                  placeholder="e.g. Near Transformer Box #3, Gate B"
                   className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
-                  required
                 />
+              </div>
+
+              {/* GPS Geofence Binding */}
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                    <Compass className="w-3 h-3 text-indigo-500" />
+                    <span>GPS Coordinates & Radius</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                          pos => {
+                            setCheckpointForm(prev => ({
+                              ...prev,
+                              latitude: Number(pos.coords.latitude.toFixed(6)),
+                              longitude: Number(pos.coords.longitude.toFixed(6))
+                            }));
+                            setStatusMsg({ type: 'SUCCESS', text: 'Current GPS coordinates detected.' });
+                          },
+                          err => setStatusMsg({ type: 'ERROR', text: `GPS error: ${err.message}` }),
+                          { enableHighAccuracy: true }
+                        );
+                      }
+                    }}
+                    className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                  >
+                    <Navigation className="w-2.5 h-2.5" />
+                    <span>Detect Device GPS</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-[9px] text-slate-400">Latitude</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={checkpointForm.latitude ?? ''}
+                      onChange={e => setCheckpointForm({ ...checkpointForm, latitude: e.target.value ? parseFloat(e.target.value) : undefined })}
+                      placeholder="e.g. 19.0760"
+                      className={`w-full p-2 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[9px] text-slate-400">Longitude</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={checkpointForm.longitude ?? ''}
+                      onChange={e => setCheckpointForm({ ...checkpointForm, longitude: e.target.value ? parseFloat(e.target.value) : undefined })}
+                      placeholder="e.g. 72.8777"
+                      className={`w-full p-2 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[9px] text-slate-400">Radius (m)</label>
+                    <input
+                      type="number"
+                      value={checkpointForm.geofenceRadius ?? 50}
+                      onChange={e => setCheckpointForm({ ...checkpointForm, geofenceRadius: Number(e.target.value) })}
+                      placeholder="50"
+                      className={`w-full p-2 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'}`}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setIsCheckpointModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-500">Cancel</button>
-                <button type="submit" disabled={isLoading} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow disabled:opacity-50">{isLoading ? "Saving..." : "Save Checkpoint"}</button>
+                <button type="submit" disabled={isLoading} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow disabled:opacity-50">
+                  {isLoading ? "Saving..." : "Save Checkpoint"}
+                </button>
               </div>
             </form>
           </div>
@@ -2152,6 +3128,59 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
           </div>
         </div>
       )}
+
+      {/* MODAL 8: PATROL PLAN CONFIGURATION */}
+      <PatrolPlanModal
+        isOpen={isPatrolPlanModalOpen}
+        onClose={() => {
+          setIsPatrolPlanModalOpen(false);
+          setSelectedPlanForEdit(null);
+        }}
+        onSave={handleSavePatrolPlan}
+        existingPlan={selectedPlanForEdit}
+        sites={sites}
+        allCheckpoints={checkpoints}
+        shifts={shifts}
+        userSession={userSession}
+        selectedSiteId={selectedSiteId}
+      />
+
+      {/* MODAL 9: PATROL TOUR RUNNER (SCANNER & RUNNER) */}
+      {activeTour && (
+        <PatrolTourRunnerModal
+          isOpen={isTourRunnerModalOpen}
+          onClose={() => setIsTourRunnerModalOpen(false)}
+          tour={activeTour}
+          siteCheckpoints={checkpoints.filter(cp => cp.siteId === activeTour.siteId)}
+          userSession={userSession}
+          site={sites.find(s => s.id === activeTour.siteId)}
+          onRecordScan={handleRecordTourScan}
+          onCompleteTour={handleCompleteTour}
+          onReportIncidentAtCheckpoint={handleReportIncidentFromTour}
+        />
+      )}
+
+      {/* MODAL 10: PATROL TOUR DETAIL & AUDIT MODAL */}
+      <PatrolTourDetailModal
+        isOpen={isTourDetailModalOpen}
+        onClose={() => {
+          setIsTourDetailModalOpen(false);
+          setSelectedTourForDetail(null);
+        }}
+        tour={selectedTourForDetail}
+        userSession={userSession}
+        onOverrideTour={handleOverrideTour}
+      />
+
+      {/* MODAL 11: CHECKPOINT QR CODE PRINT MODAL */}
+      <CheckpointQRCodeModal
+        checkpoint={selectedCheckpointForQr}
+        site={selectedCheckpointForQr ? sites.find(s => s.id === selectedCheckpointForQr.siteId) : undefined}
+        onClose={() => {
+          setIsCheckpointQrModalOpen(false);
+          setSelectedCheckpointForQr(null);
+        }}
+      />
     </div>
   );
 };

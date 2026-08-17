@@ -5,6 +5,8 @@ export type WorkflowContextType =
   | 'ACCOUNT_APPROVAL'
   | 'LEAVE_REQUEST'
   | 'ATTENDANCE_CORRECTION'
+  | 'OVERTIME_REQUEST'
+  | 'OVERTIME_ADJUSTMENT'
   | 'ONBOARDING'
   | 'SALARY_ADVANCE'
   | 'PAYROLL_CYCLE'
@@ -21,6 +23,7 @@ export interface WorkflowContext {
   targetDepartmentId?: string;
   daysCount?: number;
   amount?: number;
+  minutesCount?: number;
   requestorRole?: UserRole;
   requestorAuthority?: AuthorityLevel;
 }
@@ -66,6 +69,10 @@ export class WorkflowEngine {
         return WorkflowEngine.resolveLeaveRequest(authority, session, context);
       case 'ATTENDANCE_CORRECTION':
         return WorkflowEngine.resolveAttendanceCorrection(authority, session, context);
+      case 'OVERTIME_REQUEST':
+        return WorkflowEngine.resolveOvertimeRequest(authority, session, context);
+      case 'OVERTIME_ADJUSTMENT':
+        return WorkflowEngine.resolveOvertimeAdjustment(authority, session, context);
       case 'ACCOUNT_APPROVAL':
         return WorkflowEngine.resolveAccountApproval(authority, session, context);
       case 'ONBOARDING':
@@ -126,6 +133,65 @@ export class WorkflowEngine {
       return { canApprove: true };
     }
     return { canApprove: false, reason: 'Supervisors cannot approve attendance corrections.' };
+  }
+
+  private static resolveOvertimeRequest(auth: AuthorityLevel, session: UserSession, ctx: WorkflowContext): WorkflowResolution {
+    const minutes = ctx.minutesCount || ctx.amount || 0;
+
+    // Supervisors (A6) can approve daily OT up to 120 minutes (2 hours) at their site
+    if (auth === 'A6_SUPERVISOR') {
+      if (minutes > 120) {
+        return { canApprove: false, reason: 'Overtime exceeds Supervisor limit (Max 2 hours / 120m). Escalation to Site Manager or HR required.' };
+      }
+      return { canApprove: true };
+    }
+
+    // Site In-Charge (A5) can approve daily OT up to 240 minutes (4 hours)
+    if (auth === 'A5_SITE_IN_CHARGE') {
+      if (minutes > 240) {
+        return { canApprove: false, reason: 'Overtime exceeds Site Manager limit (Max 4 hours / 240m). Escalation to Area Manager or HR required.' };
+      }
+      return { canApprove: true };
+    }
+
+    // Area Manager, HR, Operations, Directors, CEOs, Owners can approve all OT
+    const higherAuth: AuthorityLevel[] = ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_OFFICIAL_STAFF', 'A4_REGIONAL_AREA_MANAGER'];
+    if (higherAuth.includes(auth)) {
+      if (auth === 'A3_OFFICIAL_STAFF' && !['HR', 'HR_ADMIN', 'COMPANY_ADMIN', 'OPERATIONS_OFFICE', 'OPERATIONS_MANAGER'].includes(session.role)) {
+        return { canApprove: false, reason: 'Only HR or Operations Office can approve corporate overtime requests.' };
+      }
+      return { canApprove: true };
+    }
+
+    return { canApprove: false, reason: 'Insufficient authority level to approve overtime.' };
+  }
+
+  private static resolveOvertimeAdjustment(auth: AuthorityLevel, session: UserSession, ctx: WorkflowContext): WorkflowResolution {
+    const minutes = ctx.minutesCount || ctx.amount || 0;
+
+    // Supervisors cannot approve adjustments (only request them)
+    if (auth === 'A6_SUPERVISOR') {
+      return { canApprove: false, reason: 'Supervisors can request overtime adjustments but cannot authorize them.' };
+    }
+
+    // Site In-Charge can approve adjustments up to 120 minutes
+    if (auth === 'A5_SITE_IN_CHARGE') {
+      if (minutes > 120) {
+        return { canApprove: false, reason: 'Adjustments over 2 hours require Regional Manager or HR approval.' };
+      }
+      return { canApprove: true };
+    }
+
+    // Area Manager and Corporate roles
+    const higherAuth: AuthorityLevel[] = ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_OFFICIAL_STAFF', 'A4_REGIONAL_AREA_MANAGER'];
+    if (higherAuth.includes(auth)) {
+      if (auth === 'A3_OFFICIAL_STAFF' && !['HR', 'HR_ADMIN', 'COMPANY_ADMIN', 'OPERATIONS_OFFICE', 'OPERATIONS_MANAGER'].includes(session.role)) {
+        return { canApprove: false, reason: 'Only HR or Operations can approve overtime adjustments.' };
+      }
+      return { canApprove: true };
+    }
+
+    return { canApprove: false, reason: 'Insufficient authority level to approve overtime adjustments.' };
   }
 
   private static resolveAccountApproval(auth: AuthorityLevel, session: UserSession, ctx: WorkflowContext): WorkflowResolution {

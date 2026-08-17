@@ -96,16 +96,26 @@ export const AttendanceDashboard: React.FC<Props> = ({ userSession, activeCompan
           </div>
         </div>
 
-        {/* Recent Punch Activity */}
+        {/* Suspicious / Override Activity */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
           <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Users className="w-4 h-4 text-indigo-500" /> Recent Activity
+            <AlertTriangle className="w-4 h-4 text-rose-500" /> Exceptions & Overrides
           </h3>
           <div className="space-y-3">
-            {todayLogs.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 5).map(log => (
-              <div key={log.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
+            {attendance
+              .filter(a => 
+                a.checkInGps?.suspiciousFlag || 
+                a.checkOutGps?.suspiciousFlag || 
+                a.checkInGps?.geofenceOverrideRequested || 
+                a.checkOutGps?.geofenceOverrideRequested ||
+                a.checkInGps?.biometricVerification === 'FAILED'
+              )
+              .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+              .slice(0, 5)
+              .map(log => (
+              <div key={log.id} className="flex items-center justify-between p-3 rounded-2xl bg-rose-50/50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center font-bold text-xs text-slate-500 border border-slate-100 dark:border-slate-800">
+                  <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center font-bold text-xs text-rose-500 border border-rose-200 dark:border-rose-800">
                     {log.employeeName[0]}
                   </div>
                   <div>
@@ -114,17 +124,19 @@ export const AttendanceDashboard: React.FC<Props> = ({ userSession, activeCompan
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
-                    {log.checkOut ? 'Punched Out' : 'Punched In'}
+                  <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400">
+                    {log.checkInGps?.geofenceOverrideRequested ? 'Geofence Override' : 
+                     log.checkInGps?.suspiciousFlag ? 'Location Suspicious' : 
+                     log.checkInGps?.biometricVerification === 'FAILED' ? 'Biometric Failed' : 'Exception'}
                   </p>
                   <p className="text-[10px] text-slate-400">
-                    {new Date(log.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {log.attendanceDate} {new Date(log.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
               </div>
             ))}
-            {todayLogs.length === 0 && (
-              <div className="py-10 text-center text-slate-400 text-xs italic">No activity recorded today yet.</div>
+            {attendance.filter(a => a.checkInGps?.suspiciousFlag || a.checkOutGps?.suspiciousFlag || a.checkInGps?.geofenceOverrideRequested || a.checkOutGps?.geofenceOverrideRequested).length === 0 && (
+              <div className="py-10 text-center text-slate-400 text-xs italic">No suspicious flags or overrides.</div>
             )}
           </div>
         </div>
