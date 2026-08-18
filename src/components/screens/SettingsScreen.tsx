@@ -24,7 +24,11 @@ import {
   Sliders,
   FileText,
   Award,
-  ShieldCheck
+  ShieldCheck,
+  KeyRound,
+  Eye,
+  EyeOff,
+  AlertCircle
 } from 'lucide-react';
 import { AppSettings, UserSession, CompanyTenant, PhaseAScreen } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -75,6 +79,52 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [saveToast, setSaveToast] = useState<string | null>(null);
   const [testSuiteReport, setTestSuiteReport] = useState<{ passedCount: number; failedCount: number; results: TestResult[] } | null>(null);
   const [isTesting, setIsTesting] = useState<boolean>(false);
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [newPin, setNewPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [showPin, setShowPin] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [isUpdatingPin, setIsUpdatingPin] = useState(false);
+
+  const handleUpdatePin = async () => {
+    if (newPin.length < 4) {
+      setPinError('PIN must be at least 4 digits');
+      return;
+    }
+    if (newPin !== confirmPin) {
+      setPinError('PINs do not match');
+      return;
+    }
+    if (!/^\d+$/.test(newPin)) {
+      setPinError('PIN must contain only numbers');
+      return;
+    }
+
+    setIsUpdatingPin(true);
+    setPinError(null);
+    try {
+      const success = await FirestoreService.updateEmployeePin(
+        activeCompany?.companyId || userSession?.companyId || '',
+        userSession?.employeeId || '',
+        newPin,
+        userSession?.userId || '',
+        userSession?.fullName || ''
+      );
+
+      if (success) {
+        setSaveToast('Security PIN updated successfully');
+        setShowPinSetup(false);
+        setNewPin('');
+        setConfirmPin('');
+      } else {
+        setPinError('Failed to update PIN. Please try again.');
+      }
+    } catch (err) {
+      setPinError('An error occurred. Please try again.');
+    } finally {
+      setIsUpdatingPin(false);
+    }
+  };
 
   const handleRunDiagnostics = async () => {
     setIsTesting(true);
@@ -154,7 +204,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </div>
           <div>
             <h2 className="text-sm font-bold">App Preferences & Security</h2>
-            <p className="text-xs text-slate-400">Configure theme, sync, and biometrics</p>
+            <p className="text-xs text-slate-400">Configure theme, sync, and preferences</p>
           </div>
         </div>
       </div>
@@ -276,6 +326,84 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </div>
 
+      {/* Security PIN Management */}
+      <div className={`p-4 rounded-3xl border space-y-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b pb-2 border-slate-800">
+          <KeyRound className="w-4 h-4 text-amber-400" />
+          Security PIN Management
+        </h3>
+
+        {!showPinSetup ? (
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/40 border border-slate-800">
+            <div className="space-y-0.5">
+              <span className="text-xs font-bold block">App Lock PIN</span>
+              <span className="text-[10px] text-slate-400">Used to quickly unlock your session</span>
+            </div>
+            <button
+              onClick={() => setShowPinSetup(true)}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold transition shadow-lg"
+            >
+              Setup / Change PIN
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800 animate-in slide-in-from-top-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold">Set 4-Digit Security PIN</h4>
+              <button onClick={() => setShowPinSetup(false)} className="text-[10px] text-slate-400 hover:text-white">Cancel</button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="relative">
+                <input
+                  type={showPin ? 'text' : 'password'}
+                  maxLength={4}
+                  placeholder="New 4-Digit PIN"
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
+                  className={`w-full p-3 rounded-xl border text-sm font-mono tracking-widest text-center ${
+                    isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
+                  }`}
+                />
+                <button
+                  onClick={() => setShowPin(!showPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                >
+                  {showPin ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              <input
+                type={showPin ? 'text' : 'password'}
+                maxLength={4}
+                placeholder="Confirm PIN"
+                value={confirmPin}
+                onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
+                className={`w-full p-3 rounded-xl border text-sm font-mono tracking-widest text-center ${
+                  isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
+                }`}
+              />
+
+              {pinError && (
+                <div className="flex items-center gap-2 text-rose-400 text-[10px] bg-rose-400/10 p-2 rounded-lg border border-rose-400/20">
+                  <AlertCircle size={12} />
+                  <span>{pinError}</span>
+                </div>
+              )}
+
+              <button
+                onClick={handleUpdatePin}
+                disabled={isUpdatingPin || newPin.length < 4}
+                className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 transition"
+              >
+                {isUpdatingPin ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                <span>{isUpdatingPin ? 'Updating PIN...' : 'Save & Secure App'}</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {userSession?.role === 'COMPANY_ADMIN' && (
         <div className={`p-4 rounded-3xl border space-y-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b pb-2 border-slate-800">
@@ -335,30 +463,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       )}
 
-      {/* Security & Biometrics */}
+      {/* Location & GPS */}
       <div className={`p-4 rounded-3xl border space-y-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b pb-2 border-slate-800">
-          <Fingerprint className="w-4 h-4 text-emerald-400" />
-          Security & Biometrics
+          <MapPin className="w-4 h-4 text-emerald-400" />
+          Location & GPS Services
         </h3>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-800/80">
-            <div className="space-y-0.5">
-              <span className="text-xs font-bold block">Biometric Fingerprint Unlock</span>
-              <span className="text-[10px] text-slate-400">Require fingerprint or face on session resume</span>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.biometricUnlock}
-                onChange={(e) => updateSetting('biometricUnlock', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-            </label>
-          </div>
-
           <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-800/80">
             <div className="space-y-0.5">
               <span className="text-xs font-bold block">High-Accuracy GPS Location</span>

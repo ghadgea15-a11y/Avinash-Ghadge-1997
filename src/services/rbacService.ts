@@ -221,4 +221,31 @@ export class RbacService {
 
     return false;
   }
+
+  /**
+   * Enforces BPM Escalation Policy and Execution permissions
+   */
+  static canManageEscalationPolicy(session: UserSession | null): boolean {
+    if (!session) return false;
+    if (session.role === 'SUPER_ADMIN') return true;
+    const authority = this.getAuthorityLevel(session);
+    // Company owners, Directors, General Managers, and Official Staff (HR/Admin) can manage policies
+    return ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER'].includes(authority) || 
+           (authority === 'A3_OFFICIAL_STAFF' && ['ADMIN', 'HR', 'HR_ADMIN', 'COMPANY_ADMIN'].includes(session.role));
+  }
+
+  static canExecuteEscalationCheck(session: UserSession | null): boolean {
+    if (!session) return false;
+    if (session.role === 'SUPER_ADMIN') return true;
+    const authority = this.getAuthorityLevel(session);
+    return ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_OFFICIAL_STAFF'].includes(authority);
+  }
+
+  static canViewEscalationHistory(session: UserSession | null): boolean {
+    if (!session) return false;
+    if (session.role === 'SUPER_ADMIN') return true;
+    const authority = this.getAuthorityLevel(session);
+    return ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_OFFICIAL_STAFF', 'A4_REGIONAL_AREA_MANAGER', 'A5_SITE_IN_CHARGE', 'A6_SUPERVISOR'].includes(authority);
+  }
 }
+

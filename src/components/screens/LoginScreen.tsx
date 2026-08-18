@@ -6,7 +6,6 @@ import {
   KeyRound, 
   Eye, 
   EyeOff, 
-  Fingerprint, 
   ArrowRight, 
   Loader2, 
   AlertCircle, 
@@ -19,7 +18,6 @@ import {
 import { CompanyTenant, UserSession, UserRole, PhaseAScreen } from '../../types';
 import { FirebaseAuthService, RESERVED_SUPER_ADMIN_EMAILS } from '../../services/firebaseAuthService';
 import { SessionManager } from '../../services/sessionManager';
-import { BiometricPromptModal } from '../common/BiometricPromptModal';
 import { AppLogo } from '../common/AppLogo';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -43,7 +41,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isBiometricOpen, setIsBiometricOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   
@@ -144,27 +141,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       setError(err.message || 'Google Login failed. Please use Email and Password.');
     } finally {
       setGoogleLoading(false);
-    }
-  };
-
-  const handleBiometricSuccess = async () => {
-    setIsBiometricOpen(false);
-    // If a active session already existed locally, restore or prompt login credentials
-    const existingSession = SessionManager.getUserSession();
-    const currentCompanyId = SessionManager.getActiveCompany()?.companyId || companyCode.trim().toUpperCase();
-    if (existingSession && existingSession.companyId === currentCompanyId) {
-      const updatedSession: UserSession = {
-        ...existingSession,
-        lastActiveAt: Date.now(),
-        loginMode: 'BIOMETRIC'
-      };
-      SessionManager.setUserSession(updatedSession);
-      const company = SessionManager.getActiveCompany();
-      if (company) {
-        onLoginSuccess(updatedSession, company);
-      }
-    } else {
-      setError('Biometric verified. Please enter your Password or PIN to link this device session.');
     }
   };
 
@@ -341,7 +317,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             </div>
           </div>
 
-          {/* Remember Me & Biometric Button */}
           <div className="flex items-center justify-between pt-1">
             <label className={`flex items-center gap-2 cursor-pointer text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
               <input
@@ -352,15 +327,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               />
               <span>Remember (5 mins)</span>
             </label>
-
-            <button
-              type="button"
-              onClick={() => setIsBiometricOpen(true)}
-              className="text-xs font-bold text-indigo-900 bg-white hover:bg-slate-100 border border-slate-200 shadow-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all"
-            >
-              <Fingerprint className="w-4 h-4 text-indigo-600" />
-              <span>Biometric Login</span>
-            </button>
           </div>
 
           {/* Terms & Privacy acceptance notice */}
@@ -378,39 +344,32 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             </p>
           </div>
 
-          {error && (
-            <div className="p-3 bg-rose-950/80 border border-rose-800 rounded-xl text-xs text-rose-300 flex items-start gap-2 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
+      {error && (
+        <div className="p-3 bg-rose-950/80 border border-rose-800 rounded-xl text-xs text-rose-300 flex items-start gap-2 animate-in fade-in">
+          <AlertCircle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition text-sm mt-4 bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30 disabled:opacity-50`}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Authenticating Credentials...</span>
-              </>
-            ) : (
-              <>
-                <span>Sign In</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
-
-              </div>
-      <BiometricPromptModal
-        isOpen={isBiometricOpen}
-        onClose={() => setIsBiometricOpen(false)}
-        onSuccess={handleBiometricSuccess}
-        subtitle={`Fast Fingerprint login`}
-      />
-    </div>
-  );
+      <button
+        type="submit"
+        disabled={loading}
+        className={`w-full font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition text-sm mt-4 bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30 disabled:opacity-50`}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Authenticating Credentials...</span>
+          </>
+        ) : (
+          <>
+            <span>Sign In</span>
+            <ArrowRight className="w-4 h-4" />
+          </>
+        )}
+      </button>
+    </form>
+  </div>
+</div>
+);
 };

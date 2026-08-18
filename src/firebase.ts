@@ -30,17 +30,19 @@ export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
 
-// Enable Firestore offline persistence
+// Enable Firestore offline persistence only in browser environments supporting IndexedDB
 try {
-  enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-      console.warn('Firestore offline persistence: Multiple tabs active');
-    } else if (err.code === 'unimplemented') {
-      console.warn('Firestore offline persistence not supported in this browser environment');
-    }
-  });
+  if (typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined') {
+    enableIndexedDbPersistence(db).catch((err) => {
+      if (err.code === 'failed-precondition') {
+        console.warn('Firestore offline persistence: Multiple tabs active');
+      } else if (err.code === 'unimplemented') {
+        // Platform or browser does not support IndexedDB persistence
+      }
+    });
+  }
 } catch (e) {
-  console.log('IndexedDB persistence init handled');
+  // Silent fallback for non-browser or unsupported environments
 }
 
 // Validate Connection to Firestore on boot safely

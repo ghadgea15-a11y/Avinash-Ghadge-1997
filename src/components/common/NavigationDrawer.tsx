@@ -138,6 +138,7 @@ export function NavigationDrawer({
                 </span>
                 <NavItem icon={ListTodo} label="4a. Work Orders & Tasks" screen="WORK_ORDERS" />
                 <NavItem icon={ShieldCheck} label="4b. Site Operations (Patrol/Log)" screen="SITE_OPERATIONS" />
+                <NavItem icon={ShieldAlert} label="4c. Safety & Checksheets" screen="SAFETY_MANAGEMENT" />
                 <NavItem icon={QrCode} label="5. EAM Asset Tracking" screen="ASSET_TRACKING" />
                 <NavItem icon={Boxes} label="6. SCM Inventory & Stock" screen="INVENTORY_STOCK" />
                 <NavItem icon={Building2} label="7. CRM Client Accounts" screen="CLIENT_MANAGEMENT" />

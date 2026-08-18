@@ -419,8 +419,33 @@ service cloud.firestore {
 
       match /inventory_items/{itemId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
-        allow write: if isSuperAdmin() || isManager(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
       }
+      match /stock_locations/{locId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isManager(companyId) || isCompanyAdmin(companyId);
+      }
+      match /stock_balances/{balId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId); // Backend logic handles validation
+      }
+      match /stock_ledger/{ledgerId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+      match /gate_passes/{passId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+      match /inventory_alerts/{alertId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+      match /transfer_orders/{trId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+
 
       match /site_inventory/{inventoryId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
@@ -447,6 +472,16 @@ service cloud.firestore {
       match /maintenance_occurrences/{occurrenceId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow write: if isSuperAdmin() || isManager(companyId);
+      }
+
+      match /warranties/{warrantyId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isManager(companyId) || sameCompany(companyId);
+      }
+
+      match /warranty_claims/{claimId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isManager(companyId) || sameCompany(companyId);
       }
 
       match /vendors/{vendorId} {
@@ -605,6 +640,58 @@ service cloud.firestore {
       }
 
       // 8. Physical Infrastructure Mapping
+      // 9. CRM: Clients and Contracts
+      match /clients/{clientId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+      match /client_contacts/{contactId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+      match /contracts/{contractId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+      match /contract_sites/{mappingId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+      match /contract_scopes/{scopeId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+      match /contract_amendments/{amendmentId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+
+
+      // 9.5 CRM: SLA Scorecards
+      match /sla_definitions/{slaId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+      match /sla_breaches/{breachId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+      match /sla_scorecards/{scorecardId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+
+      // 9.6 CRM: Billing Rate Matrices
+      match /billing_rate_matrices/{rateId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+
+      // 9.7 CRM: Contract Expiry Events
+      match /contract_expiry_events/{eventId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
       match /regions/{regionId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -657,6 +744,34 @@ service cloud.firestore {
         allow create: if signedIn();
         allow update: if isSuperAdmin() || isCompanyAdmin(companyId);
         allow delete: if isSuperAdmin();
+      }
+
+      // BPM Multi-Tier Approval Engine & Escalation Timers Subcollections
+      match /bpm_workflows/{workflowId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /bpm_instances/{instanceId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /bpm_delegations/{delegationId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || sameCompany(companyId);
+      }
+
+      match /bpm_escalation_policies/{policyId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /bpm_escalation_events/{eventId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if isSuperAdmin() || sameCompany(companyId);
+        allow update, delete: if false; // Immutable escalation audit trail
       }
     }
 

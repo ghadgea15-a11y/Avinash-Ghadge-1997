@@ -8,12 +8,17 @@ import { FirestoreService } from '../../services/firestoreService';
 import { EamService } from '../../services/eamService';
 import { 
   Boxes, ShieldCheck, ArrowRightLeft, AlertTriangle, 
-  Search, Plus, Filter, QrCode, HardDrive
+  Search, Plus, Filter, QrCode, HardDrive, Wrench, Shield
 } from 'lucide-react';
 import { AssetRegister } from './AssetRegister';
 import { CustodyManagement } from './CustodyManagement';
 import { TransferManagement } from './TransferManagement';
 import { AssetDeploymentModal } from './AssetDeploymentModal';
+import { MaintenanceScheduling } from './MaintenanceScheduling';
+import { WarrantyTracking } from './WarrantyTracking';
+
+import { ReportLossDamageModal } from './ReportLossDamageModal';
+import { AssetIncidentHistory } from './AssetIncidentHistory';
 
 interface EamProps {
   session: UserSession;
@@ -23,13 +28,15 @@ interface EamProps {
 }
 
 export function EnterpriseAssetManagement({ session, sites, employees, companyId }: EamProps) {
-  const [activeTab, setActiveTab] = useState<'REGISTER' | 'CUSTODY' | 'TRANSFERS'>('REGISTER');
+  const [activeTab, setActiveTab] = useState<'REGISTER' | 'CUSTODY' | 'TRANSFERS' | 'MAINTENANCE' | 'WARRANTY'>('REGISTER');
   
   const [assets, setAssets] = useState<AssetRecord[]>([]);
   const [transfers, setTransfers] = useState<EamAssetTransferRecord[]>([]);
   const [custodyRecords, setCustodyRecords] = useState<EamAssetCustodyRecord[]>([]);
   
   const [deployAsset, setDeployAsset] = useState<AssetRecord | null>(null);
+  const [reportIncidentAsset, setReportIncidentAsset] = useState<AssetRecord | null>(null);
+  const [viewIncidentsAsset, setViewIncidentsAsset] = useState<AssetRecord | null>(null);
 
   useEffect(() => {
     if (!companyId) return;
@@ -80,7 +87,9 @@ export function EnterpriseAssetManagement({ session, sites, employees, companyId
         {[
           { id: 'REGISTER', label: 'Asset Register', icon: HardDrive },
           { id: 'CUSTODY', label: 'My Custody', icon: ShieldCheck },
-          { id: 'TRANSFERS', label: 'Transfers', icon: ArrowRightLeft }
+          { id: 'TRANSFERS', label: 'Transfers', icon: ArrowRightLeft },
+          { id: 'MAINTENANCE', label: 'Maintenance', icon: Wrench },
+          { id: 'WARRANTY', label: 'Warranties & Claims', icon: Shield }
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -115,6 +124,8 @@ export function EnterpriseAssetManagement({ session, sites, employees, companyId
             sites={sites} 
             employees={employees} 
             onDeploy={(asset) => setDeployAsset(asset)}
+            onReportIncident={(asset) => setReportIncidentAsset(asset)}
+            onViewIncidents={(asset) => setViewIncidentsAsset(asset)}
           />
         )}
         
@@ -137,6 +148,26 @@ export function EnterpriseAssetManagement({ session, sites, employees, companyId
             transfers={transfers}
           />
         )}
+
+        {activeTab === 'MAINTENANCE' && (
+          <MaintenanceScheduling 
+            session={session} 
+            companyId={companyId}
+            assets={assets}
+            sites={sites}
+            employees={employees}
+          />
+        )}
+
+        {activeTab === 'WARRANTY' && (
+          <div className="p-6">
+            <WarrantyTracking 
+              session={session} 
+              companyId={companyId}
+              assets={assets}
+            />
+          </div>
+        )}
       </div>
 
       {/* Modals */}
@@ -147,6 +178,27 @@ export function EnterpriseAssetManagement({ session, sites, employees, companyId
           sites={sites}
           employees={employees}
           onClose={() => setDeployAsset(null)}
+        />
+      )}
+
+      {reportIncidentAsset && (
+        <ReportLossDamageModal
+          session={session}
+          companyId={companyId}
+          asset={reportIncidentAsset}
+          sites={sites}
+          onClose={() => setReportIncidentAsset(null)}
+          onSuccess={() => setReportIncidentAsset(null)}
+        />
+      )}
+
+      {viewIncidentsAsset && (
+        <AssetIncidentHistory
+          session={session}
+          companyId={companyId}
+          asset={viewIncidentsAsset}
+          sites={sites}
+          onClose={() => setViewIncidentsAsset(null)}
         />
       )}
     </div>

@@ -8,9 +8,11 @@ interface AssetRegisterProps {
   sites: SiteRecord[];
   employees: EmployeeRecord[];
   onDeploy: (asset: AssetRecord) => void;
+  onReportIncident?: (asset: AssetRecord) => void;
+  onViewIncidents?: (asset: AssetRecord) => void;
 }
 
-export function AssetRegister({ session, assets, sites, employees, onDeploy }: AssetRegisterProps) {
+export function AssetRegister({ session, assets, sites, employees, onDeploy, onReportIncident, onViewIncidents }: AssetRegisterProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -112,7 +114,7 @@ export function AssetRegister({ session, assets, sites, employees, onDeploy }: A
                   <td className="px-4 py-3 text-slate-600">
                     {asset.assignedEmployeeId ? employees.find(e => e.id === asset.assignedEmployeeId)?.firstName + ' ' + (employees.find(e => e.id === asset.assignedEmployeeId)?.lastName || '') : 'None'}
                   </td>
-                  <td className="px-4 py-3 text-right space-x-2">
+                  <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                     {(!asset.status || asset.status === 'AVAILABLE') && (
                       <button 
                         onClick={() => onDeploy(asset)}
@@ -121,9 +123,24 @@ export function AssetRegister({ session, assets, sites, employees, onDeploy }: A
                         Deploy
                       </button>
                     )}
-                    <button className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 rounded-lg text-xs font-medium transition-colors">
-                      Details
-                    </button>
+                    {onReportIncident && asset.status !== 'RETIRED' && asset.status !== 'LOST' && (
+                      <button 
+                        onClick={() => onReportIncident(asset)}
+                        className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-medium transition-colors"
+                        title="Report Loss or Damage"
+                      >
+                        <AlertTriangle className="w-4 h-4 inline-block" />
+                      </button>
+                    )}
+                    {onViewIncidents && (
+                      <button 
+                        onClick={() => onViewIncidents(asset)}
+                        className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 rounded-lg text-xs font-medium transition-colors"
+                        title="View Incident History"
+                      >
+                        History
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))

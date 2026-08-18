@@ -271,7 +271,8 @@ export const MASTER_APP_MODULES: AppModule[] = [
   { key: 'COMPLIANCE', name: 'Compliance & Audit', description: 'Regulatory compliance and statutory documents', category: 'SYSTEM', icon: 'CheckSquare' },
   { key: 'AUDIT_LOGS', name: 'System Audit Logs', description: 'Immutable trail of user and system actions', category: 'SYSTEM', icon: 'History' },
   { key: 'WORKFLOWS', name: 'Automated Workflows', description: 'Triggered notifications and automated tasks', category: 'SYSTEM', icon: 'Workflow' },
-  { key: 'APPROVALS', name: 'Role Approvals', description: 'User registration approvals and role delegation', category: 'HRMS', icon: 'UserPlus' }
+  { key: 'APPROVALS', name: 'Role Approvals', description: 'User registration approvals and role delegation', category: 'HRMS', icon: 'UserPlus' },
+  { key: 'SAFETY_MANAGEMENT', name: 'Safety Management', description: 'Safety check sheets, PPE audits, and fire safety inspections', category: 'SECURITY', icon: 'ShieldAlert' }
 ];
 
 export interface AppUpdateInfo {
@@ -589,6 +590,7 @@ export interface EmployeeRecord {
   role: UserRole;
   
   documents: EmployeeDocumentRecord[];
+  pin?: string; // 4-6 digit security PIN
   
   createdAt: string;
   updatedAt: string;
@@ -922,7 +924,7 @@ export interface OvertimeAdjustmentRecord {
   requestedMinutes: number;
   adjustmentType: 'OVERTIME' | 'LATE' | 'EARLY_DEPARTURE' | 'WORKED_MINUTES';
   reason: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
   requestedBy: string;
   requestedByName: string;
   requestedAt: string;
@@ -1196,6 +1198,7 @@ export type IncidentCategory =
   | 'EQUIPMENT_FAILURE' 
   | 'POLICY_VIOLATION' 
   | 'SAFETY' 
+  | 'ASSET_LOSS'
   | 'OTHER';
 
 export type IncidentSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
@@ -1277,6 +1280,20 @@ export interface IncidentReportRecord {
   timeline?: IncidentTimelineEvent[];
   createdAt?: string;
   updatedAt?: string;
+
+  // ==========================================
+  // EAM LOSS/DAMAGE LINKAGE
+  // ==========================================
+  assetId?: string;
+  custodianId?: string;
+  lossDamageType?: 'LOST' | 'DAMAGED' | 'MISSING' | 'STOLEN';
+  damageSeverity?: 'MINOR' | 'MODERATE' | 'SEVERE' | 'TOTAL_LOSS';
+  estimatedImpactAmount?: number;
+  recoveryStatus?: 'NOT_RECOVERED' | 'RECOVERY_REPORTED' | 'RECOVERY_VERIFIED';
+  recoveredAt?: string;
+  recoveredBy?: string;
+  replacementAssetId?: string;
+  eamResolution?: 'REPAIRED' | 'REPLACED' | 'RECOVERED' | 'WRITTEN_OFF' | 'UNRESOLVED';
 }
 
 export type VisitorType = 'CLIENT' | 'VENDOR' | 'CONTRACTOR' | 'CANDIDATE' | 'INTERVIEW_VISITOR' | 'DELIVERY' | 'SERVICE_TECHNICIAN' | 'GUEST' | 'OFFICIAL' | 'OTHER';
@@ -1516,7 +1533,7 @@ export interface SalaryAdvanceRecord {
   amount: number;
   reason: string;
   requestedDate: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'RECOVERED';
+  status: 'PENDING' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'RECOVERED';
   approvedBy?: string;
   approvedByName?: string;
   monthlyDeductionAmount: number;
@@ -1543,56 +1560,41 @@ export interface InventoryItemRecord {
   itemCode: string;
   itemName: string;
   category: InventoryCategory;
+  subCategory?: string;
   description?: string;
   unit: InventoryUnit;
+  serialTracking?: boolean;
+  batchTracking?: boolean;
+  
   currentStock: number;
   minStockThreshold: number;
   maxStockLimit?: number;
+  reorderLevel?: number;
+  criticalStockLevel?: number;
+  thresholdEnabled?: boolean;
+  notificationEnabled?: boolean;
+  thresholdScope?: 'COMPANY' | 'LOCATION';
+  
   unitCost: number;
-  warehouseLocation?: string;
+  warehouseLocation?: string; 
   siteId?: string;
   siteName?: string;
   supplierVendorId?: string;
   supplierVendorName?: string;
+  
   status: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'DISCONTINUED';
+  active?: boolean;
+  
   barcode?: string;
   isAssetTracked?: boolean;
+  
   createdAt: string;
+  createdBy?: string;
   updatedAt: string;
+  updatedBy?: string;
 }
 
-export type StockTransactionType = 
-  | 'PURCHASE_INWARD' 
-  | 'ISSUE_TO_EMPLOYEE' 
-  | 'SITE_TRANSFER' 
-  | 'RETURN_FROM_EMPLOYEE' 
-  | 'DAMAGE_SCRAP' 
-  | 'AUDIT_ADJUSTMENT';
 
-export interface StockTransactionRecord {
-  id: string;
-  companyId: string;
-  itemId: string;
-  itemName: string;
-  itemCode: string;
-  transactionType: StockTransactionType;
-  quantity: number;
-  previousStock: number;
-  newStock: number;
-  unitCost?: number;
-  totalValue?: number;
-  referenceNumber?: string; // PO / Gate Pass / Issue Note #
-  employeeId?: string;
-  employeeName?: string;
-  fromSiteId?: string;
-  toSiteId?: string;
-  siteName?: string;
-  vendorSupplier?: string;
-  remarks?: string;
-  performedByUid: string;
-  performedByName: string;
-  createdAt: string;
-}
 
 export interface InventoryVendorRecord {
   id: string;
@@ -2052,7 +2054,7 @@ export type PhaseAScreen =
   | 'SUPER_ADMIN_PENDING_APPROVALS'
   | 'SUPER_ADMIN_MODULES'
   | 'SUPER_ADMIN_LEADS'
-  | 'LEGAL_POLICIES'
+  | 'LEGAL_POLICIES' | 'APPROVAL_CENTER'
   | 'TASK_MANAGEMENT'
   | 'ID_BADGES'
   | 'ANNOUNCEMENTS'
@@ -2062,6 +2064,7 @@ export type PhaseAScreen =
   | 'TALENT_ACQUISITION'
   | 'TRAINING_LMS'
   | 'PROCUREMENT_SRM'
+  | 'SAFETY_MANAGEMENT'
   | 'COMPLIANCE';
 
 export type AppThemeMode = 'DARK' | 'LIGHT' | 'SYSTEM';
@@ -2276,24 +2279,128 @@ export interface KpiSnapshotRecord {
   createdAt: number;
 }
 
-export interface ClientRecord {
-  id: string;
+
+export type ClientContactType = 'COMMERCIAL' | 'OPERATIONS' | 'HR' | 'FINANCE' | 'EMERGENCY' | 'CONTRACT' | 'OTHER';
+
+export interface ClientContactRecord {
+  id: string; // contactId
   companyId: string;
-  clientName: string;
-  clientType: 'CORPORATE' | 'GOVERNMENT' | 'INDUSTRIAL' | 'RESIDENTIAL' | 'INSTITUTIONAL';
-  registeredAddress: string;
-  gstNumber?: string;
-  contractStartDate: string;
-  contractEndDate?: string;
-  contractStatus: 'ACTIVE' | 'EXPIRED' | 'TERMINATED' | 'UNDER_NEGOTIATION';
-  defaultBillingRateType: 'PER_SHIFT' | 'MONTHLY_FIXED' | 'HOURLY';
-  defaultBillingRate: number;
-  primaryContactName: string;
-  primaryContactPhone: string;
-  primaryContactEmail: string;
-  createdAt: string;
-  updatedAt: string;
+  clientId: string;
+  name: string;
+  designation?: string;
+  email: string;
+  phone: string;
+  department?: string;
+  contactType: ClientContactType;
+  primaryContact: boolean;
+  active: boolean;
 }
+
+export interface ClientRecord {
+  id: string; // clientId
+  companyId: string;
+  clientCode: string;
+  legalName: string;
+  displayName: string;
+  clientType: 'CORPORATE' | 'GOVERNMENT' | 'INDUSTRIAL' | 'RESIDENTIAL' | 'INSTITUTIONAL' | 'OTHER';
+  industry?: string;
+  registrationDetails?: string; // e.g. GST
+  billingAddress?: string;
+  communicationDetails?: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'ONBOARDING' | 'CLOSED';
+  notes?: string;
+  createdByUid?: string;
+  createdByName?: string;
+  createdAt: string;
+  updatedByUid?: string;
+  updatedByName?: string;
+  updatedAt: string;
+  
+  // Kept for backward compatibility if any
+  primaryContactName?: string;
+  primaryContactPhone?: string;
+  primaryContactEmail?: string;
+}
+
+export type ContractStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'ACTIVE' | 'EXPIRING' | 'RENEWAL_PENDING' | 'RENEWED' | 'EXPIRED' | 'TERMINATED' | 'CLOSED';
+
+export interface ContractSiteMapping {
+  id: string; // mappingId
+  companyId: string;
+  contractId: string;
+  clientId: string;
+  siteId: string;
+  serviceStartDate: string;
+  serviceEndDate: string;
+  scope?: string;
+  active: boolean;
+}
+
+export interface ContractScopeRecord {
+  id: string;
+  contractId: string;
+  companyId: string;
+  serviceCategory: string; // E.g., SECURITY, CLEANING, MAINTENANCE
+  description: string;
+  frequency?: string;
+  manpowerRequirement?: number;
+  exclusions?: string;
+  siteSpecificScope?: string;
+}
+
+export interface ContractAmendmentRecord {
+  id: string;
+  contractId: string;
+  companyId: string;
+  amendmentNumber: string;
+  effectiveDate: string;
+  changedFields: string;
+  reason: string;
+  approvedByUid?: string;
+  approvedByName?: string;
+  approvalDate?: string;
+  documentUrl?: string;
+  createdAt: string;
+}
+
+export interface ContractRecord {
+  id: string; // contractId
+  companyId: string;
+  clientId: string;
+  contractNumber: string;
+  contractTitle: string;
+  contractType: 'MASTER_SERVICES' | 'SITE_SPECIFIC' | 'SUBCONTRACT' | 'ONE_OFF';
+  startDate: string;
+  endDate: string;
+  status: ContractStatus;
+  scopeOfService?: string;
+  termsAndConditions?: string;
+  renewalType: 'AUTO' | 'MANUAL' | 'NON_RENEWABLE';
+  noticePeriodDays?: number;
+  
+  // Commercials
+  contractValue?: number;
+  currency?: string;
+  billingModel?: 'FIXED_MONTHLY' | 'PER_SHIFT' | 'HOURLY' | 'MILESTONE';
+  billingCycle?: 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY';
+  taxConfiguration?: string;
+  paymentTermsDays?: number;
+  commercialEffectiveDate?: string;
+
+  ownerUid?: string;
+  ownerName?: string;
+  
+  createdByUid?: string;
+  createdByName?: string;
+  createdAt: string;
+  updatedByUid?: string;
+  updatedByName?: string;
+  updatedAt: string;
+  
+  // Storage
+  documentUrls?: string[];
+}
+
 
 export interface DeploymentRecord {
   id: string;
@@ -2548,7 +2655,7 @@ export interface TrainingEnrollmentRecord {
 // MODULE 14: PROCUREMENT & SOURCING / SRM
 // ============================================================================
 export type ProcurementStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'PO_ISSUED' | 'PARTIALLY_DELIVERED' | 'FULFILLED' | 'CANCELLED';
-export type PurchaseOrderStatus = 'DRAFT' | 'ISSUED' | 'PARTIALLY_RECEIVED' | 'COMPLETED' | 'CANCELLED';
+export type PurchaseOrderStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'ISSUED' | 'PARTIALLY_RECEIVED' | 'COMPLETED' | 'CANCELLED';
 
 export interface RequisitionLineItem {
   itemId?: string;
@@ -2782,4 +2889,454 @@ export interface MaintenanceOccurrence {
   createdAt: string;
 }
 
+export type WarrantyStatus = 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED' | 'CLAIM_IN_PROGRESS' | 'CLAIM_RESOLVED' | 'CANCELLED';
+
+export interface WarrantyRecord {
+  id: string; // warrantyId
+  companyId: string;
+  assetId: string;
+  warrantyProvider?: string; // vendorId or name
+  warrantyNumber: string;
+  warrantyType: 'MANUFACTURER' | 'EXTENDED' | 'SERVICE_CONTRACT' | 'OTHER';
+  startDate: string;
+  endDate: string;
+  coverageDescription?: string;
+  exclusions?: string;
+  terms?: string;
+  status: WarrantyStatus;
+  claimEligibility: boolean;
+  serviceContact?: string;
+  documentUrls?: string[];
+  createdBy: string;
+  createdAt: string;
+  updatedBy: string;
+  updatedAt: string;
+}
+
+export type WarrantyClaimStatus = 'CLAIM_CREATED' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'SERVICE_IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+
+export interface WarrantyClaimRecord {
+  id: string; // claimId
+  companyId: string;
+  warrantyId: string;
+  assetId: string;
+  issueDescription: string;
+  reportedBy: string;
+  reportedByName?: string;
+  reportedAt: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  evidenceUrls?: string[];
+  vendorId?: string;
+  claimReference?: string;
+  status: WarrantyClaimStatus;
+  workOrderId?: string;
+  incidentId?: string;
+  resolutionNotes?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  closedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export * from './ops';
+
+// ==========================================
+export type StockTransactionType = 
+  | 'PURCHASE_INWARD' 
+  | 'ISSUE_TO_EMPLOYEE' 
+  | 'SITE_TRANSFER' 
+  | 'RETURN_FROM_EMPLOYEE' 
+  | 'DAMAGE_SCRAP' 
+  | 'AUDIT_ADJUSTMENT';
+
+export interface StockTransactionRecord {
+  id: string;
+  companyId: string;
+  itemId: string;
+  itemName: string;
+  itemCode: string;
+  transactionType: StockTransactionType;
+  quantity: number;
+  previousStock: number;
+  newStock: number;
+  unitCost?: number;
+  totalValue?: number;
+  referenceNumber?: string;
+  employeeId?: string;
+  employeeName?: string;
+  fromSiteId?: string;
+  toSiteId?: string;
+  siteName?: string;
+  vendorSupplier?: string;
+  remarks?: string;
+  performedByUid: string;
+  performedByName: string;
+  createdAt: string;
+}
+
+// SCM & INVENTORY ENHANCEMENTS
+// ==========================================
+
+export interface StockLocationRecord {
+  id: string;
+  companyId: string;
+  siteId?: string;
+  departmentId?: string;
+  name: string;
+  type: 'CENTRAL_STORE' | 'BRANCH_STORE' | 'SITE_STORE' | 'DEPARTMENT_STORE' | 'OTHER';
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: string;
+}
+
+export type StockTransactionTypeExtended = 
+  | 'OPENING_BALANCE'
+  | 'RECEIPT'
+  | 'ISSUE'
+  | 'TRANSFER'
+  | 'RETURN'
+  | 'ADJUSTMENT'
+  | 'CONSUMPTION';
+
+export interface StockLedgerRecord {
+  id: string;
+  companyId: string;
+  itemId: string;
+  locationId: string;
+  transactionType: StockTransactionTypeExtended;
+  
+  quantity: number;
+  previousBalance: number;
+  newBalance: number;
+  
+  unitCost?: number;
+  totalValue?: number;
+  
+  referenceId?: string; // Gate Pass ID, PO ID, etc.
+  referenceType?: 'GATE_PASS' | 'ADJUSTMENT' | 'MANUAL';
+  
+  batchNumber?: string;
+  serialNumber?: string;
+  condition?: string;
+  
+  reason?: string;
+  evidenceUrls?: string[];
+  
+  performedByUid: string;
+  performedByName: string;
+  createdAt: string;
+}
+
+export interface GatePassLineItem {
+  itemId: string;
+  itemName: string;
+  itemCode: string;
+  unit: string;
+  quantity: number;
+  returnedQuantity?: number;
+  serialNumbers?: string[];
+  batchNumbers?: string[];
+  remarks?: string;
+}
+
+export type GatePassType = 'INWARD' | 'OUTWARD' | 'RETURNABLE' | 'NON_RETURNABLE';
+export type GatePassStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'DISPATCHED' | 'GATE_VERIFIED' | 'RECEIVED' | 'RETURN_PENDING' | 'RETURNED' | 'CLOSED' | 'CANCELLED';
+
+export interface GatePassRecord {
+  id: string;
+  companyId: string;
+  passNumber: string;
+  passType: GatePassType;
+  status: GatePassStatus;
+  
+  sourceLocationId?: string;
+  sourceLocationName?: string;
+  destinationLocationId?: string;
+  destinationLocationName?: string;
+  
+  lines: GatePassLineItem[];
+  
+  requesterId: string;
+  requesterName: string;
+  recipientName: string;
+  recipientPhone?: string;
+  recipientCompany?: string;
+  
+  purpose: string;
+  vehicleNumber?: string;
+  expectedReturnDate?: string;
+  
+  evidenceUrls?: string[];
+  transferOrderId?: string;
+  createdAt: string;
+  submittedAt?: string;
+  approvedAt?: string;
+  approvedByUid?: string;
+  approvedByName?: string;
+  dispatchedAt?: string;
+  verifiedAt?: string;
+  verifiedByUid?: string;
+  verifiedByName?: string;
+  receivedAt?: string;
+  returnedAt?: string;
+  closedAt?: string;
+  
+  rejectionReason?: string;
+}
+
+export interface StockBalanceRecord {
+  id: string; // usually `${locationId}_${itemId}`
+  companyId: string;
+  locationId: string;
+  itemId: string;
+  quantity: number;
+  reservedQuantity?: number;
+  lastUpdatedAt: string;
+  status?: 'NORMAL' | 'LOW_STOCK' | 'CRITICAL_STOCK' | 'OUT_OF_STOCK' | 'OVER_STOCK';
+}
+
+export interface InventoryAlertRecord {
+  id: string;
+  companyId: string;
+  locationId: string;
+  itemId: string;
+  itemName: string;
+  previousStatus: string;
+  newStatus: string;
+  previousQuantity: number;
+  currentQuantity: number;
+  thresholdValue: number;
+  eventType: 'LOW_STOCK_DETECTED' | 'CRITICAL_STOCK_DETECTED' | 'OUT_OF_STOCK_DETECTED' | 'RECOVERY_DETECTED';
+  notificationId?: string;
+  acknowledged: boolean;
+  acknowledgedByUid?: string;
+  acknowledgedByName?: string;
+  acknowledgedAt?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface TransferOrderLine {
+  itemId: string;
+  itemName: string;
+  requestedQuantity: number;
+  approvedQuantity?: number;
+  reservedQuantity?: number;
+  dispatchedQuantity?: number;
+  receivedQuantity?: number;
+  damagedQuantity?: number;
+  missingQuantity?: number;
+  unitOfMeasure: string;
+}
+
+export type TransferOrderStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'RESERVED' | 'DISPATCHED' | 'IN_TRANSIT' | 'RECEIVED' | 'PARTIALLY_RECEIVED' | 'COMPLETED' | 'REJECTED' | 'CANCELLED' | 'EXCEPTION';
+
+export interface TransferOrderRecord {
+  id: string;
+  companyId: string;
+  transferNumber: string;
+  sourceLocationId: string;
+  destinationLocationId: string;
+  sourceSiteId?: string;
+  destinationSiteId?: string;
+  requestedByUid: string;
+  requestedByName: string;
+  approvedByUid?: string;
+  approvedByName?: string;
+  dispatchedByUid?: string;
+  dispatchedByName?: string;
+  receivedByUid?: string;
+  receivedByName?: string;
+  
+  purpose: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  status: TransferOrderStatus;
+  
+  expectedDeliveryDate?: string;
+  actualDispatchDate?: string;
+  actualReceiptDate?: string;
+  remarks?: string;
+  
+  gatePassId?: string;
+  incidentId?: string; 
+  
+  lines: TransferOrderLine[];
+  
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================================================
+// MODULE 7.2: CRM - SLA PERFORMANCE SCORECARDS
+// ============================================================================
+
+export type SlaMeasurementType = 
+  | 'RESOLUTION_TIME'
+  | 'RESPONSE_TIME'
+  | 'ATTENDANCE_COMPLIANCE'
+  | 'TASK_COMPLETION'
+  | 'SERVICE_AVAILABILITY';
+
+export type SlaStatus = 'ACTIVE' | 'DRAFT' | 'INACTIVE';
+
+export type SlaSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface SlaDefinitionRecord {
+  id: string; // slaId
+  companyId: string;
+  clientId: string;
+  contractId: string;
+  siteId?: string; // Optional if applies to all sites
+  slaCode: string;
+  slaName: string;
+  description: string;
+  measurementType: SlaMeasurementType;
+  targetValue: number;
+  targetUnit: 'MINUTES' | 'HOURS' | 'DAYS' | 'PERCENTAGE';
+  severity: SlaSeverity;
+  effectiveFrom: string; // ISO Date
+  effectiveTo?: string; // ISO Date
+  status: SlaStatus;
+  applicableService?: string; // e.g. "Security", "Cleaning"
+  createdBy: string;
+  createdAt: string;
+  updatedBy: string;
+  updatedAt: string;
+}
+
+export type SlaBreachStatus = 'OPEN' | 'ESCALATED' | 'RESOLVED' | 'CLOSED';
+
+export interface SlaBreachRecord {
+  id: string; // breachId
+  companyId: string;
+  clientId: string;
+  contractId: string;
+  siteId?: string;
+  slaId: string;
+  sourceRecordId: string; // e.g. ticketId, workOrderId
+  targetValue: number;
+  actualValue: number;
+  variance: number; // actual - target
+  detectedAt: string; // ISO timestamp
+  severity: SlaSeverity;
+  status: SlaBreachStatus;
+  escalationId?: string; // If escalated using BPM
+  resolutionNotes?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+}
+
+export interface SlaScorecardMetric {
+  slaId: string;
+  slaName: string;
+  targetValue: number;
+  targetUnit: string;
+  actualValue: number;
+  compliancePercentage: number;
+  totalMeasuredEvents: number;
+  breaches: number;
+  isMet: boolean;
+}
+
+export interface SlaScorecardRecord {
+  id: string; // scorecardId e.g. companyId_contractId_YYYY_MM
+  companyId: string;
+  clientId: string;
+  contractId: string;
+  siteId?: string; // Can be for specific site or aggregate
+  periodType: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
+  periodStartDate: string; // ISO Date
+  periodEndDate: string; // ISO Date
+  
+  metrics: SlaScorecardMetric[];
+  
+  overallCompliance: number;
+  totalBreaches: number;
+  criticalBreaches: number;
+  
+  generatedAt: string;
+  version: number;
+}
+
+// ============================================================================
+// MODULE 7.3: CRM - BILLING RATE MATRICES
+// ============================================================================
+
+export type BillingRateType = 
+  | 'PER_EMPLOYEE'
+  | 'PER_SHIFT'
+  | 'PER_DAY'
+  | 'PER_HOUR'
+  | 'PER_SERVICE'
+  | 'FIXED_MONTHLY'
+  | 'VARIABLE_QUANTITY';
+
+export type BillingRateStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'ACTIVE' | 'EXPIRED' | 'REJECTED';
+
+export interface BillingRateMatrixRecord {
+  id: string; // rateMatrixId
+  companyId: string;
+  clientId: string;
+  contractId: string;
+  
+  siteId?: string; // Optional: If empty, applies to all sites under contract
+  serviceId?: string; // Optional: If empty, applies generically
+  designationId?: string; // Optional: For specific roles
+  
+  rateType: BillingRateType;
+  unit: string; // e.g. 'Shift', 'Hour', 'Month', 'Employee'
+  rate: number;
+  currency: string;
+  
+  taxApplicability?: string; // Tax references
+  
+  effectiveFrom: string; // ISO Date
+  effectiveTo?: string; // ISO Date
+  
+  status: BillingRateStatus;
+  
+  createdBy: string;
+  createdAt: string;
+  updatedBy: string;
+  updatedAt: string;
+  approvedBy?: string;
+  approvedAt?: string;
+}
+
+export interface BillingPreviewRecord {
+  contractId: string;
+  siteId?: string;
+  serviceId?: string;
+  periodStart: string;
+  periodEnd: string;
+  applicableRate: number;
+  rateType: BillingRateType;
+  quantity: number;
+  unit: string;
+  grossAmount: number;
+  currency: string;
+  generatedAt: string;
+  sourceReference?: string;
+}
+
+// ============================================================================
+// MODULE 7.4: CRM - CONTRACT EXPIRATION ALERTS
+// ============================================================================
+
+export type ContractExpiryMilestone = 90 | 60 | 30 | 15 | 7 | 1 | 0; // 0 = EXPIRED
+
+export interface ContractExpiryEventRecord {
+  id: string; // e.g. EXP-contractId-milestone
+  companyId: string;
+  clientId: string;
+  contractId: string;
+  milestone: ContractExpiryMilestone;
+  expiryDate: string; // ISO string of contract endDate
+  daysRemaining: number;
+  detectedAt: string; // ISO string
+  notificationId?: string; // Reference to notification event
+  escalationId?: string; // Reference to escalation/BPM
+  status: 'PENDING_NOTIFICATION' | 'NOTIFIED' | 'ESCALATED' | 'RESOLVED';
+}
+export * from './bi';
+export * from './bpm';

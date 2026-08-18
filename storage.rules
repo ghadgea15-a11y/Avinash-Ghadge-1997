@@ -39,6 +39,12 @@ service firebase.storage {
     match /companies/{cid}/inventory/{iid}/images/{file} {
       allow write: if companyMatch(cid) && opsTier() && validImage();
     }
+    match /companies/{cid}/gate_passes/{gpid}/{allPaths=**} {
+      allow write: if companyMatch(cid) && validDoc();
+    }
+    match /companies/{cid}/assets/{allPaths=**} {
+      allow write: if companyMatch(cid);
+    }
     match /companies/{cid}/reports/exports/{uid}/{file} {
       allow read, write: if companyMatch(cid) && request.auth.uid == uid;
     }

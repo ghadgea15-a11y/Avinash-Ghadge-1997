@@ -22,7 +22,7 @@ import { SettingsScreen } from './components/screens/SettingsScreen';
 import { NotificationsScreen } from './components/screens/NotificationsScreen';
 import { EmployeeModuleScreen } from './components/screens/EmployeeModuleScreen';
 
-import { ClientManagementScreen } from './components/screens/ClientManagementScreen';
+import { CrmModule } from './components/crm/CrmModule';
 import { DeploymentManagementScreen } from './components/screens/DeploymentManagementScreen';
 import { ShiftRosterScreen } from './components/screens/ShiftRosterScreen';
 
@@ -46,7 +46,7 @@ import { LandingPageScreen } from './components/screens/LandingPageScreen';
 import { LegalPoliciesScreen } from './components/screens/LegalPoliciesScreen';
 import { LeaveManagementScreen } from './components/screens/LeaveManagementScreen';
 import { PayrollCompensationScreen } from './components/screens/PayrollCompensationScreen';
-import { InventoryStockScreen } from './components/screens/InventoryStockScreen';
+import { ScmModule } from './components/scm/ScmModule';
 import { AssetTrackingScreen } from './components/screens/AssetTrackingScreen';
 import { ServiceDeskScreen } from './components/screens/ServiceDeskScreen';
 import { TalentAcquisitionScreen } from './components/screens/TalentAcquisitionScreen';
@@ -60,6 +60,8 @@ import { ComplianceDashboardScreen } from './components/screens/ComplianceDashbo
 import { MyTasksScreen } from './components/screens/MyTasksScreen';
 
 import { ReportsAnalyticsScreen } from './components/screens/ReportsAnalyticsScreen';
+
+import { ApprovalCenter } from './components/bpm/ApprovalCenter';
 
 export function App() {
   // Initialize current screen from URL if landing on legal, auth, or public route
@@ -181,6 +183,8 @@ export function App() {
       setCurrentScreen("SUPER_ADMIN_DASHBOARD");
     } else if (newRole === "GUARD" || newRole === "FIELD_OFFICER") {
       setCurrentScreen("ATTENDANCE_SHIFTS");
+    } else if (newRole === "SAFETY_OFFICER" || newRole === "EHS") {
+      setCurrentScreen("SAFETY_MANAGEMENT");
     } else {
       setCurrentScreen("EMPLOYEES");
     }
@@ -196,10 +200,12 @@ export function App() {
     'EMPLOYEES', 
     'ATTENDANCE_SHIFTS', 
     'LEAVE_MANAGEMENT',
+    'APPROVAL_CENTER',
     'PAYROLL_COMPENSATION',
     'INVENTORY_STOCK',
     'ASSET_TRACKING',
     'SITE_OPERATIONS', 
+    'SAFETY_MANAGEMENT',
     'WORK_ORDERS',
     'REPORTS_ANALYTICS',
     'COMPANY_MANAGEMENT',
@@ -469,9 +475,9 @@ export function App() {
 
                     
                     {currentScreen === 'CLIENT_MANAGEMENT' && activeCompany && (
-                      <ClientManagementScreen
-                        userSession={userSession}
-                        activeCompany={activeCompany}
+                      <CrmModule
+                        session={userSession}
+                        company={activeCompany}
                       />
                     )}
                     {currentScreen === 'DEPLOYMENT_MANAGEMENT' && activeCompany && (
@@ -515,6 +521,12 @@ export function App() {
                       />
                     )}
 
+                    {currentScreen === 'APPROVAL_CENTER' && (
+                      <ApprovalCenter
+                        session={userSession}
+                      />
+                    )}
+
                     {currentScreen === 'PAYROLL_COMPENSATION' && (
                       <PayrollCompensationScreen
                         userSession={userSession}
@@ -524,12 +536,8 @@ export function App() {
                       />
                     )}
 
-                    {currentScreen === 'INVENTORY_STOCK' && (
-                      <InventoryStockScreen
-                        userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
-                      />
+                    {currentScreen === 'INVENTORY_STOCK' && activeCompany && (
+                      <ScmModule session={userSession} company={activeCompany} />
                     )}
 
                     
@@ -618,6 +626,16 @@ export function App() {
                         activeCompany={activeCompany}
                         isOnline={isOnline}
                         onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'SAFETY_MANAGEMENT' && (
+                      <SiteOperationsScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                        onNavigate={setCurrentScreen}
+                        initialTab="SAFETY_CHECKS"
                       />
                     )}
 

@@ -13,8 +13,7 @@ import {
   CheckCircle2, 
   AlertCircle,
   Building,
-  Key,
-  Fingerprint
+  Key
 } from 'lucide-react';
 import { UserSession, CompanyTenant, UserProfileData } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -250,24 +249,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </div>
       </div>
 
-      {/* Device Security & Biometric Binding */}
+      {/* Device Security */}
       <div className={`p-4 rounded-3xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
         <h3 className="text-sm font-bold border-b pb-2.5 border-slate-800 flex items-center gap-2 mb-3">
-          <Fingerprint className="w-4 h-4 text-emerald-400" />
-          Hardware & Biometric Binding
+          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          Hardware & Device Security
         </h3>
 
-        <div className="grid grid-cols-2 gap-3 text-xs">
+        <div className="grid grid-cols-1 gap-3 text-xs">
           <div className={`p-3 rounded-2xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
             <span className="text-[10px] text-slate-400 block mb-0.5">Device ID Lock</span>
             <span className="font-mono font-bold text-indigo-400">ANDR-SEC-9901-X</span>
-          </div>
-
-          <div className={`p-3 rounded-2xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-            <span className="text-[10px] text-slate-400 block mb-0.5">Biometric Status</span>
-            <span className="font-mono font-bold text-emerald-400">
-              {userSession.isBiometricEnabled ? 'ACTIVE (FINGERPRINT)' : 'DISABLED'}
-            </span>
           </div>
         </div>
       </div>

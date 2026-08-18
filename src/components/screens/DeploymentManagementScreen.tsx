@@ -57,7 +57,7 @@ export const DeploymentManagementScreen: React.FC<Props> = ({ userSession, activ
       companyId: activeCompany.companyId,
       employeeName: emp ? (emp.firstName + " " + emp.lastName) : "",
       siteName: site?.name || '',
-      clientName: client?.clientName || '',
+      clientName: client?.legalName || '',
       createdAt: formData.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     } as DeploymentRecord;
@@ -97,7 +97,7 @@ export const DeploymentManagementScreen: React.FC<Props> = ({ userSession, activ
             
             <select className="p-2 border rounded" value={formData.clientId} onChange={e => setFormData({...formData, clientId: e.target.value})}>
               <option value="">Select Client</option>
-              {clients.map(c => <option key={c.id} value={c.id}>{c.clientName}</option>)}
+              {clients.map(c => <option key={c.id} value={c.id}>{c.legalName}</option>)}
             </select>
             
             

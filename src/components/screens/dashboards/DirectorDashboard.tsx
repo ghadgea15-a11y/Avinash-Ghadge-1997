@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { CompanyTenant, UserSession, PhaseAScreen, EmployeeRecord, IncidentReportRecord, TaskRecord, SiteRecord } from '../../../types';
 import { FirestoreService } from '../../../services/firestoreService';
+import { ExecutiveBiDashboard } from "../../bi/ExecutiveBiDashboard";
+import { PredictiveAnalyticsDashboard } from "../../bi/PredictiveAnalyticsDashboard";
 import { Users, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
 
 interface DashboardProps {
@@ -97,6 +99,9 @@ export const DirectorDashboard: React.FC<DashboardProps> = ({ userSession, compa
           </div>
         </div>
       </div>
+
+      <ExecutiveBiDashboard session={userSession} company={company} />
+      <PredictiveAnalyticsDashboard session={userSession} company={company} />
     </div>
   );
 };

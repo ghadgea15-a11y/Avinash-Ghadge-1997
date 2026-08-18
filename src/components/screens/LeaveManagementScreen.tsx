@@ -229,7 +229,7 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
   };
 
   const pendingApprovals = useMemo(() => 
-    allRequests.filter(r => r.status === 'SUBMITTED' || r.status === 'PENDING_APPROVAL'),
+    allRequests.filter(r => r.status === 'SUBMITTED' || r.status === 'PENDING_APPROVAL' || r.status === 'PENDING'),
   [allRequests]);
 
   return (

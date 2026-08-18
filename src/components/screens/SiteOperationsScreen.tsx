@@ -71,25 +71,28 @@ import { PatrolPlanModal } from '../operations/PatrolPlanModal';
 import { PatrolTourRunnerModal } from '../operations/PatrolTourRunnerModal';
 import { PatrolTourDetailModal } from '../operations/PatrolTourDetailModal';
 import { CheckpointQRCodeModal } from '../operations/CheckpointQRCodeModal';
+import { SafetyChecksheetModule } from '../operations/SafetyChecksheetModule';
 
 interface SiteOperationsScreenProps {
   userSession: UserSession;
   activeCompany: CompanyTenant | null;
   isOnline: boolean;
   onNavigate: (screen: PhaseAScreen) => void;
+  initialTab?: 'PATROLS' | 'INCIDENTS' | 'VISITORS' | 'MATERIALS' | 'DAILY_LOGS' | 'HANDOVERS' | 'EMERGENCY' | 'TRACKING' | 'SAFETY_CHECKS';
 }
 
 export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   userSession,
   activeCompany,
   isOnline,
-  onNavigate
+  onNavigate,
+  initialTab = 'PATROLS'
 }) => {
   const { isDark } = useTheme();
   const companyId = activeCompany?.companyId || userSession.companyId;
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<'PATROLS' | 'INCIDENTS' | 'VISITORS' | 'MATERIALS' | 'DAILY_LOGS' | 'HANDOVERS' | 'EMERGENCY' | 'TRACKING'>('PATROLS');
+  const [activeTab, setActiveTab] = useState<'PATROLS' | 'INCIDENTS' | 'VISITORS' | 'MATERIALS' | 'DAILY_LOGS' | 'HANDOVERS' | 'EMERGENCY' | 'TRACKING' | 'SAFETY_CHECKS'>(initialTab);
 
   // Data States
   const [sites, setSites] = useState<SiteRecord[]>([]);
@@ -1347,6 +1350,17 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
           <FileText className="w-4 h-4 text-emerald-500" />
           <span>Daily Logs & Handovers</span>
         </button>
+        <button
+          onClick={() => setActiveTab('SAFETY_CHECKS')}
+          className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
+            activeTab === 'SAFETY_CHECKS'
+              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          <ShieldAlert className="w-4 h-4 text-rose-500" />
+          <span>Safety Checksheets</span>
+        </button>
       </div>
 
       {/* ============================================================ */}
@@ -2450,6 +2464,14 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
             )}
           </div>
         </div>
+      )}
+
+      {activeTab === 'SAFETY_CHECKS' && (
+        <SafetyChecksheetModule 
+          userSession={userSession}
+          activeCompany={activeCompany}
+          sites={sites}
+        />
       )}
 
       {/* MODAL 1: ADD / EDIT CHECKPOINT */}

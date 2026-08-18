@@ -170,6 +170,8 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   throw new Error(JSON.stringify(errInfo));
 }
 
+import { BpmService } from './bpmService';
+
 export class FirestoreService {
   /**
    * ============================================================
@@ -404,6 +406,46 @@ export class FirestoreService {
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, `${newPath} & ${legacyPath}`);
+      return false;
+    }
+  }
+
+  /**
+   * Updates an employee's security PIN (Dual-write support)
+   */
+  static async updateEmployeePin(companyId: string, employeeId: string, newPin: string, actorId: string, actorName: string): Promise<boolean> {
+    try {
+      const empColRef = collection(db, 'companies', companyId, 'employees');
+      const q = query(empColRef, where('employeeId', '==', employeeId));
+      const snap = await getDocs(q);
+      
+      if (snap.empty) {
+        throw new Error('Employee record not found');
+      }
+      
+      const empDoc = snap.docs[0];
+      const docId = empDoc.id;
+      const empData = empDoc.data();
+      const empDocRef = doc(db, 'companies', companyId, 'employees', docId);
+      
+      await updateDoc(empDocRef, {
+        pin: newPin,
+        updatedAt: new Date().toISOString(),
+        updatedBy: actorId
+      });
+
+      if (empData.authUid) {
+        const legacyRef = doc(db, 'users', docId);
+        const legacySnap = await getDoc(legacyRef);
+        if (legacySnap.exists()) {
+          await updateDoc(legacyRef, { pin: newPin });
+        }
+      }
+      
+      await this.logAuditEvent(companyId, actorId, actorName, 'SECURITY_PIN_UPDATED', `Security PIN updated for employee ${employeeId}`);
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] updateEmployeePin error:', err);
       return false;
     }
   }
@@ -3883,7 +3925,7 @@ export class FirestoreService {
         ...request,
         id: leaveId,
         companyId,
-        status: 'PENDING',
+        status: 'PENDING_APPROVAL', // Initially pending
         appliedAt: now,
         createdAt: now,
         updatedAt: now
@@ -3891,6 +3933,22 @@ export class FirestoreService {
 
       const docRef = doc(db, 'companies', companyId, 'leave_requests', leaveId);
       await setDoc(docRef, payload);
+
+      // Attempt BPM submission
+      const bpmInstance = await BpmService.submitForApproval(
+        companyId,
+        request.employeeId,
+        'LEAVE',
+        leaveId,
+        'LEAVE_REQUEST',
+        payload
+      );
+
+      // If no BPM workflow is found, auto-approve for backward compatibility or keep as PENDING
+      if (!bpmInstance) {
+        payload.status = 'PENDING_APPROVAL' as any;
+        await setDoc(docRef, payload);
+      }
 
       // Also create an audit log
       await this.logAuditEvent(
@@ -4219,6 +4277,22 @@ export class FirestoreService {
 
       await setDoc(docRef, payload, { merge: true });
 
+      // Attempt BPM submission if it is a new request or transitioning to pending
+      if (status === 'PENDING_APPROVAL' && (!existingData || existingData.status !== 'PENDING_APPROVAL')) {
+        const bpmInstance = await BpmService.submitForApproval(
+          companyId,
+          request.employeeId,
+          'WFM',
+          id,
+          'OVERTIME_REQUEST',
+          payload
+        );
+        if (!bpmInstance) {
+           payload.status = 'PENDING_APPROVAL' as any; // Allow fallback if needed, but match type
+           await setDoc(docRef, payload, { merge: true });
+        }
+      }
+
       // Create in-app notification if pending approval
       if (status === 'PENDING_APPROVAL') {
         await this.createNotification({
@@ -4235,6 +4309,50 @@ export class FirestoreService {
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, `companies/${companyId}/overtime_requests`);
       return null;
+    }
+  }
+
+  static async updateOvertimeAdjustmentStatus(
+    companyId: string,
+    adjustmentId: string,
+    status: 'APPROVED' | 'REJECTED' | 'CANCELLED',
+    reviewer: { uid: string; name: string; reason?: string }
+  ): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'overtime_adjustments', adjustmentId);
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) return false;
+
+      const now = new Date().toISOString();
+      const updateData: any = {
+        status,
+        updatedAt: now,
+      };
+
+      if (status === 'APPROVED') {
+        updateData.approvedBy = reviewer.uid;
+        updateData.approvedByName = reviewer.name;
+        updateData.approvedAt = now;
+      } else if (status === 'REJECTED') {
+        updateData.rejectionReason = reviewer.reason || 'Rejected by supervisor';
+      }
+
+      await updateDoc(docRef, updateData);
+
+      const adj = snap.data() as OvertimeAdjustmentRecord;
+
+      await this.logAuditEvent(
+        companyId,
+        reviewer.uid,
+        reviewer.name,
+        `OVERTIME_ADJUSTMENT_${status}`,
+        `Overtime adjustment for ${adj.employeeName} was ${status}. Reason: ${reviewer.reason || 'None'}`
+      );
+
+      return true;
+    } catch (err) {
+      console.warn('Error updating overtime adjustment status', err);
+      return false;
     }
   }
 
@@ -4354,12 +4472,28 @@ export class FirestoreService {
         ...adjustment,
         id,
         companyId,
-        status: 'PENDING',
+        status: 'PENDING_APPROVAL', // Start as pending approval
         createdAt: now,
         updatedAt: now
       };
 
       await setDoc(docRef, payload);
+
+      // Attempt BPM submission
+      const bpmInstance = await BpmService.submitForApproval(
+        companyId,
+        adjustment.requestedBy,
+        'WFM',
+        id,
+        'OVERTIME_ADJUSTMENT',
+        payload
+      );
+
+      // If no BPM workflow is found, auto-approve for backward compatibility or keep as PENDING
+      if (!bpmInstance) {
+        payload.status = 'PENDING_APPROVAL' as any;
+        await setDoc(docRef, payload);
+      }
 
       await this.logAuditEvent(
         companyId,
@@ -4826,10 +4960,25 @@ export class FirestoreService {
         id: advanceId,
         companyId,
         remainingAmount: advance.amount,
+        status: 'PENDING_APPROVAL',
         createdAt: now
       };
       const docRef = doc(db, 'companies', companyId, 'advances_and_deductions', advanceId);
       await setDoc(docRef, payload);
+
+      const bpmInstance = await BpmService.submitForApproval(
+        companyId,
+        advance.employeeId,
+        'PAYROLL',
+        advanceId,
+        'SALARY_ADVANCE',
+        payload
+      );
+
+      if (!bpmInstance) {
+        payload.status = 'PENDING';
+        await setDoc(docRef, payload);
+      }
 
       await this.logAuditEvent(
         companyId,
@@ -7119,10 +7268,38 @@ const allAttendances: any[] = [];
   static async savePurchaseOrder(companyId: string, po: PurchaseOrderRecord): Promise<boolean> {
     try {
       const docRef = doc(db, 'companies', companyId, 'purchaseOrders', po.id);
+      
+      const existingSnap = await getDoc(docRef);
+      const isNew = !existingSnap.exists();
+      const existingData = isNew ? null : existingSnap.data() as PurchaseOrderRecord;
+
+      // If new, start as pending approval
+      if (isNew) {
+         po.status = 'PENDING_APPROVAL' as any;
+      }
+
       await setDoc(docRef, {
         ...po,
         updatedAt: new Date().toISOString()
       }, { merge: true });
+
+      if (isNew) {
+        const bpmInstance = await BpmService.submitForApproval(
+          companyId,
+          po.authorizedByUserId,
+          'SCM', // Supply Chain Management
+          po.id,
+          'PURCHASE_ORDER',
+          po
+        );
+
+        // Auto approve if no workflow
+        if (!bpmInstance) {
+          po.status = 'DRAFT';
+          await setDoc(docRef, { status: 'DRAFT' }, { merge: true });
+        }
+      }
+
       return true;
     } catch (err) {
       console.error('Error saving purchase order:', err);
@@ -8052,6 +8229,45 @@ const allAttendances: any[] = [];
     } catch (e) {
       console.error('Error deleting lead:', e);
       return false;
+    }
+  }
+
+  // --- Safety Management Methods ---
+
+  static async saveSafetyChecksheet(companyId: string, sheet: import('../types/ops').SafetyChecksheetRecord): Promise<boolean> {
+    try {
+      const ref = doc(db, 'companies', companyId, 'safety_checksheets', sheet.id);
+      await setDoc(ref, sheet, { merge: true });
+      
+      await this.logAuditEvent(
+        companyId, 
+        sheet.performedByUserId, 
+        sheet.performedByUserName, 
+        'SAFETY_CHECKSHEET_SAVED', 
+        `Safety Checksheet (${sheet.templateType}) saved for site ${sheet.siteName}`
+      );
+      
+      return true;
+    } catch (err) {
+      console.error('[FirestoreService] saveSafetyChecksheet error:', err);
+      return false;
+    }
+  }
+
+  static async getSafetyChecksheets(companyId: string, siteId?: string): Promise<import('../types/ops').SafetyChecksheetRecord[]> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'safety_checksheets');
+      let q = query(colRef, orderBy('createdAt', 'desc'));
+      
+      if (siteId && siteId !== 'ALL') {
+        q = query(colRef, where('siteId', '==', siteId), orderBy('createdAt', 'desc'));
+      }
+      
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ ...d.data() } as import('../types/ops').SafetyChecksheetRecord));
+    } catch (err) {
+      console.error('[FirestoreService] getSafetyChecksheets error:', err);
+      return [];
     }
   }
 } // <- this is the closing brace for the class

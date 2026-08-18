@@ -160,7 +160,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
         ticketNumber: `TKT-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`,
         companyId: activeCompany.companyId,
         clientId: formData.clientId || selectedClient?.id || 'CLIENT-GEN',
-        clientName: selectedClient?.clientName || selectedClient?.primaryContactName || 'Direct Facility Client',
+        clientName: selectedClient?.legalName || '' || 'Direct Facility Client',
         siteId: formData.siteId || selectedSite?.id || 'SITE-GEN',
         siteName: selectedSite?.name || selectedSite?.siteName || 'Headquarters Site',
         title: formData.title.trim(),
@@ -858,7 +858,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                     }`}
                   >
                     {clients.map(c => (
-                      <option key={c.id} value={c.id}>{c.clientName || c.primaryContactName || c.id}</option>
+                      <option key={c.id} value={c.id}>{c.legalName || c.primaryContactName || c.id}</option>
                     ))}
                   </select>
                 </div>

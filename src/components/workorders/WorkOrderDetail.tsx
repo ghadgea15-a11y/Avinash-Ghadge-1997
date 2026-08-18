@@ -34,6 +34,15 @@ export function WorkOrderDetail({ workOrder, companyId, userSession, onClose }: 
     setLoading(true);
     try {
       await FirestoreService.updateWorkOrderStatus(workOrder.id, companyId, status);
+      
+      // Integration with Maintenance Module
+      if (workOrder.id.startsWith('WO_MNT_')) {
+        const { MaintenanceService } = await import('../../services/maintenanceService');
+        await MaintenanceService.handleWorkOrderUpdate(companyId, { ...workOrder, status }, {
+          id: userSession.employeeId || userSession.userId,
+          name: userSession.fullName || 'User'
+        });
+      }
     } catch (err) {
       console.error(err);
     } finally {

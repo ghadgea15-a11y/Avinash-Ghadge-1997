@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Lock, Fingerprint, ShieldCheck, KeyRound, AlertCircle, ArrowRight } from 'lucide-react';
+import { Lock, ShieldCheck, KeyRound, AlertCircle, ArrowRight } from 'lucide-react';
 import { UserSession, CompanyTenant } from '../../types';
 import { SessionManager } from '../../services/sessionManager';
 import { FirebaseAuthService } from '../../services/firebaseAuthService';
-import { BiometricPromptModal } from '../common/BiometricPromptModal';
 
 interface SessionLockScreenProps {
   userSession: UserSession;
@@ -20,8 +19,6 @@ export const SessionLockScreen: React.FC<SessionLockScreenProps> = ({
 }) => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [isBiometricOpen, setIsBiometricOpen] = useState(false);
-
   const [isLoading, setIsLoading] = useState(false);
 
   const handleUnlockWithPin = async (e: React.FormEvent) => {
@@ -103,21 +100,12 @@ export const SessionLockScreen: React.FC<SessionLockScreenProps> = ({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setIsBiometricOpen(true)}
-              className="bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs transition"
-            >
-              <Fingerprint className="w-4 h-4 text-indigo-400" />
-              <span>Biometric</span>
-            </button>
-
+          <div className="pt-2">
             <button
               type="submit" disabled={isLoading}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs shadow-lg shadow-indigo-600/30 transition"
+              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs shadow-lg shadow-indigo-600/30 transition"
             >
-              {isLoading ? <span>Verifying...</span> : <span>Unlock</span>}
+              {isLoading ? <span>Verifying...</span> : <span>Unlock Account</span>}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -132,18 +120,6 @@ export const SessionLockScreen: React.FC<SessionLockScreenProps> = ({
           Sign Out & Switch Employee Account
         </button>
       </div>
-
-      <BiometricPromptModal
-        isOpen={isBiometricOpen}
-        onClose={() => setIsBiometricOpen(false)}
-        onSuccess={() => {
-          setIsBiometricOpen(false);
-          SessionManager.updateLastActive();
-          onUnlockSuccess();
-        }}
-        title="Biometric Unlock"
-        subtitle={`Verify fingerprint to resume session for ${userSession.fullName}`}
-      />
     </div>
   );
 };

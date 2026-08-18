@@ -6,6 +6,7 @@ import { AdminDashboard } from './official/AdminDashboard';
 import { ProcurementDashboard } from './official/ProcurementDashboard';
 import { EhsDashboard } from './official/EhsDashboard';
 import { DepartmentGenericDashboard } from './official/DepartmentGenericDashboard';
+import { CrmModule } from '../../crm/CrmModule';
 
 
 interface DashboardProps { 
@@ -37,6 +38,7 @@ export const OfficialStaffDashboard: React.FC<DashboardProps> = (props) => {
     case 'COMMERCIAL':
     case 'MIS':
     case 'CLIENT_MANAGEMENT':
+      return <CrmModule session={props.userSession} company={props.company} />;
     case 'IT':
     case 'OPERATIONS_OFFICE':
       return <DepartmentGenericDashboard {...props} departmentName={role} />;

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { ExecutiveBiDashboard } from "../../bi/ExecutiveBiDashboard";
+import { PredictiveAnalyticsDashboard } from "../../bi/PredictiveAnalyticsDashboard";
 import { Users, Building, Activity, ShieldCheck, DollarSign, Clock } from 'lucide-react';
 import { CompanyTenant, UserSession, PhaseAScreen, EmployeeRecord, ApprovalRequestRecord } from '../../../types';
 import { FirestoreService } from '../../../services/firestoreService';
@@ -75,6 +77,9 @@ export const OwnerDashboard: React.FC<DashboardProps> = ({ userSession, company,
           Welcome to the Enterprise Owner Dashboard. You are viewing the global operational state of {company.companyLegalName}. All regional boundaries are lifted for your authority level (A0_OWNER).
         </p>
       </div>
+
+      <ExecutiveBiDashboard session={userSession} company={company} />
+      <PredictiveAnalyticsDashboard session={userSession} company={company} />
     </div>
   );
 };

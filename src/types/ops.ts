@@ -119,3 +119,45 @@ export interface GpsLocationEvent {
   sequenceNumber: number;
   isStale?: boolean; // If generated from last-known but too old
 }
+
+export type SafetyChecksheetTemplate = 
+  | 'FIRE_SAFETY_INSPECTION'
+  | 'PPE_COMPLIANCE_AUDIT'
+  | 'ELECTRICAL_SAFETY_CHECK'
+  | 'SITE_HAZARD_INSPECTION'
+  | 'GENERAL_SAFETY_WALK';
+
+export interface SafetyChecksheetItem {
+  id: string;
+  category: string;
+  question: string;
+  response: 'YES' | 'NO' | 'NA';
+  remarks?: string;
+  photoUrl?: string;
+}
+
+export interface SafetyChecksheetRecord {
+  id: string;
+  companyId: string;
+  siteId: string;
+  siteName: string;
+  templateType: SafetyChecksheetTemplate;
+  title: string;
+  
+  performedByUserId: string;
+  performedByUserName: string;
+  
+  items: SafetyChecksheetItem[];
+  
+  overallStatus: 'PASS' | 'FAIL' | 'CONDITIONAL';
+  summaryRemarks?: string;
+  
+  // Branding data for persistent reports
+  branding: {
+    companyName: string;
+    logoUrl?: string;
+  };
+  
+  createdAt: string;
+  updatedAt: string;
+}

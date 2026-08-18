@@ -1199,7 +1199,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          {adj.status === 'PENDING' && (
+                          {(adj.status === 'PENDING' || (adj.status as any) === 'PENDING_APPROVAL') && (
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => handleResolveAdjustment(adj.id, 'APPROVED')}
