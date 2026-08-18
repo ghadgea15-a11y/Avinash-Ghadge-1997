@@ -117,9 +117,23 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
     setTestProcessing(true);
     setTestResult(null);
     try {
-      const res = await BpmEscalationService.processAllCompanyPendingApprovals(session.companyId);
-      setTestResult(`Evaluated ${res.totalChecked} instances. Reminders sent: ${res.totalReminders}, Escalations triggered: ${res.totalEscalated}.`);
-      await loadPolicies();
+      const response = await fetch('/api/bpm/escalation/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId: session.companyId })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        setTestResult(`Evaluated ${data.result.totalChecked} instances. Reminders sent: ${data.result.totalReminders}, Escalations triggered: ${data.result.totalEscalated}.`);
+        await loadPolicies();
+      } else {
+        setTestResult(`Error: ${data.error}`);
+      }
     } catch (err: any) {
       setTestResult(`Failed to execute timer check: ${err.message || 'Error processing'}`);
     } finally {
