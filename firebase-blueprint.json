@@ -320,8 +320,85 @@
       },
       "required": ["id", "companyId", "siteId", "checkpointName", "code", "qrCode", "sequenceOrder", "status"]
     }
+    "Lead": {
+      "title": "Sales Lead",
+      "description": "A lead submitted from public forms",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "company": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "designation": { "type": "string" },
+        "city": { "type": "string" },
+        "workforceSize": { "type": "string" },
+        "interestedModules": { "type": "string" },
+        "message": { "type": "string" },
+        "utmSource": { "type": "string" },
+        "landingPage": { "type": "string" },
+        "status": { "type": "string", "enum": ["NEW", "CONTACTED", "QUALIFIED", "DEMO", "CONVERTED", "LOST"] },
+        "notes": { "type": "string" },
+        "activityHistory": { "type": "array" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "company", "email", "phone", "status", "createdAt"]
+    },
+    "MaintenancePlan": {
+      "title": "Maintenance Plan",
+      "description": "Preventive maintenance configuration for an asset",
+      "type": "object",
+      "properties": {
+        "maintenancePlanId": { "type": "string" },
+        "companyId": { "type": "string" },
+        "assetId": { "type": "string" },
+        "siteId": { "type": "string" },
+        "maintenanceType": { "type": "string", "enum": ["PREVENTIVE", "INSPECTION", "CALIBRATION", "SAFETY_CHECK", "SERVICING", "OTHER"] },
+        "frequency": { "type": "number" },
+        "frequencyUnit": { "type": "string", "enum": ["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "HALF_YEARLY", "YEARLY", "CUSTOM"] },
+        "startDate": { "type": "string" },
+        "nextDueDate": { "type": "string" },
+        "lastCompletedDate": { "type": "string" },
+        "gracePeriod": { "type": "number" },
+        "priority": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+        "assignedTo": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["maintenancePlanId", "companyId", "assetId", "siteId", "maintenanceType", "frequency", "frequencyUnit", "startDate", "nextDueDate", "status", "createdAt", "updatedAt"]
+    },
+    "MaintenanceOccurrence": {
+      "title": "Maintenance Occurrence",
+      "description": "Scheduled maintenance instance leading to a work order",
+      "type": "object",
+      "properties": {
+        "maintenanceOccurrenceId": { "type": "string" },
+        "maintenancePlanId": { "type": "string" },
+        "companyId": { "type": "string" },
+        "assetId": { "type": "string" },
+        "workOrderId": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["UPCOMING", "DUE", "OVERDUE", "IN_PROGRESS", "COMPLETED", "SKIPPED", "CANCELLED"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["maintenanceOccurrenceId", "maintenancePlanId", "companyId", "assetId", "dueDate", "status", "createdAt"]
+    }
   },
   "firestore": {
+    "/leads/{leadId}": {
+      "schema": { "$ref": "#/entities/Lead" },
+      "description": "Sales leads generated from public website forms"
+    },
+    "/companies/{companyId}/maintenance_plans/{maintenancePlanId}": {
+      "schema": { "$ref": "#/entities/MaintenancePlan" },
+      "description": "Preventive maintenance plans"
+    },
+    "/companies/{companyId}/maintenance_occurrences/{maintenanceOccurrenceId}": {
+      "schema": { "$ref": "#/entities/MaintenanceOccurrence" },
+      "description": "Scheduled maintenance occurrences"
+    },
     "/companies/{companyId}": {
       "schema": { "$ref": "#/entities/Company" },
       "description": "Company Tenant document"

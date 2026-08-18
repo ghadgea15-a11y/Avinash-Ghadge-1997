@@ -45,6 +45,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [companies, setCompanies] = useState<CompanyTenant[]>([]);
   const [pendingRequests, setPendingRequests] = useState<ApprovalRequestRecord[]>([]);
+  const [leadsCount, setLeadsCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -64,14 +65,16 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const loadData = async () => {
     setRefreshing(true);
     try {
-      const [allComp, sysStats, reqs] = await Promise.all([
+      const [allComp, sysStats, reqs, allLeads] = await Promise.all([
         FirestoreService.getAllCompanies(),
         FirestoreService.getSuperAdminStats(),
-        FirestoreService.getAllApprovalRequests()
+        FirestoreService.getAllApprovalRequests(),
+        FirestoreService.getLeads()
       ]);
       setCompanies(allComp);
       setStats(sysStats);
       setPendingRequests(reqs.filter(r => r.accountStatus === 'PENDING_APPROVAL'));
+      setLeadsCount(allLeads.filter(l => l.status === 'NEW').length);
     } catch (err) {
       console.error('[SuperAdminDashboard] Error loading system data:', err);
     } finally {
@@ -140,7 +143,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
         
         <div className={`p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
           <div className="flex items-center justify-between text-slate-400 mb-2">
@@ -160,6 +163,20 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
           </div>
           <div className="text-2xl font-black text-emerald-400">{stats.totalUsers}</div>
           <p className="text-[10px] text-slate-400 mt-1">Across all tenant organizations</p>
+        </div>
+
+        <div className={`p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <div className="flex items-center justify-between text-slate-400 mb-2">
+            <span className="text-xs font-medium">New Demo Leads</span>
+            <Users className="w-4 h-4 text-emerald-500" />
+          </div>
+          <div className="text-2xl font-black text-emerald-500">{leadsCount}</div>
+          <button 
+            onClick={() => onNavigate('SUPER_ADMIN_LEADS')}
+            className="text-[10px] text-emerald-500 hover:underline mt-1 block font-semibold"
+          >
+            Manage CRM →
+          </button>
         </div>
 
         <div className={`p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
@@ -234,14 +251,14 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
         </button>
 
         <button
-          onClick={() => onNavigate('SUPER_ADMIN_USERS')}
+          onClick={() => onNavigate('SUPER_ADMIN_LEADS')}
           className={`p-3 rounded-xl border text-left transition flex items-center justify-between ${
             isDark ? 'bg-slate-900/60 hover:bg-slate-800/80 border-slate-800' : 'bg-white hover:bg-slate-100 border-slate-200 shadow-sm'
           }`}
         >
           <div className="flex items-center gap-2.5">
             <Users className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs font-semibold">Global Users & RBAC</span>
+            <span className="text-xs font-semibold">Leads CRM</span>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-500" />
         </button>

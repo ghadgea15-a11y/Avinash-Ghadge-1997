@@ -29,9 +29,31 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    
+    const leadId = `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const newLead = {
+      id: leadId,
+      name: formData.name,
+      company: formData.company,
+      email: formData.email,
+      phone: formData.phone,
+      workforceSize: formData.workforceSize,
+      interestedModules: formData.primaryInterest,
+      message: formData.message,
+      status: 'NEW' as const,
+      createdAt: new Date().toISOString()
+    };
+
+    const { FirestoreService } = await import('../../services/firestoreService');
+    const success = await FirestoreService.createLead(newLead);
+    
+    if (success) {
+      setSubmitted(true);
+    } else {
+      alert("There was an error submitting your request. Please try again.");
+    }
   };
 
   return (

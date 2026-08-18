@@ -23,7 +23,8 @@ import {
   Bell,
   IdCard,
   ShieldAlert,
-  ListTodo
+  ListTodo,
+  Layers
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -102,50 +103,68 @@ export function NavigationDrawer({
         
         {/* Drawer Navigation List with 14 Modules */}
         <div className="flex-1 overflow-y-auto p-3 space-y-4 text-xs">
-          <div>
-            <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-              Core & Workforce
-            </span>
-            <NavItem icon={LayoutDashboard} label="Enterprise Dashboard" screen="ENTERPRISE_DASHBOARD" />
-            <NavItem icon={Users} label="1. HCM Staff & Lifecycle" screen="EMPLOYEES" />
-            <NavItem icon={IdCard} label="1b. Identity Badge Master" screen="ID_BADGES" />
-            <NavItem icon={ShieldAlert} label="1c. Document Compliance" screen="COMPLIANCE" />
-            <NavItem icon={Calendar} label="2. WFM Attendance & Roster" screen="ATTENDANCE_SHIFTS" />
-            <NavItem icon={Calendar} label="2b. Shift Roster Planner" screen="SHIFT_ROSTER" />
-            <NavItem icon={DollarSign} label="3. ERP Payroll & Finance" screen="PAYROLL_COMPENSATION" />
-          </div>
+          
+          {userSession.role === 'SUPER_ADMIN' ? (
+            <div>
+              <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-amber-500 block mb-1">
+                Super Admin
+              </span>
+              <NavItem icon={LayoutDashboard} label="Global Overview" screen="SUPER_ADMIN_DASHBOARD" />
+              <NavItem icon={Building2} label="Tenant Directory" screen="SUPER_ADMIN_COMPANIES" />
+              <NavItem icon={UserCheck} label="Lead CRM" screen="SUPER_ADMIN_LEADS" />
+              <NavItem icon={Award} label="Subscriptions" screen="SUPER_ADMIN_SUBSCRIPTIONS" />
+              <NavItem icon={Layers} label="Module Config" screen="SUPER_ADMIN_MODULES" />
+              <NavItem icon={Bell} label="Alerts" screen="NOTIFICATIONS" badge={unreadNotifCount} />
+              <NavItem icon={Settings} label="Global Settings" screen="SETTINGS" />
+            </div>
+          ) : (
+            <>
+              <div>
+                <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Core & Workforce
+                </span>
+                <NavItem icon={LayoutDashboard} label="Enterprise Dashboard" screen="ENTERPRISE_DASHBOARD" />
+                <NavItem icon={Users} label="1. HCM Staff & Lifecycle" screen="EMPLOYEES" />
+                <NavItem icon={IdCard} label="1b. Identity Badge Master" screen="ID_BADGES" />
+                <NavItem icon={ShieldAlert} label="1c. Document Compliance" screen="COMPLIANCE" />
+                <NavItem icon={Calendar} label="2. WFM Attendance & Roster" screen="ATTENDANCE_SHIFTS" />
+                <NavItem icon={Calendar} label="2b. Shift Roster Planner" screen="SHIFT_ROSTER" />
+                <NavItem icon={DollarSign} label="3. ERP Payroll & Finance" screen="PAYROLL_COMPENSATION" />
+              </div>
 
-          <div>
-            <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-              Operations & Supply Chain
-            </span>
-            <NavItem icon={ListTodo} label="4a. Work Orders & Tasks" screen="WORK_ORDERS" />
-            <NavItem icon={ShieldCheck} label="4b. Site Operations (Patrol/Log)" screen="SITE_OPERATIONS" />
-            <NavItem icon={QrCode} label="5. EAM Asset Tracking" screen="ASSET_TRACKING" />
-            <NavItem icon={Boxes} label="6. SCM Inventory & Stock" screen="INVENTORY_STOCK" />
-            <NavItem icon={Building2} label="7. CRM Client Accounts" screen="CLIENT_MANAGEMENT" />
-            <NavItem icon={LifeBuoy} label="11. Service Desk & SLA" screen="SERVICE_DESK" />
-            <NavItem icon={ShoppingCart} label="14. Procurement SRM & PO" screen="PROCUREMENT_SRM" />
-          </div>
+              <div>
+                <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Operations & Supply Chain
+                </span>
+                <NavItem icon={ListTodo} label="4a. Work Orders & Tasks" screen="WORK_ORDERS" />
+                <NavItem icon={ShieldCheck} label="4b. Site Operations (Patrol/Log)" screen="SITE_OPERATIONS" />
+                <NavItem icon={QrCode} label="5. EAM Asset Tracking" screen="ASSET_TRACKING" />
+                <NavItem icon={Boxes} label="6. SCM Inventory & Stock" screen="INVENTORY_STOCK" />
+                <NavItem icon={Building2} label="7. CRM Client Accounts" screen="CLIENT_MANAGEMENT" />
+                <NavItem icon={LifeBuoy} label="11. Service Desk & SLA" screen="SERVICE_DESK" />
+                <NavItem icon={ShoppingCart} label="14. Procurement SRM & PO" screen="PROCUREMENT_SRM" />
+              </div>
 
-          <div>
-            <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-              Talent, Learning & Governance
-            </span>
-            <NavItem icon={UserCheck} label="12. Talent Acquisition & ATS" screen="TALENT_ACQUISITION" />
-            <NavItem icon={GraduationCap} label="13. LMS & PSARA Compliance" screen="TRAINING_LMS" />
-            <NavItem icon={BarChart3} label="8. BI Reports & Analytics" screen="REPORTS_ANALYTICS" />
-            <NavItem icon={CheckSquare} label="9. BPM Task Management" screen="TASK_MANAGEMENT" />
-            <NavItem icon={Award} label="10. GRC Policy & Approvals" screen="APPROVAL_MANAGEMENT" />
-          </div>
+              <div>
+                <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Talent, Learning & Governance
+                </span>
+                <NavItem icon={UserCheck} label="12. Talent Acquisition & ATS" screen="TALENT_ACQUISITION" />
+                <NavItem icon={GraduationCap} label="13. LMS & PSARA Compliance" screen="TRAINING_LMS" />
+                <NavItem icon={BarChart3} label="8. BI Reports & Analytics" screen="REPORTS_ANALYTICS" />
+                <NavItem icon={CheckSquare} label="9. BPM Task Management" screen="TASK_MANAGEMENT" />
+                <NavItem icon={Award} label="10. GRC Policy & Approvals" screen="APPROVAL_MANAGEMENT" />
+              </div>
 
-          <div>
-            <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-              System
-            </span>
-            <NavItem icon={Bell} label="Notifications & Alerts" screen="NOTIFICATIONS" badge={unreadNotifCount} />
-            <NavItem icon={Settings} label="Settings & Diagnostics" screen="SETTINGS" />
-          </div>
+              <div>
+                <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  System
+                </span>
+                <NavItem icon={Bell} label="Notifications & Alerts" screen="NOTIFICATIONS" badge={unreadNotifCount} />
+                <NavItem icon={Settings} label="Settings & Diagnostics" screen="SETTINGS" />
+              </div>
+            </>
+          )}
         </div>
         
         {/* Footer */}

@@ -7985,6 +7985,75 @@ const allAttendances: any[] = [];
       return () => {};
     }
   }
+
+  // ==========================================
+  // LEADS (Public Forms & Super Admin CRM)
+  // ==========================================
+
+  static async createLead(lead: import('../types').LeadRecord): Promise<boolean> {
+    try {
+      const ref = doc(db, 'leads', lead.id);
+      await setDoc(ref, lead);
+      return true;
+    } catch (e) {
+      console.error('Error creating lead:', e);
+      return false;
+    }
+  }
+
+  static async getLeads(): Promise<import('../types').LeadRecord[]> {
+    try {
+      const colRef = collection(db, 'leads');
+      const snap = await getDocs(colRef);
+      return snap.docs.map(d => d.data() as import('../types').LeadRecord);
+    } catch (err) {
+      console.error('[FirestoreService] getLeads error:', err);
+      return [];
+    }
+  }
+
+  static subscribeToLeads(onData: (leads: import('../types').LeadRecord[]) => void): () => void {
+    try {
+      const colRef = collection(db, 'leads');
+      const q = query(colRef, orderBy('createdAt', 'desc'));
+      return onSnapshot(q, (snap) => {
+        const leads = snap.docs.map(d => ({ ...d.data() } as import('../types').LeadRecord));
+        onData(leads);
+      }, (err) => {
+        console.error('[Firestore] subscribeToLeads error:', err);
+        onData([]);
+      });
+    } catch (e) {
+      console.error('[Firestore] subscribeToLeads exception:', e);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  static async updateLead(leadId: string, updates: Partial<import('../types').LeadRecord>): Promise<boolean> {
+    try {
+      const ref = doc(db, 'leads', leadId);
+      await updateDoc(ref, {
+        ...updates,
+        updatedAt: new Date().toISOString()
+      });
+      return true;
+    } catch (e) {
+      console.error('Error updating lead:', e);
+      return false;
+    }
+  }
+
+  static async deleteLead(leadId: string): Promise<boolean> {
+    try {
+      const ref = doc(db, 'leads', leadId);
+      await deleteDoc(ref);
+      return true;
+    } catch (e) {
+      console.error('Error deleting lead:', e);
+      return false;
+    }
+  }
 } // <- this is the closing brace for the class
 
 

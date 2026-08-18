@@ -41,6 +41,7 @@ import { SuperAdminCreateCompany } from './components/screens/SuperAdminCreateCo
 import { SuperAdminModulesScreen } from './components/screens/SuperAdminModulesScreen';
 import { SuperAdminCompaniesScreen } from './components/screens/SuperAdminCompaniesScreen';
 import { SuperAdminSubscriptionsScreen } from './components/screens/SuperAdminSubscriptionsScreen';
+import { SuperAdminLeadsScreen } from './components/screens/SuperAdminLeadsScreen';
 import { LandingPageScreen } from './components/screens/LandingPageScreen';
 import { LegalPoliciesScreen } from './components/screens/LegalPoliciesScreen';
 import { LeaveManagementScreen } from './components/screens/LeaveManagementScreen';
@@ -417,10 +418,17 @@ export function App() {
               />
             )}
 
-            {currentScreen === 'SUPER_ADMIN_PENDING_APPROVALS' && (
+                    {currentScreen === 'SUPER_ADMIN_PENDING_APPROVALS' && (
                       <ApprovalManagementScreen
                         session={userSession}
                         onNavigateBack={() => setCurrentScreen('SUPER_ADMIN_DASHBOARD')}
+                      />
+                    )}
+
+                    {currentScreen === 'SUPER_ADMIN_LEADS' && (
+                      <SuperAdminLeadsScreen
+                        currentSession={userSession!}
+                        onNavigate={setCurrentScreen}
                       />
                     )}
 

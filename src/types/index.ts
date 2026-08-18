@@ -2051,6 +2051,7 @@ export type PhaseAScreen =
   | 'SUPER_ADMIN_USERS'
   | 'SUPER_ADMIN_PENDING_APPROVALS'
   | 'SUPER_ADMIN_MODULES'
+  | 'SUPER_ADMIN_LEADS'
   | 'LEGAL_POLICIES'
   | 'TASK_MANAGEMENT'
   | 'ID_BADGES'
@@ -2709,6 +2710,37 @@ export interface LeaveBalanceDetail {
   encashed: number;
   availableBalance: number;
 }
+export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'DEMO' | 'CONVERTED' | 'LOST';
+
+export interface LeadActivity {
+  id: string;
+  action: string;
+  notes: string;
+  timestamp: string;
+  actorId?: string;
+  actorName?: string;
+}
+
+export interface LeadRecord {
+  id: string; // leadId
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  designation?: string;
+  city?: string;
+  workforceSize?: string;
+  interestedModules?: string;
+  message?: string;
+  utmSource?: string;
+  landingPage?: string;
+  status: LeadStatus;
+  notes?: string;
+  activityHistory?: LeadActivity[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface AbsenceRegularizationRecord {
   id: string;
   employeeId: string;
@@ -2718,6 +2750,36 @@ export interface AbsenceRegularizationRecord {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: number;
   updatedAt: number;
+}
+
+export interface MaintenancePlan {
+  maintenancePlanId: string;
+  companyId: string;
+  assetId: string;
+  siteId: string;
+  maintenanceType: 'PREVENTIVE' | 'INSPECTION' | 'CALIBRATION' | 'SAFETY_CHECK' | 'SERVICING' | 'OTHER';
+  frequency: number;
+  frequencyUnit: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY' | 'CUSTOM';
+  startDate: string;
+  nextDueDate: string;
+  lastCompletedDate?: string;
+  gracePeriod: number;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  assignedTo?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MaintenanceOccurrence {
+  maintenanceOccurrenceId: string;
+  maintenancePlanId: string;
+  companyId: string;
+  assetId: string;
+  workOrderId?: string;
+  dueDate: string;
+  status: 'UPCOMING' | 'DUE' | 'OVERDUE' | 'IN_PROGRESS' | 'COMPLETED' | 'SKIPPED' | 'CANCELLED';
+  createdAt: string;
 }
 
 export * from './ops';

@@ -56,6 +56,7 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
   const superAdminDestinations = [
     { screen: 'SUPER_ADMIN_DASHBOARD' as PhaseAScreen, label: 'Overview', icon: LayoutDashboard },
     { screen: 'SUPER_ADMIN_COMPANIES' as PhaseAScreen, label: 'Tenants', icon: Building2 },
+    { screen: 'SUPER_ADMIN_LEADS' as PhaseAScreen, label: 'Leads CRM', icon: UserCheck },
     { screen: 'SUPER_ADMIN_CREATE_COMPANY' as PhaseAScreen, label: 'New Tenant', icon: PlusCircle },
     { screen: 'SUPER_ADMIN_SUBSCRIPTIONS' as PhaseAScreen, label: 'Plans', icon: Award },
     { screen: 'SUPER_ADMIN_MODULES' as PhaseAScreen, label: 'Modules', icon: Layers },

@@ -144,6 +144,13 @@ service cloud.firestore {
         && data.status in ['PENDING_APPROVAL', 'APPROVED', 'DISPATCHED', 'RECEIVED', 'REJECTED'];
     }
 
+    function isValidLead() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['id', 'name', 'company', 'email', 'phone', 'status', 'createdAt'])
+        && data.id is string
+        && data.status in ['NEW', 'CONTACTED', 'QUALIFIED', 'DEMO', 'CONVERTED', 'LOST'];
+    }
+
     function isValidAnnouncement() {
       let data = request.resource.data;
       return data.keys().hasAll(['id', 'companyId', 'message', 'priority', 'createdAt'])
@@ -161,6 +168,14 @@ service cloud.firestore {
       return data.keys().hasAll(['id', 'action', 'actorId', 'timestamp'])
         && data.id is string
         && data.action is string;
+    }
+
+    // ============================================================
+    // LEADS (Root Level Collection)
+    // ============================================================
+    match /leads/{leadId} {
+      allow read, update, delete: if isSuperAdmin();
+      allow create: if isValidLead();
     }
 
     // ============================================================
@@ -420,6 +435,16 @@ service cloud.firestore {
 
       // 5. Assets, Suppliers, Vendors, Clients, Billing
       match /assets/{assetId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isManager(companyId);
+      }
+
+      match /maintenance_plans/{planId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isManager(companyId);
+      }
+
+      match /maintenance_occurrences/{occurrenceId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow write: if isSuperAdmin() || isManager(companyId);
       }

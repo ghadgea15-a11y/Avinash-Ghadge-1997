@@ -31,13 +31,38 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
+    
+    const leadId = `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const newLead = {
+      id: leadId,
+      name: formData.fullName,
+      company: formData.companyName,
+      email: formData.workEmail,
+      phone: formData.phone,
+      workforceSize: formData.siteCount,
+      interestedModules: formData.primaryInterest,
+      message: formData.message,
+      status: 'NEW' as const,
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      const { FirestoreService } = await import('../../services/firestoreService');
+      const success = await FirestoreService.createLead(newLead);
+      if (success) {
+        setSubmitted(true);
+      } else {
+        alert("There was an error submitting your request. Please try again.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("There was an error submitting your request. Please try again.");
+    } finally {
       setIsSubmitting(false);
-      setSubmitted(true);
-    }, 800);
+    }
   };
 
   return (
