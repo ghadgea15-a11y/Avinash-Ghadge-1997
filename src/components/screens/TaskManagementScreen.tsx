@@ -9,6 +9,7 @@ import {
   DepartmentRecord 
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { BulkExportGovernanceService } from '../../services/bulkExportGovernanceService';
 import { useTheme } from '../../context/ThemeContext';
 import { 
   Plus, 
@@ -275,11 +276,25 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
   };
 
   // CSV Export
-  const handleExportCsv = () => {
+  const handleExportCsv = async () => {
     if (filteredTasks.length === 0) {
       alert('No tasks to export.');
       return;
     }
+
+    // Module 10.4: Export Governance Evaluation
+    await BulkExportGovernanceService.evaluateAndRecordExport({
+      session: userSession,
+      companyId: company.companyId,
+      module: 'OPERATIONS_TASKS',
+      entityType: 'TaskRecord',
+      exportFormat: 'CSV',
+      dataClassification: 'GENERAL',
+      recordCount: filteredTasks.length,
+      exportName: `Tasks_Export_${company.companyId}_${new Date().toISOString().slice(0, 10)}.csv`,
+      reason: 'Exported task assignments list'
+    });
+
     const headers = ['Task ID', 'Title', 'Priority', 'Status', 'Assignee', 'Site', 'SLA Deadline', 'Created Date'];
     const rows = filteredTasks.map(t => [
       t.id,

@@ -42,6 +42,7 @@ import {
   EmployeeRecord
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { BulkExportGovernanceService } from '../../services/bulkExportGovernanceService';
 
 interface InventoryStockScreenProps {
   userSession: UserSession;
@@ -495,7 +496,21 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
   };
 
   // Export CSV
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    // Module 10.4: Export Governance Evaluation
+    const targetCompanyId = companyId || activeCompany?.companyId || '';
+    await BulkExportGovernanceService.evaluateAndRecordExport({
+      session: userSession,
+      companyId: targetCompanyId,
+      module: 'SCM_INVENTORY',
+      entityType: 'InventoryItemRecord',
+      exportFormat: 'CSV',
+      dataClassification: 'INVENTORY_SCM',
+      recordCount: filteredItems.length,
+      exportName: `Inventory_Stock_Report_${targetCompanyId}_${new Date().toISOString().slice(0, 10)}.csv`,
+      reason: 'Exported stock and warehouse inventory master'
+    });
+
     const headers = ['Item Code', 'Item Name', 'Category', 'Current Stock', 'Unit', 'Min Threshold', 'Unit Cost (INR)', 'Total Value (INR)', 'Warehouse Location', 'Site', 'Status'];
     const rows = filteredItems.map(item => [
       item.itemCode,

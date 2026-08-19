@@ -64,6 +64,7 @@ import {
   ShiftRecord
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { BulkExportGovernanceService } from '../../services/bulkExportGovernanceService';
 import { StorageService } from '../../services/storageService';
 import { OfflineSyncService } from '../../services/offlineSyncService';
 import { useTheme } from '../../context/ThemeContext';
@@ -1085,7 +1086,21 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   };
 
   // CSV Export for Site Operations
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    // Module 10.4: Export Governance Evaluation
+    const targetCompanyId = activeCompany?.companyId || '';
+    await BulkExportGovernanceService.evaluateAndRecordExport({
+      session: userSession,
+      companyId: targetCompanyId,
+      module: 'OPERATIONS_SITE',
+      entityType: 'SiteOperationsReport',
+      exportFormat: 'CSV',
+      dataClassification: 'OPERATIONS_SECURITY',
+      recordCount: visitors.length + incidents.length + patrolLogs.length + materials.length,
+      exportName: `LSM_Site_Operations_Report_${selectedDate}.csv`,
+      reason: 'Exported site operational logs and incidents'
+    });
+
     const headers = ['Date', 'Site', 'Visitors In Site', 'Incidents Reported', 'Patrols Done', 'Material Passes'];
     const rows = [
       [

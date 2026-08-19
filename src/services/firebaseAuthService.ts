@@ -22,6 +22,7 @@ import {
   DepartmentRecord 
 } from '../types';
 import { FirestoreService } from './firestoreService';
+import { SecurityAuditService } from './securityAuditService';
 import { SessionManager } from './sessionManager';
 
 export const RESERVED_SUPER_ADMIN_EMAILS = [
@@ -929,6 +930,19 @@ export class FirebaseAuthService {
           companyAdminApproval,
           hrApproval
         };
+        
+        SecurityAuditService.logEvent(
+          session.companyId,
+          session.userId,
+          session.role,
+          session.employeeId,
+          'LOGIN_SUCCESS',
+          'authentication',
+          session.userId,
+          true,
+          'LOW',
+          'User authenticated successfully'
+        ).catch((e: any) => console.error(e));
         return session;
       } catch (err: unknown) {
         const firebaseErr = err as { code?: string; message?: string };
@@ -937,6 +951,7 @@ export class FirebaseAuthService {
           firebaseErr.code === 'auth/user-not-found' ||
           firebaseErr.code === 'auth/invalid-credential'
         ) {
+          SecurityAuditService.logEvent(companyId, cleanInput, 'UNKNOWN', undefined, 'LOGIN_FAILED', 'authentication', cleanInput, false, 'MEDIUM', 'Invalid credentials').catch(() => {});
           throw new Error('Invalid email or password. Please verify your login details.');
         }
         if (err instanceof Error) {
@@ -1012,7 +1027,20 @@ export class FirebaseAuthService {
         accountStatus: 'ACTIVE',
         emailVerified: true
       };
-      return session;
+      
+        SecurityAuditService.logEvent(
+          session.companyId,
+          session.userId,
+          session.role,
+          session.employeeId,
+          'LOGIN_SUCCESS',
+          'authentication',
+          session.userId,
+          true,
+          'LOW',
+          'User authenticated successfully'
+        ).catch((e: any) => console.error(e));
+        return session;
 
     } catch (err: any) {
       console.error('[FirebaseAuthService] PIN auth error:', err);

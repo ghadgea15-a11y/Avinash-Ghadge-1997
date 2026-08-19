@@ -15,6 +15,9 @@ import {
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { QueryScopeEngine } from './queryScopeEngine';
+import { AuditTrailService } from './auditTrailService';
+import { SuspiciousPunchService } from './suspiciousPunchService';
+import { BulkExportGovernanceService } from './bulkExportGovernanceService';
 import { 
   TaskRecord,
   WorkOrderRecord,
@@ -394,14 +397,35 @@ export class FirestoreService {
       }
 
       // 3. Audit Log
-      await this.logAuditEvent(
-        companyId,
-        actor.id,
-        actor.name,
-        isUpdate ? 'EMPLOYEE_UPDATED' : 'EMPLOYEE_CREATED',
-        `${isUpdate ? 'Updated' : 'Created'} employee record for ${employee.firstName} ${employee.lastName} (${employee.employeeId})`,
-        employee.id
-      );
+      const auditActor = { userId: actor.id, companyId, role: 'SYSTEM' };
+      if (isUpdate) {
+          await AuditTrailService.logUpdate(auditActor, 'EMPLOYEES', 'EmployeeRecord', employee.id, `Updated employee ${employee.firstName} ${employee.lastName}`);
+      } else {
+          await AuditTrailService.logCreate(auditActor, 'EMPLOYEES', 'EmployeeRecord', employee.id, `Created employee ${employee.firstName} ${employee.lastName}`);
+      }
+
+      // Module 10 / Point 5: HCM Compliance Policy Check
+      try {
+        const { CompliancePolicyEngine } = await import('./compliancePolicyEngine');
+        const empAny = employee as any;
+        await CompliancePolicyEngine.evaluateTransaction({
+          companyId,
+          module: 'HCM',
+          transactionType: 'EMPLOYEE_SAVE',
+          transactionId: employee.id,
+          subjectId: employee.id,
+          subjectName: `${employee.firstName || ''} ${employee.lastName || ''}`.trim(),
+          data: {
+            isKycVerified: !!(empAny.aadhaarNumber || empAny.panNumber || empAny.uan || empAny.governmentId),
+            hasIdentityProof: !!(empAny.aadhaarNumber || empAny.panNumber || empAny.governmentId),
+            status: employee.status
+          },
+          department: empAny.department || empAny.departmentId,
+          source: 'EMPLOYEE_MANAGEMENT'
+        });
+      } catch (compErr) {
+        console.warn('[Compliance] Employee KYC evaluation warning:', compErr);
+      }
 
       return true;
     } catch (err) {
@@ -1289,6 +1313,20 @@ export class FirestoreService {
         });
       }
 
+            // Module 10.4: Bulk Governance Evaluation
+      const sessionInfo = { userId: actor.id, role: 'COMPANY_ADMIN', displayName: actor.name, companyId };
+      await BulkExportGovernanceService.evaluateAndRecordBulkOperation({
+        session: sessionInfo as any,
+        companyId,
+        module: 'WFM_ROSTER',
+        entityType: 'RosterRecord',
+        operation: 'BULK_ASSIGN',
+        affectedRecordCount: rosters.length,
+        affectedRecordIds: rosters.map(r => r.id),
+        reason: `Assigned shifts to ${rosters.length} members for ${rosters[0]?.date || rosters[0]?.rosterDate}`,
+        metadata: { siteId: rosters[0]?.siteId, siteName: rosters[0]?.siteName }
+      });
+
       // Audit Log
       await this.logAuditEvent(
         companyId,
@@ -1472,6 +1510,32 @@ export class FirestoreService {
       };
 
       const ok = await this.saveAttendance(companyId, record);
+      
+      // Module 10 / Point 5: GRC Compliance Evaluation for Attendance Punch
+      if (ok) {
+        try {
+          const { CompliancePolicyEngine } = await import('./compliancePolicyEngine');
+          await CompliancePolicyEngine.evaluateTransaction({
+            companyId,
+            module: 'WFM',
+            transactionType: 'ATTENDANCE_PUNCH',
+            transactionId: id,
+            subjectId: employeeId,
+            subjectName: employeeName,
+            data: {
+              distanceMeters: geoVerification?.distanceFromSite ?? 0,
+              lateMinutes: metrics.lateMinutes,
+              isGeofenceViolated: geoVerification?.verification === 'OUTSIDE_GEOFENCE',
+              biometricPassed: biometricResult === 'SUCCESS' || biometricResult === 'NOT_REQUIRED'
+            },
+            siteId,
+            source: 'PUNCH_IN'
+          });
+        } catch (compErr) {
+          console.warn('[Compliance] Punch compliance evaluation error:', compErr);
+        }
+      }
+
       return { success: ok, message: ok ? 'Check-in successful' : 'Failed to save attendance', record: ok ? record : undefined };
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, `attendance/${id}`);
@@ -1601,6 +1665,29 @@ export class FirestoreService {
           requestedByName: record.employeeName,
           requestedAt: now
         });
+      }
+
+      // Module 10 / Point 5: GRC Compliance Evaluation for Attendance Punch Out & Overtime
+      try {
+        const { CompliancePolicyEngine } = await import('./compliancePolicyEngine');
+        await CompliancePolicyEngine.evaluateTransaction({
+          companyId,
+          module: 'WFM',
+          transactionType: 'ATTENDANCE_PUNCH_OUT',
+          transactionId: attendanceId,
+          subjectId: record.employeeId,
+          subjectName: record.employeeName,
+          data: {
+            distanceMeters: geoVerification?.distanceFromSite ?? 0,
+            workedMinutes: calcResult.workedMinutes,
+            overtimeMinutes: calcResult.calculatedOvertimeMinutes,
+            monthlyOvertimeHours: (calcResult.calculatedOvertimeMinutes || 0) / 60
+          },
+          siteId: record.siteId,
+          source: 'PUNCH_OUT'
+        });
+      } catch (compErr) {
+        console.warn('[Compliance] Punch out compliance evaluation error:', compErr);
       }
 
       return { success: true, message: 'Check-out successful' };
@@ -3409,27 +3496,13 @@ export class FirestoreService {
   ): Promise<boolean> {
     try {
       const logId = `AUDIT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-      const logRecord: AuditLogRecord = {
-        id: logId,
-        companyId: companyId || 'GLOBAL',
-        actorId,
-        actorName,
-        action,
-        details,
-        targetUser,
-        timestamp: new Date().toISOString()
-      };
-
-      if (companyId && companyId !== 'GLOBAL') {
-        const compLogRef = doc(db, 'companies', companyId, 'audit_logs', logId);
-        await setDoc(compLogRef, logRecord);
-      }
-
-      const rootLogRef = doc(db, 'system_audit_logs', logId);
-      await setDoc(rootLogRef, logRecord);
+      
+      const actorInfo = { userId: actorId, role: 'SYSTEM', companyId: companyId || 'GLOBAL' };
+      await AuditTrailService.logUpdate(actorInfo, 'LEGACY_MODULE', 'LegacyEvent', logId, `Action: ${action}. Details: ${details}`);
 
       return true;
     } catch (err) {
+
       console.warn('[FirestoreService] logAuditEvent error:', err);
       return false;
     }
@@ -5434,6 +5507,20 @@ const allAttendances: any[] = [];
         }, { merge: true });
       }
 
+            // Module 10.4: Bulk Governance Evaluation
+      const sessionInfo = { userId: actor.uid, role: 'HR_ADMIN', displayName: actor.name, companyId };
+      await BulkExportGovernanceService.evaluateAndRecordBulkOperation({
+        session: sessionInfo as any,
+        companyId,
+        module: 'PAYROLL',
+        entityType: 'SalarySlipRecord',
+        operation: 'BULK_PUBLISH',
+        affectedRecordCount: slipIds.length,
+        affectedRecordIds: slipIds,
+        reason: `Published ${slipIds.length} payslips for payroll cycle ${cycleId}`,
+        metadata: { cycleId }
+      });
+
       await this.logAuditEvent(
         companyId,
         actor.uid,
@@ -5466,6 +5553,20 @@ const allAttendances: any[] = [];
           status: 'APPROVED'
         }, { merge: true });
       }
+
+            // Module 10.4: Bulk Governance Evaluation
+      const sessionInfo = { userId: actor.uid, role: 'HR_ADMIN', displayName: actor.name, companyId };
+      await BulkExportGovernanceService.evaluateAndRecordBulkOperation({
+        session: sessionInfo as any,
+        companyId,
+        module: 'PAYROLL',
+        entityType: 'SalarySlipRecord',
+        operation: 'BULK_UNPUBLISH',
+        affectedRecordCount: slipIds.length,
+        affectedRecordIds: slipIds,
+        reason: `Unpublished ${slipIds.length} payslips for payroll cycle ${cycleId}`,
+        metadata: { cycleId }
+      });
 
       await this.logAuditEvent(
         companyId,
@@ -5780,7 +5881,22 @@ const allAttendances: any[] = [];
         updatedAt: now
       }, { merge: true });
 
-      // If all slips are exported, optionally mark cycle as DISBURSED or keep locked
+            // Module 10.4: Export Governance Evaluation
+      const sessionInfo = { userId: actor.uid, role: 'FINANCE_ADMIN', displayName: actor.name, companyId };
+      await BulkExportGovernanceService.evaluateAndRecordExport({
+        session: sessionInfo as any,
+        companyId,
+        module: 'PAYROLL',
+        entityType: 'PaymentBatchRecord',
+        exportFormat: 'BANK_CMS_FILE',
+        dataClassification: 'BANK_DISBURSEMENT',
+        recordCount: batch.validBeneficiaryCount || 1,
+        exportName: fileName,
+        reason: `Exported bank payment batch ${batch.batchNumber} format [${format}]`,
+        metadata: { batchId, format, totalAmount: batch.totalAmount }
+      });
+
+      // If all slips are exported
       await this.logAuditEvent(
         companyId,
         actor.uid,

@@ -352,6 +352,48 @@ export interface ApprovalRequestRecord {
   details?: any;
 }
 
+export interface SuspiciousMusterPunch {
+  id: string;
+  companyId: string;
+  siteId: string;
+  employeeId: string;
+  attendanceId?: string;
+  shiftId?: string;
+  punchType: 'PUNCH_IN' | 'PUNCH_OUT';
+  punchTimestamp: string;
+  detectedAt: string;
+  anomalyType: 'GEOFENCE_VIOLATION' | 'SHIFT_MISMATCH' | 'RAPID_PUNCH' | 'DUPLICATE_PUNCH' | 'IMPOSSIBLE_SEQUENCE' | 'INACTIVE_EMPLOYEE' | 'DEVICE_TAMPERING';
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  riskScore: number;
+  evidence: string;
+  status: 'DETECTED' | 'UNDER_REVIEW' | 'CONFIRMED_ANOMALY' | 'FALSE_POSITIVE' | 'RESOLVED';
+  reviewedBy?: string;
+  reviewedAt?: string;
+  resolution?: string;
+  correlationId?: string;
+}
+
+export interface AuditTrailRecord {
+  id: string;
+  companyId: string;
+  actorId: string;
+  actorEmployeeId?: string;
+  actorRole?: string;
+  module: string;
+  action: string;
+  operation: string;
+  entityType: string;
+  entityId: string;
+  timestamp: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  success: boolean;
+  failureReason?: string;
+  correlationId?: string;
+  source: string;
+  changeSummary?: string;
+  metadata?: any;
+}
+
 export interface AuditLogRecord {
   id: string;
   companyId: string;
@@ -2042,6 +2084,7 @@ export type PhaseAScreen =
   | 'ASSET_TRACKING'
   | 'SITE_OPERATIONS'
   | 'REPORTS_ANALYTICS'
+  | 'SECURITY_AUDIT'
   | 'PROFILE'
   | 'SETTINGS'
   | 'NOTIFICATIONS'
@@ -2132,6 +2175,7 @@ export const APP_MODULES = {
   VISITORS: 'VISITORS',
   GUARD_PATROL: 'GUARD_PATROL',
   SECURITY_INCIDENTS: 'SECURITY_INCIDENTS',
+  SECURITY_AUDIT: 'SECURITY_AUDIT',
   ID_BADGES: 'ID_BADGES',
   COMPLIANCE: 'COMPLIANCE',
   WORK_ORDERS: 'WORK_ORDERS'
@@ -3340,3 +3384,112 @@ export interface ContractExpiryEventRecord {
 }
 export * from './bi';
 export * from './bpm';
+
+export type SecuritySeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface SecurityEventRecord {
+  eventId: string;
+  companyId: string;
+  userId: string;
+  employeeId?: string;
+  role: string;
+  action: string;
+  resource: string;
+  resourceId: string;
+  timestamp: string;
+  severity: SecuritySeverity;
+  source: string;
+  ipAddress?: string;
+  deviceMetadata?: string;
+  success: boolean;
+  reason?: string;
+  correlationId?: string;
+}
+
+export interface SecurityAnomalyRecord {
+  anomalyId: string;
+  companyId: string;
+  severity: SecuritySeverity;
+  type: string;
+  score: number;
+  triggeringEvents: string[]; // eventIds
+  reason: string;
+  detectedAt: string;
+  status: 'DETECTED' | 'REVIEW' | 'ACKNOWLEDGED' | 'RESOLVED' | 'FALSE_POSITIVE';
+  recommendedAction?: string;
+}
+
+
+// ==========================================
+// MODULE 10 / POINT 4: BULK & EXPORT GOVERNANCE
+// ==========================================
+
+export type SensitiveDataClassification = 
+  | 'EMPLOYEE_PII' 
+  | 'PAYROLL_SALARY' 
+  | 'BANK_DISBURSEMENT' 
+  | 'STATUTORY_COMPLIANCE' 
+  | 'CLIENT_CONTRACT' 
+  | 'OPERATIONS_SECURITY' 
+  | 'INVENTORY_SCM'
+  | 'GENERAL';
+
+export type BulkOperationType = 
+  | 'BULK_UPDATE' 
+  | 'BULK_ASSIGN' 
+  | 'BULK_PUBLISH' 
+  | 'BULK_UNPUBLISH'
+  | 'BULK_DELETE' 
+  | 'BULK_IMPORT' 
+  | 'BULK_STATUS_CHANGE' 
+  | 'BULK_APPROVE'
+  | 'BATCH_RECALCULATE';
+
+export type ExportDataFormat = 'CSV' | 'EXCEL' | 'PDF' | 'BANK_CMS_FILE' | 'JSON' | 'DOCUMENT';
+
+export interface BulkAndExportAlertRecord {
+  id: string;
+  companyId: string;
+  category: 'BULK_EDIT' | 'AFTER_HOURS_DOWNLOAD' | 'SENSITIVE_EXPORT' | 'HIGH_VOLUME_EXPORT' | 'UNAUTHORIZED_EXPORT' | 'REPEATED_ACTIVITY';
+  eventType: 'BULK_OPERATION' | 'DATA_EXPORT';
+  userId: string;
+  userRole: string;
+  userEmployeeId?: string;
+  userName?: string;
+  module: string;
+  entityType: string;
+  operation: string;
+  affectedRecordCount: number;
+  exportFormat?: ExportDataFormat;
+  dataClassification?: SensitiveDataClassification;
+  isAfterHours: boolean;
+  localTimeHour: number;
+  riskScore: number;
+  severity: SecuritySeverity;
+  rulesTriggered: string[];
+  evidence: string;
+  timestamp: string;
+  status: 'DETECTED' | 'UNDER_REVIEW' | 'CONFIRMED' | 'FALSE_POSITIVE' | 'RESOLVED';
+  reviewedBy?: string;
+  reviewedAt?: string;
+  resolutionNotes?: string;
+  correlationId: string;
+  affectedRecordIds?: string[];
+  metadata?: Record<string, any>;
+}
+
+export interface SecurityGovernanceConfig {
+  companyId: string;
+  businessHoursStart: number; // 0-23, default 8 (08:00)
+  businessHoursEnd: number;   // 0-23, default 20 (20:00)
+  bulkWarningThreshold: number; // default 25 records
+  exportWarningThreshold: number; // default 100 records
+  sensitiveExportNotificationThreshold: SecuritySeverity; // default 'MEDIUM'
+  repeatedDownloadWindowMinutes: number; // default 10 mins
+  repeatedDownloadMaxCount: number; // default 3
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export * from './compliance';
+

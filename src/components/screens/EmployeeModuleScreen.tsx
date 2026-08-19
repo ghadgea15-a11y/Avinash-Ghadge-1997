@@ -57,6 +57,7 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 import { DocumentManagementTab } from '../employee/DocumentManagementTab';
 import { FirestoreService } from '../../services/firestoreService';
+import { BulkExportGovernanceService } from '../../services/bulkExportGovernanceService';
 import { SubscriptionService } from '../../services/subscriptionService';
 import { StorageService } from '../../services/storageService';
 import { OfflineSyncService } from '../../services/offlineSyncService';
@@ -808,7 +809,20 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   };
 
   // Export CSV Helper
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    // Module 10.4: Export Governance Evaluation
+    await BulkExportGovernanceService.evaluateAndRecordExport({
+      session: userSession,
+      companyId: currentCompanyId,
+      module: 'HCM_EMPLOYEES',
+      entityType: 'EmployeeRecord',
+      exportFormat: 'CSV',
+      dataClassification: 'EMPLOYEE_PII',
+      recordCount: filteredEmployees.length,
+      exportName: `employee_roster_${currentCompanyId}_${new Date().toISOString().split('T')[0]}.csv`,
+      reason: 'Exported employee roster from Employee Master Directory'
+    });
+
     const headers = 'Employee ID,First Name,Last Name,Role,Department,Branch,Site,Status,Contact,Email,Employment Type,Joined Date\n';
     const rows = filteredEmployees.map(e => 
       `"${e.id}","${e.firstName}","${e.lastName}","${e.role}","${e.departmentId}","${e.assignedBranchId}","${e.assignedSiteId}","${e.status}","${e.contactNumber}","${e.email || undefined}","${e.employmentType || 'PERMANENT'}","${e.joinedDate}"`

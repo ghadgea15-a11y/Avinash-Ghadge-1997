@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { initializeFirebaseAdmin } from './src/server/firebaseAdmin';
+import { initializeFirebaseAdmin, hasAdminCredentials } from './src/server/firebaseAdmin';
 import { BpmEscalationAdminService } from './src/server/bpmEscalationAdminService';
 
 async function startServer() {
@@ -103,14 +103,19 @@ async function startServer() {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`[LSM Server] Enterprise Server running on http://0.0.0.0:${PORT}`);
 
-    // Server-Authoritative Background Escalation Runner (Runs every 60s without requiring active clients)
-    setInterval(async () => {
-      try {
-        await BpmEscalationAdminService.processAllPendingApprovalsGlobally();
-      } catch (cronErr) {
-        console.warn('[LSM Server Background Cron] Escalation check warning:', cronErr);
-      }
-    }, 60000);
+    // Server-Authoritative Background Escalation Runner (Runs every 60s when Admin Service Account is configured)
+    if (hasAdminCredentials()) {
+      setInterval(async () => {
+        try {
+          await BpmEscalationAdminService.processAllPendingApprovalsGlobally();
+        } catch (cronErr) {
+          console.warn('[LSM Server Background Cron] Escalation check warning:', cronErr);
+        }
+      }, 60000);
+      console.log('[LSM Server] Background BPM escalation runner active.');
+    } else {
+      console.log('[LSM Server] Background BPM escalation runner idle (no service account credential in env; client-side triggers active).');
+    }
   });
 }
 

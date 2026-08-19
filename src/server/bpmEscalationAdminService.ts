@@ -1,4 +1,4 @@
-import { getAdminDb } from './firebaseAdmin';
+import { getAdminDb, hasAdminCredentials } from './firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { BpmApprovalInstance, EscalationPolicy, BpmEscalationEvent, EscalationTargetType } from '../types/bpm';
 import { AppNotification } from '../types';
@@ -17,16 +17,13 @@ export interface AdminEscalationProcessResult {
 }
 
 export class BpmEscalationAdminService {
+  private static loggedCredentialNotice = false;
   
   static async processInstanceTimers(
     companyId: string,
     instanceId: string,
     authoritativeTime?: Date
   ): Promise<AdminEscalationProcessResult> {
-    const db = getAdminDb();
-    const now = authoritativeTime || new Date();
-    const nowIso = now.toISOString();
-
     const result: AdminEscalationProcessResult = {
       instanceId,
       evaluated: false,
@@ -38,6 +35,15 @@ export class BpmEscalationAdminService {
       },
       details: []
     };
+
+    if (!hasAdminCredentials()) {
+      result.details.push('Skipped: Server Admin credentials not configured.');
+      return result;
+    }
+
+    const db = getAdminDb();
+    const now = authoritativeTime || new Date();
+    const nowIso = now.toISOString();
 
     const instanceRef = db.collection('companies').doc(companyId).collection('bpm_instances').doc(instanceId);
     
@@ -330,6 +336,14 @@ export class BpmEscalationAdminService {
     companyId: string,
     authoritativeTime?: Date
   ) {
+    if (!hasAdminCredentials()) {
+      if (!this.loggedCredentialNotice) {
+        console.info('[BpmEscalationAdminService] Server-side Firebase Admin service account not configured. Background escalation cron is idle (client-side triggers handle active sessions).');
+        this.loggedCredentialNotice = true;
+      }
+      return { totalChecked: 0, totalEscalated: 0, totalReminders: 0, results: [], skipped: true };
+    }
+
     const db = getAdminDb();
     try {
       const snapshot = await db.collection('companies').doc(companyId).collection('bpm_instances')
@@ -348,7 +362,7 @@ export class BpmEscalationAdminService {
           if (res.actionsTaken.reminderSent) totalReminders++;
           if (res.actionsTaken.escalatedLevel !== undefined) totalEscalated++;
         } catch (itemErr) {
-          console.error(`[BpmEscalationAdminService] Error processing instance ${instanceId}:`, itemErr);
+          console.warn(`[BpmEscalationAdminService] Warning processing instance ${instanceId}:`, itemErr);
         }
       }
 
@@ -358,8 +372,8 @@ export class BpmEscalationAdminService {
         totalReminders,
         results
       };
-    } catch (err) {
-      console.error(`[BpmEscalationAdminService] processAllCompanyPendingApprovals error for ${companyId}:`, err);
+    } catch (err: any) {
+      console.warn(`[BpmEscalationAdminService] processAllCompanyPendingApprovals skipped for ${companyId}:`, err?.message || err);
       return { totalChecked: 0, totalEscalated: 0, totalReminders: 0, results: [] };
     }
   }
@@ -367,6 +381,14 @@ export class BpmEscalationAdminService {
   static async processAllPendingApprovalsGlobally(
     authoritativeTime?: Date
   ) {
+    if (!hasAdminCredentials()) {
+      if (!this.loggedCredentialNotice) {
+        console.info('[BpmEscalationAdminService] Server-side Firebase Admin service account not configured. Background escalation cron is idle (client-side triggers handle active sessions).');
+        this.loggedCredentialNotice = true;
+      }
+      return { companiesProcessed: 0, totalEvaluated: 0, totalEscalated: 0, skipped: true };
+    }
+
     const db = getAdminDb();
     try {
       const compSnap = await db.collection('companies').get();
@@ -390,8 +412,8 @@ export class BpmEscalationAdminService {
         totalEvaluated,
         totalEscalated
       };
-    } catch (err) {
-      console.error('[BpmEscalationAdminService] processAllPendingApprovalsGlobally error:', err);
+    } catch (err: any) {
+      console.warn('[BpmEscalationAdminService] processAllPendingApprovalsGlobally skipped:', err?.message || err);
       return { companiesProcessed: 0, totalEvaluated: 0, totalEscalated: 0 };
     }
   }

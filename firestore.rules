@@ -223,6 +223,25 @@ service cloud.firestore {
     // ============================================================
 
     match /companies/{companyId} {
+
+      // GRC: Security Audit & Anomaly Detection
+      match /security_events/{eventId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow create: if signedIn() && (isSuperAdmin() || sameCompany(companyId)) 
+                      && request.resource.data.companyId == companyId
+                      && request.resource.data.userId == request.auth.uid; // Must use own userId
+        // Backend can forge userId if needed, but from client must match. Wait, what about failed login? Failed login might not have auth.uid yet if not signed in, but we can't secure that easily on client.
+        // Let's allow create if signedIn and sameCompany, or if SuperAdmin.
+        allow update, delete: if false; // Append-only immutable audit log
+      }
+
+      match /security_anomalies/{anomalyId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        // Only backend should ideally create anomalies, or if client creates them, they can't delete them.
+        allow create: if signedIn() && (isSuperAdmin() || sameCompany(companyId));
+        allow update: if signedIn() && (isSuperAdmin() || isCompanyAdmin(companyId));
+        allow delete: if false;
+      }
       // Individual company lookup allowed to let unauthenticated users verify codes
       allow get: if true;
       allow list: if isSuperAdmin() || sameCompany(companyId);
@@ -631,6 +650,49 @@ service cloud.firestore {
       match /system_settings/{settingId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /bulk_export_alerts/{alertId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        // Allow create by signed in user performing bulk/export operations in their company
+        allow create: if signedIn() && (isSuperAdmin() || sameCompany(companyId));
+        // Allow update only by super/company admins for review & resolution workflow
+        allow update: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow delete: if false; // Immutable governance records
+      }
+
+      match /compliance_policies/{policyId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow delete: if false;
+
+        match /versions/{versionId} {
+          allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+          allow create: if isSuperAdmin() || isCompanyAdmin(companyId);
+          allow update, delete: if false; // Immutable version snapshots
+        }
+      }
+
+      match /compliance_violations/{violationId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if signedIn() && (isSuperAdmin() || sameCompany(companyId));
+        allow update: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow delete: if false; // Immutable violation records
+      }
+
+      match /compliance_evaluations/{evalId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow create: if signedIn() && (isSuperAdmin() || sameCompany(companyId));
+        allow update, delete: if false; // Immutable evaluation audit stream
+      }
+
+      match /suspicious_punches/{punchId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        // Allow create by any signed in user (specifically employees creating their own punch anomalies via the engine)
+        allow create: if signedIn();
+        // Allow update only by admins (resolution workflow)
+        allow update: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow delete: if false; // Immutable detection
       }
 
       match /audit_logs/{logId} {

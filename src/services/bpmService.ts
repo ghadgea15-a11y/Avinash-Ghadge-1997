@@ -15,6 +15,8 @@ import { RbacService } from './rbacService';
 import { BpmIntegrationService } from './bpmIntegrationService';
 import { BpmEscalationService } from './bpmEscalationService';
 import { BpmDelegationService } from './bpmDelegationService';
+import { SecurityAuditService } from './securityAuditService';
+import { AuditTrailService } from './auditTrailService';
 import { BpmThresholdRoutingService } from './bpmThresholdRoutingService';
 
 export class BpmService {
@@ -297,6 +299,23 @@ export class BpmService {
 
     // Proxy Audit & Delegator Notification
     if (proxyDetails.asProxy && proxyDetails.delegatorId) {
+      SecurityAuditService.logEvent(
+        session.companyId,
+        session.userId,
+        session.role,
+        session.employeeId,
+        'DELEGATION_ACTED',
+        'bpm_instances',
+        instanceId,
+        true,
+        'MEDIUM',
+        `Acted as proxy for ${proxyDetails.delegatorId} (Action: ${actionType})`
+      ).catch(() => {});
+      
+      // Module 10.2: Immutable Audit Trail for Workflow Proxy Action
+      AuditTrailService.logUpdate(session, 'BPM', 'BpmApprovalInstance', instanceId, `Proxy action ${actionType} performed on behalf of ${proxyDetails.delegatorId}`, { proxyUserId: session.userId, delegatorId: proxyDetails.delegatorId }, instanceId).catch(() => {});
+
+
       try {
         const auditLogId = `AUDIT_PROXY_ACT_${instanceId}_${Date.now()}`;
         const auditRef = doc(db, 'companies', session.companyId, 'audit_logs', auditLogId);

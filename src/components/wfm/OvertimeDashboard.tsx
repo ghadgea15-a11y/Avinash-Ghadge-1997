@@ -39,6 +39,7 @@ import {
   AttendanceCalculationResult
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { BulkExportGovernanceService } from '../../services/bulkExportGovernanceService';
 import { AttendanceCalculationEngine } from '../../services/calculationEngine';
 import { WorkflowEngine } from '../../services/workflowEngine';
 
@@ -251,6 +252,20 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
   const handleBulkApprove = async () => {
     if (selectedRequestIds.length === 0) return;
     setIsBulkProcessing(true);
+
+    // Module 10.4: Bulk Governance Evaluation
+    await BulkExportGovernanceService.evaluateAndRecordBulkOperation({
+      session: userSession,
+      companyId,
+      module: 'WFM_OVERTIME',
+      entityType: 'OvertimeRequest',
+      operation: 'BULK_APPROVE',
+      affectedRecordCount: selectedRequestIds.length,
+      affectedRecordIds: selectedRequestIds,
+      reason: 'Bulk approved via Overtime Dashboard',
+      metadata: { siteId: selectedSiteId }
+    });
+
     for (const reqId of selectedRequestIds) {
       const req = requests.find(r => r.id === reqId);
       if (req && req.status === 'PENDING_APPROVAL') {

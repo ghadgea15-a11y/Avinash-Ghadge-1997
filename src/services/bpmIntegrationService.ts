@@ -82,6 +82,16 @@ export class BpmIntegrationService {
         const ticketRef = doc(db, 'companies', instance.companyId, 'serviceTickets', instance.sourceRecordId);
         await updateDoc(ticketRef, { status: 'IN_PROGRESS', approvedBy: reviewerId, approvedAt: now, updatedAt: now });
         break;
+      case 'COMPLIANCE':
+        const compRef = doc(db, 'companies', instance.companyId, 'compliance_violations', instance.sourceRecordId);
+        await updateDoc(compRef, { 
+          status: 'RESOLVED', 
+          bpmStatus: 'APPROVED', 
+          resolvedBy: reviewerName || reviewerId, 
+          resolvedAt: now,
+          resolutionNotes: `Remediation approved via BPM workflow (${instance.id})`
+        });
+        break;
       default:
         console.log(`Domain integration executed for module: ${instance.sourceModule}`);
     }
@@ -93,6 +103,14 @@ export class BpmIntegrationService {
   static async onWorkflowRejected(instance: BpmApprovalInstance, reviewerId: string, reviewerName: string, reason: string): Promise<void> {
     const now = new Date().toISOString();
     switch (instance.sourceModule) {
+      case 'COMPLIANCE':
+        const compRef = doc(db, 'companies', instance.companyId, 'compliance_violations', instance.sourceRecordId);
+        await updateDoc(compRef, { 
+          status: 'UNDER_REVIEW', 
+          bpmStatus: 'REJECTED', 
+          resolutionNotes: `Remediation rejected via BPM workflow (${instance.id}). Reason: ${reason}`
+        });
+        break;
       case 'LEAVE':
         await FirestoreService.updateLeaveRequestStatus(
           instance.companyId,

@@ -197,8 +197,8 @@ async function main() {
     );
 
     // Assertions
-    assert(calc.payableDays === 27, `Expected 27 payable days (26 + 0.5 + 0.5), got ${calc.payableDays}`);
-    assert(calc.lopDays === 4, `Expected 4 LOP days (31 - 27), got ${calc.lopDays}`);
+    assert(calc.payableDays === 28, `Expected 28 payable days (26 + 0.5 + 0.5 + 1 paid leave), got ${calc.payableDays}`);
+    assert(calc.lopDays === 3, `Expected 3 LOP days (31 - 28), got ${calc.lopDays}`);
     assert(calc.earnings.totalGross > 0, 'Total Gross earnings must be positive');
     assert(calc.deductions.pf > 0, `PF must be computed, got ₹${calc.deductions.pf}`);
     assert(calc.deductions.pt === 200, `Maharashtra PT for gross > 10k must be ₹200, got ₹${calc.deductions.pt}`);
@@ -207,7 +207,7 @@ async function main() {
     assert(calc.totalGross === calc.earnings.totalGross, 'Total gross equality mismatch');
     assert(calc.netPay === calc.totalGross - calc.totalDeductions, 'Net pay formula mismatch');
 
-    return `Verified Employee to Payroll: 31 calendar days -> 27 payable days, 4 LOP days, Gross ₹${calc.totalGross}, PF ₹${calc.deductions.pf}, PT ₹${calc.deductions.pt}, Net ₹${calc.netPay}`;
+    return `Verified Employee to Payroll: 31 calendar days -> 28 payable days, 3 LOP days, Gross ₹${calc.totalGross}, PF ₹${calc.deductions.pf}, PT ₹${calc.deductions.pt}, Net ₹${calc.netPay}`;
   });
 
   // =========================================================================

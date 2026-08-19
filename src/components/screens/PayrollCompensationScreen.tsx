@@ -48,6 +48,7 @@ import {
   BankExportFormat
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { BulkExportGovernanceService } from '../../services/bulkExportGovernanceService';
 import { PayslipService } from '../../services/payslipService';
 import { PayslipModal } from '../payroll/PayslipModal';
 import { BankExportModal } from '../payroll/BankExportModal';
@@ -299,23 +300,52 @@ export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps>
     }
   };
 
-  const handleBulkDownloadPDFs = () => {
+  const handleBulkDownloadPDFs = async () => {
     const slipsToDownload = selectedSlipIds.length > 0
       ? cycleSlips.filter(s => selectedSlipIds.includes(s.id))
       : cycleSlips;
 
     if (slipsToDownload.length === 0) return;
 
+    // Module 10.4: Export Governance Evaluation
+    const targetCompanyId = companyId || activeCompany?.companyId || '';
+    await BulkExportGovernanceService.evaluateAndRecordExport({
+      session: userSession,
+      companyId: targetCompanyId,
+      module: 'PAYROLL',
+      entityType: 'SalarySlipRecord',
+      exportFormat: 'PDF',
+      dataClassification: 'PAYROLL_SALARY',
+      recordCount: slipsToDownload.length,
+      exportName: `Payslips_Bulk_${selectedCycleId}.pdf`,
+      reason: `Bulk download of ${slipsToDownload.length} payslips in PDF format`
+    });
+
     slipsToDownload.forEach((slip, idx) => {
       setTimeout(() => {
-        PayslipService.downloadPDF(slip, activeCompany);
+        if (activeCompany) PayslipService.downloadPDF(slip, activeCompany);
       }, idx * 300);
     });
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     if (cycleSlips.length === 0) return;
     const label = activeCycle?.cycleLabel || selectedCycleId;
+    const targetCompanyId = companyId || activeCompany?.companyId || '';
+
+    // Module 10.4: Export Governance Evaluation
+    await BulkExportGovernanceService.evaluateAndRecordExport({
+      session: userSession,
+      companyId: targetCompanyId,
+      module: 'PAYROLL',
+      entityType: 'SalarySlipRecord',
+      exportFormat: 'CSV',
+      dataClassification: 'PAYROLL_SALARY',
+      recordCount: cycleSlips.length,
+      exportName: `Payroll_Summary_${label}.csv`,
+      reason: `Exported summary payroll CSV for cycle ${label}`
+    });
+
     PayslipService.exportSummaryCSV(cycleSlips, label);
   };
 

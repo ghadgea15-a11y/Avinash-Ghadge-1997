@@ -1,4 +1,6 @@
 import { db } from '../firebase';
+import { SecurityAuditService } from './securityAuditService';
+import { AuditTrailService } from './auditTrailService';
 import { 
   collection, 
   doc, 
@@ -498,6 +500,7 @@ export class BpmDelegationService {
   ): Promise<ProxyAuthCheckResult> {
     // 0a. Strict Tenant Isolation: User must belong to the instance company
     if (instance.companyId && session.companyId !== instance.companyId && session.role !== 'SUPER_ADMIN') {
+      SecurityAuditService.logEvent(session.companyId, session.userId, session.role, session.employeeId, 'CROSS_COMPANY_ACCESS_DENIED', 'bpm_instances', instance.id, false, 'HIGH', 'User tried to access cross-company instance').catch(() => {});
       return {
         canAct: false,
         asProxy: false,
@@ -540,6 +543,7 @@ export class BpmDelegationService {
           if (this.matchesScope(delegation, instance, referenceTime)) {
             // Privilege Intersection Check: Delegate's own site boundary
             if (session.assignedSiteId && instance.siteId && session.assignedSiteId !== instance.siteId && session.role !== 'SUPER_ADMIN' && session.role !== 'COMPANY_ADMIN' && session.role !== 'DIRECTOR_CEO') {
+              SecurityAuditService.logEvent(session.companyId, session.userId, session.role, session.employeeId, 'CROSS_SITE_ACCESS_DENIED', 'bpm_instances', instance.id, false, 'MEDIUM', 'Proxy attempted cross-site access').catch(() => {});
               return {
                 canAct: false,
                 asProxy: false,
