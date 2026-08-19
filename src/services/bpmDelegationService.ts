@@ -200,6 +200,7 @@ export class BpmDelegationService {
     const canManageAll = RbacService.canManageDelegations(session);
 
     if (!isOwnDelegation && !canManageAll) {
+      await SecurityAuditService.logUnauthorizedAttempt(session, 'Unauthorized: You can only configure proxy delegation for your own approvals.', 'bpm_delegations');
       throw new Error('Unauthorized: You can only configure proxy delegation for your own approvals.');
     }
 
@@ -343,6 +344,7 @@ export class BpmDelegationService {
       const isDelegator = session.userId === delegation.delegatorUserId;
       const canManage = RbacService.canManageDelegations(session);
       if (!isDelegator && !canManage) {
+        await SecurityAuditService.logUnauthorizedAttempt(session, 'Unauthorized: You do not have permission to revoke this delegation.', 'bpm_delegations', delegationId);
         throw new Error('Unauthorized: You do not have permission to revoke this delegation.');
       }
 
@@ -641,6 +643,7 @@ export class BpmDelegationService {
    */
   static async getAllCompanyDelegations(session: UserSession): Promise<ProxyDelegation[]> {
     if (!RbacService.canViewAllCompanyDelegations(session)) {
+      await SecurityAuditService.logUnauthorizedAttempt(session, 'Insufficient permissions to view organization delegations', 'bpm_delegations');
       throw new Error('Unauthorized: Insufficient permissions to view organization delegations.');
     }
 

@@ -9,10 +9,46 @@ const STORAGE_KEYS = {
   OFFLINE_QUEUE: 'lsm_offline_queue_v1'
 };
 
+// Resilient memory storage fallback if localStorage is unavailable
+const memoryStorage: Map<string, string> = new Map();
+
+function getItem(key: string): string | null {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(key);
+    }
+  } catch {
+    // ignore
+  }
+  return memoryStorage.get(key) || null;
+}
+
+function setItem(key: string, value: string): void {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, value);
+    }
+  } catch {
+    // ignore
+  }
+  memoryStorage.set(key, value);
+}
+
+function removeItem(key: string): void {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    // ignore
+  }
+  memoryStorage.delete(key);
+}
+
 export class SessionManager {
   static getActiveCompany(): CompanyTenant | null {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.ACTIVE_COMPANY);
+      const data = getItem(STORAGE_KEYS.ACTIVE_COMPANY);
       return data ? JSON.parse(data) : null;
     } catch {
       return null;
@@ -20,16 +56,16 @@ export class SessionManager {
   }
 
   static setActiveCompany(company: CompanyTenant): void {
-    localStorage.setItem(STORAGE_KEYS.ACTIVE_COMPANY, JSON.stringify(company));
+    setItem(STORAGE_KEYS.ACTIVE_COMPANY, JSON.stringify(company));
   }
 
   static clearActiveCompany(): void {
-    localStorage.removeItem(STORAGE_KEYS.ACTIVE_COMPANY);
+    removeItem(STORAGE_KEYS.ACTIVE_COMPANY);
   }
 
   static getUserSession(): UserSession | null {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.USER_SESSION);
+      const data = getItem(STORAGE_KEYS.USER_SESSION);
       if (!data) return null;
       const session: UserSession = JSON.parse(data);
       // Check if token expired
@@ -44,11 +80,11 @@ export class SessionManager {
   }
 
   static setUserSession(session: UserSession): void {
-    localStorage.setItem(STORAGE_KEYS.USER_SESSION, JSON.stringify(session));
+    setItem(STORAGE_KEYS.USER_SESSION, JSON.stringify(session));
   }
 
   static clearUserSession(): void {
-    localStorage.removeItem(STORAGE_KEYS.USER_SESSION);
+    removeItem(STORAGE_KEYS.USER_SESSION);
   }
 
   static clearSession(): void {
@@ -77,12 +113,12 @@ export class SessionManager {
       session.isBiometricEnabled = enabled;
       this.setUserSession(session);
     }
-    localStorage.setItem(STORAGE_KEYS.BIOMETRIC_BINDING, JSON.stringify(enabled));
+    setItem(STORAGE_KEYS.BIOMETRIC_BINDING, JSON.stringify(enabled));
   }
 
   static isBiometricEnabled(): boolean {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.BIOMETRIC_BINDING) || 'false');
+      return JSON.parse(getItem(STORAGE_KEYS.BIOMETRIC_BINDING) || 'false');
     } catch {
       return false;
     }
@@ -90,7 +126,7 @@ export class SessionManager {
 
   static getSavedCredentials(): { emailOrId: string; passwordOrPin?: string; companyCode?: string; remember: boolean } {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.REMEMBER_ME);
+      const data = getItem(STORAGE_KEYS.REMEMBER_ME);
       if (!data) return { emailOrId: '', remember: false };
 
       const parsed = JSON.parse(data);
@@ -99,7 +135,7 @@ export class SessionManager {
 
       // If expired (older than 5 minutes), clear storage immediately
       if (!savedAt || (Date.now() - savedAt > MAX_REMEMBER_DURATION_MS)) {
-        localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
+        removeItem(STORAGE_KEYS.REMEMBER_ME);
         return { emailOrId: '', passwordOrPin: '', companyCode: parsed.companyCode || '', remember: false };
       }
 
@@ -116,7 +152,7 @@ export class SessionManager {
 
   static setSavedCredentials(emailOrId: string, passwordOrPin: string, companyCode: string, remember: boolean): void {
     if (remember) {
-      localStorage.setItem(
+      setItem(
         STORAGE_KEYS.REMEMBER_ME,
         JSON.stringify({
           emailOrId,
@@ -127,7 +163,7 @@ export class SessionManager {
         })
       );
     } else {
-      localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
+      removeItem(STORAGE_KEYS.REMEMBER_ME);
     }
   }
 }

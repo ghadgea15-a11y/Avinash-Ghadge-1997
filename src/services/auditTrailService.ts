@@ -2,6 +2,9 @@ import { db } from '../firebase';
 import { collection, doc, setDoc, query, where, getDocs, orderBy, limit, startAfter } from 'firebase/firestore';
 import { AuditTrailRecord, UserSession } from '../types';
 
+export let _auditSetDoc = setDoc;
+export function _setAuditSetDocMock(mock: any) { _auditSetDoc = mock; }
+
 export class AuditTrailService {
   static async recordEvent(
     actor: { userId: string, employeeId?: string, role?: string, companyId: string } | null,
@@ -26,7 +29,7 @@ export class AuditTrailService {
 
       const id = `AUDIT-${Date.now()}-${Math.random().toString(36).substring(2,8).toUpperCase()}`;
       
-      const record: AuditTrailRecord = {
+      const record: any = {
         id,
         companyId: targetCompanyId,
         actorId: actor.userId,
@@ -47,8 +50,14 @@ export class AuditTrailService {
         metadata
       };
 
+      Object.keys(record).forEach(key => {
+        if (record[key] === undefined) {
+          delete record[key];
+        }
+      });
+
       const auditRef = doc(db, 'companies', targetCompanyId, 'audit_logs', id);
-      await setDoc(auditRef, record);
+      await _auditSetDoc(auditRef, record as AuditTrailRecord);
     } catch (error) {
       console.error('[AuditTrailService] Error recording audit event:', error);
     }

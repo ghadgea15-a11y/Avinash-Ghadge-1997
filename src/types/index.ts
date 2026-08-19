@@ -3415,7 +3415,10 @@ export interface SecurityAnomalyRecord {
   triggeringEvents: string[]; // eventIds
   reason: string;
   detectedAt: string;
-  status: 'DETECTED' | 'REVIEW' | 'ACKNOWLEDGED' | 'RESOLVED' | 'FALSE_POSITIVE';
+  status: 'DETECTED' | 'UNDER_REVIEW' | 'CONFIRMED' | 'FALSE_POSITIVE' | 'RESOLVED';
+  resolutionNotes?: string;
+  resolvedByUserId?: string;
+  resolvedAt?: string;
   recommendedAction?: string;
 }
 
@@ -3492,4 +3495,5 @@ export interface SecurityGovernanceConfig {
 }
 
 export * from './compliance';
+export * from './dataPrivacy';
 

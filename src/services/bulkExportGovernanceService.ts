@@ -53,6 +53,7 @@ export class BulkExportGovernanceService {
   ): Promise<boolean> {
     if (!companyId) return false;
     if (session.role !== 'SUPER_ADMIN' && session.role !== 'COMPANY_ADMIN') {
+      await SecurityAuditService.logUnauthorizedAttempt(session, 'Unauthorized bulk export governance config update attempt', 'security_governance');
       console.warn('[BulkExportGovernanceService] Unauthorized config update attempt');
       return false;
     }
@@ -68,6 +69,19 @@ export class BulkExportGovernanceService {
 
       const docRef = doc(db, 'companies', companyId, 'system_settings', 'security_governance');
       await setDoc(docRef, updatedConfig, { merge: true });
+
+      await SecurityAuditService.logEvent(
+        session.companyId,
+        session.userId,
+        session.role,
+        session.employeeId,
+        'CONFIG_UPDATE',
+        'security_governance',
+        companyId,
+        true,
+        'HIGH',
+        'Bulk Export Governance Configuration Updated'
+      ).catch(() => {});
 
       // Audit Trail
       const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId };
@@ -520,6 +534,7 @@ export class BulkExportGovernanceService {
   ): Promise<boolean> {
     if (!companyId || !alertId) return false;
     if (session.role !== 'SUPER_ADMIN' && session.role !== 'COMPANY_ADMIN') {
+      await SecurityAuditService.logUnauthorizedAttempt(session, 'Unauthorized bulk export alert resolution attempt', 'bulk_export_alerts', alertId);
       console.warn('[BulkExportGovernanceService] Unauthorized alert resolution attempt');
       return false;
     }

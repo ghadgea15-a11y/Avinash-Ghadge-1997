@@ -24,6 +24,7 @@ import {
 import { FirestoreService } from './firestoreService';
 import { SecurityAuditService } from './securityAuditService';
 import { SessionManager } from './sessionManager';
+import { AccountProtectionService } from './accountProtectionService';
 
 export const RESERVED_SUPER_ADMIN_EMAILS = [
   'admin@logsheetmuster.com',
@@ -812,6 +813,12 @@ export class FirebaseAuthService {
     const cleanInput = emailOrId.trim();
     const cleanInputLower = cleanInput.toLowerCase();
 
+    // Check Account Lockout first
+    const lockCheck = await AccountProtectionService.isAccountLocked(companyId, cleanInput);
+    if (lockCheck.locked) {
+      throw new Error(lockCheck.reason || 'Account is temporarily locked due to multiple failed attempts. Please try again later.');
+    }
+
     // 1. Firebase Auth mode (Email / Password)
     if (!isPinMode || cleanInput.includes('@')) {
       try {
@@ -931,6 +938,9 @@ export class FirebaseAuthService {
           hrApproval
         };
         
+        // Reset failed logins
+        await AccountProtectionService.recordSuccessfulLogin(companyId, cleanInput);
+
         SecurityAuditService.logEvent(
           session.companyId,
           session.userId,
@@ -951,7 +961,10 @@ export class FirebaseAuthService {
           firebaseErr.code === 'auth/user-not-found' ||
           firebaseErr.code === 'auth/invalid-credential'
         ) {
-          SecurityAuditService.logEvent(companyId, cleanInput, 'UNKNOWN', undefined, 'LOGIN_FAILED', 'authentication', cleanInput, false, 'MEDIUM', 'Invalid credentials').catch(() => {});
+          const failRec = await AccountProtectionService.recordFailedLogin(companyId, cleanInput);
+          if (failRec.locked) {
+            throw new Error(failRec.message);
+          }
           throw new Error('Invalid email or password. Please verify your login details.');
         }
         if (err instanceof Error) {
@@ -1028,22 +1041,28 @@ export class FirebaseAuthService {
         emailVerified: true
       };
       
-        SecurityAuditService.logEvent(
-          session.companyId,
-          session.userId,
-          session.role,
-          session.employeeId,
-          'LOGIN_SUCCESS',
-          'authentication',
-          session.userId,
-          true,
-          'LOW',
-          'User authenticated successfully'
-        ).catch((e: any) => console.error(e));
-        return session;
+      await AccountProtectionService.recordSuccessfulLogin(companyId, cleanInput);
+
+      SecurityAuditService.logEvent(
+        session.companyId,
+        session.userId,
+        session.role,
+        session.employeeId,
+        'LOGIN_SUCCESS',
+        'authentication',
+        session.userId,
+        true,
+        'LOW',
+        'User authenticated successfully'
+      ).catch((e: any) => console.error(e));
+      return session;
 
     } catch (err: any) {
       console.error('[FirebaseAuthService] PIN auth error:', err);
+      const failRec = await AccountProtectionService.recordFailedLogin(companyId, cleanInput);
+      if (failRec.locked) {
+        throw new Error(failRec.message);
+      }
       if (err instanceof Error) {
         throw err;
       }
@@ -1058,6 +1077,21 @@ export class FirebaseAuthService {
    */
   static async logoutUser(): Promise<void> {
     try {
+      const session = SessionManager.getUserSession();
+      if (session) {
+        await SecurityAuditService.logEvent(
+          session.companyId,
+          session.userId,
+          session.role,
+          session.employeeId,
+          'LOGOUT',
+          'authentication',
+          session.userId,
+          true,
+          'LOW',
+          'User logged out successfully'
+        ).catch(() => {});
+      }
       await signOut(auth);
     } catch (e) {
       console.warn('[FirebaseAuthService] SignOut warning:', e);

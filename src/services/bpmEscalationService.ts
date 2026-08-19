@@ -24,6 +24,7 @@ import { UserSession, AppNotification } from '../types';
 import { FirestoreService } from './firestoreService';
 import { RbacService } from './rbacService';
 import { BpmDelegationService } from './bpmDelegationService';
+import { SecurityAuditService } from './securityAuditService';
 
 export interface EscalationProcessResult {
   instanceId: string;
@@ -52,6 +53,7 @@ export class BpmEscalationService {
     policyInput: Omit<EscalationPolicy, 'id' | 'policyId' | 'companyId' | 'version' | 'createdAt' | 'updatedAt'>
   ): Promise<EscalationPolicy> {
     if (!RbacService.canManageEscalationPolicy(session)) {
+      await SecurityAuditService.logUnauthorizedAttempt(session, 'Insufficient permissions to create escalation policy', 'bpm_escalation_policies');
       throw new Error('Unauthorized: Insufficient permissions to create escalation policy.');
     }
 
@@ -110,6 +112,7 @@ export class BpmEscalationService {
     updates: Partial<EscalationPolicy>
   ): Promise<EscalationPolicy> {
     if (!RbacService.canManageEscalationPolicy(session)) {
+      await SecurityAuditService.logUnauthorizedAttempt(session, 'Insufficient permissions to modify escalation policy', 'bpm_escalation_policies', policyId);
       throw new Error('Unauthorized: Insufficient permissions to modify escalation policy.');
     }
 

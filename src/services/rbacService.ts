@@ -6,8 +6,16 @@ import {
   WorkforceCategory, 
   AppModuleKey 
 } from '../types';
+import { 
+  StandardPermission, 
+  PermissionAction, 
+  AccessContext, 
+  PrivilegeCheckResult 
+} from '../types/permissions';
+import { PermissionRegistry } from './permissionRegistry';
+import { PrivilegeGovernanceService } from './privilegeGovernanceService';
 
-export type PermissionAction = 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'EXPORT' | 'REPORT';
+export type { PermissionAction };
 
 export class RbacService {
   /**
@@ -95,6 +103,28 @@ export class RbacService {
   }
 
   /**
+   * Centralized check for Standard Permission (`MODULE:SUBMODULE:ACTION`).
+   */
+  static can(
+    session: UserSession | null,
+    permission: StandardPermission,
+    context?: AccessContext
+  ): boolean {
+    return PermissionRegistry.evaluatePermission(session, permission, context).allowed;
+  }
+
+  /**
+   * Authoritative access check with automatic security event auditing when blocked.
+   */
+  static async enforce(
+    session: UserSession | null,
+    permission: StandardPermission,
+    context?: AccessContext
+  ): Promise<boolean> {
+    return await PrivilegeGovernanceService.enforce(session, permission, context);
+  }
+
+  /**
    * Enforces module-level access.
    */
   static hasModuleAccess(session: UserSession | null, moduleKey: AppModuleKey): boolean {
@@ -104,7 +134,6 @@ export class RbacService {
     if (session.role === 'SUPER_ADMIN') return true;
 
     const authority = this.getAuthorityLevel(session);
-    const scope = this.getDataScope(session);
 
     switch (moduleKey) {
       case 'COMPANY_MANAGEMENT':
@@ -159,6 +188,17 @@ export class RbacService {
       return false;
     }
 
+    const standardPerm = PermissionRegistry.mapLegacyActionToPermission(context.module, action);
+    const evalResult = PermissionRegistry.evaluatePermission(session, standardPerm, {
+      targetCompanyId: context.targetCompanyId,
+      targetSiteId: context.targetSiteId,
+      targetOwnerId: context.targetOwnerId
+    });
+
+    if (!evalResult.allowed) {
+      return false;
+    }
+
     const authority = this.getAuthorityLevel(session);
     
     // Global Actions across most modules
@@ -178,12 +218,12 @@ export class RbacService {
 
        // Official staff can only modify their domains
        if (authority === 'A3_OFFICIAL_STAFF') {
-          if (context.module === 'EMPLOYEES' && ['HR', 'HR_ADMIN'].includes(session.role)) return true;
-          if (context.module === 'ID_BADGES' && ['HR', 'HR_ADMIN'].includes(session.role)) return true;
-          if (context.module === 'COMPLIANCE' && ['HR', 'HR_ADMIN', 'ADMIN'].includes(session.role)) return true;
-          if (context.module === 'PAYROLL' && ['FINANCE', 'FINANCE_MANAGER'].includes(session.role)) return true;
+          if (context.module === 'EMPLOYEES' && ['HR', 'HR_ADMIN', 'COMPANY_ADMIN'].includes(session.role)) return true;
+          if (context.module === 'ID_BADGES' && ['HR', 'HR_ADMIN', 'COMPANY_ADMIN'].includes(session.role)) return true;
+          if (context.module === 'COMPLIANCE' && ['HR', 'HR_ADMIN', 'ADMIN', 'COMPANY_ADMIN'].includes(session.role)) return true;
+          if (context.module === 'PAYROLL' && ['FINANCE', 'FINANCE_MANAGER', 'COMPANY_ADMIN'].includes(session.role)) return true;
           // EHS for incidents, etc...
-          if (context.module === 'SECURITY_INCIDENTS' && ['EHS'].includes(session.role)) return true;
+          if (context.module === 'SECURITY_INCIDENTS' && ['EHS', 'COMPANY_ADMIN'].includes(session.role)) return true;
           return false; // Strict isolation for official staff
        }
 

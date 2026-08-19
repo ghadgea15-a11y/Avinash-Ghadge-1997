@@ -1934,7 +1934,10 @@ export class FirestoreService {
           const notifs: AppNotification[] = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-          } as AppNotification));
+          } as AppNotification)).filter(n => {
+            if (!n.roleScope || n.roleScope.length === 0) return true;
+            return n.roleScope.includes(role as UserRole);
+          });
           onData(notifs);
         } else {
           onData([]);

@@ -29,6 +29,16 @@ import { AuditTrailService } from './auditTrailService';
 import { SecurityAuditService } from './securityAuditService';
 import { FirestoreService } from './firestoreService';
 
+// Allow dependency injection for testing
+export let _getDocs = getDocs;
+export function _setGetDocsMock(mock: any) { _getDocs = mock; }
+export let _setDoc = setDoc;
+export function _setSetDocMock(mock: any) { _setDoc = mock; }
+export let _updateDoc = updateDoc;
+export function _setUpdateDocMock(mock: any) { _updateDoc = mock; }
+export let _getDoc = getDoc;
+export function _setGetDocMock(mock: any) { _getDoc = mock; }
+
 function sanitizeForFirestore<T>(data: T): T {
   if (data === null || data === undefined) {
     return null as any;
@@ -250,6 +260,30 @@ export class CompliancePolicyEngine {
         createdAt: now,
         updatedAt: now,
         tags: ['security', 'export', 'grc', 'data-protection']
+      },
+      {
+        id: `POL-${companyId}-SEC-02`,
+        companyId,
+        name: 'Critical Security Anomaly Governance',
+        description: 'Enforces strict investigation and governance workflows for all CRITICAL or HIGH severity security anomalies.',
+        module: 'SECURITY',
+        policyType: 'AFTER_HOURS_DATA_DOWNLOAD', // using existing type for simplicity
+        scope: { scopeType: 'COMPANY_WIDE' },
+        conditions: [
+          { field: 'isGovernanceRequired', operator: 'EQUALS', value: true, description: 'High or Critical anomalies require strict GRC governance' }
+        ],
+        thresholds: { warningThreshold: 0, violationThreshold: 1 },
+        severity: 'CRITICAL',
+        enabled: true,
+        effectiveFrom: today,
+        enforcementAction: 'CREATE_VIOLATION',
+        responsibleRoles: ['SUPER_ADMIN', 'COMPANY_ADMIN'],
+        createdBy: authorId,
+        updatedBy: authorId,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        tags: ['security', 'anomaly', 'grc', 'mandatory-investigation']
       }
     ];
   }
@@ -261,7 +295,7 @@ export class CompliancePolicyEngine {
     if (!companyId) return [];
     try {
       const colRef = collection(db, 'companies', companyId, 'compliance_policies');
-      const snap = await getDocs(colRef);
+      const snap = await _getDocs(colRef);
       
       let policies = snap.docs.map(d => d.data() as CompliancePolicy);
 
@@ -270,7 +304,7 @@ export class CompliancePolicyEngine {
         const defaults = this.getDefaultPolicies(companyId);
         for (const p of defaults) {
           const docRef = doc(db, 'companies', companyId, 'compliance_policies', p.id);
-          await setDoc(docRef, p);
+          await _setDoc(docRef, p);
         }
         policies = defaults;
       }
@@ -304,6 +338,7 @@ export class CompliancePolicyEngine {
     
     // RBAC: Only Super Admin and Company Admin can modify policies
     if (session.role !== 'SUPER_ADMIN' && session.role !== 'COMPANY_ADMIN') {
+      await SecurityAuditService.logUnauthorizedAttempt(session, 'Unauthorized: Only Super Admins and Company Admins can manage compliance policies.', 'compliance_policies');
       throw new Error('Unauthorized: Only Super Admins and Company Admins can manage compliance policies.');
     }
 
@@ -311,7 +346,7 @@ export class CompliancePolicyEngine {
       const policyId = policyData.id || `POL-${companyId}-${policyData.module}-${Date.now().toString(36).toUpperCase()}`;
       const now = new Date().toISOString();
       const policyDocRef = doc(db, 'companies', companyId, 'compliance_policies', policyId);
-      const existingSnap = await getDoc(policyDocRef);
+      const existingSnap = await _getDoc(policyDocRef);
 
       let currentVersion = 0;
       let existingCreatedAt = now;
@@ -349,7 +384,7 @@ export class CompliancePolicyEngine {
       };
 
       // 1. Save main policy record
-      await setDoc(policyDocRef, sanitizeForFirestore(fullPolicy));
+      await _setDoc(policyDocRef, sanitizeForFirestore(fullPolicy));
 
       // 2. Save immutable version snapshot
       const versionId = `v${nextVersion}`;
@@ -365,7 +400,7 @@ export class CompliancePolicyEngine {
         changedByName: session.fullName || session.email,
         changedAt: now
       };
-      await setDoc(versionDocRef, sanitizeForFirestore(versionRecord));
+      await _setDoc(versionDocRef, sanitizeForFirestore(versionRecord));
 
       // 3. Log to Immutable Audit Trail
       const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId };
@@ -394,16 +429,17 @@ export class CompliancePolicyEngine {
   static async togglePolicy(session: UserSession, companyId: string, policyId: string, enabled: boolean): Promise<boolean> {
     if (!companyId || !policyId) return false;
     if (session.role !== 'SUPER_ADMIN' && session.role !== 'COMPANY_ADMIN') {
+      await SecurityAuditService.logUnauthorizedAttempt(session, 'Unauthorized to toggle policy', 'compliance_policies', policyId);
       throw new Error('Unauthorized to toggle policy');
     }
 
     try {
       const docRef = doc(db, 'companies', companyId, 'compliance_policies', policyId);
-      const snap = await getDoc(docRef);
+      const snap = await _getDoc(docRef);
       if (!snap.exists()) return false;
 
       const now = new Date().toISOString();
-      await updateDoc(docRef, {
+      await _updateDoc(docRef, {
         enabled,
         updatedBy: session.userId,
         updatedAt: now
@@ -435,7 +471,7 @@ export class CompliancePolicyEngine {
     if (!companyId || !policyId) return [];
     try {
       const colRef = collection(db, 'companies', companyId, 'compliance_policies', policyId, 'versions');
-      const snap = await getDocs(colRef);
+      const snap = await _getDocs(colRef);
       const versions = snap.docs.map(d => d.data() as PolicyVersionRecord);
       versions.sort((a, b) => b.version - a.version);
       return versions;
@@ -599,7 +635,7 @@ export class CompliancePolicyEngine {
             try {
               // Save violation record (idempotent write)
               const violationRef = doc(db, 'companies', companyId, 'compliance_violations', violationId);
-              await setDoc(violationRef, sanitizeForFirestore(violationRecord), { merge: true });
+              await _setDoc(violationRef, sanitizeForFirestore(violationRecord), { merge: true });
 
               // Escalate to Security Anomaly if High/Critical
               if (policy.severity === 'HIGH' || policy.severity === 'CRITICAL') {
@@ -607,7 +643,7 @@ export class CompliancePolicyEngine {
                   companyId,
                   session?.userId || 'SYSTEM',
                   session?.role || 'SYSTEM',
-                  session?.employeeId,
+                  session?.employeeId || 'SYSTEM_EMP_ID',
                   `COMPLIANCE_VIOLATION_${policy.policyType}`,
                   transactionType,
                   correlationId,
@@ -655,7 +691,7 @@ export class CompliancePolicyEngine {
         if (!skipPersistence) {
           try {
             const evalRef = doc(db, 'companies', companyId, 'compliance_evaluations', evalId);
-            await setDoc(evalRef, sanitizeForFirestore(evalRecord));
+            await _setDoc(evalRef, sanitizeForFirestore(evalRecord));
 
             // 5. Immutable Audit Trail for Non-Compliant Results
             if (resultType === 'VIOLATION' || resultType === 'WARNING') {
@@ -788,11 +824,11 @@ export class CompliancePolicyEngine {
       };
 
       const bpmRef = doc(db, 'companies', companyId, 'approval_requests', bpmId);
-      await setDoc(bpmRef, sanitizeForFirestore(workflowData), { merge: true });
+      await _setDoc(bpmRef, sanitizeForFirestore(workflowData), { merge: true });
 
       // Link BPM ID back to violation
       const violationRef = doc(db, 'companies', companyId, 'compliance_violations', violation.id);
-      await updateDoc(violationRef, {
+      await _updateDoc(violationRef, {
         bpmWorkflowId: bpmId,
         bpmStatus: 'PENDING',
         status: 'REMEDIATION'
@@ -818,7 +854,7 @@ export class CompliancePolicyEngine {
     if (!companyId) return [];
     try {
       const colRef = collection(db, 'companies', companyId, 'compliance_violations');
-      const snap = await getDocs(colRef);
+      const snap = await _getDocs(colRef);
       let list = snap.docs.map(d => d.data() as ComplianceViolationRecord);
 
       list.sort((a, b) => new Date(b.detectedAt).getTime() - new Date(a.detectedAt).getTime());
@@ -852,7 +888,7 @@ export class CompliancePolicyEngine {
 
     try {
       const docRef = doc(db, 'companies', companyId, 'compliance_violations', violationId);
-      const snap = await getDoc(docRef);
+      const snap = await _getDoc(docRef);
       if (!snap.exists()) return false;
 
       const current = snap.data() as ComplianceViolationRecord;
@@ -870,7 +906,7 @@ export class CompliancePolicyEngine {
           : current.resolvedAt
       };
 
-      await updateDoc(docRef, updatePayload);
+      await _updateDoc(docRef, updatePayload);
 
       // Log to Immutable Audit Trail
       const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId };
@@ -906,7 +942,7 @@ export class CompliancePolicyEngine {
 
     try {
       const docRef = doc(db, 'companies', companyId, 'compliance_violations', violationId);
-      const snap = await getDoc(docRef);
+      const snap = await _getDoc(docRef);
       if (!snap.exists()) return false;
 
       const current = snap.data() as ComplianceViolationRecord;
@@ -933,9 +969,9 @@ export class CompliancePolicyEngine {
       };
 
       const bpmRef = doc(db, 'companies', companyId, 'approval_requests', bpmId);
-      await setDoc(bpmRef, sanitizeForFirestore(workflowData), { merge: true });
+      await _setDoc(bpmRef, sanitizeForFirestore(workflowData), { merge: true });
 
-      await updateDoc(docRef, {
+      await _updateDoc(docRef, {
         status: 'REMEDIATION',
         remediationPlan,
         bpmWorkflowId: bpmId,
@@ -970,7 +1006,7 @@ export class CompliancePolicyEngine {
     try {
       const colRef = collection(db, 'companies', companyId, 'compliance_evaluations');
       const q = query(colRef, limit(limitCount));
-      const snap = await getDocs(q);
+      const snap = await _getDocs(q);
       const items = snap.docs.map(d => d.data() as ComplianceEvaluationRecord);
       items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       return items;
