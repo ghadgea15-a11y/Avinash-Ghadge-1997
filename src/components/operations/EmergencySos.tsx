@@ -80,7 +80,7 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
         
         
       };
-      // await FirestoreService.createNotification(session.companyId, notif);
+      await FirestoreService.createNotification(session.companyId, notif);
       setShowTriggerModal(false);
     }
   };

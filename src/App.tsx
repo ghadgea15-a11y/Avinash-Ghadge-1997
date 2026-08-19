@@ -142,7 +142,7 @@ export function App() {
   // Realtime notification monitor (authenticated only)
   useEffect(() => {
     if (userSession) {
-      const unsub = FirestoreService.subscribeToNotifications(userSession.role, (notifs) => {
+      const unsub = FirestoreService.subscribeToNotifications(userSession.companyId, userSession.role, (notifs) => {
         setUnreadNotifCount(notifs.filter(n => !n.isRead).length);
       });
       return () => unsub();

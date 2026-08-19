@@ -41,7 +41,7 @@ export class BpmEscalationAdminService {
 
     const instanceRef = db.collection('companies').doc(companyId).collection('bpm_instances').doc(instanceId);
     
-    await db.runTransaction(async (transaction) => {
+    await db.runTransaction(async (transaction: any) => {
       const instanceSnap = await transaction.get(instanceRef);
       if (!instanceSnap.exists) {
         result.details.push('Instance does not exist.');
@@ -212,15 +212,18 @@ export class BpmEscalationAdminService {
             if (!existingEscSnap.exists) {
               const previousApprovers = [...instance.currentApprovers];
               
-              // We simulate resolving targets to Super Admins / Managers if this is executing server-side.
-              // In reality, this requires querying users by role. We'll fallback to a generic admin marker for this snippet.
-              // The real target resolution query is handled outside the transaction if needed, but for simplicity we reassign to a placeholder or keep it.
-              let resolvedTargets = ['admin@' + companyId]; // Placeholder resolution for the server snippet
               const allowReassignment = levelConfig.reassignmentAllowed || policy.reassignmentAllowed;
+              let resolvedTargets = ['admin@' + companyId];
+              
+              if (levelConfig.targetUserId) {
+                resolvedTargets = [levelConfig.targetUserId];
+              } else if (levelConfig.targetRole) {
+                resolvedTargets = [levelConfig.targetRole];
+              }
 
               if (allowReassignment) {
                 instance.currentApprovers = resolvedTargets;
-                instance.reassignedFrom = previousApprovers.join(',');
+                instance.reassignedFrom = previousApprovers;
                 result.actionsTaken.reassigned = true;
               }
 
@@ -231,7 +234,7 @@ export class BpmEscalationAdminService {
                 id: notifId,
                 title: isFinal ? `Final Escalation: ${instance.sourceModule} Approval` : `Escalation Notice: ${instance.sourceModule} Approval`,
                 message: levelConfig.customNotificationMessage || `Approval request ${instance.sourceRecordId} has been escalated to Level ${levelConfig.level}.`,
-                type: 'CRITICAL',
+                type: 'ALERT',
                 timestamp: nowIso,
                 isRead: false,
                 actionRoute: 'APPROVAL_CENTER'
@@ -373,6 +376,9 @@ export class BpmEscalationAdminService {
 
       for (const compDoc of compSnap.docs) {
         const companyId = compDoc.id;
+        // Auto-refresh delegation lifecycle states
+        await this.refreshCompanyDelegations(companyId, authoritativeTime);
+
         const res = await this.processAllCompanyPendingApprovals(companyId, authoritativeTime);
         companiesProcessed++;
         totalEvaluated += res.totalChecked;
@@ -387,6 +393,47 @@ export class BpmEscalationAdminService {
     } catch (err) {
       console.error('[BpmEscalationAdminService] processAllPendingApprovalsGlobally error:', err);
       return { companiesProcessed: 0, totalEvaluated: 0, totalEscalated: 0 };
+    }
+  }
+
+  /**
+   * Auto-expires past delegations and activates scheduled ones server-authoritatively.
+   */
+  static async refreshCompanyDelegations(companyId: string, authoritativeTime?: Date): Promise<number> {
+    const db = getAdminDb();
+    const now = authoritativeTime || new Date();
+    const nowMs = now.getTime();
+    const nowIso = now.toISOString();
+
+    try {
+      const snap = await db.collection('companies').doc(companyId).collection('bpm_delegations')
+        .where('status', 'in', ['ACTIVE', 'SCHEDULED'])
+        .get();
+
+      let updated = 0;
+      const batch = db.batch();
+
+      for (const doc of snap.docs) {
+        const data = doc.data();
+        const startMs = new Date(data.startAt).getTime();
+        const endMs = new Date(data.endAt).getTime();
+
+        if (nowMs > endMs && data.status !== 'EXPIRED') {
+          batch.update(doc.ref, { status: 'EXPIRED', updatedAt: nowIso });
+          updated++;
+        } else if (nowMs >= startMs && nowMs <= endMs && data.status === 'SCHEDULED') {
+          batch.update(doc.ref, { status: 'ACTIVE', updatedAt: nowIso });
+          updated++;
+        }
+      }
+
+      if (updated > 0) {
+        await batch.commit();
+      }
+      return updated;
+    } catch (err) {
+      console.warn(`[BpmEscalationAdminService] refreshCompanyDelegations error for ${companyId}:`, err);
+      return 0;
     }
   }
 }

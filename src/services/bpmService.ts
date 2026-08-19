@@ -5,15 +5,17 @@ import {
   BpmApprovalStep,
   BpmApprovalInstance, 
   BpmApprovalAction, 
-  BpmApprovalDelegation, 
+  ProxyDelegation,
   BpmApprovalState, 
   BpmApprovalActionType,
   EscalationPolicy
 } from '../types/bpm';
-import { UserSession } from '../types';
+import { UserSession, AppNotification } from '../types';
 import { RbacService } from './rbacService';
 import { BpmIntegrationService } from './bpmIntegrationService';
 import { BpmEscalationService } from './bpmEscalationService';
+import { BpmDelegationService } from './bpmDelegationService';
+import { BpmThresholdRoutingService } from './bpmThresholdRoutingService';
 
 export class BpmService {
 
@@ -22,8 +24,8 @@ export class BpmService {
   // -------------------------------------------------------------
 
   /**
-   * Evaluates business transaction to determine necessary workflow 
-   * and initializes an Approval Instance. 
+   * Evaluates business transaction with Threshold Routing Engine to determine 
+   * the exact workflow and initializes an Approval Instance. 
    */
   static async submitForApproval(
     companyId: string,
@@ -34,29 +36,64 @@ export class BpmService {
     transactionData: any
   ): Promise<BpmApprovalInstance | null> {
     
-    // 1. Fetch active workflows for this module & transaction
-    const wfQuery = query(
-      collection(db, 'companies', companyId, 'bpm_workflows'),
-      where('module', '==', sourceModule),
-      where('transactionType', '==', transactionType),
-      where('active', '==', true)
-    );
-    const wfSnap = await getDocs(wfQuery);
+    // 1. Authoritative Threshold Routing evaluation
+    let selectedWorkflowId: string | undefined;
+    let routingDecision: any = undefined;
 
-    if (wfSnap.empty) {
-      // No active workflow found, meaning either it's auto-approved or manual
+    try {
+      const routingResult = await BpmThresholdRoutingService.resolveWorkflowForTransaction(
+        companyId,
+        sourceModule,
+        transactionType,
+        transactionData || {},
+        undefined,
+        requesterId
+      );
+      if (routingResult && routingResult.selectedWorkflowId) {
+        selectedWorkflowId = routingResult.selectedWorkflowId;
+        routingDecision = routingResult.routingDecision;
+      }
+    } catch (err) {
+      console.warn('[BpmService] Threshold routing evaluation error, falling back to direct workflow lookup:', err);
+    }
+
+    let workflow: BpmApprovalWorkflow | null = null;
+
+    // 2. Fetch the routed workflow if resolved
+    if (selectedWorkflowId) {
+      const directWfQuery = query(
+        collection(db, 'companies', companyId, 'bpm_workflows'),
+        where('workflowId', '==', selectedWorkflowId),
+        where('active', '==', true)
+      );
+      const directSnap = await getDocs(directWfQuery);
+      if (!directSnap.empty) {
+        workflow = directSnap.docs[0].data() as BpmApprovalWorkflow;
+      }
+    }
+
+    // 3. Fallback to standard module/transaction workflow if not found
+    if (!workflow) {
+      const wfQuery = query(
+        collection(db, 'companies', companyId, 'bpm_workflows'),
+        where('module', '==', sourceModule),
+        where('transactionType', '==', transactionType),
+        where('active', '==', true)
+      );
+      const wfSnap = await getDocs(wfQuery);
+      if (wfSnap.empty) {
+        return null;
+      }
+      workflow = wfSnap.docs[0].data() as BpmApprovalWorkflow;
+    }
+
+    // 4. Validate conditions
+    const isMatch = this.evaluateConditions(workflow, transactionData);
+    if (!isMatch) {
       return null;
     }
 
-    const workflow = wfSnap.docs[0].data() as BpmApprovalWorkflow;
-
-    // 2. Validate conditions to see if it actually matches
-    const isMatch = this.evaluateConditions(workflow, transactionData);
-    if (!isMatch) {
-      return null; // Bypass approval if condition isn't met
-    }
-
-    // 3. Resolve Tier 1 Approvers
+    // 5. Resolve Tier 1 Approvers
     const step1 = workflow.steps.find(s => s.sequence === 1);
     if (!step1) {
       throw new Error(`Workflow ${workflow.workflowName} has no steps configured.`);
@@ -64,7 +101,7 @@ export class BpmService {
 
     const currentApprovers = await this.resolveApprovers(companyId, step1, requesterId);
 
-    // 4. Resolve Escalation Policy
+    // 6. Resolve Escalation Policy
     const escalationPolicy = await BpmEscalationService.getActivePolicy(
       companyId,
       sourceModule,
@@ -73,7 +110,7 @@ export class BpmService {
       step1.stepId
     );
 
-    // 5. Create the instance
+    // 7. Create the instance
     const instanceId = doc(collection(db, 'bpm_instances')).id;
     const now = new Date().toISOString();
     const dueAt = escalationPolicy 
@@ -87,17 +124,23 @@ export class BpmService {
       sourceModule,
       transactionType,
       sourceRecordId,
+      requesterId,
+      requesterName: transactionData?.requesterName || transactionData?.employeeName,
       status: 'SUBMITTED',
       currentTier: 1,
       currentStepId: step1.stepId,
       currentApprovers,
       history: [],
       submittedAt: now,
+      routingDecision,
       escalationPolicyId: escalationPolicy?.policyId,
       policyVersion: escalationPolicy?.version || 1,
       escalationLevel: 0,
       dueAt,
       isOverdue: false,
+      siteId: transactionData?.siteId,
+      departmentId: transactionData?.departmentId,
+      metadata: transactionData,
       createdAt: now,
       updatedAt: now
     };
@@ -117,7 +160,7 @@ export class BpmService {
   }
 
   // -------------------------------------------------------------
-  // Approval Actions (Multi-Tier)
+  // Approval Actions (Multi-Tier & Proxy Delegation)
   // -------------------------------------------------------------
 
   static async performAction(
@@ -128,6 +171,7 @@ export class BpmService {
     delegateId?: string
   ): Promise<BpmApprovalInstance> {
     const instanceRef = doc(db, 'companies', session.companyId, 'bpm_instances', instanceId);
+    let proxyDetails: { asProxy: boolean; delegatorId?: string; delegatorName?: string; delegationId?: string } = { asProxy: false };
     
     const result = await runTransaction(db, async (transaction) => {
       const snap = await transaction.get(instanceRef);
@@ -141,11 +185,18 @@ export class BpmService {
         throw new Error(`Cannot perform action. Status is ${instance.status}`);
       }
 
-      // Check if actor is authorized or a valid delegate
-      const isAuthorized = await this.checkAuthorization(session, instance);
-      if (!isAuthorized.valid) {
-        throw new Error('You are not authorized to perform this action.');
+      // Authoritative check: Direct approver or Active Proxy
+      const authCheck = await BpmDelegationService.canUserActOnInstance(session, instance);
+      if (!authCheck.canAct) {
+        throw new Error(authCheck.reason || 'You are not authorized to perform this approval action.');
       }
+
+      proxyDetails = {
+        asProxy: authCheck.asProxy,
+        delegatorId: authCheck.delegatorId,
+        delegatorName: authCheck.delegatorName,
+        delegationId: authCheck.delegationId
+      };
 
       const now = new Date().toISOString();
       const actionId = doc(collection(db, 'bpm_actions')).id;
@@ -153,12 +204,15 @@ export class BpmService {
       const actionRecord: BpmApprovalAction = {
         id: actionId,
         approvalInstanceId: instanceId,
-        stepId: instance.currentStepId!,
+        stepId: instance.currentStepId || instance.currentTier.toString(),
         actorId: session.userId,
         action: actionType,
         timestamp: now,
-        reason,
-        delegatedFrom: isAuthorized.delegatedFrom
+        reason: reason || (authCheck.asProxy ? `Action taken by proxy on behalf of ${authCheck.delegatorName}` : undefined),
+        delegatedFrom: authCheck.delegatorId,
+        delegationId: authCheck.delegationId,
+        actingProxyName: authCheck.asProxy ? (session.fullName || session.email) : undefined,
+        originalApproverName: authCheck.delegatorName
       };
 
       instance.history.push(actionRecord);
@@ -173,7 +227,7 @@ export class BpmService {
           const wfSnap = await transaction.get(wfRef);
           
           if (!wfSnap.exists()) {
-             // Edge case: workflow deleted
+             // Edge case: workflow deleted or direct approval
              instance.status = 'APPROVED';
              instance.completedAt = now;
           } else {
@@ -194,9 +248,8 @@ export class BpmService {
               instance.isOverdue = false;
               instance.reassignedFrom = undefined;
               
-              // Load active policy or retain current policy to recalculate dueAt
               if (instance.dueAt) {
-                // By default 24h or policy interval
+                // Reset due target for new tier (24h default)
                 instance.dueAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
               }
               
@@ -235,10 +288,55 @@ export class BpmService {
       return instance;
     });
 
+    // Post-Action Integrations & Auditing
     if (result.status === 'APPROVED') {
       await BpmIntegrationService.onWorkflowApproved(result, session.userId, session.fullName);
     } else if (result.status === 'REJECTED') {
       await BpmIntegrationService.onWorkflowRejected(result, session.userId, session.fullName, reason || 'Rejected by approver');
+    }
+
+    // Proxy Audit & Delegator Notification
+    if (proxyDetails.asProxy && proxyDetails.delegatorId) {
+      try {
+        const auditLogId = `AUDIT_PROXY_ACT_${instanceId}_${Date.now()}`;
+        const auditRef = doc(db, 'companies', session.companyId, 'audit_logs', auditLogId);
+        await setDoc(auditRef, {
+          id: auditLogId,
+          companyId: session.companyId,
+          module: 'BPM_DELEGATION',
+          action: 'PROXY_APPROVAL_ACTION',
+          description: `${session.fullName || session.userId} acted as proxy for ${proxyDetails.delegatorName || proxyDetails.delegatorId} (Action: ${actionType}) on ${result.sourceModule} (${result.sourceRecordId})`,
+          performedBy: session.userId,
+          performedByName: session.fullName || 'User',
+          targetId: instanceId,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            instanceId,
+            actionType,
+            delegationId: proxyDetails.delegationId,
+            delegatorId: proxyDetails.delegatorId,
+            proxyUserId: session.userId,
+            sourceRecordId: result.sourceRecordId,
+            sourceModule: result.sourceModule
+          }
+        });
+
+        // Notify Delegator
+        const notifId = `NOTIF_PROXY_ACT_${instanceId}_${Date.now()}`;
+        const notifRef = doc(db, 'companies', session.companyId, 'notifications', notifId);
+        const delegatorNotif: AppNotification = {
+          id: notifId,
+          title: `Proxy Action: ${actionType} on ${result.sourceModule}`,
+          message: `Your designated proxy ${session.fullName || 'Authorized Proxy'} has executed ${actionType} on request ${result.sourceRecordId} on your behalf.`,
+          type: actionType === 'APPROVE' ? 'SUCCESS' : 'INFO',
+          timestamp: new Date().toISOString(),
+          isRead: false,
+          actionRoute: 'APPROVAL_CENTER'
+        };
+        await setDoc(notifRef, delegatorNotif);
+      } catch (logErr) {
+        console.warn('[BpmService] Proxy audit or notification warning:', logErr);
+      }
     }
 
     return result;
@@ -258,77 +356,41 @@ export class BpmService {
     if (step.approverType === 'USER' && step.approverUserId) {
       approvers.push(step.approverUserId);
     } else if (step.approverType === 'ROLE' && step.approverRole) {
-      // Find users with this role
       const usersQuery = query(
         collection(db, 'companies', companyId, 'users'),
         where('role', '==', step.approverRole)
       );
       const snap = await getDocs(usersQuery);
       approvers = snap.docs.map(d => d.id);
-    } else if (step.approverType === 'MANAGER') {
-      // In a real system, lookup requester's manager in employee record
-      // Placeholder logic
     }
 
-    // Filter out self-approval unless permitted
-    // We enforce segregation of duties by default
+    // Filter out self-approval for segregation of duties
     approvers = approvers.filter(id => id !== requesterId);
 
-    // Expand with active delegates
+    // Expand with active delegates (so either original or delegate can be notified/acted upon)
     const activeDelegates = await this.getActiveDelegates(companyId, approvers);
-    
-    // Add valid delegates to the list (so either original or delegate can approve)
     const finalApprovers = new Set([...approvers, ...activeDelegates]);
     return Array.from(finalApprovers);
-  }
-
-  /**
-   * Checks if current user is directly authorized or via delegation.
-   */
-  private static async checkAuthorization(session: UserSession, instance: BpmApprovalInstance): Promise<{ valid: boolean, delegatedFrom?: string }> {
-    if (instance.currentApprovers.includes(session.userId)) {
-      return { valid: true };
-    }
-
-    // Check if the user is a delegate for one of the actual approvers
-    const delegatesQuery = query(
-      collection(db, 'companies', session.companyId, 'bpm_delegations'),
-      where('delegateId', '==', session.userId),
-      where('status', '==', 'ACTIVE')
-    );
-    const snap = await getDocs(delegatesQuery);
-    
-    const now = new Date().toISOString();
-    for (const d of snap.docs) {
-      const del = d.data() as BpmApprovalDelegation;
-      if (del.startDateTime <= now && del.endDateTime >= now) {
-         // Is delegator one of the current approvers?
-         if (instance.currentApprovers.includes(del.delegatorId)) {
-           return { valid: true, delegatedFrom: del.delegatorId };
-         }
-      }
-    }
-
-    return { valid: false };
   }
 
   static async getActiveDelegates(companyId: string, userIds: string[]): Promise<string[]> {
     if (userIds.length === 0) return [];
     
     const delegates: string[] = [];
-    // Firestore 'in' has max 10, batch if needed, but for simplicity assuming small tier size
     const delQuery = query(
       collection(db, 'companies', companyId, 'bpm_delegations'),
-      where('delegatorId', 'in', userIds.slice(0, 10)),
-      where('status', '==', 'ACTIVE')
+      where('delegatorUserId', 'in', userIds.slice(0, 10)),
+      where('status', 'in', ['ACTIVE', 'SCHEDULED'])
     );
     const snap = await getDocs(delQuery);
-    const now = new Date().toISOString();
+    const now = Date.now();
     
     snap.docs.forEach(d => {
-      const del = d.data() as BpmApprovalDelegation;
-      if (del.startDateTime <= now && del.endDateTime >= now) {
-        delegates.push(del.delegateId);
+      const del = d.data() as ProxyDelegation;
+      const startMs = new Date(del.startAt).getTime();
+      const endMs = new Date(del.endAt).getTime();
+      if (startMs <= now && now <= endMs) {
+        delegates.push(del.delegateUserId);
       }
     });
 
@@ -354,27 +416,48 @@ export class BpmService {
           if (dataVal <= cond.value) return false; break;
         case 'LESS_THAN':
           if (dataVal >= cond.value) return false; break;
-        // ... more
       }
     }
     return true;
   }
 
+  // -------------------------------------------------------------
   // Queries for the UI
+  // -------------------------------------------------------------
 
+  /**
+   * Retrieves pending approvals for the current user, merging:
+   * 1. Approvals directly assigned to user
+   * 2. Approvals delegated to user via active Proxy Delegation
+   */
   static async getMyApprovals(session: UserSession): Promise<BpmApprovalInstance[]> {
-    // Note: Due to limitations of Firestore array-contains on large dynamically expanded lists (like delegates),
-    // we query where currentApprovers array-contains uid.
-    // If the UI relies heavily on delegates, the delegate injection logic needs to push the delegate ID into currentApprovers
-    // at the time of assignment, which we are doing!
-    const q = query(
+    // 1. Direct assignments
+    const directQuery = query(
       collection(db, 'companies', session.companyId, 'bpm_instances'),
       where('currentApprovers', 'array-contains', session.userId),
       where('status', '==', 'PENDING_APPROVAL')
     );
-    
-    const snap = await getDocs(q);
-    return snap.docs.map(d => d.data() as BpmApprovalInstance);
+    const directSnap = await getDocs(directQuery);
+    const directList = directSnap.docs.map(d => d.data() as BpmApprovalInstance);
+
+    // 2. Delegated assignments
+    let delegatedList: BpmApprovalInstance[] = [];
+    try {
+      const delegatedItems = await BpmDelegationService.getDelegatedPendingApprovals(session);
+      delegatedList = delegatedItems.map(item => item.instance);
+    } catch (delErr) {
+      console.warn('[BpmService] Error loading delegated pending approvals:', delErr);
+    }
+
+    // 3. Deduplicate by instance id
+    const instanceMap = new Map<string, BpmApprovalInstance>();
+    [...directList, ...delegatedList].forEach(inst => {
+      instanceMap.set(inst.id, inst);
+    });
+
+    return Array.from(instanceMap.values()).sort((a, b) => 
+      new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    );
   }
 
 }

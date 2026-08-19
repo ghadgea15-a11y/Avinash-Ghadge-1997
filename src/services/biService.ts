@@ -109,7 +109,7 @@ export class BiService {
       category: 'SERVICE',
       description: 'Number of open helpdesk/service tickets',
       calculationType: 'COUNT',
-      source: 'service_tickets',
+      source: 'serviceTickets',
       unit: 'Count',
       frequency: 'DAILY',
       active: true,
@@ -259,7 +259,7 @@ export class BiService {
           }
           case 'SERVICE_OPEN_TICKETS': {
             try {
-               const snap = await getCountFromServer(query(collection(db, 'companies', companyId, 'service_tickets'), where('status', 'in', ['OPEN', 'IN_PROGRESS'])));
+               const snap = await getCountFromServer(query(collection(db, 'companies', companyId, 'serviceTickets'), where('status', 'in', ['OPEN', 'IN_PROGRESS'])));
                currentVal = snap.data().count;
                moduleDataQuality['SERVICE'] = 'COMPLETE';
             } catch(e) {

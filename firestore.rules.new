@@ -269,7 +269,7 @@ service cloud.firestore {
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
-      match /employee_documents/{docId} {
+       
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create, update: if isSuperAdmin() || isManager(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -783,7 +783,7 @@ service cloud.firestore {
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
-      match /documents/{docId} {
+       
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -834,11 +834,6 @@ service cloud.firestore {
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
       match /statutory_configs/{docId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
-        allow create, update: if isSuperAdmin() || sameCompany(companyId);
-        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
-      }
-      match /attendance_adjustments/{docId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -940,7 +935,20 @@ service cloud.firestore {
     // GLOBAL TOP-LEVEL COLLECTIONS
     // ============================================================
 
-
+    match /approval_requests/{requestId} {
+      allow read: if signedIn() && (
+        isSuperAdmin() ||
+        resource == null ||
+        resource.data.uid == request.auth.uid ||
+        isCompanyAdmin(resource.data.companyId)
+      );
+      allow create: if signedIn();
+      allow update: if signedIn() && (
+        isSuperAdmin() ||
+        isCompanyAdmin(resource.data.companyId)
+      );
+      allow delete: if isSuperAdmin();
+    }
 
     match /system_audit_logs/{logId} {
       allow read: if isSuperAdmin();
@@ -948,7 +956,11 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-
+    match /notifications/{notificationId} {
+      allow read: if signedIn();
+      allow create: if isSuperAdmin() || (signedIn() && userExists() && isManager(userData().companyId));
+      allow update, delete: if isSuperAdmin() || (signedIn() && userExists() && isCompanyAdmin(userData().companyId));
+    }
 
     match /plans/{planId} {
       allow read: if signedIn();

@@ -189,7 +189,7 @@ export class PredictionService {
       const slaDef = slaDefSnap.docs[0].data() as SlaDefinitionRecord;
 
       // 2. Fetch Ticket (Incidents or WorkOrders, let's assume WorkOrders as the generic container for tasks)
-      const ticketSnap = await getDocs(query(collection(db, 'companies', companyId, 'work_orders'), where('id', '==', ticketId)));
+      const ticketSnap = await getDocs(query(collection(db, 'companies', companyId, 'serviceTickets'), where('id', '==', ticketId)));
       if (ticketSnap.empty) throw new Error('Ticket not found');
       const ticket = ticketSnap.docs[0].data() as any; // Using any as WorkOrder might not map perfectly to ticket
 

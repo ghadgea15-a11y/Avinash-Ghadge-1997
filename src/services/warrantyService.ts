@@ -175,7 +175,7 @@ export class WarrantyService {
 
           // If expired or expiring soon, send notification
           if (newStatus === 'EXPIRING_SOON' || newStatus === 'EXPIRED') {
-            await FirestoreService.createNotification({
+            await FirestoreService.createNotification(companyId, {
               id: `NOTIF_WARR_${newStatus}_${warranty.id}_${Date.now()}`,
               title: `Warranty ${newStatus === 'EXPIRED' ? 'Expired' : 'Expiring Soon'}`,
               message: `Warranty ${warranty.warrantyNumber} for asset ${warranty.assetId} is ${newStatus.replace('_', ' ').toLowerCase()}.`,
@@ -254,7 +254,7 @@ export class WarrantyService {
         `${isNew ? 'Created' : 'Updated'} warranty claim for warranty ${claim.warrantyId}`
       );
 
-      await FirestoreService.createNotification({
+      await FirestoreService.createNotification(companyId, {
         id: `NOTIF_CLAIM_${claim.id}_${Date.now()}`,
         title: 'Warranty Claim Submitted',
         message: `Claim submitted for asset ${claim.assetId} under warranty ${claim.warrantyId}.`,
@@ -355,7 +355,7 @@ export class WarrantyService {
       );
 
       // Notify
-      await FirestoreService.createNotification({
+      await FirestoreService.createNotification(companyId, {
         id: `NOTIF_CLAIM_STATUS_${claimId}_${Date.now()}`,
         title: `Warranty Claim ${newStatus.replace('_', ' ')}`,
         message: `Claim ${claimId} status changed to ${newStatus}.`,

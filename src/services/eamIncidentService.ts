@@ -103,7 +103,7 @@ export class EamIncidentService {
         `Asset ${assetId} reported as ${reportData.type}`
       );
 
-      await FirestoreService.createNotification({
+      await FirestoreService.createNotification(companyId, {
         id: `NOTIF_EAM_INC_${incidentId}_${Date.now()}`,
         title: `Asset ${reportData.type}`,
         message: `Asset ${assetId} has been reported as ${reportData.type}.`,
@@ -256,7 +256,7 @@ export class EamIncidentService {
 
     await FirestoreService.logAuditEvent(companyId, session.userId, session.fullName, 'asset.recovery_reported', `Recovery reported for asset ${assetId}`);
     
-    await FirestoreService.createNotification({
+    await FirestoreService.createNotification(companyId, {
       id: `NOTIF_REC_${incidentId}_${Date.now()}`,
       title: 'Asset Recovery Reported',
       message: `Asset ${assetId} recovery has been reported. Verification pending.`,

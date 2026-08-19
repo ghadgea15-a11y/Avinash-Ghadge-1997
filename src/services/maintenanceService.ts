@@ -236,7 +236,7 @@ export class MaintenanceService {
 
         // Notifications outside transaction to avoid repeats if transaction retries
         const occ = occDoc.data() as MaintenanceOccurrence;
-        await FirestoreService.createNotification({
+        await FirestoreService.createNotification(companyId, {
           id: `NOTIF_${Date.now()}_${occ.maintenanceOccurrenceId}`,
           title: 'New Maintenance Work Order',
           message: `Work Order has been generated for asset ${occ.assetId}.`,

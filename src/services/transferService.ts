@@ -18,7 +18,7 @@ export class TransferService {
     await setDoc(ref, transfer);
     
     // Notification
-    const notifRef = doc(collection(db, 'notifications'));
+    const notifRef = doc(collection(db, 'companies', transfer.companyId, 'notifications'));
     await setDoc(notifRef, {
       id: notifRef.id,
       companyId: transfer.companyId,

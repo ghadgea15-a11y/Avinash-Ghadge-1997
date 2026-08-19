@@ -731,7 +731,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     
     if (ok && newInc.severity === 'CRITICAL' && !incidentForm.id) {
        // Only notify on creation
-       await FirestoreService.createNotification({
+       await FirestoreService.createNotification(companyId, {
           id: `NOTIF-${Date.now()}`,
           title: 'CRITICAL INCIDENT REPORTED',
           message: `${newInc.title} at ${newInc.siteName}`,
@@ -787,7 +787,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     // If escalated, route notification to A3/A4 Operations leadership
     if (ok && status === 'ESCALATED') {
       const inc = incidents.find(i => i.id === reportId);
-      await FirestoreService.createNotification({
+      await FirestoreService.createNotification(companyId, {
         id: `NOTIF-ESC-${Date.now()}`,
         title: 'ESCALATED INCIDENT/COMPLAINT - A3/A4 ACTION REQUIRED',
         message: `Incident/Complaint "${inc?.title || reportId}" has been escalated for site ${inc?.siteName || selectedSiteId}. Immediate review required by Operations Leadership.`,

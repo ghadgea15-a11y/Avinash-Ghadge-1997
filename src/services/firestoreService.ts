@@ -1819,9 +1819,9 @@ export class FirestoreService {
   /**
    * Listen to real-time Notifications
    */
-  static async createNotification(notification: AppNotification): Promise<boolean> {
+  static async createNotification(companyId: string, notification: AppNotification): Promise<boolean> {
     try {
-      const ref = doc(db, 'notifications', notification.id);
+      const ref = doc(db, 'companies', companyId, 'notifications', notification.id);
       await setDoc(ref, notification);
       return true;
     } catch (e) {
@@ -1831,12 +1831,13 @@ export class FirestoreService {
   }
 
   static subscribeToNotifications(
+    companyId: string,
     role: string, 
     onData: (notifications: AppNotification[]) => void
   ): () => void {
     try {
       const q = query(
-        collection(db, 'notifications'),
+        collection(db, 'companies', companyId, 'notifications'),
         orderBy('timestamp', 'desc'),
         limit(20)
       );
@@ -4295,7 +4296,7 @@ export class FirestoreService {
 
       // Create in-app notification if pending approval
       if (status === 'PENDING_APPROVAL') {
-        await this.createNotification({
+        await this.createNotification(companyId, {
           id: `NOTIF_OT_${Date.now()}`,
           title: 'Overtime Approval Pending',
           message: `${request.employeeName} has ${AttendanceCalculationEngine.formatDuration(request.roundedOvertimeMinutes)} of overtime on ${request.workDate} pending approval.`,
@@ -5664,7 +5665,7 @@ const allAttendances: any[] = [];
         `Created ${batchPayload.paymentMethod} bank payment batch ${batchPayload.batchNumber} for ${batchPayload.payrollCycleLabel}. Total: ₹${batchPayload.totalAmount.toLocaleString('en-IN')}, Beneficiaries: ${batchPayload.validBeneficiaryCount}`
       );
 
-      await this.createNotification({
+      await this.createNotification(companyId, {
         id: `NOTIF_BATCH_${batchPayload.id}`,
         title: `Bank Payment Batch Created: ${batchPayload.batchNumber}`,
         message: `Payment batch for ${batchPayload.payrollCycleLabel} (₹${batchPayload.totalAmount.toLocaleString('en-IN')}) is ready for finance review.`,
@@ -5727,7 +5728,7 @@ const allAttendances: any[] = [];
         `Approved bank payment batch ${batch.batchNumber} (₹${batch.totalAmount.toLocaleString('en-IN')}) for export by ${actor.name}`
       );
 
-      await this.createNotification({
+      await this.createNotification(companyId, {
         id: `NOTIF_APPV_BATCH_${batch.id}`,
         title: `Payment Batch Approved: ${batch.batchNumber}`,
         message: `Batch ${batch.batchNumber} has been approved by ${actor.name} and is ready for bank export.`,

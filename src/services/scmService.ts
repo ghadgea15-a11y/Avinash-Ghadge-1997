@@ -66,7 +66,7 @@ export class ScmService {
         createdAt: new Date().toISOString()
       });
       
-      const notifRef = doc(collection(db, 'notifications'));
+      const notifRef = doc(collection(db, 'companies', companyId, 'notifications'));
       t.set(notifRef, {
         id: notifRef.id,
         companyId,

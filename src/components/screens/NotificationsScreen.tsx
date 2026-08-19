@@ -38,7 +38,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
 
   useEffect(() => {
     if (!userSession) return;
-    const unsub = FirestoreService.subscribeToNotifications(userSession.role, (notifs) => {
+    const unsub = FirestoreService.subscribeToNotifications(userSession.companyId, userSession.role, (notifs) => {
       setNotifications(notifs);
     });
     return () => unsub();

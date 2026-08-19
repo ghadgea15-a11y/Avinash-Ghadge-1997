@@ -102,6 +102,15 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`[LSM Server] Enterprise Server running on http://0.0.0.0:${PORT}`);
+
+    // Server-Authoritative Background Escalation Runner (Runs every 60s without requiring active clients)
+    setInterval(async () => {
+      try {
+        await BpmEscalationAdminService.processAllPendingApprovalsGlobally();
+      } catch (cronErr) {
+        console.warn('[LSM Server Background Cron] Escalation check warning:', cronErr);
+      }
+    }, 60000);
   });
 }
 

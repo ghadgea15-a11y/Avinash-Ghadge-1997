@@ -3,6 +3,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { FirestoreService } from '../../services/firestoreService';
 import { ShiftHandoverRecord, SiteRecord, EmployeeRecord, UserSession, ShiftRecord, IncidentReportRecord, VisitorLogRecord } from '../../types';
 import { CheckCircle, Users, AlertTriangle, ListTodo, ShieldAlert, ArrowRightLeft, Search, Plus, Save } from 'lucide-react';
+import { collection, query, where, getCountFromServer } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 interface ShiftHandoverProps {
   session: UserSession;
@@ -148,12 +150,36 @@ export const ShiftHandover: React.FC<ShiftHandoverProps> = ({ session, sites, em
 
 const CreateHandoverModal: React.FC<any> = ({ isOpen, onClose, session, sites, employees, selectedSiteId }) => {
   const { isDark } = useTheme();
+
   const [formData, setFormData] = useState({
     siteId: selectedSiteId,
     summary: '',
     importantNotes: '',
     criticalObservations: '',
   });
+
+const [metrics, setMetrics] = useState({ incidents: 0, visitors: 0, workOrders: 0 });
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      if (!session?.companyId || !formData.siteId) return;
+      try {
+        const incSnap = await getCountFromServer(query(collection(db, 'companies', session.companyId, 'incident_reports'), where('siteId', '==', formData.siteId), where('status', 'in', ['OPEN', 'INVESTIGATING'])));
+        const visSnap = await getCountFromServer(query(collection(db, 'companies', session.companyId, 'visitor_logs'), where('siteId', '==', formData.siteId), where('status', '==', 'CHECKED_IN')));
+        const woSnap = await getCountFromServer(query(collection(db, 'companies', session.companyId, 'work_orders'), where('siteId', '==', formData.siteId), where('status', 'in', ['SUBMITTED', 'IN_PROGRESS', 'APPROVED'])));
+        
+        setMetrics({
+          incidents: incSnap.data().count,
+          visitors: visSnap.data().count,
+          workOrders: woSnap.data().count
+        });
+      } catch (err) {
+        console.error('Failed to fetch metrics', err);
+      }
+    };
+    fetchMetrics();
+  }, [session?.companyId, formData.siteId]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,13 +219,13 @@ const CreateHandoverModal: React.FC<any> = ({ isOpen, onClose, session, sites, e
              <h4 className="text-xs font-bold text-indigo-900 dark:text-indigo-100">Automated Context Captured</h4>
              <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2 text-xs text-indigo-700 dark:text-indigo-300">
-                  <ShieldAlert className="w-4 h-4"/> 0 Open Incidents
+                  <ShieldAlert className="w-4 h-4"/> {metrics.incidents} Open Incidents
                 </div>
                 <div className="flex items-center gap-2 text-xs text-indigo-700 dark:text-indigo-300">
-                  <Users className="w-4 h-4"/> 0 Active Visitors
+                  <Users className="w-4 h-4"/> {metrics.visitors} Active Visitors
                 </div>
                 <div className="flex items-center gap-2 text-xs text-indigo-700 dark:text-indigo-300">
-                  <ListTodo className="w-4 h-4"/> 0 Pending Work Orders
+                  <ListTodo className="w-4 h-4"/> {metrics.workOrders} Pending Work Orders
                 </div>
              </div>
            </div>

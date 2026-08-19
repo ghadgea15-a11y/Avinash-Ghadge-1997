@@ -247,5 +247,29 @@ export class RbacService {
     const authority = this.getAuthorityLevel(session);
     return ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_OFFICIAL_STAFF', 'A4_REGIONAL_AREA_MANAGER', 'A5_SITE_IN_CHARGE', 'A6_SUPERVISOR'].includes(authority);
   }
+
+  /**
+   * Enforces BPM Proxy Delegation permissions
+   */
+  static canCreateOwnDelegation(session: UserSession | null): boolean {
+    if (!session) return false;
+    if (session.role === 'SUPER_ADMIN') return true;
+    const authority = this.getAuthorityLevel(session);
+    // Any user with approval authority (A0 down to A5/A6) can delegate their own approvals
+    return ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_OFFICIAL_STAFF', 'A4_REGIONAL_AREA_MANAGER', 'A5_SITE_IN_CHARGE', 'A6_SUPERVISOR'].includes(authority);
+  }
+
+  static canManageDelegations(session: UserSession | null): boolean {
+    if (!session) return false;
+    if (session.role === 'SUPER_ADMIN') return true;
+    const authority = this.getAuthorityLevel(session);
+    // Company Admins, Owners, Directors, GMs, and HR Admins can manage delegations across the organization
+    return ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER'].includes(authority) ||
+           (authority === 'A3_OFFICIAL_STAFF' && ['ADMIN', 'HR', 'HR_ADMIN', 'COMPANY_ADMIN'].includes(session.role));
+  }
+
+  static canViewAllCompanyDelegations(session: UserSession | null): boolean {
+    return this.canManageDelegations(session);
+  }
 }
 

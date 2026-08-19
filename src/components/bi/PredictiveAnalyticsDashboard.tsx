@@ -6,7 +6,7 @@ import { RbacService } from '../../services/rbacService';
 import { AlertTriangle, TrendingDown, Users, DollarSign, Clock, RefreshCw, CheckCircle, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { db } from '../../firebase';
-import { collection, query, getDocs } from 'firebase/firestore';
+import { collection, query, getDocs, where } from 'firebase/firestore';
 
 interface PredictiveAnalyticsDashboardProps {
   session: UserSession;
@@ -52,9 +52,21 @@ export const PredictiveAnalyticsDashboard: React.FC<PredictiveAnalyticsDashboard
         for (const emp of emps.slice(0, 10)) {
           await PredictionService.calculateAttritionRisk(company.companyId, emp.id, 90);
         }
-      } else if (activeTab === 'SLA_BREACH') {
-         // Since we need slaId, let's just show insufficient data or mock fetch if we want to test
-         // Real implementation would grab open tickets and their SLAs
+} else if (activeTab === 'SLA_BREACH') {
+         // Generate predictions for active SLAs
+         const slaSnap = await getDocs(query(collection(db, 'companies', company.companyId, 'sla_definitions'), where('status', '==', 'ACTIVE')));
+         const slas = slaSnap.docs.map(d => d.data());
+         
+         const ticketsSnap = await getDocs(query(collection(db, 'companies', company.companyId, 'serviceTickets'), where('status', 'in', ['OPEN', 'IN_PROGRESS'])));
+         const tickets = ticketsSnap.docs.map(d => d.data());
+         
+         for (const sla of slas) {
+           // For simplicity in this dashboard, pick a random open ticket related to the client
+           const relevantTickets = tickets.filter(t => t.clientId === sla.clientId);
+           for (const t of relevantTickets.slice(0, 3)) { // Limit to avoid overloading
+             await PredictionService.calculateSlaBreachRisk(company.companyId, sla.contractId || 'UNKNOWN', sla.id, t.id);
+           }
+         }
       } else if (activeTab === 'PROFITABILITY') {
         const conSnap = await getDocs(query(collection(db, 'companies', company.companyId, 'contracts')));
         for (const con of conSnap.docs) {

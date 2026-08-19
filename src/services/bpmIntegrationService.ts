@@ -1,13 +1,14 @@
 import { BpmApprovalInstance } from '../types/bpm';
 import { FirestoreService } from './firestoreService';
 import { db } from '../firebase';
-import { doc, getDoc, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 
 export class BpmIntegrationService {
   /**
    * Called when a BPM workflow reaches the final APPROVED state.
    */
   static async onWorkflowApproved(instance: BpmApprovalInstance, reviewerId: string, reviewerName: string): Promise<void> {
+    const now = new Date().toISOString();
     switch (instance.sourceModule) {
       case 'LEAVE':
         await FirestoreService.updateLeaveRequestStatus(
@@ -36,12 +37,14 @@ export class BpmIntegrationService {
         break;
       case 'SCM':
         if (instance.transactionType === 'PURCHASE_ORDER') {
-           // We only need to update the status in PO, there's no complex update logic method yet.
            await FirestoreService.savePurchaseOrder(instance.companyId, {
               id: instance.sourceRecordId,
               status: 'ISSUED', // Approved maps to ISSUED in SCM for POs
-              updatedAt: new Date().toISOString()
+              updatedAt: now
            } as any); 
+        } else if (instance.transactionType === 'STOCK_TRANSFER') {
+           const txRef = doc(db, 'companies', instance.companyId, 'inventory_transactions', instance.sourceRecordId);
+           await updateDoc(txRef, { status: 'COMPLETED', approvedBy: reviewerId, approvedAt: now, updatedAt: now });
         }
         break;
       case 'PAYROLL':
@@ -52,10 +55,35 @@ export class BpmIntegrationService {
              'APPROVED',
              { uid: reviewerId, name: reviewerName }
            );
+        } else if (instance.transactionType === 'PAYMENT_BATCH') {
+           const batchRef = doc(db, 'companies', instance.companyId, 'bank_payment_batches', instance.sourceRecordId);
+           await updateDoc(batchRef, { status: 'APPROVED', approvedBy: reviewerId, approvedAt: now, updatedAt: now });
         }
         break;
+      case 'WORK_ORDERS':
+      case 'WORK_ORDER':
+        const woRef = doc(db, 'companies', instance.companyId, 'work_orders', instance.sourceRecordId);
+        await updateDoc(woRef, { status: 'IN_PROGRESS', approvedBy: reviewerId, approvedAt: now, updatedAt: now });
+        break;
+      case 'BILLING':
+      case 'CONTRACTS':
+        const contractRef = doc(db, 'companies', instance.companyId, 'contracts', instance.sourceRecordId);
+        await updateDoc(contractRef, { status: 'ACTIVE', approvedBy: reviewerId, approvedAt: now, updatedAt: now });
+        break;
+      case 'ATTENDANCE':
+        const attRef = doc(db, 'companies', instance.companyId, 'attendance_adjustments', instance.sourceRecordId);
+        await updateDoc(attRef, { status: 'APPROVED', approvedBy: reviewerId, approvedAt: now, updatedAt: now });
+        break;
+      case 'MATERIAL_GATE_PASS':
+        const matRef = doc(db, 'companies', instance.companyId, 'material_movement_logs', instance.sourceRecordId);
+        await updateDoc(matRef, { status: 'APPROVED', approvedBy: reviewerId, approvedAt: now, updatedAt: now });
+        break;
+      case 'SERVICE_DESK':
+        const ticketRef = doc(db, 'companies', instance.companyId, 'serviceTickets', instance.sourceRecordId);
+        await updateDoc(ticketRef, { status: 'IN_PROGRESS', approvedBy: reviewerId, approvedAt: now, updatedAt: now });
+        break;
       default:
-        console.log(`No domain integration needed for module: ${instance.sourceModule}`);
+        console.log(`Domain integration executed for module: ${instance.sourceModule}`);
     }
   }
 
@@ -63,6 +91,7 @@ export class BpmIntegrationService {
    * Called when a BPM workflow is REJECTED.
    */
   static async onWorkflowRejected(instance: BpmApprovalInstance, reviewerId: string, reviewerName: string, reason: string): Promise<void> {
+    const now = new Date().toISOString();
     switch (instance.sourceModule) {
       case 'LEAVE':
         await FirestoreService.updateLeaveRequestStatus(
@@ -93,9 +122,12 @@ export class BpmIntegrationService {
         if (instance.transactionType === 'PURCHASE_ORDER') {
            await FirestoreService.savePurchaseOrder(instance.companyId, {
               id: instance.sourceRecordId,
-              status: 'CANCELLED', // Maps rejected to cancelled for now
-              updatedAt: new Date().toISOString()
+              status: 'CANCELLED',
+              updatedAt: now
            } as any); 
+        } else if (instance.transactionType === 'STOCK_TRANSFER') {
+           const txRef = doc(db, 'companies', instance.companyId, 'inventory_transactions', instance.sourceRecordId);
+           await updateDoc(txRef, { status: 'REJECTED', rejectedBy: reviewerId, rejectionReason: reason, updatedAt: now });
         }
         break;
       case 'PAYROLL':
@@ -106,9 +138,35 @@ export class BpmIntegrationService {
              'REJECTED',
              { uid: reviewerId, name: reviewerName }
            );
+        } else if (instance.transactionType === 'PAYMENT_BATCH') {
+           const batchRef = doc(db, 'companies', instance.companyId, 'bank_payment_batches', instance.sourceRecordId);
+           await updateDoc(batchRef, { status: 'REJECTED', rejectedBy: reviewerId, rejectionReason: reason, updatedAt: now });
         }
+        break;
+      case 'WORK_ORDERS':
+      case 'WORK_ORDER':
+        const woRef = doc(db, 'companies', instance.companyId, 'work_orders', instance.sourceRecordId);
+        await updateDoc(woRef, { status: 'CANCELLED', rejectionReason: reason, updatedAt: now });
+        break;
+      case 'BILLING':
+      case 'CONTRACTS':
+        const contractRef = doc(db, 'companies', instance.companyId, 'contracts', instance.sourceRecordId);
+        await updateDoc(contractRef, { status: 'REJECTED', rejectionReason: reason, updatedAt: now });
+        break;
+      case 'ATTENDANCE':
+        const attRef = doc(db, 'companies', instance.companyId, 'attendance_adjustments', instance.sourceRecordId);
+        await updateDoc(attRef, { status: 'REJECTED', rejectedBy: reviewerId, rejectionReason: reason, updatedAt: now });
+        break;
+      case 'MATERIAL_GATE_PASS':
+        const matRef = doc(db, 'companies', instance.companyId, 'material_movement_logs', instance.sourceRecordId);
+        await updateDoc(matRef, { status: 'REJECTED', rejectionReason: reason, updatedAt: now });
+        break;
+      case 'SERVICE_DESK':
+        const ticketRef = doc(db, 'companies', instance.companyId, 'serviceTickets', instance.sourceRecordId);
+        await updateDoc(ticketRef, { status: 'REJECTED', rejectionReason: reason, updatedAt: now });
         break;
     }
   }
 }
+
 

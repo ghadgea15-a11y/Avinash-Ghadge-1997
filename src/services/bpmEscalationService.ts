@@ -23,6 +23,7 @@ import {
 import { UserSession, AppNotification } from '../types';
 import { FirestoreService } from './firestoreService';
 import { RbacService } from './rbacService';
+import { BpmDelegationService } from './bpmDelegationService';
 
 export interface EscalationProcessResult {
   instanceId: string;
@@ -487,9 +488,24 @@ export class BpmEscalationService {
             let newApprovers = [...instance.currentApprovers];
             const allowReassignment = levelConfig.reassignmentAllowed ?? policy.reassignmentAllowed ?? false;
 
-            if (allowReassignment && resolvedTargets.length > 0) {
+if (allowReassignment && resolvedTargets.length > 0) {
               // Reassign approval ownership to the resolved target approvers
-              newApprovers = resolvedTargets;
+              let finalTargets = [...resolvedTargets];
+              
+              // Integrate Proxy Delegation: If the target has an active proxy, route it to the proxy
+              try {
+                const activeProxies = await BpmDelegationService.getActiveProxiesForApprovers(companyId, resolvedTargets, instance, now);
+                if (activeProxies.length > 0) {
+                  const proxyMap = new Map<string, string>();
+                  activeProxies.forEach(p => proxyMap.set(p.delegatorUserId, p.delegateUserId));
+                  
+                  finalTargets = resolvedTargets.map(uid => proxyMap.has(uid) ? proxyMap.get(uid)! : uid);
+                }
+              } catch (e) {
+                console.warn('[EscalationEngine] Proxy evaluation failed during escalation:', e);
+              }
+
+              newApprovers = Array.from(new Set(finalTargets));
               instance.reassignedFrom = previousApprovers;
               instance.currentApprovers = newApprovers;
               result.actionsTaken.reassigned = true;

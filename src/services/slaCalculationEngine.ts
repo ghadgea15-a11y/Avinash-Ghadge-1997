@@ -144,11 +144,19 @@ export const slaCalculationEngine = {
             }
           }
         }
-      } else if (def.measurementType === 'ATTENDANCE_COMPLIANCE') {
-        // Mocking attendance compliance aggregation
-        measured = 1; 
-        const attendanceRate = attendances.length > 0 ? 98.5 : 0; // Simplified
+} else if (def.measurementType === 'ATTENDANCE_COMPLIANCE') {
+        measured = attendances.length;
+        
+        let compliantCount = 0;
+        attendances.forEach(a => {
+          if (['PRESENT', 'LATE', 'EARLY_DEPARTURE', 'HALF_DAY'].includes(a.status)) {
+            compliantCount++;
+          }
+        });
+        
+        const attendanceRate = measured > 0 ? (compliantCount / measured) * 100 : 100;
         totalActual = attendanceRate;
+        
         if (attendanceRate < def.targetValue) {
            breachedEvents++;
            newBreaches.push({
