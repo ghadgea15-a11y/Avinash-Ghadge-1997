@@ -39,6 +39,8 @@ import {
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { CompliancePolicyEngine } from '../../services/compliancePolicyEngine';
+import { RiskManagementService } from '../../services/riskManagementService';
+import { RiskMetricsSummary } from '../../types/risk';
 import { DocumentTypeManager } from '../compliance/DocumentTypeManager';
 import { PolicyManagerModal } from '../compliance/PolicyManagerModal';
 import { ViolationDetailModal } from '../compliance/ViolationDetailModal';
@@ -57,6 +59,7 @@ export function ComplianceDashboardScreen({ userSession }: ComplianceDashboardPr
 
   // GRC Data State
   const [metrics, setMetrics] = useState<ComplianceMetricsSummary | null>(null);
+  const [riskMetrics, setRiskMetrics] = useState<RiskMetricsSummary | null>(null);
   const [policies, setPolicies] = useState<CompliancePolicy[]>([]);
   const [violations, setViolations] = useState<ComplianceViolationRecord[]>([]);
   const [evaluations, setEvaluations] = useState<ComplianceEvaluationRecord[]>([]);
@@ -98,14 +101,16 @@ export function ComplianceDashboardScreen({ userSession }: ComplianceDashboardPr
         violationsData, 
         evalsData,
         typesData, 
-        expiringData
+        expiringData,
+        riskData
       ] = await Promise.all([
         CompliancePolicyEngine.getComplianceMetrics(userSession.companyId),
         CompliancePolicyEngine.getPolicies(userSession.companyId),
         CompliancePolicyEngine.getViolations(userSession.companyId),
         CompliancePolicyEngine.getEvaluations(userSession.companyId, 100),
         FirestoreService.getDocumentTypes(userSession.companyId),
-        FirestoreService.getExpiringDocuments(userSession.companyId, 90)
+        FirestoreService.getExpiringDocuments(userSession.companyId, 90),
+        RiskManagementService.getRiskMetrics(userSession, userSession.companyId)
       ]);
 
       setMetrics(metricsData);
@@ -114,6 +119,7 @@ export function ComplianceDashboardScreen({ userSession }: ComplianceDashboardPr
       setEvaluations(evalsData);
       setDocTypes(typesData);
       setExpiringDocs(expiringData);
+      setRiskMetrics(riskData);
     } catch (err) {
       console.error('[ComplianceDashboardScreen] Error loading compliance data:', err);
     } finally {

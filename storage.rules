@@ -17,13 +17,21 @@ service firebase.storage {
     }
 
     match /companies/{cid}/{allPaths=**} {
-      allow read: if isDeveloper() || companyMatch(cid);
+      // Base company rule - deny by default to enforce granular privacy
+    }
+
+    match /companies/{cid}/employees/{eid}/{allPaths=**} {
+      // General path for an employee - must be HR or self to read sensitive docs
+      allow read: if companyMatch(cid) && (hrTier() || request.auth.uid == eid);
     }
 
     match /companies/{cid}/employees/{eid}/profile/{file} {
+      // Allow others in company to read profile pics
+      allow read: if companyMatch(cid);
       allow write: if companyMatch(cid) && (hrTier() || request.auth.uid == eid) && validImage();
     }
     match /companies/{cid}/employees/{eid}/documents/{docType}/{file} {
+      allow read: if companyMatch(cid) && (hrTier() || request.auth.uid == eid);
       allow write: if companyMatch(cid) && hrTier() && validDoc();
     }
     match /companies/{cid}/employees/{eid}/selfie-verifications/{date}/{file} {
@@ -31,24 +39,35 @@ service firebase.storage {
       allow delete: if false;
     }
     match /companies/{cid}/attendance/{branchId}/{month}/{aid}/{file} {
+      allow read: if companyMatch(cid) && opsTier();
       allow write: if companyMatch(cid) && opsTier() && validImage();
     }
     match /companies/{cid}/sites/{sid}/qr-codes/{file} {
+      allow read: if companyMatch(cid);
       allow write: if companyMatch(cid) && hrTier();
     }
     match /companies/{cid}/inventory/{iid}/images/{file} {
+      allow read: if companyMatch(cid);
       allow write: if companyMatch(cid) && opsTier() && validImage();
     }
     match /companies/{cid}/gate_passes/{gpid}/{allPaths=**} {
+      allow read: if companyMatch(cid);
       allow write: if companyMatch(cid) && validDoc();
     }
     match /companies/{cid}/assets/{allPaths=**} {
+      allow read: if companyMatch(cid);
       allow write: if companyMatch(cid);
+    }
+    match /companies/{cid}/serviceTickets/{tid}/{allPaths=**} {
+      allow read: if companyMatch(cid);
+      allow write: if companyMatch(cid) && validDoc();
+      allow delete: if companyMatch(cid) && opsTier();
     }
     match /companies/{cid}/reports/exports/{uid}/{file} {
       allow read, write: if companyMatch(cid) && request.auth.uid == uid;
     }
     match /companies/{cid}/branding/{file} {
+      allow read: if companyMatch(cid);
       allow write: if companyMatch(cid) && claims().role in ['companyOwner','admin'] && validImage();
     }
     match /system/backups/{cid}/{allPaths=**} {

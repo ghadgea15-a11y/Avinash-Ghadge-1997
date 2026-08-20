@@ -414,7 +414,7 @@ export interface SystemConfigRecord {
 
 export interface OfflineQueueItem {
   id: string;
-  actionType: 'PUNCH_IN' | 'PUNCH_OUT' | 'PATROL_CHECK' | 'PATROL_TOUR_LOG' | 'PATROL_PLAN' | 'PATROL_TOUR_START' | 'PATROL_SCAN' | 'PATROL_TOUR_SCAN' | 'PATROL_TOUR_COMPLETE' | 'PATROL_OVERRIDE' | 'INCIDENT_REPORT' | 'VISITOR_LOG' | 'VISITOR_CHECK_OUT' | 'MATERIAL_PASS' | 'MATERIAL_APPROVE' | 'CREATE_EMPLOYEE' | 'UPDATE_EMPLOYEE_STATUS' | 'CREATE_ROSTER' | 'DELETE_ROSTER';
+  actionType: 'PUNCH_IN' | 'PUNCH_OUT' | 'PATROL_CHECK' | 'PATROL_TOUR_LOG' | 'PATROL_PLAN' | 'PATROL_TOUR_START' | 'PATROL_SCAN' | 'PATROL_TOUR_SCAN' | 'PATROL_TOUR_COMPLETE' | 'PATROL_OVERRIDE' | 'INCIDENT_REPORT' | 'VISITOR_LOG' | 'VISITOR_CHECK_OUT' | 'MATERIAL_PASS' | 'MATERIAL_APPROVE' | 'CREATE_EMPLOYEE' | 'UPDATE_EMPLOYEE_STATUS' | 'CREATE_ROSTER' | 'DELETE_ROSTER' | 'SERVICE_TICKET_COMMENT' | 'SERVICE_TICKET_ATTACHMENT' | 'SERVICE_TICKET_STATUS_TRANSITION' | 'SERVICE_TICKET_FEEDBACK';
   payload: Record<string, unknown>;
   timestamp: number;
   status: 'PENDING' | 'SYNCED' | 'FAILED';
@@ -425,6 +425,7 @@ export type DocumentStatus =
   | 'UPLOADED'
   | 'UNDER_VERIFICATION'
   | 'VERIFIED'
+  | 'IN_PROGRESS'
   | 'EXPIRING_SOON'
   | 'EXPIRED'
   | 'RENEWAL_PENDING'
@@ -456,7 +457,8 @@ export interface EmployeeDocumentRecord {
   expiryDate?: string;
   status: DocumentStatus;
   
-  verificationStatus: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  verificationStatus: 'PENDING' | 'VERIFIED'
+  | 'IN_PROGRESS' | 'REJECTED';
   verifiedBy?: string;
   verifiedByName?: string;
   verifiedAt?: string;
@@ -491,7 +493,7 @@ export type EmployeeLifecycleStatus =
   | 'EXIT_PENDING'
   | 'EXITED';
 
-export type OnboardingTaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'WAIVED' | 'OVERDUE';
+export type OnboardingTaskStatus = 'PENDING' |'IN_PROGRESS'| 'COMPLETED' | 'WAIVED' | 'OVERDUE';
 
 export interface OnboardingTask {
   id: string;
@@ -1154,7 +1156,7 @@ export interface PatrolTourCheckpointScan {
 export type PatrolTourStatus = 
   | 'SCHEDULED' 
   | 'ASSIGNED' 
-  | 'IN_PROGRESS' 
+  |'IN_PROGRESS'
   | 'COMPLETED' 
   | 'INCOMPLETE' 
   | 'MISSED' 
@@ -1252,12 +1254,13 @@ export type IncidentStatus =
   | 'UNDER_INVESTIGATION' 
   | 'INVESTIGATING' 
   | 'ACTION_REQUIRED' 
-  | 'RESOLVED' 
-  | 'VERIFIED' 
-  | 'CLOSED' 
+  | 'RESOLVED'
+  | 'VERIFIED'
+  | 'IN_PROGRESS' 
+  | 'CLOSED'
   | 'REJECTED' 
   | 'CANCELLED' 
-  | 'IN_PROGRESS' 
+  | 'REOPENED'
   | 'ESCALATED' 
   | 'RECORDED';
 
@@ -1487,7 +1490,8 @@ export interface DailySiteLogRecord {
   totalIncidentsReported: number;
   generalNotes?: string;
   createdAt: string;
-  status?: 'DRAFT' | 'SUBMITTED' | 'VERIFIED' | 'REVIEWED' | 'INITIATED' | 'ACCEPTED' | 'DISPUTED';
+  status?: 'DRAFT' | 'SUBMITTED' | 'VERIFIED'
+  | 'IN_PROGRESS' | 'REVIEWED' | 'INITIATED' | 'ACCEPTED' | 'DISPUTED';
 }
 
 export interface LeaveRequestRecord {
@@ -1812,7 +1816,7 @@ export interface AssetMaintenanceRecord {
   issueDescription: string;
   actionTaken: string;
   nextServiceDate?: string;
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'SCHEDULED' |'IN_PROGRESS'| 'COMPLETED' | 'CANCELLED';
   loggedByUid: string;
   loggedByName: string;
 }
@@ -2183,7 +2187,8 @@ export const APP_MODULES = {
 
 export type AppModuleKey = keyof typeof APP_MODULES;
 
-export type WorkOrderStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'DISPATCHED' | 'ACCEPTED' | 'IN_PROGRESS' | 'PAUSED' | 'COMPLETED' | 'VERIFIED' | 'CLOSED' | 'CANCELLED' | 'REJECTED' | 'OVERDUE';
+export type WorkOrderStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'DISPATCHED' | 'ACCEPTED' | 'IN_PROGRESS' | 'PAUSED' | 'COMPLETED' | 'VERIFIED'
+  | 'IN_PROGRESS' | 'CLOSED' | 'CANCELLED' | 'REJECTED' | 'OVERDUE';
 export type WorkOrderPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type LocationRequirementMode = 'NONE' | 'SITE_ONLY' | 'GEOFENCE_REQUIRED';
 
@@ -2244,7 +2249,8 @@ export interface WorkOrderRecord {
   approvalRequirement: boolean;
   
   // Status/Audit
-  verificationStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  verificationStatus?: 'PENDING' | 'VERIFIED'
+  | 'IN_PROGRESS' | 'REJECTED';
   closedBy?: string; // Actor ID
   createdBy: string; // Actor ID
   updatedBy: string; // Actor ID
@@ -2275,7 +2281,7 @@ export interface TaskRecord {
   checklist?: { id: string; text: string; done: boolean }[];
   completionNotes?: string;
   photoUrl?: string;
-  status: 'TODO' | 'IN_PROGRESS' | 'PENDING_VERIFICATION' | 'COMPLETED' | 'CANCELLED' | 'PENDING' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'RESOLVED';
+  status: 'TODO' |'IN_PROGRESS'| 'PENDING_VERIFICATION' | 'COMPLETED' | 'CANCELLED' | 'PENDING' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'RESOLVED';
   createdAt: number;
   updatedAt: number;
 }
@@ -2510,27 +2516,650 @@ export interface DeploymentHistoryRecord {
 // MODULE 11: SERVICE MANAGEMENT / CLIENT HELPDESK
 // ============================================================================
 export type ServiceTicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-export type ServiceTicketStatus = 'OPEN' | 'IN_PROGRESS' | 'PENDING_CLIENT' | 'RESOLVED' | 'CLOSED' | 'REOPENED';
-export type ServiceTicketCategory = 
-  | 'GUARD_BEHAVIOR' 
-  | 'SHORT_MANPOWER' 
-  | 'EQUIPMENT_MALFUNCTION' 
-  | 'BILLING_INVOICE' 
-  | 'ACCESS_CONTROL' 
-  | 'PATROL_IRREGULARITY' 
-  | 'CLEANLINESS_HYGIENE' 
+export type ServiceTicketStatus = 
+  | 'NEW' 
+  | 'OPEN' 
+  | 'ASSIGNED' 
+  | 'ACCEPTED' 
+  | 'IN_PROGRESS' 
+  | 'ON_HOLD' 
+  | 'PENDING_CLIENT' 
+  | 'RESOLVED' 
+  | 'CLOSED' 
+  | 'REOPENED' 
+  | 'CANCELLED';
+
+export interface TicketStatusHistoryRecord {
+  id: string;
+  ticketId: string;
+  companyId: string;
+  fromStatus: ServiceTicketStatus;
+  toStatus: ServiceTicketStatus;
+  changedAt: string;
+  changedByUserId: string;
+  changedByName: string;
+  changedByRole?: string;
+  reason?: string;
+  notes?: string;
+  pauseReason?: TicketSlaPauseReason;
+  resolutionCategory?: string;
+  resolutionSummary?: string;
+  rootCause?: string;
+  clientRating?: number;
+  clientFeedbackNotes?: string;
+  evidenceAttachmentIds?: string[];
+  bpmWorkflowId?: string;
+  bpmStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  auditReference?: string;
+}
+
+export interface TicketStatusDefinition {
+  status: ServiceTicketStatus;
+  code: string;
+  name: string;
+  description: string;
+  badgeBg: string;
+  badgeText: string;
+  badgeBorder: string;
+  allowedTransitions: ServiceTicketStatus[];
+  permittedRoles?: string[];
+  requiresReason?: boolean;
+  requiresResolutionDetails?: boolean;
+  requiresPauseReason?: boolean;
+  requiresReopenReason?: boolean;
+  requiresCancellationReason?: boolean;
+  requiresRating?: boolean;
+  affectsSla?: 'START_RESPONSE' | 'PAUSE' | 'RESUME' | 'COMPLETE_RESOLUTION' | 'COMPLETE_LIFECYCLE' | 'RESET_RESOLUTION' | 'CANCEL';
+}
+
+export interface TicketStatusTransitionPayload {
+  toStatus: ServiceTicketStatus;
+  reason?: string;
+  notes?: string;
+  pauseReason?: TicketSlaPauseReason;
+  resolutionCategory?: string;
+  rootCause?: string;
+  correctiveAction?: string;
+  resolutionSummary?: string;
+  clientRating?: number;
+  clientFeedbackNotes?: string;
+  evidenceAttachmentIds?: string[];
+  linkedAttachmentIds?: string[];
+  expectedCurrentStatus?: ServiceTicketStatus;
+}
+
+// ==========================================
+// POINT 9: SERVICE TICKET RESOLUTION
+// ==========================================
+export type TicketVerificationStatus = 'PENDING_VERIFICATION' | 'VERIFIED' | 'REJECTED' | 'NOT_REQUIRED';
+export type TicketVerificationResult = 'APPROVED' | 'REJECTED';
+
+export interface ServiceTicketResolutionRecord {
+  id: string; // e.g. res_1740000000_abc12
+  ticketId: string;
+  ticketNumber?: string;
+  companyId: string;
+  siteId?: string;
+  siteName?: string;
+  clientId?: string;
+  clientName?: string;
+  contractId?: string;
+  resolutionSummary: string; // Detailed description of the resolution
+  rootCause: string; // Root cause analysis (RCA)
+  correctiveAction: string; // Corrective and preventive action (CAPA)
+  resolutionCategory?: string;
+  resolvedByUserId: string;
+  resolvedByName: string;
+  resolvedByRole?: string;
+  resolutionTimestamp: string; // Authoritative ISO timestamp
+  evidenceAttachmentIds?: string[]; // Point 7 attachment references
+  evidenceUrls?: string[];
+  resolutionCommentId?: string; // Point 6 comment reference
+  isClientVisible: boolean; // default true
+  internalNotes?: string; // confidential tech remarks
+  verificationStatus: TicketVerificationStatus;
+  verificationResult?: TicketVerificationResult;
+  verifiedByUserId?: string;
+  verifiedByName?: string;
+  verifiedByRole?: string;
+  verifiedAt?: string;
+  verificationNotes?: string;
+  rejectionReason?: string;
+  reworkNotes?: string;
+  rejectedByUserId?: string;
+  rejectedByName?: string;
+  rejectedAt?: string;
+  slaResolutionStatus: TicketSlaStatus; // 'MET' | 'FAILED' | 'BREACHED'
+  slaTargetDueTime: string;
+  actualResolutionDurationMinutes: number;
+  isSlaMet: boolean;
+  bpmWorkflowId?: string;
+  bpmStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'ACTIVE' | 'SUPERSEDED' | 'REJECTED';
+  auditReference?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubmitResolutionPayload {
+  resolutionSummary: string;
+  rootCause: string;
+  correctiveAction: string;
+  resolutionCategory?: string;
+  isClientVisible?: boolean;
+  internalNotes?: string;
+  evidenceAttachmentIds?: string[];
+  resolutionComment?: string;
+  requiresVerification?: boolean;
+}
+
+export interface VerifyResolutionPayload {
+  resolutionId: string;
+  verificationResult: TicketVerificationResult;
+  verificationNotes?: string;
+  rejectionReason?: string;
+  reworkNotes?: string;
+}
+
+// ============================================================================
+// MODULE 11 / POINT 10: SERVICE TICKET REOPEN
+// ============================================================================
+
+export type TicketReopenReasonCategory = 
+  | 'ISSUE_RECURRED'
+  | 'INCOMPLETE_RESOLUTION'
+  | 'SECONDARY_SYMPTOM'
+  | 'CLIENT_REJECTED'
+  | 'QUALITY_FAILURE'
+  | 'NEW_FINDING'
   | 'OTHER';
+
+export interface TicketReopenRecord {
+  id: string; // e.g. reopen_1740000000_abc12
+  ticketId: string;
+  ticketNumber?: string;
+  companyId: string;
+  siteId?: string;
+  siteName?: string;
+  clientId?: string;
+  clientName?: string;
+  contractId?: string;
+  reasonCategory: TicketReopenReasonCategory;
+  reason: string; // Detailed justification (min 5 chars)
+  notes?: string; // Operational instructions
+  previousStatus: ServiceTicketStatus;
+  newStatus: ServiceTicketStatus; // 'REOPENED' | 'IN_PROGRESS' | 'ASSIGNED'
+  previousResolutionId?: string; // Immutable link to prior resolution
+  reopenedByUserId: string;
+  reopenedByName: string;
+  reopenedByRole: string;
+  reopenedAt: string; // ISO string
+  evidenceAttachmentIds?: string[];
+  slaCycleNumber: number; // e.g. 2 for 2nd cycle
+  slaRecalculationMode: 'NEW_CYCLE' | 'RESUME' | 'CUSTOM';
+  previousSlaResolutionStatus?: TicketSlaStatus;
+  previousSlaDueTime?: string;
+  newSlaDueTime?: string;
+  assignedToUserId?: string;
+  assignedToName?: string;
+  assignedTeam?: string;
+  priorityAtReopen: ServiceTicketPriority;
+  bpmWorkflowId?: string;
+  bpmStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'AUTO_APPROVED';
+  approvalNotes?: string;
+  approvedByUserId?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  status: 'ACTIVE' | 'CANCELLED' | 'SUPERSEDED';
+  auditReference?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReopenTicketPayload {
+  reasonCategory: TicketReopenReasonCategory;
+  reason: string;
+  notes?: string;
+  targetStatus?: ServiceTicketStatus; // 'REOPENED' | 'IN_PROGRESS' | 'ASSIGNED'
+  assignedToUserId?: string;
+  assignedToName?: string;
+  assignedTeam?: string;
+  updatedPriority?: ServiceTicketPriority;
+  evidenceAttachmentIds?: string[];
+  slaRecalculationMode?: 'NEW_CYCLE' | 'RESUME' | 'CUSTOM';
+  customSlaTargetMinutes?: number;
+  requireApproval?: boolean;
+}
+
+export interface TicketReopenEligibilityResult {
+  isEligible: boolean;
+  reason?: string;
+  allowedTargetStatuses: ServiceTicketStatus[];
+  reopenWindowDays: number;
+  daysSinceClosure?: number;
+  isWithinWindow: boolean;
+  requiresApproval: boolean;
+  previousResolutionId?: string;
+  currentCycleCount: number;
+}
+
+// ============================================================================
+// MODULE 11 / POINT 11: CLIENT FEEDBACK & CSAT
+// ============================================================================
+
+export type TicketFeedbackStatus = 
+  | 'PENDING' 
+  | 'REQUESTED' 
+  | 'SUBMITTED' 
+  | 'REVIEWED' 
+  | 'CLOSED';
+
+export type FeedbackSentiment = 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE';
+
+export interface TicketFeedbackRatingBreakdown {
+  overallRating: number; // 1 - 5 stars (Mandatory)
+  timelinessScore?: number; // 1 - 5 stars
+  technicianCompetenceScore?: number; // 1 - 5 stars
+  communicationScore?: number; // 1 - 5 stars
+  resolutionQualityScore?: number; // 1 - 5 stars
+}
+
+export interface TicketFeedbackRecord {
+  id: string; // e.g. fb_1740000000_abc12
+  ticketId: string;
+  ticketNumber?: string;
+  companyId: string;
+  clientId?: string;
+  clientName?: string;
+  siteId?: string;
+  siteName?: string;
+  contractId?: string;
+  contactId?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  
+  rating: number; // 1 - 5 stars
+  ratingBreakdown?: TicketFeedbackRatingBreakdown;
+  comment: string;
+  feedbackTags?: string[];
+  sentiment?: FeedbackSentiment;
+  isNegativeFeedback: boolean; // Flagged when rating <= 2 or dissatisfied
+  
+  // Follow-up requested by client
+  followUpRequested?: boolean;
+  followUpNotes?: string;
+  followUpContactPreferred?: 'PHONE' | 'EMAIL';
+
+  // Lifecycle
+  status: TicketFeedbackStatus;
+  resolutionId?: string;
+  slaCycleNumber?: number;
+
+  // Submitter details
+  submittedByUserId: string;
+  submittedByName: string;
+  submittedByRole: string;
+  submittedByEmail?: string;
+  submittedAt: string; // ISO
+
+  // Staff Review & Escalation Management
+  reviewedByUserId?: string;
+  reviewedByName?: string;
+  reviewedAt?: string;
+  reviewNotes?: string;
+  actionTaken?: string;
+
+  // Negative Feedback Escalation
+  isEscalated?: boolean;
+  escalatedAt?: string;
+  escalatedToUserId?: string;
+  escalatedToName?: string;
+  escalationNotes?: string;
+  escalationStatus?: 'OPEN' | 'INVESTIGATING' | 'ACTION_TAKEN' | 'RESOLVED' | 'CLOSED';
+
+  // Governance
+  auditReference?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubmitClientFeedbackPayload {
+  rating: number; // 1 - 5
+  comment: string;
+  ratingBreakdown?: TicketFeedbackRatingBreakdown;
+  feedbackTags?: string[];
+  followUpRequested?: boolean;
+  followUpNotes?: string;
+  followUpContactPreferred?: 'PHONE' | 'EMAIL';
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+}
+
+export interface ReviewClientFeedbackPayload {
+  reviewNotes: string;
+  actionTaken?: string;
+  closeEscalation?: boolean;
+  newStatus?: 'REVIEWED' | 'CLOSED';
+}
+
+export interface RequestClientFeedbackPayload {
+  recipientEmail?: string;
+  recipientName?: string;
+  customMessage?: string;
+}
+
+export interface TicketFeedbackEligibilityResult {
+  isEligible: boolean;
+  reason?: string;
+  isWithinWindow: boolean;
+  feedbackWindowDays: number;
+  daysSinceResolution?: number;
+  alreadySubmitted: boolean;
+  feedbackId?: string;
+  existingFeedback?: TicketFeedbackRecord;
+  canRequestFeedback: boolean;
+  canSubmitFeedback: boolean;
+  canReviewFeedback: boolean;
+}
+
+// ============================================================================
+// MODULE 11 / POINT 12: SATISFACTION SCORE & CSAT ANALYTICS
+// ============================================================================
+
+export interface SatisfactionScoreFilter {
+  companyId: string;
+  clientId?: string;
+  siteId?: string;
+  contractId?: string;
+  category?: string;
+  priority?: string;
+  startDate?: string;
+  endDate?: string;
+  dateRangePreset?: 'ALL' | '7D' | '30D' | '90D' | 'YEAR' | 'CUSTOM';
+  ticketStatus?: string;
+  assignedToEmployeeId?: string;
+  minRating?: number;
+  maxRating?: number;
+  isNegativeOnly?: boolean;
+}
+
+export interface SatisfactionDimensionScore {
+  dimension: 'overall' | 'timeliness' | 'competence' | 'communication' | 'quality';
+  label: string;
+  averageScore: number; // 0.0 - 5.0
+  responseCount: number;
+  positivePercentage: number; // >= 4 stars %
+}
+
+export interface SatisfactionGroupMetric {
+  id: string; // e.g. clientId, siteId, category, technicianId
+  name: string; // Display label
+  code?: string;
+  totalResponses: number;
+  averageScore: number; // 0.0 - 5.0
+  positiveCount: number; // 4-5 stars
+  neutralCount: number; // 3 stars
+  negativeCount: number; // 1-2 stars
+  satisfactionPercentage: number; // % positive
+  escalationCount: number;
+  avgTimelinessScore?: number;
+  avgCompetenceScore?: number;
+  avgCommunicationScore?: number;
+  avgQualityScore?: number;
+  slaComplianceRate?: number; // % SLA met on these tickets
+  avgResolutionTimeHours?: number; // MTTR for this group
+  totalTicketsCount?: number;
+  feedbackResponseRate?: number; // feedback count / total resolved tickets * 100
+}
+
+export interface SatisfactionTrendPoint {
+  periodKey: string; // e.g. "2026-08-01", "2026-W34", "2026-08"
+  periodLabel: string; // e.g. "Aug 15", "Week 34", "August 2026"
+  periodTimestamp: number;
+  averageScore: number;
+  totalResponses: number;
+  positiveCount: number;
+  neutralCount: number;
+  negativeCount: number;
+  satisfactionPercentage: number;
+}
+
+export interface SatisfactionScoreSummary {
+  hasData: boolean;
+  totalFeedbackRecords: number;
+  totalResolvedTickets: number;
+  surveyResponseRate: number; // percentage (0 - 100)
+  overallAverageScore: number; // 0.0 - 5.0
+  overallSatisfactionPercentage: number; // >= 4 stars %
+  positiveCount: number; // 4-5 stars
+  neutralCount: number; // 3 stars
+  negativeCount: number; // 1-2 stars
+  escalationCount: number;
+  dimensionScores: {
+    overall: SatisfactionDimensionScore;
+    timeliness: SatisfactionDimensionScore;
+    competence: SatisfactionDimensionScore;
+    communication: SatisfactionDimensionScore;
+    quality: SatisfactionDimensionScore;
+  };
+  byClient: SatisfactionGroupMetric[];
+  bySite: SatisfactionGroupMetric[];
+  byCategory: SatisfactionGroupMetric[];
+  byPriority: SatisfactionGroupMetric[];
+  byTechnician: SatisfactionGroupMetric[];
+  trend: SatisfactionTrendPoint[];
+  slaCorrelation: {
+    slaMetAvgScore: number;
+    slaBreachedAvgScore: number;
+    slaMetResponsesCount: number;
+    slaBreachedResponsesCount: number;
+    avgResolutionHoursSatisfied: number; // MTTR when rating >= 4
+    avgResolutionHoursDissatisfied: number; // MTTR when rating <= 2
+    reopenRateSatisfiedPct: number; // % reopened when rating >= 4
+    reopenRateDissatisfiedPct: number; // % reopened when rating <= 2
+  };
+  thresholdAlerts: {
+    isCompanyBelowThreshold: boolean;
+    configuredThreshold: number; // default 3.5
+    underperformingClients: { clientId: string; clientName: string; averageScore: number; responseCount: number }[];
+    underperformingSites: { siteId: string; siteName: string; averageScore: number; responseCount: number }[];
+    underperformingCategories: { category: string; categoryName: string; averageScore: number; responseCount: number }[];
+  };
+  filterApplied: SatisfactionScoreFilter;
+  calculatedAt: string; // ISO
+}
+
+export interface ServiceCsatSnapshotRecord {
+  id: string;
+  companyId: string;
+  snapshotPeriod: string; // e.g. "2026-08", "DAILY_2026-08-20", "OVERALL"
+  summary: SatisfactionScoreSummary;
+  createdAt: string;
+  createdBy: string;
+}
+
+export type ServiceTicketCategory = string; // Allows legacy codes + dynamic IDs
+
+export interface TicketCategoryRecord {
+  id: string;
+  companyId: string;
+  code: string;
+  name: string;
+  description?: string;
+  parentId?: string; // For hierarchy
+  isActive: boolean;
+  displayOrder: number;
+  applicableServiceTypes?: string[];
+  applicableSiteIds?: string[];
+  restrictedRoles?: string[]; // Roles allowed to use this
+  defaultPriority?: string;
+  slaReferenceId?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedBy: string;
+  updatedAt: string;
+}
+
+
+export interface ServicePriorityConfigRecord {
+  id: string; // Document ID (could be 'LOW', 'MEDIUM', etc.)
+  companyId: string;
+  name: string;
+  code: string;
+  severity: number; // e.g. 1 (Critical) to 4 (Low)
+  description: string;
+  ordering: number;
+  isActive: boolean;
+  dispatchImpact: 'HIGH' | 'NORMAL' | 'NONE';
+  escalationImpact: 'ACCELERATED' | 'STANDARD' | 'NONE';
+  requiresReasonToChange: boolean;
+  restrictedRoles?: string[]; // Roles allowed to change to/from this priority
+  slaTargetHours?: number; // Added for SLA calculation impact
+  createdAt: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
+export type TicketSlaStatus = 'NOT_STARTED' | 'ACTIVE' | 'WARNING' | 'BREACHED' | 'PAUSED' | 'MET' | 'FAILED' | 'CANCELLED';
+export type TicketSlaCoverageType = '24X7' | 'BUSINESS_HOURS' | 'CUSTOM';
+export type TicketSlaPauseReason = 'WAITING_ON_CLIENT' | 'PENDING_PARTS' | 'THIRD_PARTY_DEPENDENCY' | 'SCHEDULED_MAINTENANCE' | 'OTHER';
+
+export interface TicketSlaPauseRecord {
+  id: string;
+  ticketId: string;
+  companyId: string;
+  pausedAt: string;
+  resumedAt?: string;
+  pausedDurationMinutes?: number;
+  reason: TicketSlaPauseReason;
+  notes?: string;
+  pausedByUserId: string;
+  pausedByName: string;
+  resumedByUserId?: string;
+  resumedByName?: string;
+}
+
+export interface ServiceSlaPolicyRecord {
+  id: string; // policy ID
+  companyId: string;
+  policyName: string;
+  code: string;
+  description: string;
+  // Scope / Target criteria ('*' or undefined means all)
+  clientId?: string;
+  contractId?: string;
+  siteId?: string;
+  category?: string;
+  priority?: ServiceTicketPriority | '*';
+  // Target Durations
+  responseTargetMinutes: number; // e.g. 30
+  resolutionTargetMinutes: number; // e.g. 240
+  warningThresholdPercentage: number; // e.g. 75 or 80 %
+  // Operating Coverage
+  coverageType: TicketSlaCoverageType;
+  businessHoursStart?: string; // e.g. '09:00'
+  businessHoursEnd?: string; // e.g. '18:00'
+  businessDays?: number[]; // [1, 2, 3, 4, 5] (Mon-Fri)
+  timezone?: string;
+  // Escalation Integration
+  escalationPolicyId?: string;
+  escalateOnWarning?: boolean;
+  escalateOnBreach?: boolean;
+  escalationUserIds?: string[];
+  // Lifecycle
+  status: 'ACTIVE' | 'DRAFT' | 'INACTIVE';
+  effectiveFrom: string;
+  effectiveTo?: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
+}
+
+export interface TicketPriorityHistoryRecord {
+  id: string; // unique ID or timestamp based
+  ticketId: string;
+  companyId: string;
+  previousPriority: ServiceTicketPriority | string;
+  newPriority: ServiceTicketPriority | string;
+  reason: string;
+  changedByUserId: string;
+  changedByName: string;
+  timestamp: string; // ISO string
+}
 
 export interface TicketCommentRecord {
   id: string;
   ticketId: string;
   companyId: string;
+  clientId?: string;
+  siteId?: string;
   authorUserId: string;
   authorName: string;
   authorRole: string;
   comment: string;
   isInternalOnly: boolean;
+  visibility?: 'INTERNAL' | 'CLIENT_VISIBLE';
+  attachmentUrls?: string[];
+  priorityHistory?: TicketPriorityHistoryRecord[];
   createdAt: string;
+  updatedAt?: string;
+  isEdited?: boolean;
+  editedAt?: string;
+  editedByUserId?: string;
+  editedByName?: string;
+  editHistory?: {
+    text: string;
+    editedAt: string;
+    editedByUserId: string;
+    editedByName?: string;
+  }[];
+  status?: 'ACTIVE' | 'ARCHIVED';
+  archivedAt?: string;
+  archivedByUserId?: string;
+  archivedByName?: string;
+  archiveReason?: string;
+  auditReference?: string;
+}
+
+export type TicketEvidenceType = 
+  | 'PHOTO' 
+  | 'DOCUMENT' 
+  | 'SERVICE_REPORT' 
+  | 'INSPECTION' 
+  | 'COMPLETION' 
+  | 'CLIENT_DOCUMENT' 
+  | 'OTHER';
+
+export interface TicketAttachmentRecord {
+  id: string;
+  ticketId: string;
+  companyId: string;
+  siteId?: string;
+  clientId?: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  storagePath: string;
+  downloadUrl: string;
+  uploadedByUserId: string;
+  uploadedByName: string;
+  uploadedByRole?: string;
+  uploadedAt: string;
+  createdAt: string;
+  updatedAt?: string;
+  visibility: 'CLIENT_VISIBLE' | 'INTERNAL';
+  evidenceType: TicketEvidenceType;
+  notes?: string;
+  status: 'ACTIVE' | 'ARCHIVED';
+  auditReference?: string;
+  archivedAt?: string;
+  archivedByUserId?: string;
+  archivedByName?: string;
+  archiveReason?: string;
+  commentId?: string;
 }
 
 export interface ServiceTicketRecord {
@@ -2539,28 +3168,106 @@ export interface ServiceTicketRecord {
   companyId: string;
   clientId: string;
   clientName: string;
+  contactId?: string; // Client Contact
+  contactName?: string;
   siteId: string;
   siteName: string;
+  contractId?: string;
   title: string;
   description: string;
   category: ServiceTicketCategory;
+  subCategoryId?: string;
   priority: ServiceTicketPriority;
   status: ServiceTicketStatus;
+  source?: string; // channel/source
   reportedByUserId: string;
   reportedByName: string;
   reportedByEmail?: string;
   reportedByPhone?: string;
   assignedToUserId?: string;
   assignedToName?: string;
-  slaDueTime: string; // ISO string calculated from priority
+  assignedTeam?: string;
+  
+  // SLA Timers & Lifecycle Tracking
+  slaPolicyId?: string;
+  slaPolicyName?: string;
+  responseTargetMinutes?: number;
+  resolutionTargetMinutes?: number;
+  responseDueTime?: string; // ISO timestamp
+  respondedAt?: string; // ISO timestamp when first acknowledged/contacted
+  respondedByUserId?: string;
+  responseSlaStatus?: 'PENDING' | 'MET' | 'BREACHED';
+  slaDueTime: string; // ISO string (resolution due time)
+  resolutionDueTime?: string; // Explicit resolution due timestamp
+  resolutionSlaStatus?: TicketSlaStatus;
   isSlaBreached: boolean;
+  isResponseBreached?: boolean;
+  isResolutionBreached?: boolean;
+  totalPausedDurationMinutes?: number;
+  lastPausedAt?: string;
+  pauseHistory?: TicketSlaPauseRecord[];
+  slaBreachRecorded?: boolean;
+  slaWarningTriggered?: boolean;
+  slaBreachTriggered?: boolean;
+  escalatedAt?: string;
+  escalationLevel?: number;
+  escalationInstanceId?: string;
+
   resolutionSummary?: string;
+  resolutionCategory?: string;
+  rootCause?: string;
+  correctiveAction?: string;
+  activeResolutionId?: string;
+  verificationStatus?: TicketVerificationStatus;
+  verifiedAt?: string;
+  verifiedByUserId?: string;
+  verifiedByName?: string;
+  rejectionReason?: string;
+  reworkNotes?: string;
   resolvedAt?: string;
   resolvedByUserId?: string;
   closedAt?: string;
   clientRating?: number; // 1 - 5 stars
   clientFeedbackNotes?: string;
+  feedbackStatus?: TicketFeedbackStatus;
+  hasNegativeFeedback?: boolean;
+  activeFeedbackId?: string;
+  feedbackRequestedAt?: string;
+  feedbackSubmittedAt?: string;
+  feedbackEscalationStatus?: 'NONE' | 'ESCALATED' | 'REVIEWED' | 'CLOSED';
+  feedbackReviewNotes?: string;
+  previousStatus?: ServiceTicketStatus;
+  lastStatusChangedAt?: string;
+  lastStatusChangedByUserId?: string;
+  lastStatusChangedByName?: string;
+  statusChangeReason?: string;
+  statusHistory?: TicketStatusHistoryRecord[];
+  bpmWorkflowId?: string;
+  bpmStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   linkedIncidentId?: string;
+  relatedRecordId?: string; // general related op record
+  attachmentUrls?: string[];
+  priorityHistory?: TicketPriorityHistoryRecord[];
+  
+  // Reopen Tracking & Multi-Cycle SLA
+  reopenCount?: number;
+  lastReopenedAt?: string;
+  lastReopenedByUserId?: string;
+  lastReopenedByName?: string;
+  lastReopenedByRole?: string;
+  activeReopenId?: string;
+  slaCycleCount?: number; // 1 = initial cycle, 2 = 1st reopen, etc.
+  historicalSlaCycles?: {
+    cycleNumber: number;
+    startedAt: string;
+    endedAt?: string;
+    dueTime: string;
+    slaStatus: TicketSlaStatus;
+    isMet: boolean;
+    resolutionId?: string;
+  }[];
+  reopenHistory?: TicketReopenRecord[];
+
   createdAt: string;
   updatedAt: string;
 }
@@ -2579,7 +3286,8 @@ export type CandidateStage =
   | 'ONBOARDED' 
   | 'REJECTED';
 
-export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'FAILED' | 'EXEMPTED';
+export type VerificationStatus = 'PENDING' | 'VERIFIED'
+  | 'IN_PROGRESS' | 'FAILED' | 'EXEMPTED';
 
 export interface JobRequisitionRecord {
   id: string;
@@ -2605,8 +3313,38 @@ export interface JobRequisitionRecord {
   updatedAt: string;
 }
 
+export interface CandidateEducation {
+  institution: string;
+  degree: string;
+  fieldOfStudy: string;
+  startDate: string;
+  endDate: string;
+  percentage?: number;
+  grade?: string;
+}
+
+export interface CandidateExperience {
+  company: string;
+  position: string;
+  location?: string;
+  startDate: string;
+  endDate?: string; // Empty if current
+  isCurrent: boolean;
+  description?: string;
+}
+
+export interface CandidateCertification {
+  title: string;
+  issuingOrganization: string;
+  issueDate: string;
+  expiryDate?: string;
+  credentialId?: string;
+  credentialUrl?: string;
+}
+
 export interface CandidateRecord {
   id: string;
+  applicationId: string; // Explicit Application ID
   candidateCode: string; // e.g. CAND-8841
   companyId: string;
   requisitionId?: string;
@@ -2615,9 +3353,14 @@ export interface CandidateRecord {
   gender: 'MALE' | 'FEMALE' | 'OTHER';
   dateOfBirth: string;
   phoneNumber: string;
-  email?: string;
+  email: string; // Required for recruitment lifecycle
   currentAddress: string;
   permanentAddress?: string;
+  qualification?: string;
+  skills?: string[];
+  education?: CandidateEducation[];
+  experience?: CandidateExperience[];
+  certifications?: CandidateCertification[];
   experienceYears: number;
   highestEducation: string;
   aadhaarNumber?: string;
@@ -2629,14 +3372,28 @@ export interface CandidateRecord {
   previousEmployer?: string;
   expectedSalaryMonthly: number;
   offeredSalaryMonthly?: number;
+  resumeUrl?: string; // Reference to Storage
+  source?: string; // e.g. "Direct", "LinkedIn", "Referral"
   stage: CandidateStage;
   interviewFeedback?: string;
   interviewerRating?: number; // 1-5
   rejectionReason?: string;
   convertedToEmployeeId?: string;
   onboardedAt?: string;
+  siteId?: string;
+  siteName?: string;
+  availabilityDate?: string;
+  noticePeriodDays?: number;
+  profilePhotoUrl?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CandidateRegistrationResult {
+  success: boolean;
+  candidateId?: string;
+  isDuplicate?: boolean;
+  error?: string;
 }
 
 // ============================================================================
@@ -2684,7 +3441,7 @@ export interface TrainingEnrollmentRecord {
   scheduledDate: string;
   attendanceStatus: 'SCHEDULED' | 'PRESENT' | 'ABSENT';
   scoreObtained?: number;
-  resultStatus: 'ENROLLED' | 'IN_PROGRESS' | 'PASSED' | 'FAILED';
+  resultStatus: 'ENROLLED' |'IN_PROGRESS'| 'PASSED' | 'FAILED';
   certificateId?: string;
   certificateNumber?: string;
   certificateIssuedDate?: string;
@@ -2929,7 +3686,7 @@ export interface MaintenanceOccurrence {
   assetId: string;
   workOrderId?: string;
   dueDate: string;
-  status: 'UPCOMING' | 'DUE' | 'OVERDUE' | 'IN_PROGRESS' | 'COMPLETED' | 'SKIPPED' | 'CANCELLED';
+  status: 'UPCOMING' | 'DUE' | 'OVERDUE' |'IN_PROGRESS'| 'COMPLETED' | 'SKIPPED' | 'CANCELLED';
   createdAt: string;
 }
 
@@ -3495,5 +4252,139 @@ export interface SecurityGovernanceConfig {
 }
 
 export * from './compliance';
+export * from './complianceControl';
 export * from './dataPrivacy';
+
+export * from './risk';
+export * from './complianceObligation';
+
+// -------------------------------------------------------------
+// MODULE 10 - POINT 10: Security Assurance & Release Gate
+// -------------------------------------------------------------
+
+export type SecurityAssuranceStatus = 'PASS' | 'FAIL' | 'BLOCKED';
+export type SecurityFindingSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type SecurityFindingStatus = 'DETECTED' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'RETEST_PENDING' | 'VERIFIED'
+  | 'IN_PROGRESS' | 'CLOSED';
+
+export interface SecurityFinding {
+  id: string;
+  companyId: string;
+  runId: string;
+  checkId: string;
+  module: string;
+  testName: string;
+  severity: SecurityFindingSeverity;
+  failureReason: string;
+  affectedResource: string;
+  status: SecurityFindingStatus;
+  assignedTo?: string;
+  remediationNotes?: string;
+  timestamp: string;
+  updatedAt: string;
+}
+
+export interface ReleaseGateSignOff {
+  id: string;
+  companyId: string;
+  runId: string;
+  reviewerId: string;
+  reviewerRole: string;
+  reviewerName: string;
+  timestamp: string;
+  version: string;
+  securityResult: SecurityAssuranceStatus;
+  approvalDecision: 'APPROVED' | 'REJECTED';
+  comments?: string;
+}
+
+export interface SecurityAssuranceRun {
+  id: string;
+  companyId: string;
+  version: string;
+  status: SecurityAssuranceStatus;
+  totalChecks: number;
+  passed: number;
+  failed: number;
+  blocked: number;
+  findings: SecurityFinding[];
+  executedAt: string;
+  signOffStatus: 'PENDING' | 'SIGNED_OFF';
+  signOffId?: string;
+  webBuildStatus: 'PASS' | 'FAIL' | 'UNKNOWN';
+  androidBuildStatus: 'PASS' | 'FAIL' | 'UNKNOWN';
+}
+
+
+// ==========================================
+// MODULE 10 / POINT 11: CONTINUOUS SECURITY MONITORING
+// ==========================================
+
+export type DetectionRuleEventType = 
+  | 'AUTH_FAILED_LOGIN'
+  | 'AUTH_UNAUTHORIZED_ACCESS'
+  | 'CROSS_COMPANY_ACCESS'
+  | 'CROSS_SITE_ACCESS'
+  | 'PERMISSION_CHANGED'
+  | 'ROLE_CHANGED'
+  | 'BULK_DATA_MODIFICATION'
+  | 'BULK_EXPORT'
+  | 'SUSPICIOUS_MUSTER_ACTIVITY'
+  | 'AFTER_HOURS_ACTIVITY'
+  | 'APPROVAL_FAILURE'
+  | 'ADMIN_ACTION'
+  | 'SECURITY_RULE_DENIAL'
+  | 'ANY';
+
+export type DetectedRiskSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface SecurityDetectionRule {
+  id: string; 
+  companyId: string;
+  eventType: DetectionRuleEventType;
+  name: string;
+  description: string;
+  condition: 'COUNT_GREATER_THAN' | 'COUNT_GREATER_THAN_EQUAL'; 
+  threshold: number; 
+  timeWindowMinutes: number; 
+  severity: DetectedRiskSeverity;
+  riskCategory: string;
+  enabled: boolean;
+  effectiveDate: string; 
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type DetectedRiskStatus = 
+  | 'DETECTED' 
+  | 'REVIEWED' 
+  | 'CONFIRMED' 
+  | 'FALSE_POSITIVE' 
+  | 'INVESTIGATION' 
+  | 'REMEDIATION' 
+  | 'RETEST' 
+  | 'CLOSED';
+
+export interface DetectedRiskEvent {
+  id: string;
+  companyId: string;
+  ruleId: string;
+  ruleName: string;
+  eventType: DetectionRuleEventType;
+  source: string; 
+  siteId?: string;
+  userId?: string;
+  userRole?: string;
+  timestamp: string; 
+  severity: DetectedRiskSeverity;
+  evidence: string; 
+  description: string;
+  status: DetectedRiskStatus;
+  assignedReviewerId?: string;
+  investigationNotes?: string;
+  remediation?: string;
+  closureNotes?: string;
+  closedAt?: string;
+  updatedAt: string;
+}
 

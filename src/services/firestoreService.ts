@@ -87,6 +87,9 @@ import {
   AssetMovementAction,
   ServiceTicketRecord,
   TicketCommentRecord,
+  TicketAttachmentRecord,
+  TicketStatusHistoryRecord,
+  TicketStatusTransitionPayload,
   JobRequisitionRecord,
   CandidateRecord,
   TrainingProgramRecord,
@@ -7113,11 +7116,24 @@ const allAttendances: any[] = [];
     }
   }
 
-  static subscribeToTicketComments(companyId: string, ticketId: string, onUpdate: (comments: TicketCommentRecord[]) => void): () => void {
+  static subscribeToTicketComments(companyId: string, ticketId: string, onUpdate: (comments: TicketCommentRecord[]) => void, userRole?: string): () => void {
     const colRef = collection(db, 'companies', companyId, 'serviceTickets', ticketId, 'comments');
     const q = query(colRef);
+    const staffRoles = [
+      'SUPER_ADMIN', 'COMPANY_ADMIN', 'ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 
+      'FIELD_OFFICER', 'MANAGER', 'SUPERVISOR', 'OWNER_PROMOTER', 'DIRECTOR_CEO', 
+      'GENERAL_MANAGER', 'REGIONAL_MANAGER', 'AREA_MANAGER', 'SITE_IN_CHARGE', 
+      'HR', 'FINANCE', 'PROCUREMENT', 'EHS', 'QUALITY', 'COMMERCIAL', 
+      'MIS', 'IT', 'OPERATIONS_OFFICE', 'SERVICE_DESK', 'TECHNICIAN', 'SAFETY_OFFICER'
+    ];
+    const isStaff = userRole ? staffRoles.includes(userRole) : true;
+
     return onSnapshot(q, (snap) => {
-      const list = snap.docs.map(d => d.data() as TicketCommentRecord);
+      let list = snap.docs.map(d => d.data() as TicketCommentRecord);
+      list = list.filter(c => c.status !== 'ARCHIVED');
+      if (userRole && !isStaff) {
+        list = list.filter(c => !c.isInternalOnly && c.visibility !== 'INTERNAL');
+      }
       list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
       onUpdate(list);
     });
@@ -7126,10 +7142,106 @@ const allAttendances: any[] = [];
   static async addTicketComment(companyId: string, ticketId: string, comment: TicketCommentRecord): Promise<boolean> {
     try {
       const docRef = doc(db, 'companies', companyId, 'serviceTickets', ticketId, 'comments', comment.id);
-      await setDoc(docRef, comment);
+      await setDoc(docRef, {
+        ...comment,
+        status: comment.status || 'ACTIVE',
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
       return true;
     } catch (err) {
       console.error('Error adding ticket comment:', err);
+      return false;
+    }
+  }
+
+  static subscribeToTicketAttachments(companyId: string, ticketId: string, onUpdate: (attachments: TicketAttachmentRecord[]) => void, userRole?: string): () => void {
+    const colRef = collection(db, 'companies', companyId, 'serviceTickets', ticketId, 'attachments');
+    const q = query(colRef);
+    const staffRoles = [
+      'SUPER_ADMIN', 'COMPANY_ADMIN', 'ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 
+      'FIELD_OFFICER', 'MANAGER', 'SUPERVISOR', 'OWNER_PROMOTER', 'DIRECTOR_CEO', 
+      'GENERAL_MANAGER', 'REGIONAL_MANAGER', 'AREA_MANAGER', 'SITE_IN_CHARGE', 
+      'HR', 'FINANCE', 'PROCUREMENT', 'EHS', 'QUALITY', 'COMMERCIAL', 
+      'MIS', 'IT', 'OPERATIONS_OFFICE', 'SERVICE_DESK', 'TECHNICIAN', 'SAFETY_OFFICER'
+    ];
+    const isStaff = userRole ? staffRoles.includes(userRole) : true;
+
+    return onSnapshot(q, (snap) => {
+      let list = snap.docs.map(d => d.data() as TicketAttachmentRecord);
+      list = list.filter(a => a.status !== 'ARCHIVED');
+      if (userRole && !isStaff) {
+        list = list.filter(a => a.visibility !== 'INTERNAL');
+      }
+      list.sort((a, b) => new Date(b.createdAt || b.uploadedAt).getTime() - new Date(a.createdAt || a.uploadedAt).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async addTicketAttachment(companyId: string, ticketId: string, attachment: TicketAttachmentRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'serviceTickets', ticketId, 'attachments', attachment.id);
+      await setDoc(docRef, {
+        ...attachment,
+        status: attachment.status || 'ACTIVE',
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error adding ticket attachment:', err);
+      return false;
+    }
+  }
+
+  static async archiveTicketAttachment(companyId: string, ticketId: string, attachmentId: string, reason: string, session: UserSession): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'serviceTickets', ticketId, 'attachments', attachmentId);
+      const now = new Date().toISOString();
+      await setDoc(docRef, {
+        status: 'ARCHIVED',
+        archivedAt: now,
+        archivedByUserId: session.userId,
+        archivedByName: session.fullName || session.email || 'User',
+        archiveReason: reason || 'Archived by user',
+        updatedAt: now
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error archiving ticket attachment:', err);
+      return false;
+    }
+  }
+
+  static subscribeToTicketStatusHistory(companyId: string, ticketId: string, onUpdate: (history: TicketStatusHistoryRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'serviceTickets', ticketId, 'status_history');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as TicketStatusHistoryRecord);
+      list.sort((a, b) => new Date(a.changedAt).getTime() - new Date(b.changedAt).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async addTicketStatusHistoryRecord(companyId: string, ticketId: string, record: TicketStatusHistoryRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'serviceTickets', ticketId, 'status_history', record.id);
+      await setDoc(docRef, {
+        ...record
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error adding ticket status history record:', err);
+      return false;
+    }
+  }
+
+  static async recordTicketStatusTransition(session: UserSession, companyId: string, ticketId: string, transitionData: TicketStatusTransitionPayload): Promise<boolean> {
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { ServiceDeskService } = await import('./serviceDeskService');
+      const res = await ServiceDeskService.transitionTicketStatus(session, companyId, ticketId, transitionData);
+      return res.success;
+    } catch (err) {
+      console.error('Error recording offline ticket status transition:', err);
       return false;
     }
   }

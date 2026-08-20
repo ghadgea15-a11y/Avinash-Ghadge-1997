@@ -127,6 +127,21 @@ export class OfflineSyncService {
           if (companyId && rosterId) {
             await FirestoreService.deleteRoster(companyId, rosterId, actor);
           }
+        } else if (item.actionType === 'SERVICE_TICKET_COMMENT') {
+          const { companyId, ticketId, comment } = item.payload as any;
+          if (companyId && ticketId && comment) {
+            await FirestoreService.addTicketComment(companyId, ticketId, comment);
+          }
+        } else if (item.actionType === 'SERVICE_TICKET_ATTACHMENT') {
+          const { companyId, ticketId, attachment } = item.payload as any;
+          if (companyId && ticketId && attachment) {
+            await FirestoreService.addTicketAttachment(companyId, ticketId, attachment);
+          }
+        } else if (item.actionType === 'SERVICE_TICKET_STATUS_TRANSITION') {
+          const { session, companyId, ticketId, transitionData } = item.payload as any;
+          if (companyId && ticketId && transitionData) {
+            await FirestoreService.recordTicketStatusTransition(session, companyId, ticketId, transitionData);
+          }
         }
         syncedCount++;
       } catch (e: any) {

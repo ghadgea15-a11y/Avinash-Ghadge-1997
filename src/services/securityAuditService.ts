@@ -3,6 +3,7 @@ import { db } from '../firebase';
 import { UserSession, SecurityEventRecord, SecurityAnomalyRecord, SecuritySeverity } from '../types';
 
 import { CompliancePolicyEngine } from './compliancePolicyEngine';
+import { ContinuousMonitoringService } from './continuousMonitoringService';
 
 export let _getDocs = getDocs;
 export function _setGetDocsMock(mock: any) {
@@ -70,6 +71,9 @@ export class SecurityAuditService {
 
       // Asynchronously trigger anomaly detection so we don't block
       this.runAnomalyDetection(companyId, eventRecord).catch(e => console.error('Anomaly detection failed', e));
+
+      // Evaluate Continuous Monitoring Rules
+      ContinuousMonitoringService.evaluateEvent(companyId, eventRecord).catch(err => console.error('[SecurityAuditService] CM Eval Error:', err));
 
       return eventRecord;
     } catch (err) {

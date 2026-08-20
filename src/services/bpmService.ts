@@ -42,6 +42,19 @@ export class BpmService {
     let selectedWorkflowId: string | undefined;
     let routingDecision: any = undefined;
 
+    // 0. Idempotency Check (Offline / Duplicate Submission Prevention)
+    const pendingQuery = query(
+      collection(db, 'companies', companyId, 'bpm_instances'),
+      where('sourceRecordId', '==', sourceRecordId),
+      where('transactionType', '==', transactionType),
+      where('status', 'in', ['SUBMITTED', 'PENDING_APPROVAL'])
+    );
+    const pendingSnap = await getDocs(pendingQuery);
+    if (!pendingSnap.empty) {
+      console.log(`[BpmService] Idempotency: Pending approval already exists for ${sourceRecordId}. Returning existing instance.`);
+      return pendingSnap.docs[0].data() as BpmApprovalInstance;
+    }
+
     try {
       const routingResult = await BpmThresholdRoutingService.resolveWorkflowForTransaction(
         companyId,

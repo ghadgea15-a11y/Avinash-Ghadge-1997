@@ -77,6 +77,15 @@ service cloud.firestore {
       ]);
     }
 
+    function canViewSalary(companyId) {
+      return isSuperAdmin() || hasCompanyRole(companyId, ["COMPANY_ADMIN", "ADMIN", "HR_ADMIN", "HR", "FINANCE", "OWNER_PROMOTER", "DIRECTOR_CEO", "GENERAL_MANAGER", "COMMERCIAL", "CLIENT_MANAGEMENT"]);
+    }
+
+    function canViewEmployeeIdentity(companyId) {
+      return isSuperAdmin() || hasCompanyRole(companyId, ["COMPANY_ADMIN", "ADMIN", "HR_ADMIN", "HR", "OWNER_PROMOTER", "DIRECTOR_CEO", "GENERAL_MANAGER"]);
+    }
+
+
     // ============================================================
     // VALIDATION BLUEPRINTS (Payload-First Security)
     // ============================================================
@@ -279,7 +288,7 @@ service cloud.firestore {
       match /employees/{employeeId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create: if isSuperAdmin() || isCompanyAdmin(companyId);
-        allow update: if isSuperAdmin() || isManager(companyId);
+        allow update: if isSuperAdmin() || isManager(companyId) || (signedIn() && sameCompany(companyId) && employeeId == userData().employeeId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
@@ -289,8 +298,8 @@ service cloud.firestore {
       }
 
       match /employee_documents/{docId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
-        allow create, update: if isSuperAdmin() || isManager(companyId);
+        allow read: if canViewEmployeeIdentity(companyId) || (signedIn() && sameCompany(companyId) && resource.data.employeeId == userData().employeeId);
+        allow create, update: if isSuperAdmin() || isManager(companyId) || (signedIn() && sameCompany(companyId) && request.resource.data.employeeId == userData().employeeId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
@@ -376,6 +385,35 @@ service cloud.firestore {
 
 
       // 3. Payroll, Compensation & Advances Subcollections
+      
+      // Module 10: Security Assurance & Release Gate
+      
+      // Module 10: Continuous Security Monitoring
+      match /security_detection_rules/{ruleId} {
+        allow read: if isCompanyMember();
+        allow write: if hasRole('SUPER_ADMIN') || hasRole('SYSTEM');
+      }
+      
+      match /detected_risk_events/{eventId} {
+        allow read: if isCompanyMember();
+        allow write: if hasRole('SUPER_ADMIN') || hasRole('COMPANY_ADMIN') || hasRole('SYSTEM');
+      }
+
+      match /security_assurance_runs/{runId} {
+        allow read: if isCompanyMember();
+        allow write: if hasRole('SUPER_ADMIN') || hasRole('SYSTEM') || hasRole('HR_ADMIN');
+      }
+      
+      match /security_findings/{findingId} {
+        allow read: if isCompanyMember();
+        allow write: if hasRole('SUPER_ADMIN') || hasRole('COMPANY_ADMIN') || hasRole('HR_ADMIN') || hasRole('SYSTEM');
+      }
+      
+      match /production_signoffs/{signoffId} {
+        allow read: if isCompanyMember();
+        allow write: if hasRole('SUPER_ADMIN');
+      }
+
       match /payroll/{payrollId} {
         allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
         allow create, update: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -393,18 +431,18 @@ service cloud.firestore {
       }
 
       match /employee_salary_profiles/{profileId} {
-        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || (signedIn() && sameCompany(companyId));
-        allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow read: if canViewSalary(companyId) || (signedIn() && sameCompany(companyId) && resource.data.employeeId == userData().employeeId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId) || canViewSalary(companyId);
       }
 
       match /salary_structures/{structureId} {
-        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || canViewSalary(companyId);
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
       match /salary_slips/{slipId} {
-        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || (signedIn() && sameCompany(companyId));
-        allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow read: if canViewSalary(companyId) || (signedIn() && sameCompany(companyId) && resource.data.employeeId == userData().employeeId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId) || canViewSalary(companyId);
       }
 
       match /salary_advances/{advanceId} {
@@ -686,6 +724,26 @@ service cloud.firestore {
         allow update, delete: if false; // Immutable evaluation audit stream
       }
 
+      match /risk_records/{riskId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow create: if signedIn() && (isSuperAdmin() || sameCompany(companyId));
+        allow update: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow delete: if false; // Risk records are immutable, can only be CLOSED
+      }
+
+      match /risk_reviews/{reviewId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow create: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow update: if false; // Reviews are immutable
+        allow delete: if false; // Reviews are immutable
+      }
+      match /risk_mitigations/{mitigationId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId) || (signedIn() && sameCompany(companyId) && resource.data.assignedToUserId == request.auth.uid);
+        allow create: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow update: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId) || (signedIn() && sameCompany(companyId) && resource.data.assignedToUserId == request.auth.uid);
+        allow delete: if false; // Immutable
+      }
+
       match /suspicious_punches/{punchId} {
         allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
         // Allow create by any signed in user (specifically employees creating their own punch anomalies via the engine)
@@ -889,11 +947,63 @@ service cloud.firestore {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+
+        match /comments/{commentId} {
+          allow read: if isSuperAdmin() || (sameCompany(companyId) && (!resource.data.isInternalOnly || isManager(companyId) || isCompanyAdmin(companyId) || resource.data.authorUserId == request.auth.uid));
+          allow create: if isSuperAdmin() || (sameCompany(companyId) && (!request.resource.data.isInternalOnly || isManager(companyId) || isCompanyAdmin(companyId)));
+          allow update: if isSuperAdmin() || (sameCompany(companyId) && (resource.data.authorUserId == request.auth.uid || isCompanyAdmin(companyId)));
+          allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+        }
+
+        match /attachments/{attachmentId} {
+          allow read: if isSuperAdmin() || (sameCompany(companyId) && (resource.data.visibility != 'INTERNAL' || isManager(companyId) || isCompanyAdmin(companyId) || resource.data.uploadedByUserId == request.auth.uid));
+          allow create: if isSuperAdmin() || (sameCompany(companyId) && (request.resource.data.visibility != 'INTERNAL' || isManager(companyId) || isCompanyAdmin(companyId)));
+          allow update: if isSuperAdmin() || (sameCompany(companyId) && (resource.data.uploadedByUserId == request.auth.uid || isCompanyAdmin(companyId)));
+          allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+        }
+
+        match /status_history/{historyId} {
+          allow read: if isSuperAdmin() || sameCompany(companyId);
+          allow create: if isSuperAdmin() || sameCompany(companyId);
+          allow update, delete: if false;
+        }
+
+        match /resolutions/{resolutionId} {
+          allow read: if isSuperAdmin() || sameCompany(companyId);
+          allow create, update: if isSuperAdmin() || sameCompany(companyId);
+          allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+        }
       }
       match /serviceTickets/{docId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+
+        match /comments/{commentId} {
+          allow read: if isSuperAdmin() || (sameCompany(companyId) && (!resource.data.isInternalOnly || isManager(companyId) || isCompanyAdmin(companyId) || resource.data.authorUserId == request.auth.uid));
+          allow create: if isSuperAdmin() || (sameCompany(companyId) && (!request.resource.data.isInternalOnly || isManager(companyId) || isCompanyAdmin(companyId)));
+          allow update: if isSuperAdmin() || (sameCompany(companyId) && (resource.data.authorUserId == request.auth.uid || isCompanyAdmin(companyId)));
+          allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+        }
+
+        match /attachments/{attachmentId} {
+          allow read: if isSuperAdmin() || (sameCompany(companyId) && (resource.data.visibility != 'INTERNAL' || isManager(companyId) || isCompanyAdmin(companyId) || resource.data.uploadedByUserId == request.auth.uid));
+          allow create: if isSuperAdmin() || (sameCompany(companyId) && (request.resource.data.visibility != 'INTERNAL' || isManager(companyId) || isCompanyAdmin(companyId)));
+          allow update: if isSuperAdmin() || (sameCompany(companyId) && (resource.data.uploadedByUserId == request.auth.uid || isCompanyAdmin(companyId)));
+          allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+        }
+
+        match /status_history/{historyId} {
+          allow read: if isSuperAdmin() || sameCompany(companyId);
+          allow create: if isSuperAdmin() || sameCompany(companyId);
+          allow update, delete: if false;
+        }
+
+        match /resolutions/{resolutionId} {
+          allow read: if isSuperAdmin() || sameCompany(companyId);
+          allow create, update: if isSuperAdmin() || sameCompany(companyId);
+          allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+        }
       }
       match /statutory_configs/{docId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
@@ -955,6 +1065,17 @@ service cloud.firestore {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create: if isSuperAdmin() || sameCompany(companyId);
         allow update, delete: if false; // Immutable escalation audit trail
+      }
+
+      match /compliance_obligations/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || (sameCompany(companyId) && (isCompanyAdmin(companyId) || request.auth.token.role == "HR_ADMIN"));
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /obligation_reviews/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
       match /bpm_threshold_rules/{ruleId} {

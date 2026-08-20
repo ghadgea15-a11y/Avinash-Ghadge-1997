@@ -9,7 +9,11 @@ import { BulkExportAlertsDashboard } from './BulkExportAlertsDashboard';
 import { PrivilegeMatrixViewer } from './PrivilegeMatrixViewer';
 import { AccountProtectionViewer } from './AccountProtectionViewer';
 import { DataPrivacyViewer } from './DataPrivacyViewer';
-import { Lock, FileKey } from 'lucide-react';
+import { ContinuousMonitoringDashboard } from './ContinuousMonitoringDashboard';
+import { RiskRegisterViewer } from './RiskRegisterViewer';
+import { ComplianceControlViewer } from './ComplianceControlViewer';
+import { ComplianceObligationViewer } from './ComplianceObligationViewer';
+import { Lock, FileKey, FileText } from 'lucide-react';
 
 interface SecurityDashboardProps {
   userSession: UserSession;
@@ -20,7 +24,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
   const [events, setEvents] = useState<SecurityEventRecord[]>([]);
   const [anomalies, setAnomalies] = useState<SecurityAnomalyRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'ANOMALIES' | 'BULK_DOWNLOAD' | 'PUNCHES' | 'EVENTS' | 'PRIVILEGES' | 'ACCOUNT_LOCKS' | 'DATA_PRIVACY'>('ANOMALIES');
+  const [activeTab, setActiveTab] = useState<'ANOMALIES' | 'BULK_DOWNLOAD' | 'PUNCHES' | 'EVENTS' | 'PRIVILEGES' | 'ACCOUNT_LOCKS' | 'DATA_PRIVACY' | 'CONTINUOUS_MONITORING' | 'RISK_REGISTER' | 'COMPLIANCE_CONTROL' | 'OBLIGATIONS'>('CONTINUOUS_MONITORING');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [filterSeverity, setFilterSeverity] = useState<string>('ALL');
 
@@ -193,7 +197,41 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
             <FileKey className="w-4 h-4 text-purple-600" />
             Data Privacy & DDM
           </button>
-        </div>
+          <button
+            onClick={() => setActiveTab('CONTINUOUS_MONITORING')}
+            className={`flex-1 min-w-[170px] py-3.5 px-4 text-center text-xs font-bold transition-colors flex items-center justify-center gap-2 ${
+              activeTab === 'CONTINUOUS_MONITORING' ? 'bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600' : 'text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            <Activity className="w-4 h-4 text-blue-600" />
+            Continuous Monitoring
+          </button>
+          <button
+            onClick={() => setActiveTab('RISK_REGISTER')}
+            className={`flex-1 min-w-[170px] py-3.5 px-4 text-center text-xs font-bold transition-colors flex items-center justify-center gap-2 ${
+              activeTab === 'RISK_REGISTER' ? 'bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600' : 'text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            <AlertTriangle className="w-4 h-4 text-orange-600" />
+            Risk Register
+          </button>
+          <button
+            onClick={() => setActiveTab('COMPLIANCE_CONTROL')}
+            className={`flex-1 min-w-[170px] py-3.5 px-4 text-center text-xs font-bold transition-colors flex items-center justify-center gap-2 ${
+              activeTab === 'COMPLIANCE_CONTROL' ? 'bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600' : 'text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            Compliance Controls
+          </button>
+          <button
+            onClick={() => setActiveTab('OBLIGATIONS')}
+            className={`flex-1 min-w-[170px] py-3.5 px-4 text-center text-xs font-bold transition-colors flex items-center justify-center gap-2 ${
+              activeTab === 'OBLIGATIONS' ? 'bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600' : 'text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            <FileText className="w-4 h-4 text-blue-500" />
+            Obligations & Expiry</button></div>
 
         <div className="p-4 md:p-6">
           {activeTab === 'ANOMALIES' && (
@@ -375,7 +413,29 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
             <AccountProtectionViewer userSession={userSession} />
           )}
 
-          {activeTab === 'DATA_PRIVACY' && (
+          {activeTab === 'RISK_REGISTER' && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <RiskRegisterViewer userSession={userSession} />
+        </motion.div>
+      )}
+
+      {activeTab === 'CONTINUOUS_MONITORING' && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <ContinuousMonitoringDashboard userSession={userSession} />
+        </motion.div>
+      )}
+      {activeTab === 'COMPLIANCE_CONTROL' && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <ComplianceControlViewer session={userSession} />
+        </motion.div>
+      )}
+      {activeTab === 'OBLIGATIONS' && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <ComplianceObligationViewer session={userSession} />
+        </motion.div>
+      )}
+
+      {activeTab === 'DATA_PRIVACY' && (
             <DataPrivacyViewer userSession={userSession} />
           )}
         </div>

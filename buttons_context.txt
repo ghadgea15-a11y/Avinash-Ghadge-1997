@@ -1,0 +1,37 @@
+Line 415: <button
+Line 421: </button>
+Line 582: <button
+Line 590: </button>
+Line 616: <button
+Line 621: </button>
+Line 669: <button onClick={handleDecline} disabled={actionLoading} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow-sm transition disabled:opacity-50">Confirm Decline</button>
+Line 670: <button onClick={() => setIsDeclining(false)} className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold shadow-sm transition">Cancel</button>
+Line 677: <button onClick={handleAccept} disabled={actionLoading} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition disabled:opacity-50">Accept Assignment</button>
+Line 678: <button onClick={() => setIsDeclining(true)} disabled={actionLoading} className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-sm transition disabled:opacity-50">Decline</button>
+Line 682: <button onClick={() => setIsDispatching(!isDispatching)} className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">Reassign</button>
+Line 691: <button onClick={() => setIsDispatching(!isDispatching)} className="ml-3 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">Dispatch Ticket</button>
+Line 710: <button onClick={handleAssign} disabled={!selectedAssignee || actionLoading} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold shadow-sm transition disabled:opacity-50">Assign</button>
+Line 721: <button
+Line 727: </button>
+Line 735: <button
+Line 741: </button>
+Line 742: <button
+Line 748: </button>
+Line 753: <button
+Line 759: </button>
+Line 767: <button
+Line 774: </button>
+Line 787: <button
+Line 792: </button>
+Line 793: <button
+Line 798: </button>
+Line 808: <button
+Line 813: </button>
+Line 868: <button
+Line 875: </button>
+Line 901: <button onClick={() => setIsCreateModalOpen(false)} className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full">
+Line 903: </button>
+Line 1017: <button
+Line 1023: </button>
+Line 1024: <button
+Line 1030: </button>
