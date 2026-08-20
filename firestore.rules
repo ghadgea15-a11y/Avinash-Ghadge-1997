@@ -898,6 +898,26 @@ service cloud.firestore {
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
+      match /screenings/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /interviews/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /selections/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /backgroundVerifications/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
       match /deployments/{docId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create, update: if isSuperAdmin() || sameCompany(companyId);

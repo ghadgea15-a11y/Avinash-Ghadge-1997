@@ -92,6 +92,39 @@ export class BpmIntegrationService {
           resolutionNotes: `Remediation approved via BPM workflow (${instance.id})`
         });
         break;
+      case 'TALENT_ACQUISITION':
+        if (instance.transactionType === 'JOB_REQUISITION_APPROVAL') {
+          const reqRef = doc(db, 'companies', instance.companyId, 'jobRequisitions', instance.sourceRecordId);
+          await updateDoc(reqRef, { 
+            status: 'APPROVED', 
+            openingDate: now,
+            updatedAt: now 
+          });
+        } else if (instance.transactionType === 'SELECTION_APPROVAL') {
+          // 1. Fetch Selection Record
+          const selRef = doc(db, 'companies', instance.companyId, 'selections', instance.sourceRecordId);
+          const selSnap = await getDoc(selRef);
+          if (selSnap.exists()) {
+            const selection = selSnap.data() as any;
+            // 2. Update Candidate Stage
+            const candRef = doc(db, 'companies', instance.companyId, 'candidates', selection.candidateId);
+            await updateDoc(candRef, { stage: 'SELECTED', updatedAt: now });
+            
+            // 3. Update Requisition Capacity
+            const reqRef = doc(db, 'companies', instance.companyId, 'jobRequisitions', selection.requisitionId);
+            const reqSnap = await getDoc(reqRef);
+            if (reqSnap.exists()) {
+              const reqData = reqSnap.data() as any;
+              const newFilled = (reqData.filledPositions || 0) + 1;
+              await updateDoc(reqRef, { 
+                filledPositions: newFilled,
+                status: newFilled >= reqData.openPositions ? 'FILLED' : 'OPEN',
+                updatedAt: now 
+              });
+            }
+          }
+        }
+        break;
       default:
         console.log(`Domain integration executed for module: ${instance.sourceModule}`);
     }
@@ -110,6 +143,29 @@ export class BpmIntegrationService {
           bpmStatus: 'REJECTED', 
           resolutionNotes: `Remediation rejected via BPM workflow (${instance.id}). Reason: ${reason}`
         });
+        break;
+      case 'TALENT_ACQUISITION':
+        if (instance.transactionType === 'JOB_REQUISITION_APPROVAL') {
+          const reqRejectRef = doc(db, 'companies', instance.companyId, 'jobRequisitions', instance.sourceRecordId);
+          await updateDoc(reqRejectRef, { 
+            status: 'REJECTED', 
+            statusReason: reason || 'Rejected via BPM',
+            updatedAt: now 
+          });
+        } else if (instance.transactionType === 'SELECTION_APPROVAL') {
+          // Update selection record to REJECTED if BPM rejected it
+          const selRef = doc(db, 'companies', instance.companyId, 'selections', instance.sourceRecordId);
+          const selSnap = await getDoc(selRef);
+          if (selSnap.exists()) {
+            const selection = selSnap.data() as any;
+            await updateDoc(selRef, { decision: 'REJECTED', rejectionReason: reason, updatedAt: now });
+            
+            // Move candidate to REJECTED or back to INTERVIEW? 
+            // Usually rejection from BPM means the hiring manager said no.
+            const candRef = doc(db, 'companies', instance.companyId, 'candidates', selection.candidateId);
+            await updateDoc(candRef, { stage: 'REJECTED', rejectionReason: reason, updatedAt: now });
+          }
+        }
         break;
       case 'LEAVE':
         await FirestoreService.updateLeaveRequestStatus(

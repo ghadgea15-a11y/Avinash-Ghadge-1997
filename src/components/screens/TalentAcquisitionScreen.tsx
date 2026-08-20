@@ -8,7 +8,21 @@ import {
   VerificationStatus,
   DepartmentRecord,
   SiteRecord,
-  PhaseAScreen
+  PhaseAScreen,
+  ScreeningRecord,
+  ScreeningDecision,
+  ScreeningCriteriaResult,
+  InterviewRecord,
+  InterviewType,
+  InterviewStatus,
+  InterviewDecision,
+  EmployeeRecord,
+  SelectionRecord,
+  SelectionDecision,
+  BackgroundVerificationRecord,
+  BgVerificationType,
+  BgVerificationStatus,
+  BgVerificationResult
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { TalentAcquisitionService } from '../../services/talentAcquisitionService';
@@ -34,7 +48,12 @@ import {
   RefreshCw,
   Award,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Video,
+  Clock3,
+  UserPlus2,
+  Trash2,
+  CheckCircle2
 } from 'lucide-react';
 
 interface TalentAcquisitionScreenProps {
@@ -49,11 +68,16 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
   onNavigate
 }) => {
   const { isDark } = useTheme();
-  const [activeTab, setActiveTab] = useState<'CANDIDATES' | 'REQUISITIONS'>('CANDIDATES');
+  const [activeTab, setActiveTab] = useState<'CANDIDATES' | 'REQUISITIONS' | 'SCREENING_QUEUE' | 'INTERVIEWS' | 'SELECTION_QUEUE' | 'VERIFICATIONS'>('CANDIDATES');
   const [requisitions, setRequisitions] = useState<JobRequisitionRecord[]>([]);
   const [candidates, setCandidates] = useState<CandidateRecord[]>([]);
+  const [screenings, setScreenings] = useState<ScreeningRecord[]>([]);
+  const [interviews, setInterviews] = useState<InterviewRecord[]>([]);
+  const [selections, setSelections] = useState<SelectionRecord[]>([]);
+  const [verifications, setVerifications] = useState<BackgroundVerificationRecord[]>([]);
   const [departments, setDepartments] = useState<DepartmentRecord[]>([]);
   const [sites, setSites] = useState<SiteRecord[]>([]);
+  const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [stageFilter, setStageFilter] = useState<string>('ALL');
@@ -61,14 +85,83 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
   // Modals
   const [isCandidateModalOpen, setIsCandidateModalOpen] = useState<boolean>(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState<boolean>(false);
+  const [isScreeningModalOpen, setIsScreeningModalOpen] = useState<boolean>(false);
+  const [isInterviewModalOpen, setIsInterviewModalOpen] = useState<boolean>(false);
+  const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState<boolean>(false);
+  const [isSelectionModalOpen, setIsSelectionModalOpen] = useState<boolean>(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState<boolean>(false);
+  const [isProcessVerificationModalOpen, setIsProcessVerificationModalOpen] = useState<boolean>(false);
   const [profileTab, setProfileTab] = useState<'SUMMARY' | 'DETAIL' | 'DOCUMENTS'>('SUMMARY');
   const [isReqModalOpen, setIsReqModalOpen] = useState<boolean>(false);
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateRecord | null>(null);
+  const [candidateToScreen, setCandidateToScreen] = useState<CandidateRecord | null>(null);
+  const [selectedInterview, setSelectedInterview] = useState<InterviewRecord | null>(null);
+  const [selectedVerification, setSelectedVerification] = useState<BackgroundVerificationRecord | null>(null);
   const [isConverting, setIsConverting] = useState<boolean>(false);
   const [isSavingProfile, setIsSavingProfile] = useState<boolean>(false);
+  const [isSubmittingScreening, setIsSubmittingScreening] = useState<boolean>(false);
+  const [isSchedulingInterview, setIsSchedulingInterview] = useState<boolean>(false);
+  const [isSubmittingEvaluation, setIsSubmittingEvaluation] = useState<boolean>(false);
+  const [isSubmittingSelection, setIsSubmittingSelection] = useState<boolean>(false);
+  const [isRequestingVerification, setIsRequestingVerification] = useState<boolean>(false);
+  const [isUpdatingVerification, setIsUpdatingVerification] = useState<boolean>(false);
   const [conversionSuccessMsg, setConversionSuccessMsg] = useState<string | null>(null);
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
+
+  // Background Verification Form
+  const [bgvFormData, setBgvFormData] = useState({
+    type: 'EMPLOYMENT' as BgVerificationType,
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    notes: ''
+  });
+
+  // Verification Processing Form
+  const [bgvProcessFormData, setBgvProcessFormData] = useState({
+    status: 'IN_PROGRESS' as BgVerificationStatus,
+    result: 'PENDING' as BgVerificationResult,
+    findings: '',
+    notes: ''
+  });
+
+  // Screening Form
+  const [screeningFormData, setScreeningFormData] = useState({
+    decision: 'SHORTLISTED' as ScreeningDecision,
+    notes: '',
+    rejectionReason: '',
+    criteriaResults: [] as ScreeningCriteriaResult[]
+  });
+
+  // Interview Schedule Form
+  const [interviewFormData, setInterviewFormData] = useState({
+    type: 'GENERAL' as InterviewType,
+    scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+    durationMinutes: 30,
+    location: '',
+    meetingLink: '',
+    interviewerIds: [] as string[]
+  });
+
+  // Interview Evaluation Form
+  const [evaluationFormData, setEvaluationFormData] = useState({
+    decision: 'SELECTED' as InterviewDecision,
+    rating: 3,
+    notes: '',
+    rejectionReason: '',
+    criteria: [
+      { criteria: 'Technical Skills', rating: 3, comments: '' },
+      { criteria: 'Communication', rating: 3, comments: '' },
+      { criteria: 'Experience Alignment', rating: 3, comments: '' },
+      { criteria: 'Behavioral Fit', rating: 3, comments: '' }
+    ]
+  });
+  
+  // Selection Form
+  const [selectionFormData, setSelectionFormData] = useState({
+    decision: 'SELECTED' as SelectionDecision,
+    rejectionReason: '',
+    notes: ''
+  });
 
   // Candidate Form
   const [candFormData, setCandFormData] = useState({
@@ -99,15 +192,25 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
   // Requisition Form
   const [reqFormData, setReqFormData] = useState({
     jobTitle: '',
+    description: '',
     departmentId: '',
     siteId: '',
-    openPositions: 5,
-    minExperienceYears: 1,
-    salaryMinMonthly: 16000,
-    salaryMaxMonthly: 22000,
-    jobDescription: '',
-    targetHiringDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    openPositions: 1,
+    minExperienceYears: 0,
+    salaryMinMonthly: 15000,
+    salaryMaxMonthly: 25000,
+    employmentType: 'FULL_TIME' as 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'TEMPORARY',
+    workforceCategory: 'OPERATIONS' as any,
+    priority: 'MEDIUM' as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+    hiringManagerId: '',
+    hiringManagerName: '',
+    targetHiringDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    requiredSkills: '',
+    requiredQualifications: '',
+    shiftRequirement: ''
   });
+
+  const [isSubmittingReq, setIsSubmittingReq] = useState<boolean>(false);
 
   useEffect(() => {
     if (!activeCompany) return;
@@ -120,6 +223,26 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
     const unsubCands = FirestoreService.subscribeToCandidates(activeCompany.companyId, (candList) => {
       setCandidates(candList);
       setLoading(false);
+    });
+
+    const unsubScreenings = FirestoreService.subscribeToScreenings(activeCompany.companyId, (scrList) => {
+      setScreenings(scrList);
+    });
+
+    const unsubInterviews = FirestoreService.subscribeToInterviews(activeCompany.companyId, (intList) => {
+      setInterviews(intList);
+    });
+
+    const unsubSelections = FirestoreService.subscribeToSelections(activeCompany.companyId, (selList) => {
+      setSelections(selList);
+    });
+
+    const unsubVerifications = FirestoreService.subscribeToVerifications(activeCompany.companyId, (verList) => {
+      setVerifications(verList);
+    });
+
+    const unsubEmployees = FirestoreService.subscribeToEmployees(userSession!, activeCompany.companyId, (empList: EmployeeRecord[]) => {
+      setEmployees(empList);
     });
 
     const unsubDeps = FirestoreService.subscribeToDepartments(activeCompany.companyId, (depList) => {
@@ -139,10 +262,291 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
     return () => {
       unsubReqs();
       unsubCands();
+      unsubScreenings();
+      unsubInterviews();
+      unsubSelections();
+      unsubVerifications();
+      unsubEmployees();
       unsubDeps();
       unsubSites();
     };
   }, [activeCompany?.companyId]);
+
+  const handleStartScreening = (candidate: CandidateRecord) => {
+    if (!candidate.requisitionId) {
+      alert('This candidate is not linked to a job requisition.');
+      return;
+    }
+
+    const req = requisitions.find(r => r.id === candidate.requisitionId);
+    if (!req) {
+      alert('Linked job requisition not found.');
+      return;
+    }
+
+    const automatedResults = TalentAcquisitionService.evaluateCandidateEligibility(candidate, req);
+    
+    setCandidateToScreen(candidate);
+    setScreeningFormData({
+      decision: 'SHORTLISTED',
+      notes: '',
+      rejectionReason: '',
+      criteriaResults: automatedResults
+    });
+    setIsScreeningModalOpen(true);
+  };
+
+  const handleSubmitScreening = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userSession || !candidateToScreen || !candidateToScreen.requisitionId) return;
+
+    setIsSubmittingScreening(true);
+    try {
+      const score = Math.round(
+        (screeningFormData.criteriaResults.filter(r => r.isMet).length / 
+         screeningFormData.criteriaResults.length) * 100
+      ) || 0;
+
+      const result = await TalentAcquisitionService.submitScreeningDecision(userSession, {
+        candidateId: candidateToScreen.id,
+        requisitionId: candidateToScreen.requisitionId,
+        decision: screeningFormData.decision,
+        notes: screeningFormData.notes,
+        rejectionReason: screeningFormData.rejectionReason,
+        criteriaResults: screeningFormData.criteriaResults,
+        overallEligibilityScore: score
+      });
+
+      if (result.success) {
+        setIsScreeningModalOpen(false);
+        setCandidateToScreen(null);
+
+        // If shortlisted, automatically open interview scheduling
+        if (screeningFormData.decision === 'SHORTLISTED') {
+          const cand = candidates.find(c => c.id === candidateToScreen.id);
+          if (cand) {
+             handleStartScheduling(cand);
+          }
+        }
+      } else {
+        alert(result.error || 'Failed to submit screening');
+      }
+    } catch (err: any) {
+      console.error('Error submitting screening:', err);
+    } finally {
+      setIsSubmittingScreening(false);
+    }
+  };
+
+  const handleStartScheduling = (candidate: CandidateRecord) => {
+    setSelectedCandidate(candidate);
+    setInterviewFormData({
+      type: 'GENERAL',
+      scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+      durationMinutes: 30,
+      location: '',
+      meetingLink: '',
+      interviewerIds: userSession ? [userSession.userId] : []
+    });
+    setIsInterviewModalOpen(true);
+  };
+
+  const handleSubmitInterview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userSession || !selectedCandidate || !selectedCandidate.requisitionId) return;
+
+    if (interviewFormData.interviewerIds.length === 0) {
+      alert('Please assign at least one interviewer.');
+      return;
+    }
+
+    setIsSchedulingInterview(true);
+    const selectedInterviewers = employees
+      .filter(emp => interviewFormData.interviewerIds.includes(emp.authUid || ''))
+      .map(emp => ({ 
+        userId: emp.authUid || '', 
+        fullName: `${emp.firstName} ${emp.lastName}` 
+      }));
+
+    const screening = screenings.find(s => s.candidateId === selectedCandidate.id);
+
+    const payload: Partial<InterviewRecord> = {
+      candidateId: selectedCandidate.id,
+      requisitionId: selectedCandidate.requisitionId,
+      screeningId: screening?.id || 'DIRECT_ENTRY',
+      type: interviewFormData.type,
+      scheduledAt: interviewFormData.scheduledAt,
+      durationMinutes: interviewFormData.durationMinutes,
+      location: interviewFormData.location,
+      meetingLink: interviewFormData.meetingLink,
+      interviewers: selectedInterviewers
+    };
+
+    const result = await TalentAcquisitionService.scheduleInterview(userSession, payload);
+    if (result.success) {
+      setIsInterviewModalOpen(false);
+      setActiveTab('INTERVIEWS');
+    } else {
+      alert(result.error);
+    }
+    setIsSchedulingInterview(false);
+  };
+
+  const handleStartEvaluation = (interview: InterviewRecord) => {
+    setSelectedInterview(interview);
+    const cand = candidates.find(c => c.id === interview.candidateId);
+    if (cand) setSelectedCandidate(cand);
+    
+    setEvaluationFormData({
+      decision: 'SELECTED',
+      rating: 3,
+      notes: '',
+      rejectionReason: '',
+      criteria: [
+        { criteria: 'Technical Skills', rating: 3, comments: '' },
+        { criteria: 'Communication', rating: 3, comments: '' },
+        { criteria: 'Experience Alignment', rating: 3, comments: '' },
+        { criteria: 'Behavioral Fit', rating: 3, comments: '' }
+      ]
+    });
+    setIsEvaluationModalOpen(true);
+  };
+
+  const handleSubmitEvaluation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userSession || !selectedInterview) return;
+
+    setIsSubmittingEvaluation(true);
+    const evaluation = {
+      items: evaluationFormData.criteria,
+      overallRating: evaluationFormData.rating,
+      notes: evaluationFormData.notes
+    };
+
+    const result = await TalentAcquisitionService.submitInterviewEvaluation(
+      userSession,
+      selectedInterview.id,
+      evaluation,
+      evaluationFormData.decision,
+      evaluationFormData.rejectionReason
+    );
+
+    if (result.success) {
+      setIsEvaluationModalOpen(false);
+    } else {
+      alert(result.error);
+    }
+    setIsSubmittingEvaluation(false);
+  };
+
+  const handleUpdateInterviewStatus = async (interviewId: string, status: InterviewStatus) => {
+    if (!userSession) return;
+    const result = await TalentAcquisitionService.updateInterviewStatus(userSession, interviewId, status);
+    if (!result.success) alert(result.error);
+  };
+
+  const handleStartVerificationRequest = (candidate: CandidateRecord) => {
+    setSelectedCandidate(candidate);
+    const sel = selections.find(s => s.candidateId === candidate.id && s.decision === 'SELECTED');
+    setBgvFormData({
+      type: 'EMPLOYMENT',
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      notes: ''
+    });
+    setIsVerificationModalOpen(true);
+  };
+
+  const handleSubmitVerificationRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userSession || !selectedCandidate) return;
+
+    const sel = selections.find(s => s.candidateId === selectedCandidate.id && s.decision === 'SELECTED');
+    if (!sel) {
+      alert('Candidate must be in SELECTED state to request verification.');
+      return;
+    }
+
+    setIsRequestingVerification(true);
+    const result = await TalentAcquisitionService.requestBackgroundVerification(userSession, {
+      candidateId: selectedCandidate.id,
+      selectionId: sel.id,
+      requisitionId: selectedCandidate.requisitionId || '',
+      type: bgvFormData.type,
+      dueDate: bgvFormData.dueDate,
+      notes: bgvFormData.notes
+    });
+
+    if (result.success) {
+      setIsVerificationModalOpen(false);
+      setActiveTab('VERIFICATIONS');
+    } else {
+      alert(result.error || 'Failed to request verification');
+    }
+    setIsRequestingVerification(false);
+  };
+
+  const handleStartProcessingVerification = (verification: BackgroundVerificationRecord) => {
+    setSelectedVerification(verification);
+    setBgvProcessFormData({
+      status: verification.status === 'REQUESTED' ? 'ASSIGNED' : verification.status,
+      result: verification.result,
+      findings: verification.findings || '',
+      notes: verification.notes || ''
+    });
+    setIsProcessVerificationModalOpen(true);
+  };
+
+  const handleSubmitVerificationProcess = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userSession || !selectedVerification) return;
+
+    setIsUpdatingVerification(true);
+    const result = await TalentAcquisitionService.updateVerificationStatus(userSession, selectedVerification.id, {
+      status: bgvProcessFormData.status,
+      result: bgvProcessFormData.result,
+      findings: bgvProcessFormData.findings,
+      notes: bgvProcessFormData.notes
+    });
+
+    if (result.success) {
+      setIsProcessVerificationModalOpen(false);
+    } else {
+      alert(result.error || 'Failed to update verification');
+    }
+    setIsUpdatingVerification(false);
+  };
+
+  const handleStartSelection = (candidate: CandidateRecord) => {
+    setSelectedCandidate(candidate);
+    setSelectionFormData({
+      decision: 'SELECTED',
+      rejectionReason: '',
+      notes: ''
+    });
+    setIsSelectionModalOpen(true);
+  };
+
+  const handleSubmitSelection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userSession || !selectedCandidate || !selectedCandidate.requisitionId) return;
+
+    setIsSubmittingSelection(true);
+    const result = await TalentAcquisitionService.submitSelectionDecision(userSession, {
+      candidateId: selectedCandidate.id,
+      requisitionId: selectedCandidate.requisitionId,
+      decision: selectionFormData.decision,
+      rejectionReason: selectionFormData.rejectionReason,
+      notes: selectionFormData.notes
+    });
+
+    if (result.success) {
+      setIsSelectionModalOpen(false);
+      setActiveTab('SELECTION_QUEUE');
+    } else {
+      alert(result.error || 'Failed to submit selection decision');
+    }
+    setIsSubmittingSelection(false);
+  };
 
   const handleCreateCandidate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -245,65 +649,97 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
     e.preventDefault();
     if (!activeCompany || !userSession || !reqFormData.jobTitle.trim()) return;
 
+    setIsSubmittingReq(true);
     try {
-      const reqId = `REQ-${Date.now().toString().slice(-6)}`;
       const selectedDep = departments.find(d => d.id === reqFormData.departmentId);
       const selectedSite = sites.find(s => s.id === reqFormData.siteId);
 
-      const newReq: JobRequisitionRecord = {
-        id: reqId,
-        requisitionCode: `REQ-${new Date().getFullYear()}-${Date.now().toString().slice(-3)}`,
-        companyId: activeCompany.companyId,
-        jobTitle: reqFormData.jobTitle.trim(),
-        departmentId: reqFormData.departmentId || selectedDep?.id || 'DEP-SEC',
-        departmentName: selectedDep?.name || 'Security Operations',
-        siteId: reqFormData.siteId || selectedSite?.id || 'SITE-GEN',
-        siteName: selectedSite?.name || 'All Sites',
-        openPositions: Number(reqFormData.openPositions),
-        filledPositions: 0,
-        minExperienceYears: Number(reqFormData.minExperienceYears),
-        salaryMinMonthly: Number(reqFormData.salaryMinMonthly),
-        salaryMaxMonthly: Number(reqFormData.salaryMaxMonthly),
-        workforceCategory: 'OPERATIONS',
-        jobDescription: reqFormData.jobDescription.trim(),
-        status: 'OPEN',
-        targetHiringDate: reqFormData.targetHiringDate,
-        createdByUserId: userSession.userId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+      const result = await TalentAcquisitionService.createJobRequisition(
+        userSession,
+        {
+          jobTitle: reqFormData.jobTitle.trim(),
+          description: reqFormData.description.trim(),
+          departmentId: reqFormData.departmentId,
+          departmentName: selectedDep?.name || 'Department',
+          siteId: reqFormData.siteId,
+          siteName: selectedSite?.name || 'Site',
+          openPositions: Number(reqFormData.openPositions),
+          minExperienceYears: Number(reqFormData.minExperienceYears),
+          salaryMinMonthly: Number(reqFormData.salaryMinMonthly),
+          salaryMaxMonthly: Number(reqFormData.salaryMaxMonthly),
+          employmentType: reqFormData.employmentType,
+          workforceCategory: reqFormData.workforceCategory,
+          priority: reqFormData.priority,
+          hiringManagerId: reqFormData.hiringManagerId || userSession.userId,
+          hiringManagerName: reqFormData.hiringManagerName || userSession.fullName || 'Hiring Manager',
+          targetHiringDate: reqFormData.targetHiringDate,
+          requiredSkills: reqFormData.requiredSkills.split(',').map(s => s.trim()).filter(s => s),
+          requiredQualifications: reqFormData.requiredQualifications.split(',').map(s => s.trim()).filter(s => s),
+          shiftRequirement: reqFormData.shiftRequirement
+        }
+      );
 
-      await FirestoreService.saveJobRequisition(activeCompany.companyId, newReq);
-      setIsReqModalOpen(false);
-      setReqFormData({
-        jobTitle: '',
-        departmentId: departments[0]?.id || '',
-        siteId: sites[0]?.id || '',
-        openPositions: 5,
-        minExperienceYears: 1,
-        salaryMinMonthly: 16000,
-        salaryMaxMonthly: 22000,
-        jobDescription: '',
-        targetHiringDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      });
-    } catch (err) {
+      if (result.success) {
+        setIsReqModalOpen(false);
+        // Reset form
+        setReqFormData({
+          jobTitle: '',
+          description: '',
+          departmentId: departments[0]?.id || '',
+          siteId: sites[0]?.id || '',
+          openPositions: 1,
+          minExperienceYears: 0,
+          salaryMinMonthly: 15000,
+          salaryMaxMonthly: 25000,
+          employmentType: 'FULL_TIME',
+          workforceCategory: 'OPERATIONS',
+          priority: 'MEDIUM',
+          hiringManagerId: '',
+          hiringManagerName: '',
+          targetHiringDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          requiredSkills: '',
+          requiredQualifications: '',
+          shiftRequirement: ''
+        });
+      } else {
+        setRegisterError(result.error || 'Failed to create requisition');
+      }
+    } catch (err: any) {
       console.error('Error creating job requisition:', err);
+      setRegisterError(err.message || 'An unexpected error occurred');
+    } finally {
+      setIsSubmittingReq(false);
+    }
+  };
+
+  const handleSubmitReqForApproval = async (requisitionId: string) => {
+    if (!activeCompany || !userSession) return;
+
+    setIsSubmittingReq(true);
+    try {
+      const result = await TalentAcquisitionService.submitRequisitionForApproval(userSession, requisitionId);
+      if (!result.success) {
+        alert(result.error || 'Submission failed');
+      }
+    } catch (err: any) {
+      console.error('Error submitting requisition:', err);
+    } finally {
+      setIsSubmittingReq(false);
     }
   };
 
   const handleUpdateCandidateStage = async (candidate: CandidateRecord, newStage: CandidateStage) => {
-    if (!activeCompany) return;
+    if (!activeCompany || !userSession) return;
 
     try {
-      const updated: CandidateRecord = {
-        ...candidate,
-        stage: newStage,
-        updatedAt: new Date().toISOString()
-      };
-      await FirestoreService.saveCandidate(activeCompany.companyId, updated);
-      setSelectedCandidate(updated);
+      const result = await TalentAcquisitionService.updateCandidateStage(userSession, candidate, newStage);
+      if (result.success) {
+        setSelectedCandidate({ ...candidate, stage: newStage });
+      } else {
+        alert(result.error || 'Failed to update stage');
+      }
     } catch (err) {
-      console.error('Error updating stage:', err);
+      console.error('Error updating candidate stage:', err);
     }
   };
 
@@ -470,6 +906,46 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
         >
           Job Requisitions & Headcount ({requisitions.length})
         </button>
+        <button
+          onClick={() => setActiveTab('SCREENING_QUEUE')}
+          className={`px-5 py-3 text-sm font-bold border-b-2 transition ${
+            activeTab === 'SCREENING_QUEUE'
+              ? 'border-teal-600 text-teal-600 dark:text-teal-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Screening Queue ({candidates.filter(c => c.stage === 'APPLIED' || c.stage === 'SCREENING').length})
+        </button>
+        <button
+          onClick={() => setActiveTab('INTERVIEWS')}
+          className={`px-5 py-3 text-sm font-bold border-b-2 transition ${
+            activeTab === 'INTERVIEWS'
+              ? 'border-teal-600 text-teal-600 dark:text-teal-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Interview Rounds ({interviews.filter(i => i.status !== 'COMPLETED' && i.status !== 'CANCELLED').length})
+        </button>
+        <button
+          onClick={() => setActiveTab('SELECTION_QUEUE')}
+          className={`px-5 py-3 text-sm font-bold border-b-2 transition ${
+            activeTab === 'SELECTION_QUEUE'
+              ? 'border-teal-600 text-teal-600 dark:text-teal-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Selection Review ({candidates.filter(c => c.stage === 'INTERVIEW').length})
+        </button>
+        <button
+          onClick={() => setActiveTab('VERIFICATIONS')}
+          className={`px-5 py-3 text-sm font-bold border-b-2 transition ${
+            activeTab === 'VERIFICATIONS'
+              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Verifications ({verifications.filter(v => v.status !== 'CLEARED' && v.status !== 'FAILED' && v.status !== 'CLOSED').length})
+        </button>
       </div>
 
       {/* Tab 1: Candidates View */}
@@ -581,17 +1057,65 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                           {getStageBadge(c.stage)}
                         </td>
                         <td className="p-3.5 text-right">
-                          {c.stage === 'SELECTED' || c.stage === 'OFFER_EXTENDED' ? (
+                          {c.stage === 'APPLIED' ? (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handle1ClickConvert(c);
+                                handleStartScreening(c);
                               }}
-                              className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1 ml-auto"
+                              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1 ml-auto"
                             >
-                              <Sparkles className="w-3.5 h-3.5" />
-                              <span>1-Click Hire</span>
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                              <span>Screen</span>
                             </button>
+                          ) : c.stage === 'INTERVIEW' ? (
+                            <div className="flex items-center gap-2 justify-end">
+                              {interviews.some(i => i.candidateId === c.id && i.status === 'COMPLETED') && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStartSelection(c);
+                                  }}
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1"
+                                >
+                                  <UserCheck className="w-3.5 h-3.5" />
+                                  <span>Select</span>
+                                </button>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStartScheduling(c);
+                                }}
+                                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1"
+                              >
+                                <Calendar className="w-3.5 h-3.5" />
+                                <span>Schedule</span>
+                              </button>
+                            </div>
+                          ) : c.stage === 'SELECTED' || c.stage === 'OFFER_EXTENDED' ? (
+                            <div className="flex items-center gap-2 justify-end">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStartVerificationRequest(c);
+                                }}
+                                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1"
+                              >
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>Verify</span>
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handle1ClickConvert(c);
+                                }}
+                                className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1"
+                              >
+                                <Sparkles className="w-3.5 h-3.5" />
+                                <span>1-Click Hire</span>
+                              </button>
+                            </div>
                           ) : (
                             <button
                               onClick={(e) => {
@@ -616,70 +1140,1009 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
 
       {/* Tab 2: Requisitions View */}
       {activeTab === 'REQUISITIONS' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {requisitions.map((req) => (
-            <div
-              key={req.id}
-              className={`p-5 rounded-2xl border flex flex-col justify-between ${
-                isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-teal-600 dark:text-teal-400">{req.requisitionCode}</span>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                    {req.status}
-                  </span>
-                </div>
-
-                <h3 className="text-lg font-bold mt-2 text-slate-900 dark:text-slate-100">{req.jobTitle}</h3>
-                
-                <div className="space-y-1.5 text-xs text-slate-500 mt-3">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Department: {req.departmentName}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Site: {req.siteName}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Budget: ₹{req.salaryMinMonthly.toLocaleString()} - ₹{req.salaryMaxMonthly.toLocaleString()}/mo</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Target Date: {new Date(req.targetHiringDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
-
-                {req.jobDescription && (
-                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-3 line-clamp-2">
-                    {req.jobDescription}
-                  </p>
-                )}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {requisitions.length === 0 ? (
+              <div className="col-span-full p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl">
+                <Briefcase className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                <h3 className="font-bold text-lg text-slate-700 dark:text-slate-300">No Job Requisitions</h3>
+                <p className="text-sm text-slate-500 mt-1">Create your first requisition to start tracking vacancies and hiring pipeline.</p>
               </div>
-
-              <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  Openings: <strong className="text-teal-600 dark:text-teal-400">{req.openPositions}</strong>
-                </span>
-                <button
-                  onClick={() => {
-                    setCandFormData(prev => ({ ...prev, requisitionId: req.id, jobTitleAppliedFor: req.jobTitle }));
-                    setIsCandidateModalOpen(true);
-                  }}
-                  className="px-3 py-1.5 bg-teal-50 dark:bg-teal-950/50 hover:bg-teal-100 text-teal-600 dark:text-teal-300 rounded-lg text-xs font-semibold transition"
+            ) : (
+              requisitions.map((req) => (
+                <div
+                  key={req.id}
+                  className={`p-6 rounded-3xl border flex flex-col justify-between transition-all hover:shadow-xl ${
+                    isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'
+                  }`}
                 >
-                  + Add Applicant
-                </button>
-              </div>
-            </div>
-          ))}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-1 bg-slate-100 dark:bg-slate-900 rounded text-[10px] font-mono font-bold text-slate-500">{req.requisitionCode}</span>
+                        {req.priority === 'CRITICAL' && <span className="px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 text-[10px] font-bold rounded-full">CRITICAL</span>}
+                        {req.priority === 'HIGH' && <span className="px-2 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400 text-[10px] font-bold rounded-full">HIGH</span>}
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        req.status === 'OPEN' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400' :
+                        req.status === 'PENDING_APPROVAL' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400' :
+                        req.status === 'DRAFT' ? 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300' :
+                        req.status === 'FILLED' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-400' :
+                        'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-400'
+                      }`}>
+                        {req.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight">{req.jobTitle}</h3>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 font-medium">
+                        <span>{req.departmentName}</span>
+                        <span>•</span>
+                        <span>{req.siteName}</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-100 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Headcount</span>
+                        <div className="flex items-end gap-1">
+                          <span className="text-xl font-bold text-teal-600">{req.filledPositions}</span>
+                          <span className="text-sm text-slate-400 mb-0.5">/ {req.openPositions}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Pipeline</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Users className="w-4 h-4 text-slate-400" />
+                          <span className="text-sm font-bold">{req.pipelineCount || 0} Applicants</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 text-slate-500">
+                          <DollarSign className="w-3.5 h-3.5" />
+                          <span>Monthly Budget</span>
+                        </div>
+                        <span className="font-bold">₹{req.salaryMinMonthly.toLocaleString()} - {req.salaryMaxMonthly.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 text-slate-500">
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span>Hiring Manager</span>
+                        </div>
+                        <span className="font-bold">{req.hiringManagerName}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 text-slate-500">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>Target Joining</span>
+                        </div>
+                        <span className="font-bold">{new Date(req.targetHiringDate).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 flex flex-col gap-2">
+                    {req.status === 'DRAFT' && (
+                      <button
+                        onClick={() => handleSubmitReqForApproval(req.id)}
+                        disabled={isSubmittingReq}
+                        className="w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-lg transition flex items-center justify-center gap-2"
+                      >
+                        {isSubmittingReq ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                        Submit for Approval
+                      </button>
+                    )}
+                    {req.status === 'OPEN' && (
+                      <button
+                        onClick={() => {
+                          setCandFormData(prev => ({ ...prev, requisitionId: req.id, jobTitleAppliedFor: req.jobTitle }));
+                          setIsCandidateModalOpen(true);
+                          setActiveTab('CANDIDATES');
+                        }}
+                        className="w-full py-2.5 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 text-teal-600 dark:text-teal-400 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add New Applicant
+                      </button>
+                    )}
+                    {(req.status === 'REJECTED' || req.status === 'DRAFT') && (
+                      <button
+                        className="w-full py-2.5 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition"
+                      >
+                        Edit Details
+                      </button>
+                    )}
+                    {req.status === 'PENDING_APPROVAL' && (
+                      <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900 rounded-xl text-center">
+                        <p className="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-widest mb-1">Under BPM Approval</p>
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400">Waiting for departmental authorization.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
 
-      {/* Candidate Profile & Hiring Modal */}
+      {activeTab === 'SCREENING_QUEUE' && (
+        <div className="space-y-4">
+          <div className={`p-6 rounded-3xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
+            <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-indigo-500" />
+              Recruitment Screening Queue
+            </h2>
+            <p className="text-sm text-slate-500 mb-6">Review applicants against requisition criteria and decide their eligibility for interview.</p>
+
+            {candidates.filter(c => c.stage === 'APPLIED' || c.stage === 'SCREENING').length === 0 ? (
+              <div className="py-12 text-center text-slate-400">
+                <CheckCircle className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p className="font-bold">Queue is empty</p>
+                <p className="text-xs">No pending applications require screening at this time.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {candidates.filter(c => c.stage === 'APPLIED' || c.stage === 'SCREENING').map(c => {
+                  const req = requisitions.find(r => r.id === c.requisitionId);
+                  return (
+                    <div 
+                      key={c.id} 
+                      className={`p-4 rounded-2xl border flex items-center justify-between transition-all hover:border-indigo-400 ${
+                        isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-950/40 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">
+                          {c.fullName.charAt(0)}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-900 dark:text-slate-100">{c.fullName}</h4>
+                          <div className="text-xs text-slate-500 flex flex-col gap-0.5">
+                            <span>{c.jobTitleAppliedFor}</span>
+                            {req && (
+                              <span className="text-indigo-600 dark:text-indigo-400 font-medium">
+                                Requisition: {req.requisitionCode} ({req.jobTitle})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleStartScreening(c)}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-2"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        Start Screening
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className={`p-6 rounded-3xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
+            <h3 className="text-sm font-bold mb-4 uppercase tracking-widest text-slate-500">Recent Screening History</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                    <th className="py-3 px-2">Date</th>
+                    <th className="py-3 px-2">Candidate</th>
+                    <th className="py-3 px-2">Requisition</th>
+                    <th className="py-3 px-2">Screener</th>
+                    <th className="py-3 px-2">Decision</th>
+                    <th className="py-3 px-2 text-right">Score</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {screenings.slice(0, 10).map(scr => {
+                    const cand = candidates.find(c => c.id === scr.candidateId);
+                    const req = requisitions.find(r => r.id === scr.requisitionId);
+                    return (
+                      <tr key={scr.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition">
+                        <td className="py-3 px-2 font-medium">{new Date(scr.screeningDate).toLocaleDateString()}</td>
+                        <td className="py-3 px-2 font-bold text-slate-700 dark:text-slate-300">{cand?.fullName || 'Deleted Candidate'}</td>
+                        <td className="py-3 px-2 font-mono">{req?.requisitionCode || 'N/A'}</td>
+                        <td className="py-3 px-2">{scr.screenerName}</td>
+                        <td className="py-3 px-2">
+                          <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${
+                            scr.decision === 'SHORTLISTED' ? 'bg-emerald-100 text-emerald-800' :
+                            scr.decision === 'REJECTED' ? 'bg-rose-100 text-rose-800' :
+                            'bg-amber-100 text-amber-800'
+                          }`}>
+                            {scr.decision}
+                          </span>
+                        </td>
+                        <td className="py-3 px-2 text-right">
+                          <span className={`font-bold ${
+                            (scr.overallEligibilityScore || 0) >= 70 ? 'text-emerald-600' :
+                            (scr.overallEligibilityScore || 0) >= 40 ? 'text-amber-600' :
+                            'text-rose-600'
+                          }`}>
+                            {scr.overallEligibilityScore}%
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'INTERVIEWS' && (
+        <div className="space-y-4">
+          <div className={`p-6 rounded-3xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
+            <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
+              <Video className="w-5 h-5 text-indigo-500" />
+              Interview Management
+            </h2>
+            <p className="text-sm text-slate-500 mb-6">Manage candidate interview schedules, evaluations, and hiring decisions.</p>
+
+            {interviews.length === 0 ? (
+              <div className="py-12 text-center text-slate-400">
+                <Calendar className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p className="font-bold">No interviews scheduled</p>
+                <p className="text-xs">Schedule an interview from the candidate pipeline or screening queue.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {interviews.map(int => {
+                  const cand = candidates.find(c => c.id === int.candidateId);
+                  const req = requisitions.find(r => r.id === int.requisitionId);
+                  const isUpcoming = new Date(int.scheduledAt) > new Date();
+                  
+                  return (
+                    <div 
+                      key={int.id} 
+                      className={`p-4 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-indigo-400 ${
+                        isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg ${
+                          int.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-600' :
+                          int.status === 'CANCELLED' ? 'bg-rose-100 text-rose-600' :
+                          'bg-indigo-100 text-indigo-600'
+                        }`}>
+                          {cand?.fullName.charAt(0) || '?'}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-slate-900 dark:text-slate-100">{cand?.fullName || 'Deleted Candidate'}</h4>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                              int.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' :
+                              int.status === 'SCHEDULED' ? 'bg-indigo-100 text-indigo-800' :
+                              int.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-800' :
+                              'bg-slate-100 text-slate-800'
+                            }`}>
+                              {int.status}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <Briefcase className="w-3 h-3" />
+                              <span>{int.type} Interview • {req?.jobTitle || 'Unknown Position'}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Clock3 className="w-3 h-3" />
+                              <span className={isUpcoming && int.status === 'SCHEDULED' ? 'text-indigo-600 font-medium' : ''}>
+                                {new Date(int.scheduledAt).toLocaleString()} ({int.durationMinutes} min)
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 ml-auto md:ml-0">
+                        {int.status === 'SCHEDULED' && (
+                          <>
+                            <button 
+                              onClick={() => handleUpdateInterviewStatus(int.id, 'IN_PROGRESS')}
+                              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-bold transition flex items-center gap-1"
+                            >
+                              <RefreshCw className="w-3 h-3" /> Start
+                            </button>
+                            <button 
+                              onClick={() => handleUpdateInterviewStatus(int.id, 'CANCELLED')}
+                              className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-bold transition flex items-center gap-1"
+                            >
+                              <X className="w-3 h-3" /> Cancel
+                            </button>
+                          </>
+                        )}
+                        {(int.status === 'SCHEDULED' || int.status === 'IN_PROGRESS') && (
+                          <button 
+                            onClick={() => handleStartEvaluation(int)}
+                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-2"
+                          >
+                            <UserCheck className="w-4 h-4" />
+                            Evaluate
+                          </button>
+                        )}
+                        {int.status === 'COMPLETED' && (
+                          <div className="flex items-center gap-2">
+                             <div className="text-right mr-2">
+                               <p className="text-[10px] font-bold text-slate-400 uppercase">Decision</p>
+                               <p className={`text-xs font-bold ${
+                                 int.decision === 'SELECTED' ? 'text-emerald-600' :
+                                 int.decision === 'REJECTED' ? 'text-rose-600' :
+                                 'text-amber-600'
+                               }`}>{int.decision}</p>
+                             </div>
+                             <button 
+                              onClick={() => handleStartEvaluation(int)}
+                              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
+                             >
+                               <FileText className="w-4 h-4" />
+                             </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 5: Selection Queue View */}
+      {activeTab === 'SELECTION_QUEUE' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl text-emerald-600">
+                <UserCheck className="w-6 h-6" />
+              </div>
+              Final Selection Review
+            </h2>
+            <div className="flex items-center gap-3">
+               <span className="text-xs text-slate-500 font-medium italic">Pending review for candidates who completed interviews</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {candidates.filter(c => c.stage === 'INTERVIEW').length === 0 ? (
+              <div className="p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl">
+                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                <h3 className="font-bold text-lg text-slate-700 dark:text-slate-300">Queue is Empty</h3>
+                <p className="text-sm text-slate-500 mt-1">No candidates are currently pending a selection decision.</p>
+              </div>
+            ) : (
+              candidates.filter(c => c.stage === 'INTERVIEW').map((c) => {
+                const req = requisitions.find(r => r.id === c.requisitionId);
+                const interviewList = interviews.filter(i => i.candidateId === c.id);
+                const latestInt = interviewList.sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())[0];
+                const isReady = interviewList.some(i => i.status === 'COMPLETED');
+
+                return (
+                  <div 
+                    key={c.id}
+                    className={`p-5 rounded-2xl border transition-all hover:shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                      isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200 shadow-sm'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg ${
+                        isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {c.fullName.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 dark:text-slate-100">{c.fullName}</h4>
+                        <p className="text-xs text-slate-500 font-medium">Applied for: {c.jobTitleAppliedFor} • {req?.requisitionCode}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                           <span className="text-[10px] uppercase font-bold text-slate-400">Interviews: {interviewList.length}</span>
+                           <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                             isReady ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                           }`}>
+                             {isReady ? 'Completed' : 'In Progress'}
+                           </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                       <div className="text-right mr-4 hidden md:block">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Avg Rating</p>
+                          <div className="flex items-center justify-end gap-1">
+                             <Award className="w-3 h-3 text-amber-500" />
+                             <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                               {latestInt?.evaluation?.overallRating || 'N/A'}
+                             </span>
+                          </div>
+                       </div>
+                       
+                       <button
+                         onClick={() => handleStartSelection(c)}
+                         disabled={!isReady}
+                         className={`px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 ${
+                           isReady 
+                             ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md' 
+                             : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                         }`}
+                       >
+                         <UserCheck className="w-4 h-4" />
+                         Make Decision
+                       </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 6: Background Verification Queue */}
+      {activeTab === 'VERIFICATIONS' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-3">
+              <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl text-indigo-600">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              Background Verifications
+            </h2>
+            <div className="flex items-center gap-3">
+               <span className="text-xs text-slate-500 font-medium italic">Track and process background verification checks</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {verifications.length === 0 ? (
+              <div className="p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl">
+                <ShieldCheck className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                <h3 className="font-bold text-lg text-slate-700 dark:text-slate-300">No Active Verifications</h3>
+                <p className="text-sm text-slate-500 mt-1">Background check requests will appear here once initiated.</p>
+              </div>
+            ) : (
+              verifications.map((v) => {
+                const candidate = candidates.find(c => c.id === v.candidateId);
+                const isOverdue = new Date(v.dueDate) < new Date() && v.status !== 'CLEARED' && v.status !== 'FAILED' && v.status !== 'CLOSED';
+
+                return (
+                  <div 
+                    key={v.id}
+                    className={`p-5 rounded-2xl border transition-all hover:shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                      isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200 shadow-sm'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg ${
+                        isDark ? 'bg-slate-700 text-indigo-400' : 'bg-indigo-50 text-indigo-600'
+                      }`}>
+                        {v.type.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                           <h4 className="font-bold text-slate-900 dark:text-slate-100">{candidate?.fullName || 'Unknown Candidate'}</h4>
+                           <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full font-bold text-slate-500 uppercase tracking-wider">{v.verificationCode}</span>
+                        </div>
+                        <p className="text-xs text-slate-500 font-medium">{v.type} Check • Requested: {new Date(v.requestDate).toLocaleDateString()}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                           <div className="flex items-center gap-1">
+                              <Calendar className={`w-3 h-3 ${isOverdue ? 'text-rose-500' : 'text-slate-400'}`} />
+                              <span className={`text-[10px] font-bold ${isOverdue ? 'text-rose-500' : 'text-slate-400'}`}>
+                                Due: {new Date(v.dueDate).toLocaleDateString()} {isOverdue && '(OVERDUE)'}
+                              </span>
+                           </div>
+                           <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                             v.status === 'CLEARED' ? 'bg-emerald-100 text-emerald-700' :
+                             v.status === 'FAILED' ? 'bg-rose-100 text-rose-700' :
+                             v.status === 'IN_PROGRESS' || v.status === 'UNDER_REVIEW' ? 'bg-blue-100 text-blue-700' :
+                             'bg-amber-100 text-amber-700'
+                           }`}>
+                             {v.status.replace('_', ' ')}
+                           </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                       {v.evidenceReferences.length > 0 && (
+                         <div className="flex -space-x-2 mr-2">
+                           {v.evidenceReferences.map((e: any, idx: number) => (
+                             <div key={idx} className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-800 bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                               <FileText className="w-3.5 h-3.5" />
+                             </div>
+                           ))}
+                         </div>
+                       )}
+
+                       <button
+                         onClick={() => handleStartProcessingVerification(v)}
+                         className={`px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 ${
+                           isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-100' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                         }`}
+                       >
+                         <ArrowRight className="w-4 h-4" />
+                         Process
+                       </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Candidate Screening Evaluation Modal */}
+      {isScreeningModalOpen && candidateToScreen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
+          <form 
+            onSubmit={handleSubmitScreening}
+            className={`w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden border flex flex-col ${
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            }`}
+          >
+            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg text-indigo-600">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm">Eligibility Screening Evaluation</h3>
+                  <p className="text-[10px] text-slate-500 font-medium">{candidateToScreen.fullName} • {candidateToScreen.candidateCode}</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsScreeningModalOpen(false)}
+                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Context Summary */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Candidate Profile</span>
+                  <p className="text-sm font-bold">{candidateToScreen.jobTitleAppliedFor}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{candidateToScreen.highestEducation} • {candidateToScreen.experienceYears} Years Exp</p>
+                </div>
+                <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Linked Requisition</span>
+                  <p className="text-sm font-bold">
+                    {requisitions.find(r => r.id === candidateToScreen.requisitionId)?.jobTitle || 'N/A'}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">Code: {requisitions.find(r => r.id === candidateToScreen.requisitionId)?.requisitionCode}</p>
+                </div>
+              </div>
+
+              {/* Automated Eligibility Results */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Criteria Validation Results
+                </h4>
+                <div className="space-y-2">
+                  {screeningFormData.criteriaResults.map((res, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`p-3 rounded-xl border flex items-start gap-3 ${
+                        res.isMet 
+                          ? (isDark ? 'bg-emerald-950/20 border-emerald-900/50' : 'bg-emerald-50/50 border-emerald-100') 
+                          : (isDark ? 'bg-rose-950/20 border-rose-900/50' : 'bg-rose-50/50 border-rose-100')
+                      }`}
+                    >
+                      <div className={`p-1 rounded-full mt-0.5 ${res.isMet ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                        {res.isMet ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">{res.type}</span>
+                          <span className={`text-[10px] font-bold ${res.isMet ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {res.isMet ? 'MATCHED' : 'NOT MET'}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium mt-0.5 text-slate-900 dark:text-slate-100">{res.requirement}</p>
+                        <p className="text-[11px] text-slate-500 mt-1 italic">{res.details}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Decision Section */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500">Screening Decision</label>
+                    <select
+                      required
+                      value={screeningFormData.decision}
+                      onChange={(e) => setScreeningFormData(prev => ({ ...prev, decision: e.target.value as ScreeningDecision }))}
+                      className={`w-full p-2.5 rounded-xl border text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                      }`}
+                    >
+                      <option value="SHORTLISTED">SHORTLISTED</option>
+                      <option value="HOLD">KEEP ON HOLD</option>
+                      <option value="REJECTED">REJECTED</option>
+                    </select>
+                  </div>
+                  {screeningFormData.decision === 'REJECTED' && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500">Rejection Reason</label>
+                      <input
+                        required
+                        type="text"
+                        placeholder="e.g. Qualification mismatch"
+                        value={screeningFormData.rejectionReason}
+                        onChange={(e) => setScreeningFormData(prev => ({ ...prev, rejectionReason: e.target.value }))}
+                        className={`w-full p-2.5 rounded-xl border text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition outline-none ${
+                          isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                        }`}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500">Internal Screening Notes</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Provide additional details regarding candidate eligibility..."
+                    value={screeningFormData.notes}
+                    onChange={(e) => setScreeningFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    className={`w-full p-2.5 rounded-xl border text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition outline-none resize-none ${
+                      isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className={`p-4 border-t flex items-center justify-between ${isDark ? 'bg-slate-850 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="flex items-center gap-2">
+                <div className={`p-2 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-white'} border border-slate-200 dark:border-slate-700`}>
+                   <span className="text-xs font-bold">Score: </span>
+                   <span className={`text-sm font-bold ${
+                     (screeningFormData.criteriaResults.filter(r => r.isMet).length / Math.max(1, screeningFormData.criteriaResults.length)) >= 0.7 ? 'text-emerald-600' : 'text-rose-600'
+                   }`}>
+                     {Math.round((screeningFormData.criteriaResults.filter(r => r.isMet).length / Math.max(1, screeningFormData.criteriaResults.length)) * 100)}%
+                   </span>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsScreeningModalOpen(false)}
+                  className="px-6 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-700 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingScreening}
+                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-lg transition disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isSubmittingScreening ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  Submit Evaluation
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Interview Scheduling Modal */}
+      {isInterviewModalOpen && selectedCandidate && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
+          <form 
+            onSubmit={handleSubmitInterview}
+            className={`w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border flex flex-col ${
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            }`}
+          >
+            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg text-indigo-600">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm">Schedule Interview</h3>
+                  <p className="text-[10px] text-slate-500 font-medium">{selectedCandidate.fullName} • {selectedCandidate.candidateCode}</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsInterviewModalOpen(false)}
+                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500">Interview Type</label>
+                  <select
+                    required
+                    value={interviewFormData.type}
+                    onChange={(e) => setInterviewFormData(prev => ({ ...prev, type: e.target.value as InterviewType }))}
+                    className={`w-full p-2.5 rounded-xl border text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition outline-none ${
+                      isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                    }`}
+                  >
+                    <option value="GENERAL">General Interview</option>
+                    <option value="TECHNICAL">Technical Round</option>
+                    <option value="HR">HR Round</option>
+                    <option value="MANAGERIAL">Managerial Round</option>
+                    <option value="FINAL">Final Interview</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500">Duration (Minutes)</label>
+                  <input
+                    type="number"
+                    required
+                    min="15"
+                    step="15"
+                    value={interviewFormData.durationMinutes}
+                    onChange={(e) => setInterviewFormData(prev => ({ ...prev, durationMinutes: parseInt(e.target.value) }))}
+                    className={`w-full p-2.5 rounded-xl border text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition outline-none ${
+                      isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500">Scheduled At</label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={interviewFormData.scheduledAt}
+                  onChange={(e) => setInterviewFormData(prev => ({ ...prev, scheduledAt: e.target.value }))}
+                  className={`w-full p-2.5 rounded-xl border text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition outline-none ${
+                    isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                  }`}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500">Location / Meeting Link</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="e.g. Conference Room A or Google Meet link"
+                    value={interviewFormData.location}
+                    onChange={(e) => setInterviewFormData(prev => ({ ...prev, location: e.target.value, meetingLink: e.target.value }))}
+                    className={`w-full pl-10 p-2.5 rounded-xl border text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition outline-none ${
+                      isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500">Assign Interviewers (Authorized Staff)</label>
+                <div className={`p-2 rounded-xl border max-h-40 overflow-y-auto space-y-1 ${
+                  isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                }`}>
+                  {employees.filter(emp => emp.authUid).map(emp => (
+                    <label key={emp.id} className="flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-slate-700/30 rounded-lg cursor-pointer transition">
+                      <input
+                        type="checkbox"
+                        checked={interviewFormData.interviewerIds.includes(emp.authUid || '')}
+                        onChange={(e) => {
+                          const id = emp.authUid!;
+                          if (e.target.checked) {
+                            setInterviewFormData(prev => ({ ...prev, interviewerIds: [...prev.interviewerIds, id] }));
+                          } else {
+                            setInterviewFormData(prev => ({ ...prev, interviewerIds: prev.interviewerIds.filter(i => i !== id) }));
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold truncate">{emp.firstName} {emp.lastName}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{emp.designation} • {emp.employeeId}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-500 italic">Select one or more interviewers from the employee master.</p>
+              </div>
+            </div>
+
+            <div className={`p-4 border-t flex items-center justify-end gap-3 ${isDark ? 'bg-slate-850 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <button
+                type="button"
+                onClick={() => setIsInterviewModalOpen(false)}
+                className="px-6 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-700 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSchedulingInterview}
+                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-lg transition disabled:opacity-50 flex items-center gap-2"
+              >
+                {isSchedulingInterview ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Calendar className="w-4 h-4" />}
+                Schedule Interview
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Interview Evaluation Modal */}
+      {isEvaluationModalOpen && selectedInterview && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
+          <form 
+            onSubmit={handleSubmitEvaluation}
+            className={`w-full max-w-xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden border flex flex-col ${
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            }`}
+          >
+            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg text-emerald-600">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm">Interview Evaluation</h3>
+                  <p className="text-[10px] text-slate-500 font-medium">{selectedCandidate?.fullName} • {selectedInterview.type} Round</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsEvaluationModalOpen(false)}
+                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Scoring Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">Evaluation Criteria</h4>
+                <div className="space-y-3">
+                  {evaluationFormData.criteria.map((item, idx) => (
+                    <div key={idx} className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.criteria}</span>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => {
+                                const newCriteria = [...evaluationFormData.criteria];
+                                newCriteria[idx].rating = star;
+                                setEvaluationFormData(prev => ({ ...prev, criteria: newCriteria }));
+                              }}
+                              className={`p-0.5 transition ${item.rating >= star ? 'text-amber-500' : 'text-slate-300'}`}
+                            >
+                              <Sparkles className="w-3.5 h-3.5 fill-current" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Specific comments for this criteria..."
+                        value={item.comments}
+                        onChange={(e) => {
+                          const newCriteria = [...evaluationFormData.criteria];
+                          newCriteria[idx].comments = e.target.value;
+                          setEvaluationFormData(prev => ({ ...prev, criteria: newCriteria }));
+                        }}
+                        className={`w-full p-2 rounded-lg border text-[11px] outline-none focus:ring-1 focus:ring-indigo-500 ${
+                          isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'
+                        }`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Decision Section */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500">Final Decision</label>
+                    <select
+                      required
+                      value={evaluationFormData.decision}
+                      onChange={(e) => setEvaluationFormData(prev => ({ ...prev, decision: e.target.value as InterviewDecision }))}
+                      className={`w-full p-2.5 rounded-xl border text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                      }`}
+                    >
+                      <option value="SELECTED">SELECTED</option>
+                      <option value="FURTHER_REVIEW">FURTHER REVIEW</option>
+                      <option value="HOLD">KEEP ON HOLD</option>
+                      <option value="REJECTED">REJECTED</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500">Overall Rating (1-5)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      max="5"
+                      value={evaluationFormData.rating}
+                      onChange={(e) => setEvaluationFormData(prev => ({ ...prev, rating: parseInt(e.target.value) }))}
+                      className={`w-full p-2.5 rounded-xl border text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {evaluationFormData.decision === 'REJECTED' && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500">Rejection Reason</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="e.g. Communication barrier"
+                      value={evaluationFormData.rejectionReason}
+                      onChange={(e) => setEvaluationFormData(prev => ({ ...prev, rejectionReason: e.target.value }))}
+                      className={`w-full p-2.5 rounded-xl border text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                      }`}
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500">Internal Evaluation Notes</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Provide additional details regarding candidate performance..."
+                    value={evaluationFormData.notes}
+                    onChange={(e) => setEvaluationFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    className={`w-full p-2.5 rounded-xl border text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition outline-none resize-none ${
+                      isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className={`p-4 border-t flex items-center justify-end gap-3 ${isDark ? 'bg-slate-850 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <button
+                type="button"
+                onClick={() => setIsEvaluationModalOpen(false)}
+                className="px-6 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-700 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmittingEvaluation}
+                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-lg transition disabled:opacity-50 flex items-center gap-2"
+              >
+                {isSubmittingEvaluation ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                Submit Final Decision
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {selectedCandidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className={`w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden border flex flex-col ${
@@ -1519,104 +2982,579 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
       {/* Create Requisition Modal */}
       {isReqModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className={`w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border ${
+          <div className={`w-full max-w-2xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden border flex flex-col ${
             isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
           }`}>
-            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
-              <h3 className="font-bold text-lg">Create Job Requisition</h3>
-              <button onClick={() => setIsReqModalOpen(false)} className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full">
+            <div className={`p-6 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-teal-100 dark:bg-teal-900/40 text-teal-600 rounded-xl">
+                  <Briefcase className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg leading-none">Raise Recruitment Requisition</h3>
+                  <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-bold">New Vacancy Request</p>
+                </div>
+              </div>
+              <button onClick={() => setIsReqModalOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateRequisition} className="p-5 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">Position Title *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Senior Security Supervisor"
-                  value={reqFormData.jobTitle}
-                  onChange={(e) => setReqFormData(prev => ({ ...prev, jobTitle: e.target.value }))}
-                  className={`w-full px-3.5 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                  }`}
-                />
-              </div>
+            <form onSubmit={handleCreateRequisition} className="flex-1 overflow-y-auto p-8 space-y-8">
+              {/* Basic Details */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold uppercase text-teal-600 tracking-widest">Position & Department</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="col-span-full">
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Job Title / Vacancy Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Senior Security Supervisor"
+                      value={reqFormData.jobTitle}
+                      onChange={(e) => setReqFormData(prev => ({ ...prev, jobTitle: e.target.value }))}
+                      className={`w-full px-4 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                      }`}
+                    />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">Department</label>
-                  <select
-                    value={reqFormData.departmentId}
-                    onChange={(e) => setReqFormData(prev => ({ ...prev, departmentId: e.target.value }))}
-                    className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                    }`}
-                  >
-                    {departments.map(d => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Department</label>
+                    <select
+                      value={reqFormData.departmentId}
+                      onChange={(e) => setReqFormData(prev => ({ ...prev, departmentId: e.target.value }))}
+                      className={`w-full px-4 py-2.5 text-sm rounded-xl border focus:outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                      }`}
+                    >
+                      <option value="">Select Department</option>
+                      {departments.map(d => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">Open Vacancies</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={reqFormData.openPositions}
-                    onChange={(e) => setReqFormData(prev => ({ ...prev, openPositions: Number(e.target.value) }))}
-                    className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">Min Salary (Monthly)</label>
-                  <input
-                    type="number"
-                    value={reqFormData.salaryMinMonthly}
-                    onChange={(e) => setReqFormData(prev => ({ ...prev, salaryMinMonthly: Number(e.target.value) }))}
-                    className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">Max Salary (Monthly)</label>
-                  <input
-                    type="number"
-                    value={reqFormData.salaryMaxMonthly}
-                    onChange={(e) => setReqFormData(prev => ({ ...prev, salaryMaxMonthly: Number(e.target.value) }))}
-                    className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                    }`}
-                  />
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Deployment Site / Branch</label>
+                    <select
+                      value={reqFormData.siteId}
+                      onChange={(e) => setReqFormData(prev => ({ ...prev, siteId: e.target.value }))}
+                      className={`w-full px-4 py-2.5 text-sm rounded-xl border focus:outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                      }`}
+                    >
+                      <option value="">Select Site</option>
+                      {sites.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+              {/* Hiring Requirements */}
+              <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                <h4 className="text-xs font-bold uppercase text-teal-600 tracking-widest">Hiring Requirements & Capacity</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Open Vacancies</label>
+                    <input
+                      type="number"
+                      min={1}
+                      required
+                      value={reqFormData.openPositions}
+                      onChange={(e) => setReqFormData(prev => ({ ...prev, openPositions: Number(e.target.value) }))}
+                      className={`w-full px-4 py-2.5 text-sm rounded-xl border focus:outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Employment Type</label>
+                    <select
+                      value={reqFormData.employmentType}
+                      onChange={(e) => setReqFormData(prev => ({ ...prev, employmentType: e.target.value as any }))}
+                      className={`w-full px-4 py-2.5 text-sm rounded-xl border focus:outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                      }`}
+                    >
+                      <option value="FULL_TIME">Full Time</option>
+                      <option value="PART_TIME">Part Time</option>
+                      <option value="CONTRACT">Contract</option>
+                      <option value="TEMPORARY">Temporary</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Workforce Category</label>
+                    <select
+                      value={reqFormData.workforceCategory}
+                      onChange={(e) => setReqFormData(prev => ({ ...prev, workforceCategory: e.target.value as any }))}
+                      className={`w-full px-4 py-2.5 text-sm rounded-xl border focus:outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                      }`}
+                    >
+                      <option value="OPERATIONS">Operations (PSARA)</option>
+                      <option value="MANAGERIAL">Managerial</option>
+                      <option value="EXECUTIVE">Executive / Staff</option>
+                      <option value="TRAINING">Training Academy</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Priority Level</label>
+                    <select
+                      value={reqFormData.priority}
+                      onChange={(e) => setReqFormData(prev => ({ ...prev, priority: e.target.value as any }))}
+                      className={`w-full px-4 py-2.5 text-sm rounded-xl border focus:outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                      }`}
+                    >
+                      <option value="LOW">Low</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="HIGH">High</option>
+                      <option value="CRITICAL">Critical</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Min Experience (Yrs)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={reqFormData.minExperienceYears}
+                      onChange={(e) => setReqFormData(prev => ({ ...prev, minExperienceYears: Number(e.target.value) }))}
+                      className={`w-full px-4 py-2.5 text-sm rounded-xl border focus:outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Target Joining Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={reqFormData.targetHiringDate}
+                      onChange={(e) => setReqFormData(prev => ({ ...prev, targetHiringDate: e.target.value }))}
+                      className={`w-full px-4 py-2.5 text-sm rounded-xl border focus:outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Financials & Description */}
+              <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                <h4 className="text-xs font-bold uppercase text-teal-600 tracking-widest">Financials & Job Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Salary Min (Monthly)</label>
+                    <div className="relative">
+                      <DollarSign className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                      <input
+                        type="number"
+                        value={reqFormData.salaryMinMonthly}
+                        onChange={(e) => setReqFormData(prev => ({ ...prev, salaryMinMonthly: Number(e.target.value) }))}
+                        className={`w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border focus:outline-none ${
+                          isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Salary Max (Monthly)</label>
+                    <div className="relative">
+                      <DollarSign className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                      <input
+                        type="number"
+                        value={reqFormData.salaryMaxMonthly}
+                        onChange={(e) => setReqFormData(prev => ({ ...prev, salaryMaxMonthly: Number(e.target.value) }))}
+                        className={`w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border focus:outline-none ${
+                          isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <div className="col-span-full">
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Required Skills (Comma separated)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. PSARA Certified, Fire Safety, First Aid, Guarding"
+                      value={reqFormData.requiredSkills}
+                      onChange={(e) => setReqFormData(prev => ({ ...prev, requiredSkills: e.target.value }))}
+                      className={`w-full px-4 py-2.5 text-sm rounded-xl border focus:outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                      }`}
+                    />
+                  </div>
+                  <div className="col-span-full">
+                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5">Job Description / Responsibilities</label>
+                    <textarea
+                      rows={3}
+                      placeholder="Detailed breakdown of duties..."
+                      value={reqFormData.description}
+                      onChange={(e) => setReqFormData(prev => ({ ...prev, description: e.target.value }))}
+                      className={`w-full px-4 py-2.5 text-sm rounded-xl border focus:outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-300'
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsReqModalOpen(false)}
-                  className="px-4 py-2 text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100"
+                  className="px-6 py-2.5 text-sm font-bold rounded-xl text-slate-500 hover:bg-slate-100 transition"
                 >
-                  Cancel
+                  Save as Draft
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-sm font-semibold rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow-sm"
+                  disabled={isSubmittingReq}
+                  className="px-8 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-teal-600/20 transition flex items-center gap-2"
                 >
-                  Publish Requisition
+                  {isSubmittingReq && <RefreshCw className="w-4 h-4 animate-spin" />}
+                  Create Requisition
                 </button>
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Selection Decision Modal */}
+      {isSelectionModalOpen && selectedCandidate && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+          <form 
+            onSubmit={handleSubmitSelection}
+            className={`w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border flex flex-col ${
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            }`}
+          >
+            <div className={`p-6 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl text-emerald-600">
+                  <UserCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Final Selection Decision</h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{selectedCandidate.fullName} • {selectedCandidate.candidateCode}</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsSelectionModalOpen(false)}
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6">
+              <div className="space-y-4">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Decision Outcome</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {(['SELECTED', 'REJECTED', 'HOLD'] as SelectionDecision[]).map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setSelectionFormData(prev => ({ ...prev, decision: opt }))}
+                      className={`py-3 rounded-2xl text-xs font-bold border transition-all ${
+                        selectionFormData.decision === opt
+                          ? opt === 'SELECTED' ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-600/20' :
+                            opt === 'REJECTED' ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/20' :
+                            'bg-amber-600 border-amber-600 text-white shadow-lg shadow-amber-600/20'
+                          : isDark ? 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500' : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {selectionFormData.decision === 'REJECTED' && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                  <label className="block text-[11px] font-bold uppercase text-rose-500 tracking-widest">Rejection Reason *</label>
+                  <textarea
+                    required
+                    value={selectionFormData.rejectionReason}
+                    onChange={(e) => setSelectionFormData(prev => ({ ...prev, rejectionReason: e.target.value }))}
+                    placeholder="Provide a specific reason for rejection..."
+                    rows={3}
+                    className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                      isDark ? 'bg-slate-800 border-slate-700 focus:border-rose-500' : 'bg-slate-50 border-slate-200 focus:border-rose-400'
+                    }`}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Notes / Justification</label>
+                <textarea
+                  value={selectionFormData.notes}
+                  onChange={(e) => setSelectionFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Additional context for this decision..."
+                  rows={3}
+                  className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                    isDark ? 'bg-slate-800 border-slate-700 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:border-indigo-400'
+                  }`}
+                />
+              </div>
+
+              <div className={`p-4 rounded-2xl border text-[11px] font-medium leading-relaxed ${isDark ? 'bg-slate-800/40 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                <div className="flex items-start gap-2">
+                   <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                   <p>
+                     {selectionFormData.decision === 'SELECTED' 
+                       ? 'Selecting this candidate will trigger the approval workflow (if configured) or move them directly to the Selected stage. This will affect requisition capacity.'
+                       : selectionFormData.decision === 'REJECTED'
+                       ? 'Rejecting this candidate will move them to the Rejected stage and notify HR. This action is recorded in the audit trail.'
+                       : 'Placing this candidate on Hold will preserve their current interview status for future reconsideration.'}
+                   </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsSelectionModalOpen(false)}
+                className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmittingSelection}
+                className={`px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg transition flex items-center gap-2 ${
+                  selectionFormData.decision === 'REJECTED' 
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20' 
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                }`}
+              >
+                {isSubmittingSelection && <RefreshCw className="w-4 h-4 animate-spin" />}
+                Confirm Decision
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+      {/* Background Verification Request Modal */}
+      {isVerificationModalOpen && selectedCandidate && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+          <form 
+            onSubmit={handleSubmitVerificationRequest}
+            className={`w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border flex flex-col ${
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            }`}
+          >
+            <div className={`p-6 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl text-indigo-600">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Request Background Verification</h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{selectedCandidate.fullName}</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsVerificationModalOpen(false)}
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Verification Type</label>
+                  <select
+                    value={bgvFormData.type}
+                    onChange={(e) => setBgvFormData(prev => ({ ...prev, type: e.target.value as BgVerificationType }))}
+                    className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                      isDark ? 'bg-slate-800 border-slate-700 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:border-indigo-400'
+                    }`}
+                  >
+                    <option value="EMPLOYMENT">Employment History</option>
+                    <option value="EDUCATION">Education Verification</option>
+                    <option value="IDENTITY">ID / Document Check</option>
+                    <option value="ADDRESS">Address Verification</option>
+                    <option value="REFERENCE">Professional Reference</option>
+                    <option value="OTHER">Other / Misc Check</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Target Due Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={bgvFormData.dueDate}
+                    onChange={(e) => setBgvFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+                    className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                      isDark ? 'bg-slate-800 border-slate-700 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:border-indigo-400'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Specific Instructions</label>
+                <textarea
+                  value={bgvFormData.notes}
+                  onChange={(e) => setBgvFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Detail any specific aspects or documents to verify..."
+                  rows={3}
+                  className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                    isDark ? 'bg-slate-800 border-slate-700 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:border-indigo-400'
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsVerificationModalOpen(false)}
+                className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isRequestingVerification}
+                className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/20 transition flex items-center gap-2"
+              >
+                {isRequestingVerification && <RefreshCw className="w-4 h-4 animate-spin" />}
+                Initiate Request
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Verification Processing Modal */}
+      {isProcessVerificationModalOpen && selectedVerification && (
+        <div className="fixed inset-0 z-[75] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+          <form 
+            onSubmit={handleSubmitVerificationProcess}
+            className={`w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border flex flex-col ${
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            }`}
+          >
+            <div className={`p-6 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl text-indigo-600">
+                  <RefreshCw className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Process Background Check</h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                    {selectedVerification.verificationCode} • {selectedVerification.type}
+                  </p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsProcessVerificationModalOpen(false)}
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Update Status</label>
+                  <select
+                    value={bgvProcessFormData.status}
+                    onChange={(e) => setBgvProcessFormData(prev => ({ ...prev, status: e.target.value as BgVerificationStatus }))}
+                    className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                      isDark ? 'bg-slate-800 border-slate-700 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:border-indigo-400'
+                    }`}
+                  >
+                    <option value="ASSIGNED">Assigned</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="EVIDENCE_SUBMITTED">Evidence Submitted</option>
+                    <option value="UNDER_REVIEW">Under Review</option>
+                    <option value="CLEARED">Cleared / Approved</option>
+                    <option value="FAILED">Failed / Rejected</option>
+                    <option value="CLARIFICATION_REQUIRED">Requires Clarification</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Final Result</label>
+                  <select
+                    value={bgvProcessFormData.result}
+                    onChange={(e) => setBgvProcessFormData(prev => ({ ...prev, result: e.target.value as BgVerificationResult }))}
+                    className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                      isDark ? 'bg-slate-800 border-slate-700 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:border-indigo-400'
+                    }`}
+                  >
+                    <option value="PENDING">Pending</option>
+                    <option value="CLEARED">Cleared</option>
+                    <option value="FAILED">Failed</option>
+                    <option value="CLARIFICATION_REQUIRED">Incomplete</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Verification Findings</label>
+                <textarea
+                  value={bgvProcessFormData.findings}
+                  onChange={(e) => setBgvProcessFormData(prev => ({ ...prev, findings: e.target.value }))}
+                  placeholder="Summarize the findings of the background check..."
+                  rows={3}
+                  className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                    isDark ? 'bg-slate-800 border-slate-700 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:border-indigo-400'
+                  }`}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Internal Notes</label>
+                <textarea
+                  value={bgvProcessFormData.notes}
+                  onChange={(e) => setBgvProcessFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Additional context or remarks..."
+                  rows={2}
+                  className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                    isDark ? 'bg-slate-800 border-slate-700 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:border-indigo-400'
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsProcessVerificationModalOpen(false)}
+                className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isUpdatingVerification}
+                className={`px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg transition flex items-center gap-2 ${
+                  bgvProcessFormData.result === 'FAILED' 
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20' 
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20'
+                }`}
+              >
+                {isUpdatingVerification && <RefreshCw className="w-4 h-4 animate-spin" />}
+                Update Verification
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

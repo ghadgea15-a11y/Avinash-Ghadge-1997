@@ -3275,7 +3275,17 @@ export interface ServiceTicketRecord {
 // ============================================================================
 // MODULE 12: TALENT ACQUISITION & ONBOARDING (ATS)
 // ============================================================================
-export type RequisitionStatus = 'OPEN' | 'INTERVIEWING' | 'FILLED' | 'CANCELLED';
+export type RequisitionStatus = 
+  | 'DRAFT' 
+  | 'SUBMITTED' 
+  | 'PENDING_APPROVAL' 
+  | 'APPROVED' 
+  | 'OPEN' 
+  | 'ON_HOLD' 
+  | 'CLOSED' 
+  | 'CANCELLED' 
+  | 'FILLED' 
+  | 'REJECTED';
 export type CandidateStage = 
   | 'APPLIED' 
   | 'SCREENING' 
@@ -3294,20 +3304,50 @@ export interface JobRequisitionRecord {
   requisitionCode: string; // e.g. REQ-2026-012
   companyId: string;
   jobTitle: string;
+  description?: string; // Detailed description
   departmentId: string;
   departmentName: string;
   siteId: string;
   siteName: string;
   designationId?: string;
+  designationName?: string;
+  
+  // Capacity & Tracking
   openPositions: number;
   filledPositions: number;
+  pipelineCount?: number;
+  
+  // Requirements
+  employmentType: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'TEMPORARY';
+  workforceCategory: WorkforceCategory;
+  shiftRequirement?: string;
   minExperienceYears: number;
+  requiredQualifications?: string[];
+  requiredSkills?: string[];
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  
+  // Ownership
+  hiringManagerId: string;
+  hiringManagerName: string;
+  recruiterId?: string;
+  recruiterName?: string;
+  
+  // Financials
   salaryMinMonthly: number;
   salaryMaxMonthly: number;
-  workforceCategory: WorkforceCategory;
-  jobDescription: string;
+  currency?: string;
+  
+  // Lifecycle
   status: RequisitionStatus;
+  statusReason?: string;
+  openingDate?: string;
+  closingDate?: string;
   targetHiringDate: string;
+  
+  // BPM / Approval
+  bpmInstanceId?: string;
+  
+  // Metadata
   createdByUserId: string;
   createdAt: string;
   updatedAt: string;
@@ -3340,6 +3380,126 @@ export interface CandidateCertification {
   expiryDate?: string;
   credentialId?: string;
   credentialUrl?: string;
+}
+
+export type ScreeningDecision = 'SHORTLISTED' | 'REJECTED' | 'HOLD';
+export type SelectionDecision = 'SELECTED' | 'REJECTED' | 'HOLD';
+
+export type InterviewType = 'TECHNICAL' | 'HR' | 'MANAGERIAL' | 'FINAL' | 'GENERAL';
+export type InterviewStatus = 'SCHEDULED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+export type InterviewDecision = 'SELECTED' | 'REJECTED' | 'FURTHER_REVIEW' | 'HOLD';
+
+export interface InterviewEvaluationItem {
+  criteria: string;
+  rating: number; // 1-5
+  comments?: string;
+}
+
+export interface InterviewRecord {
+  id: string;
+  companyId: string;
+  candidateId: string;
+  requisitionId: string;
+  screeningId: string;
+  interviewCode: string; // e.g. INT-1123
+  type: InterviewType;
+  interviewers: {
+    userId: string;
+    fullName: string;
+  }[];
+  scheduledAt: string; // ISO string
+  durationMinutes: number;
+  location?: string;
+  meetingLink?: string;
+  status: InterviewStatus;
+  evaluation?: {
+    items: InterviewEvaluationItem[];
+    overallRating: number;
+    notes?: string;
+  };
+  decision?: InterviewDecision;
+  rejectionReason?: string;
+  createdAt: string;
+  updatedAt: string;
+  bpmInstanceId?: string;
+}
+
+export interface SelectionRecord {
+  id: string;
+  companyId: string;
+  candidateId: string;
+  requisitionId: string;
+  screeningId?: string;
+  interviewId?: string;
+  selectionCode: string; // e.g. SEL-2026-101
+  selectorId: string;
+  selectorName: string;
+  selectionDate: string;
+  decision: SelectionDecision;
+  rejectionReason?: string;
+  notes?: string;
+  approvalReference?: string;
+  bpmInstanceId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type BgVerificationType = 'EMPLOYMENT' | 'EDUCATION' | 'IDENTITY' | 'ADDRESS' | 'REFERENCE' | 'OTHER';
+export type BgVerificationStatus = 'REQUESTED' | 'ASSIGNED' | 'IN_PROGRESS' | 'EVIDENCE_SUBMITTED' | 'UNDER_REVIEW' | 'CLEARED' | 'FAILED' | 'CLARIFICATION_REQUIRED' | 'CLOSED';
+export type BgVerificationResult = 'CLEARED' | 'FAILED' | 'PENDING' | 'CLARIFICATION_REQUIRED';
+
+export interface BackgroundVerificationRecord {
+  id: string;
+  companyId: string;
+  candidateId: string;
+  selectionId: string;
+  requisitionId: string;
+  verificationCode: string; // e.g. BGV-2026-101
+  type: BgVerificationType;
+  assignedVerifierId?: string;
+  assignedVerifierName?: string;
+  requestDate: string;
+  dueDate: string;
+  status: BgVerificationStatus;
+  result: BgVerificationResult;
+  findings?: string;
+  notes?: string;
+  evidenceReferences: {
+    documentId: string;
+    documentType: string;
+    fileName: string;
+    fileUrl: string;
+    uploadedAt: string;
+  }[];
+  completionDate?: string;
+  bpmInstanceId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScreeningCriteriaResult {
+  requirement: string;
+  isMet: boolean;
+  details?: string;
+  type: 'QUALIFICATION' | 'SKILL' | 'EXPERIENCE' | 'OTHER';
+}
+
+export interface ScreeningRecord {
+  id: string;
+  companyId: string;
+  candidateId: string;
+  requisitionId: string;
+  screeningCode: string; // e.g. SCR-9921
+  screenerId: string;
+  screenerName: string;
+  screeningDate: string;
+  decision: ScreeningDecision;
+  rejectionReason?: string;
+  notes?: string;
+  criteriaResults: ScreeningCriteriaResult[];
+  overallEligibilityScore?: number; // 0-100 percentage
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CandidateRecord {

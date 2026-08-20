@@ -92,6 +92,10 @@ import {
   TicketStatusTransitionPayload,
   JobRequisitionRecord,
   CandidateRecord,
+  ScreeningRecord,
+  InterviewRecord,
+  SelectionRecord,
+  BackgroundVerificationRecord,
   TrainingProgramRecord,
   TrainingEnrollmentRecord,
   ProcurementRequisitionRecord,
@@ -515,10 +519,16 @@ export class FirestoreService {
       if (ok) {
         // Update candidate stage
         await setDoc(doc(db, 'companies', companyId, 'candidates', candidate.id), {
-          stage: 'CONVERTED',
+          stage: 'ONBOARDED', // Using ONBOARDED as requested in Module 12 types
           convertedToEmployeeId: employeeId,
           updatedAt: new Date().toISOString()
         }, { merge: true });
+
+        // Update Requisition Capacity (Module 12 / Point 3.7)
+        if (candidate.requisitionId) {
+          const { TalentAcquisitionService } = await import('./talentAcquisitionService');
+          await TalentAcquisitionService.updateRequisitionCapacity(companyId, candidate.requisitionId, 1, -1);
+        }
 
         // Add Lifecycle Event
         await this.addLifecycleEvent(companyId, employeeId, {
@@ -7293,6 +7303,102 @@ const allAttendances: any[] = [];
       return true;
     } catch (err) {
       console.error('Error saving candidate:', err);
+      return false;
+    }
+  }
+
+  static subscribeToScreenings(companyId: string, onUpdate: (screenings: ScreeningRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'screenings');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as ScreeningRecord);
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async saveScreeningRecord(companyId: string, screening: ScreeningRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'screenings', screening.id);
+      await setDoc(docRef, {
+        ...screening,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving screening record:', err);
+      return false;
+    }
+  }
+
+  static subscribeToInterviews(companyId: string, onUpdate: (interviews: InterviewRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'interviews');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as InterviewRecord);
+      list.sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async saveInterviewRecord(companyId: string, interview: InterviewRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'interviews', interview.id);
+      await setDoc(docRef, {
+        ...interview,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving interview record:', err);
+      return false;
+    }
+  }
+
+  static subscribeToSelections(companyId: string, onUpdate: (selections: SelectionRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'selections');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as SelectionRecord);
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static subscribeToVerifications(companyId: string, onUpdate: (verifications: BackgroundVerificationRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'backgroundVerifications');
+    const q = query(colRef);
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as BackgroundVerificationRecord);
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      onUpdate(list);
+    });
+  }
+
+  static async saveVerificationRecord(companyId: string, verification: BackgroundVerificationRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'backgroundVerifications', verification.id);
+      await setDoc(docRef, {
+        ...verification,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving verification record:', err);
+      return false;
+    }
+  }
+
+  static async saveSelectionRecord(companyId: string, selection: SelectionRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'selections', selection.id);
+      await setDoc(docRef, {
+        ...selection,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving selection record:', err);
       return false;
     }
   }
