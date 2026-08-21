@@ -1,0 +1,275 @@
+import React, { useState, useEffect } from 'react';
+import { CompanyTenant, UserSession, SrmVendorRecord, VendorTier, VendorStatus } from '../../types';
+import { Search, Plus, Filter, FileText, CheckCircle, XCircle, ShieldAlert, Star, Building2, Ban } from 'lucide-react';
+import { getFirestore, collection, query, getDocs } from 'firebase/firestore';
+import { format } from 'date-fns';
+
+interface Props {
+  userSession: UserSession;
+  activeCompany: CompanyTenant;
+  onNavigate: (screen: any) => void;
+}
+
+export function VendorDirectoryScreen({ userSession, activeCompany, onNavigate }: Props) {
+  const [vendors, setVendors] = useState<SrmVendorRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [tierFilter, setTierFilter] = useState<VendorTier | 'ALL'>('ALL');
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const db = getFirestore();
+        // Mock data since we don't have seeds for this feature yet
+        setTimeout(() => {
+          setVendors([
+            {
+              id: 'VND-1001',
+              companyId: activeCompany.companyId,
+              businessName: 'Apex Security Gear',
+              legalEntityName: 'Apex Equipments Ltd',
+              category: 'Security Gear',
+              subCategories: ['Uniforms', 'Batons', 'Boots'],
+              tier: 'TIER_1_PREFERRED',
+              status: 'ACTIVE',
+              contactPerson: { name: 'Rajesh Verma', phone: '9876543210', email: 'rajesh@apexgear.com' },
+              billingAddress: 'Sector 4, Noida',
+              bankDetails: { accountName: 'Apex Equipments Ltd', accountNumber: '1234567890', ifscCode: 'HDFC0001', bankName: 'HDFC Bank' },
+              taxDetails: { gstin: '07AAPCA1234Z1Z1', panNumber: 'AAPCA1234Z', msmeRegistrationNumber: 'UDYAM-UP-001' },
+              complianceScore: 100,
+              ratingAverage: 4.8,
+              creditPeriodDays: 30,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            },
+            {
+              id: 'VND-1002',
+              companyId: activeCompany.companyId,
+              businessName: 'CleanPro Services',
+              legalEntityName: 'CleanPro Solutions Pvt Ltd',
+              category: 'Housekeeping Consumables',
+              subCategories: ['Chemicals', 'Mops', 'Tissues'],
+              tier: 'TIER_2_APPROVED',
+              status: 'ACTIVE',
+              contactPerson: { name: 'Sunita Sharma', phone: '9876543211', email: 'sunita@cleanpro.in' },
+              billingAddress: 'Andheri East, Mumbai',
+              bankDetails: { accountName: 'CleanPro Solutions', accountNumber: '0987654321', ifscCode: 'SBIN0001', bankName: 'SBI' },
+              taxDetails: { gstin: '27AABCC1234Z1Z1', panNumber: 'AABCC1234Z', msmeRegistrationNumber: 'UDYAM-MH-002' },
+              complianceScore: 85,
+              ratingAverage: 4.2,
+              creditPeriodDays: 45,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            },
+            {
+              id: 'VND-1003',
+              companyId: activeCompany.companyId,
+              businessName: 'TechFix IT',
+              legalEntityName: 'TechFix Systems Ltd',
+              category: 'IT Hardware',
+              subCategories: ['Laptops', 'Servers'],
+              tier: 'BLACKLISTED',
+              status: 'SUSPENDED',
+              contactPerson: { name: 'Vikram Singh', phone: '9876543212', email: 'vikram@techfix.com' },
+              billingAddress: 'Koramangala, Bangalore',
+              bankDetails: { accountName: 'TechFix Systems', accountNumber: '1122334455', ifscCode: 'ICIC0001', bankName: 'ICICI Bank' },
+              taxDetails: { gstin: '29AABCD1234Z1Z1', panNumber: 'AABCD1234Z', msmeRegistrationNumber: 'UDYAM-KA-003' },
+              complianceScore: 40,
+              ratingAverage: 2.1,
+              creditPeriodDays: 15,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          ]);
+          setLoading(false);
+        }, 800);
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [activeCompany.companyId]);
+
+  const getTierBadge = (tier: VendorTier) => {
+    switch (tier) {
+      case 'TIER_1_PREFERRED': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'TIER_2_APPROVED': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'TIER_3_PROVISIONAL': return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'BLACKLISTED': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const filteredVendors = vendors.filter(v => {
+    const matchesSearch = v.businessName.toLowerCase().includes(searchQuery.toLowerCase()) || v.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTier = tierFilter === 'ALL' || v.tier === tierFilter;
+    return matchesSearch && matchesTier;
+  });
+
+  return (
+    <div className="min-h-screen bg-slate-50 pt-20 px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Vendor Management</h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Onboarding, Document Verification, and Compliance Directory.
+            </p>
+          </div>
+          <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center">
+            <Plus className="w-4 h-4 mr-2" />
+            Onboard Vendor
+          </button>
+        </div>
+
+        {/* Dashboard Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Total Vendors</p>
+              <p className="text-2xl font-bold text-slate-900">{loading ? '-' : vendors.length}</p>
+            </div>
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+              <Building2 className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Tier 1 Preferred</p>
+              <p className="text-2xl font-bold text-emerald-600">
+                {loading ? '-' : vendors.filter(s => s.tier === 'TIER_1_PREFERRED').length}
+              </p>
+            </div>
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
+              <CheckCircle className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Under Review</p>
+              <p className="text-2xl font-bold text-amber-600">
+                {loading ? '-' : vendors.filter(s => s.status === 'UNDER_REVIEW').length}
+              </p>
+            </div>
+            <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
+              <FileText className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Blacklisted</p>
+              <p className="text-2xl font-bold text-red-600">
+                {loading ? '-' : vendors.filter(s => s.tier === 'BLACKLISTED').length}
+              </p>
+            </div>
+            <div className="p-3 bg-red-50 text-red-600 rounded-lg">
+              <Ban className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+
+        {/* Directory Controls */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by vendor name or category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            />
+          </div>
+          <select
+            value={tierFilter}
+            onChange={(e) => setTierFilter(e.target.value as VendorTier | 'ALL')}
+            className="px-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+          >
+            <option value="ALL">All Tiers</option>
+            <option value="TIER_1_PREFERRED">Tier 1 (Preferred)</option>
+            <option value="TIER_2_APPROVED">Tier 2 (Approved)</option>
+            <option value="TIER_3_PROVISIONAL">Tier 3 (Provisional)</option>
+            <option value="BLACKLISTED">Blacklisted</option>
+          </select>
+        </div>
+
+        {/* Status Directory */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+            <h2 className="text-lg font-semibold text-slate-800">Vendor Master List</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500">
+                  <th className="px-6 py-3 font-medium">Business Name</th>
+                  <th className="px-6 py-3 font-medium">Category</th>
+                  <th className="px-6 py-3 font-medium">Compliance</th>
+                  <th className="px-6 py-3 font-medium">Rating</th>
+                  <th className="px-6 py-3 font-medium">Tier Classification</th>
+                  <th className="px-6 py-3 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 text-sm">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                      Loading vendors...
+                    </td>
+                  </tr>
+                ) : filteredVendors.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                      No vendors found matching criteria.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredVendors.map((vendor) => (
+                    <tr key={vendor.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-slate-900">{vendor.businessName}</div>
+                        <div className="text-slate-500 text-xs">{vendor.contactPerson.email}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-slate-800 font-medium">{vendor.category}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full ${vendor.complianceScore >= 80 ? 'bg-emerald-500' : vendor.complianceScore >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                              style={{ width: `${vendor.complianceScore}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-medium text-slate-600">{vendor.complianceScore}%</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center text-slate-700 font-medium">
+                          <Star className="w-4 h-4 text-amber-500 mr-1 fill-amber-500" />
+                          {vendor.ratingAverage.toFixed(1)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getTierBadge(vendor.tier)}`}>
+                          {vendor.tier.replace(/_/g, ' ')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <button className="text-indigo-600 hover:text-indigo-900 font-medium text-sm transition-colors">
+                          View Profile
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}

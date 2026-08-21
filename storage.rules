@@ -58,6 +58,16 @@ service firebase.storage {
       allow read: if companyMatch(cid);
       allow write: if companyMatch(cid);
     }
+    
+    match /companies/{cid}/certifications/{allPaths=**} {
+      allow read: if companyMatch(cid);
+      allow write: if companyMatch(cid) && validDoc();
+    }
+    match /companies/{cid}/candidates/{candId}/{allPaths=**} {
+      allow read: if companyMatch(cid) && (hrTier() || opsTier());
+      allow write: if companyMatch(cid) && hrTier() && (validDoc() || validImage());
+      allow delete: if companyMatch(cid) && hrTier();
+    }
     match /companies/{cid}/serviceTickets/{tid}/{allPaths=**} {
       allow read: if companyMatch(cid);
       allow write: if companyMatch(cid) && validDoc();

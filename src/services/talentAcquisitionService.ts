@@ -1,12 +1,14 @@
-import { collection, doc, getDoc, getDocs, query, where, updateDoc, runTransaction } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, query, where, updateDoc, runTransaction } from 'firebase/firestore';
 import { db } from '../firebase';
 import { 
-  CandidateRecord, 
+  CandidateRecord,
+  EmployeeRecord, 
   CandidateRegistrationResult,
   UserSession,
   AppNotification,
   JobRequisitionRecord,
   CandidateStage,
+  CandidateStatusHistory,
   ScreeningRecord,
   ScreeningDecision,
   ScreeningCriteriaResult,
@@ -18,11 +20,17 @@ import {
   BackgroundVerificationRecord,
   BgVerificationType,
   BgVerificationStatus,
-  BgVerificationResult
-} from '../types';
+  BgVerificationResult,
+  VerificationStatus,
+  CandidateDocumentRecord,
+  CandidateDocumentType,
+  CandidateDocVerificationStatus,
+  STANDARD_CANDIDATE_DOCUMENTS
+} from "../types";
 import { FirestoreService } from './firestoreService';
 import { StorageService } from './storageService';
 import { AuditTrailService } from './auditTrailService';
+
 import { BpmService } from './bpmService';
 
 /**
@@ -64,7 +72,7 @@ export class TalentAcquisitionService {
       }
 
       // 4. Stage Checks
-      if (candidate.stage === 'REJECTED' || candidate.stage === 'ONBOARDED') {
+      if (candidate.stage === 'REJECTED' || candidate.stage === 'CONVERTED_TO_EMPLOYEE') {
         return { eligible: false, error: `Candidate is in '${candidate.stage}' stage and cannot be selected.` };
       }
 
@@ -157,11 +165,11 @@ export class TalentAcquisitionService {
           // For now, we'll wait for approval before moving to 'SELECTED' stage.
         } else {
           // No BPM, direct selection
-          await this.updateCandidateStage(session, candidate, 'SELECTED');
+          await this.updateCandidateStatus(session, candidate.id, 'SELECTED');
           await this.updateRequisitionCapacity(companyId, requisition.id, 1, 0);
         }
       } else if (newSelection.decision === 'REJECTED') {
-        await this.updateCandidateStage(session, candidate, 'REJECTED', newSelection.rejectionReason);
+        await this.updateCandidateStatus(session, candidate.id, 'REJECTED', newSelection.rejectionReason);
       } else if (newSelection.decision === 'HOLD') {
         // Hold usually preserves current state, but we log the decision record
         // Candidate remains in INTERVIEW or current stage
@@ -230,7 +238,7 @@ export class TalentAcquisitionService {
       if (!candSnap.exists()) return { success: false, error: 'Candidate not found.' };
       const candidate = candSnap.data() as CandidateRecord;
 
-      if (candidate.stage !== 'SELECTED' && candidate.stage !== 'INTERVIEW') {
+      if (candidate.stage !== 'SELECTED' && candidate.stage !== 'INTERVIEW_SCHEDULED') {
          // Usually requested after selection, but sometimes parallel.
       }
 
@@ -353,9 +361,91 @@ export class TalentAcquisitionService {
         await FirestoreService.createNotification(companyId, notification);
       }
 
+      // Sync Police or Aadhaar verification status to Candidate
+      if (current.type === 'POLICE' || current.type === 'AADHAAR') {
+        const candidateRef = doc(db, 'companies', companyId, 'candidates', current.candidateId);
+        if (current.type === 'POLICE') {
+          await updateDoc(candidateRef, {
+            policeVerificationStatus: updates.result === 'CLEARED' ? 'VERIFIED' : updates.result === 'FAILED' ? 'FAILED' : 'PENDING'
+          });
+        }
+        if (current.type === 'AADHAAR') {
+          await updateDoc(candidateRef, {
+            aadhaarVerificationStatus: updates.result === 'CLEARED' ? 'VERIFIED' : updates.result === 'FAILED' ? 'FAILED' : 'PENDING'
+          });
+        }
+      }
+
+      await this.syncCandidateVerificationStatus(session, current.candidateId);
+
       return { success: true };
     } catch (err: any) {
       console.error('[TalentAcquisitionService] updateVerificationStatus failure:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  public static async uploadVerificationEvidence(
+    session: UserSession,
+    verificationId: string,
+    file: File
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { companyId } = session;
+      const verRef = doc(db, 'companies', companyId, 'backgroundVerifications', verificationId);
+      const verSnap = await getDoc(verRef);
+      if (!verSnap.exists()) return { success: false, error: 'Verification record not found.' };
+      
+      const current = verSnap.data() as BackgroundVerificationRecord;
+      const candidateId = current.candidateId;
+
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const storagePath = `companies/${companyId}/candidates/${candidateId}/verifications/${verificationId}_${Date.now()}_${sanitizedFileName}`;
+      const fileUrl = await StorageService.uploadFile(storagePath, file, session);
+
+      const documentId = `DOC-${Date.now()}`;
+      
+      const newEvidence = {
+        documentId,
+        documentType: current.type,
+        fileName: file.name,
+        fileUrl,
+        uploadedAt: new Date().toISOString()
+      };
+
+      await updateDoc(verRef, {
+        evidenceReferences: [...(current.evidenceReferences || []), newEvidence],
+        status: 'EVIDENCE_SUBMITTED',
+        updatedAt: new Date().toISOString()
+      });
+
+      await AuditTrailService.logAction(
+        session,
+        'TALENT_ACQUISITION',
+        'UPDATE',
+        'BACKGROUND_VERIFICATION',
+        verificationId,
+        true,
+        'MEDIUM',
+        `Evidence uploaded for ${current.type} verification`,
+        { documentId, fileName: file.name }
+      );
+
+      const notification: any = {
+        id: `NOTIF-EVIDENCE-${Date.now()}`,
+        title: `Verification Evidence Submitted`,
+        message: `Evidence file "${file.name}" was uploaded for ${current.type} verification (Candidate ID: ${candidateId}).`,
+        type: 'INFO',
+        roleScope: ['HR', 'COMPANY_ADMIN'],
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        metadata: { verificationId, candidateId }
+      };
+      await FirestoreService.createNotification(companyId, notification);
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('[TalentAcquisitionService] uploadVerificationEvidence failure:', err);
       return { success: false, error: err.message };
     }
   }
@@ -569,63 +659,225 @@ export class TalentAcquisitionService {
   /**
    * Updates candidate stage and handles requisition capacity adjustments.
    */
-  public static async updateCandidateStage(
+
+
+  public static async requestPoliceVerification(
     session: UserSession,
-    candidate: CandidateRecord,
-    newStage: CandidateStage,
-    reason?: string
-  ): Promise<{ success: boolean; error?: string }> {
-    const { companyId } = session;
-
+    candidateId: string
+  ): Promise<{ success: boolean; status: VerificationStatus; message: string }> {
     try {
-      const oldStage = candidate.stage;
-      if (oldStage === newStage) return { success: true };
+      const candidateRef = doc(db, `companies/${session.companyId}/candidates/${candidateId}`);
+      const candidateSnap = await getDoc(candidateRef);
 
-      const candRef = doc(db, 'companies', companyId, 'candidates', candidate.id);
+      if (!candidateSnap.exists()) {
+        throw new Error('Candidate not found');
+      }
+
+      const candidateData = candidateSnap.data();
+
+      // Check existing verification records to prevent duplicates
+      const verificationsRef = collection(db, `companies/${session.companyId}/backgroundVerifications`);
+      const q = query(
+        verificationsRef, 
+        where('candidateId', '==', candidateId), 
+        where('type', '==', 'POLICE')
+      );
       
-      await updateDoc(candRef, {
-        stage: newStage,
-        rejectionReason: reason || candidate.rejectionReason,
-        updatedAt: new Date().toISOString()
-      });
+      const verificationsSnap = await getDocs(q);
+      const activeVerifications = verificationsSnap.docs.filter(d => 
+        d.data().status !== 'FAILED' && d.data().status !== 'CLOSED' && d.data().result !== 'FAILED'
+      );
 
-      // Handle Requisition Capacity (Module 12 / Point 3.7)
-      if (candidate.requisitionId) {
-        let deltaPipeline = 0;
-        
-        // If moving out of active pipeline (REJECTED or ONBOARDED)
-        const isActive = (s: CandidateStage) => s !== 'REJECTED' && s !== 'ONBOARDED';
-        
-        if (isActive(oldStage) && !isActive(newStage)) {
-          deltaPipeline = -1;
-        } else if (!isActive(oldStage) && isActive(newStage)) {
-          deltaPipeline = 1;
-        }
-
-        if (deltaPipeline !== 0) {
-          await this.updateRequisitionCapacity(companyId, candidate.requisitionId, 0, deltaPipeline);
+      if (activeVerifications.length > 0) {
+        const active = activeVerifications[0].data();
+        if (active.status === 'CLEARED' || active.result === 'CLEARED') {
+           return { success: true, status: 'VERIFIED', message: 'Candidate already has a cleared Police Verification record' };
+        } else {
+           return { success: true, status: 'PENDING', message: 'A Police verification is already in progress' };
         }
       }
 
-      // Audit
+      const verificationId = `BGV-${Date.now()}-${Math.random().toString(36).substring(2,8).toUpperCase()}`;
+      const code = `POLICE-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      
+      const newRecord = {
+        id: verificationId,
+        companyId: session.companyId,
+        candidateId,
+        selectionId: 'DIRECT',
+        requisitionId: candidateData.requisitionId || 'UNKNOWN',
+        verificationCode: code,
+        type: 'POLICE',
+        verificationMethod: 'MANUAL_SUBMISSION',
+        requestDate: new Date().toISOString(),
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: 'REQUESTED',
+        result: 'PENDING',
+        notes: 'Police Verification requested. Waiting for submission.',
+        evidenceReferences: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      await setDoc(doc(db, `companies/${session.companyId}/backgroundVerifications/${verificationId}`), newRecord);
+
       await AuditTrailService.logAction(
         session,
         'TALENT_ACQUISITION',
-        'CANDIDATE_STAGE_UPDATED',
-        'CANDIDATE',
-        candidate.id,
+        'UPDATE',
+        'CANDIDATE_RECORD',
+        candidateId,
         true,
-        'LOW',
-        `Candidate ${candidate.fullName} moved from ${oldStage} to ${newStage}`,
-        { oldStage, newStage, reason }
+        'MEDIUM',
+        `Police verification requested and workflow initiated for ${candidateData.fullName}`,
+        { verificationId }
       );
+      
+      const notification: any = {
+        id: `NOTIF-PV-REQ-${Date.now()}`,
+        title: `Police Verification Requested`,
+        message: `Police Verification workflow has been initiated for candidate ${candidateData.fullName}.`,
+        type: 'INFO',
+        roleScope: ['HR', 'COMPANY_ADMIN'],
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        metadata: { verificationId, candidateId }
+      };
+      await FirestoreService.createNotification(session.companyId, notification);
 
-      return { success: true };
-    } catch (err: any) {
-      console.error('[TalentAcquisitionService] updateCandidateStage failure:', err);
-      return { success: false, error: err.message };
+      await updateDoc(candidateRef, {
+        policeVerificationStatus: 'PENDING',
+        updatedAt: new Date().toISOString()
+      });
+
+      return { 
+        success: true, 
+        status: 'PENDING', 
+        message: 'Police Verification Request initiated successfully' 
+      };
+
+    } catch (err) {
+      console.error('[TalentAcquisitionService] requestPoliceVerification error:', err);
+      throw err;
     }
   }
+
+  public static async processAadhaarVerification(
+    session: UserSession,
+    candidateId: string
+  ): Promise<{ success: boolean; status: VerificationStatus; message: string }> {
+    try {
+      const candidateRef = doc(db, `companies/${session.companyId}/candidates/${candidateId}`);
+      const candidateSnap = await getDoc(candidateRef);
+
+      if (!candidateSnap.exists()) {
+        throw new Error('Candidate not found');
+      }
+
+      const candidateData = candidateSnap.data();
+
+      // Ensure Aadhaar number exists
+      if (!candidateData.aadhaarNumber) {
+        return { success: false, status: 'FAILED', message: 'Aadhaar number not provided by candidate' };
+      }
+
+      // Check existing verification records to prevent duplicates
+      const verificationsRef = collection(db, `companies/${session.companyId}/backgroundVerifications`);
+      const q = query(
+        verificationsRef, 
+        where('candidateId', '==', candidateId), 
+        where('type', '==', 'AADHAAR')
+      );
+      
+      const verificationsSnap = await getDocs(q);
+      const activeVerifications = verificationsSnap.docs.filter(d => 
+        d.data().status !== 'FAILED' && d.data().status !== 'CLOSED' && d.data().result !== 'FAILED'
+      );
+
+      if (activeVerifications.length > 0) {
+        const active = activeVerifications[0].data();
+        if (active.status === 'CLEARED' || active.result === 'CLEARED') {
+           // It's already cleared
+           return { success: true, status: 'VERIFIED', message: 'Candidate already has a verified Aadhaar record' };
+        } else {
+           // It's in progress
+           return { success: true, status: 'PENDING', message: 'An Aadhaar verification is already in progress' };
+        }
+      }
+
+      // 1. Record Consent
+      const verificationId = `BGV-${Date.now()}-${Math.random().toString(36).substring(2,8).toUpperCase()}`;
+      const code = `AADHAAR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      
+      const newRecord = {
+        id: verificationId,
+        companyId: session.companyId,
+        candidateId,
+        selectionId: 'DIRECT',
+        requisitionId: candidateData.requisitionId || 'UNKNOWN',
+        verificationCode: code,
+        type: 'AADHAAR',
+        consentStatus: 'GRANTED',
+        consentTimestamp: new Date().toISOString(),
+        verificationMethod: 'OFFLINE_KYC_OR_API',
+        requestDate: new Date().toISOString(),
+        dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: 'REQUESTED',
+        result: 'PENDING',
+        notes: 'Aadhaar consent obtained digitally. Auth provider pending.',
+        evidenceReferences: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      await setDoc(doc(db, `companies/${session.companyId}/backgroundVerifications/${verificationId}`), newRecord);
+
+      // Audit Log for consent
+      await AuditTrailService.logAction(
+        session,
+        'TALENT_ACQUISITION',
+        'UPDATE',
+        'CANDIDATE_RECORD',
+        candidateId,
+        true,
+        'MEDIUM',
+        `Aadhaar verification consent recorded and workflow initiated for ${candidateData.fullName}`,
+        { consent: 'GRANTED', verificationId }
+      );
+
+      const notification: any = {
+        id: `NOTIF-AADHAAR-REQ-${Date.now()}`,
+        title: `Aadhaar Verification Requested`,
+        message: `Aadhaar Verification workflow has been initiated for candidate ${candidateData.fullName}.`,
+        type: 'INFO',
+        roleScope: ['HR', 'COMPANY_ADMIN'],
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        metadata: { verificationId, candidateId }
+      };
+      await FirestoreService.createNotification(session.companyId, notification);
+
+      // 2. Integration Boundary (Provider not configured as per constraints)
+      // We will set it to PENDING per rules: "If no authorized provider exists: Keep status Pending - Provide a safe integration boundary"
+      
+      await updateDoc(candidateRef, {
+        aadhaarVerificationStatus: 'PENDING',
+        updatedAt: new Date().toISOString()
+      });
+
+      return { 
+        success: true, 
+        status: 'PENDING', 
+        message: 'PENDING — AUTHORIZED VERIFICATION PROVIDER NOT CONFIGURED' 
+      };
+
+    } catch (err) {
+      console.error('[TalentAcquisitionService] processAadhaarVerification error:', err);
+      throw err;
+    }
+  }
+
+  // Old updateCandidateStatus removed
 
   // ==========================================================================
   // SCREENING (MODULE 12 / POINT 4)
@@ -722,10 +974,10 @@ export class TalentAcquisitionService {
 
       // 3. Update Candidate Stage
       let nextStage: CandidateStage = 'SCREENING';
-      if (newRecord.decision === 'SHORTLISTED') nextStage = 'INTERVIEW';
+      if (newRecord.decision === 'SHORTLISTED') nextStage = 'INTERVIEW_SCHEDULED';
       if (newRecord.decision === 'REJECTED') nextStage = 'REJECTED';
 
-      const stageUpdate = await this.updateCandidateStage(session, candidate, nextStage, newRecord.rejectionReason);
+      const stageUpdate = await this.updateCandidateStatus(session, candidate.id, nextStage, newRecord.rejectionReason);
       if (!stageUpdate.success) throw new Error(stageUpdate.error);
 
       // 4. Persist Screening Record
@@ -775,7 +1027,7 @@ export class TalentAcquisitionService {
       if (!candDoc.exists()) return { success: false, error: 'Candidate not found' };
       const candidate = candDoc.data() as CandidateRecord;
 
-      if (candidate.stage !== 'INTERVIEW' && candidate.stage !== 'SCREENING') {
+      if (candidate.stage !== 'INTERVIEW_SCHEDULED' && candidate.stage !== 'SCREENING') {
         // We allow from SCREENING if they were just shortlisted, but usually Point 4 moves them to INTERVIEW
       }
 
@@ -798,8 +1050,8 @@ export class TalentAcquisitionService {
       if (!saved) throw new Error('Failed to save interview record');
 
       // 4. Update Candidate if not already in INTERVIEW stage
-      if (candidate.stage !== 'INTERVIEW') {
-        await this.updateCandidateStage(session, candidate, 'INTERVIEW');
+      if (candidate.stage !== 'INTERVIEW_SCHEDULED') {
+        await this.updateCandidateStatus(session, candidate.id, 'INTERVIEW_SCHEDULED');
       }
 
       // 5. Notifications
@@ -823,7 +1075,7 @@ export class TalentAcquisitionService {
         session,
         'TALENT_ACQUISITION',
         'INTERVIEW_SCHEDULED',
-        'INTERVIEW',
+        'INTERVIEW_SCHEDULED',
         interviewId,
         true,
         'LOW',
@@ -866,7 +1118,7 @@ export class TalentAcquisitionService {
         session,
         'TALENT_ACQUISITION',
         'INTERVIEW_STATUS_UPDATED',
-        'INTERVIEW',
+        'INTERVIEW_SCHEDULED',
         interviewId,
         true,
         'LOW',
@@ -919,7 +1171,7 @@ export class TalentAcquisitionService {
         // FURTHER_REVIEW and HOLD stay in INTERVIEW stage
 
         if (nextStage !== candidate.stage) {
-          await this.updateCandidateStage(session, candidate, nextStage, rejectionReason);
+          await this.updateCandidateStatus(session, candidate.id, nextStage, rejectionReason);
         }
       }
 
@@ -941,7 +1193,7 @@ export class TalentAcquisitionService {
         session,
         'TALENT_ACQUISITION',
         'INTERVIEW_EVALUATED',
-        'INTERVIEW',
+        'INTERVIEW_SCHEDULED',
         interviewId,
         true,
         'LOW',
@@ -1062,7 +1314,14 @@ export class TalentAcquisitionService {
         phoneNumber: applicantData.phoneNumber.trim(),
         fullName: applicantData.fullName.trim(),
         resumeUrl,
-        stage: 'APPLIED', // Controlled initial lifecycle status
+        stage: 'REGISTERED', // Initial lifecycle status
+        statusHistory: [{
+          stage: 'REGISTERED',
+          changedBy: session.userId,
+          changedByName: session.fullName || session.userId,
+          changedAt: new Date().toISOString(),
+          sourceEvent: 'Candidate Registration'
+        }],
         aadhaarVerificationStatus: 'PENDING',
         policeVerificationStatus: 'PENDING',
         createdAt: new Date().toISOString(),
@@ -1198,6 +1457,928 @@ export class TalentAcquisitionService {
     } catch (err: any) {
       console.error('[TalentAcquisitionService] Profile Update Failure:', err);
       return { success: false, error: `System Error: ${err.message}` };
+    }
+  }
+
+  // ==========================================================================
+  // CANDIDATE DOCUMENT VERIFICATION (MODULE 12 / POINT 10)
+  // ==========================================================================
+
+  /**
+   * Uploads or re-uploads a candidate document with version tracking and validation.
+   */
+  public static async uploadCandidateDocument(
+    session: UserSession,
+    candidateId: string,
+    params: {
+      documentType: CandidateDocumentType;
+      documentName?: string;
+      isRequired?: boolean;
+      expiryDate?: string;
+      file: File;
+      selectionId?: string;
+      requisitionId?: string;
+    }
+  ): Promise<{ success: boolean; error?: string; documentId?: string; fileUrl?: string }> {
+    const { companyId, userId, fullName, role } = session;
+
+    try {
+      // 1. Authorization check
+      const isAuthorized = ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'HR', 'MANAGER'].includes(role);
+      if (!isAuthorized) {
+        return { success: false, error: 'Unauthorized: Only HR or Admins can upload candidate verification documents.' };
+      }
+
+      // 2. Candidate Existence Check
+      const candRef = doc(db, 'companies', companyId, 'candidates', candidateId);
+      const candSnap = await getDoc(candRef);
+      if (!candSnap.exists()) {
+        return { success: false, error: 'Candidate record not found.' };
+      }
+      const candidate = candSnap.data() as CandidateRecord;
+
+      const { file, documentType, expiryDate, selectionId, requisitionId } = params;
+
+      // 3. File Validation
+      if (!file) {
+        return { success: false, error: 'No file provided for upload.' };
+      }
+
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      if (file.size > MAX_FILE_SIZE) {
+        return { success: false, error: `File size exceeds maximum limit of 10MB (${(file.size / (1024 * 1024)).toFixed(1)}MB).` };
+      }
+
+      const allowedMimeTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedMimeTypes.includes(file.type)) {
+        return { success: false, error: 'Invalid file format. Please upload PDF, JPG, PNG, or WEBP.' };
+      }
+
+      // 4. Default document name & requirement metadata
+      const standardDoc = STANDARD_CANDIDATE_DOCUMENTS.find(d => d.documentType === documentType);
+      const documentName = params.documentName || standardDoc?.documentName || documentType.replace(/_/g, ' ');
+      const isRequired = params.isRequired !== undefined ? params.isRequired : (standardDoc?.isRequired ?? false);
+
+      // 5. Check if document of this type already exists for candidate
+      const docsCol = collection(db, 'companies', companyId, 'candidateDocuments');
+      const q = query(docsCol, where('candidateId', '==', candidateId), where('documentType', '==', documentType));
+      const existingSnap = await getDocs(q);
+
+      let existingDoc: CandidateDocumentRecord | null = null;
+      if (!existingSnap.empty) {
+        existingDoc = existingSnap.docs[0].data() as CandidateDocumentRecord;
+      }
+
+      // 6. Upload file to Storage
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const storagePath = `companies/${companyId}/candidates/${candidateId}/documents/${Date.now()}_${sanitizedFileName}`;
+      const fileUrl = await StorageService.uploadFile(storagePath, file, session);
+
+      // 7. Calculate Expiry
+      let isExpired = false;
+      if (expiryDate) {
+        const exp = new Date(expiryDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        isExpired = exp < today;
+      }
+
+      const timestamp = new Date().toISOString();
+
+      let docRecord: CandidateDocumentRecord;
+
+      if (existingDoc) {
+        // Version update
+        const previousVersion = {
+          version: existingDoc.version || 1,
+          fileName: existingDoc.fileName || 'previous_file',
+          fileUrl: existingDoc.fileUrl || '',
+          storagePath: existingDoc.storagePath,
+          fileSize: existingDoc.fileSize || 0,
+          fileType: existingDoc.fileType || '',
+          uploadedAt: existingDoc.submittedAt || existingDoc.createdAt,
+          uploadedBy: existingDoc.submittedBy || 'Unknown',
+          status: existingDoc.status,
+          rejectionReason: existingDoc.rejectionReason,
+          correctionNotes: existingDoc.correctionNotes
+        };
+
+        const newVersion = (existingDoc.version || 1) + 1;
+        const history = [...(existingDoc.history || []), previousVersion];
+
+        docRecord = {
+          ...existingDoc,
+          documentName,
+          isRequired,
+          fileUrl,
+          storagePath,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          status: 'RESUBMITTED',
+          version: newVersion,
+          history,
+          submittedAt: timestamp,
+          submittedBy: fullName || userId,
+          verifiedAt: undefined,
+          verifiedBy: undefined,
+          rejectionReason: undefined,
+          correctionNotes: undefined,
+          expiryDate: expiryDate || existingDoc.expiryDate,
+          isExpired,
+          selectionId: selectionId || existingDoc.selectionId,
+          requisitionId: requisitionId || existingDoc.requisitionId,
+          updatedAt: timestamp
+        };
+      } else {
+        // New record creation
+        const docId = `CDOC-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        docRecord = {
+          id: docId,
+          companyId,
+          candidateId,
+          selectionId,
+          requisitionId: requisitionId || candidate.requisitionId,
+          documentType,
+          documentName,
+          isRequired,
+          fileUrl,
+          storagePath,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          status: 'SUBMITTED',
+          version: 1,
+          history: [],
+          submittedAt: timestamp,
+          submittedBy: fullName || userId,
+          expiryDate,
+          isExpired,
+          createdAt: timestamp,
+          updatedAt: timestamp
+        };
+      }
+
+      // 8. Save Document Record
+      await FirestoreService.saveCandidateDocument(companyId, docRecord);
+
+      // 9. Sync specific document URLs to candidate record if applicable
+      const candidateUpdates: Partial<CandidateRecord> = {};
+      if (documentType === 'RESUME') {
+        candidateUpdates.resumeUrl = fileUrl;
+      } else if (documentType === 'PHOTOGRAPH') {
+        candidateUpdates.profilePhotoUrl = fileUrl;
+      } else if (documentType === 'POLICE_CLEARANCE') {
+        candidateUpdates.policeVerificationCertUrl = fileUrl;
+      }
+
+      if (Object.keys(candidateUpdates).length > 0) {
+        await FirestoreService.saveCandidate(companyId, { ...candidate, ...candidateUpdates } as CandidateRecord);
+      }
+
+      // 10. Audit Trail
+      await AuditTrailService.logAction(
+        session,
+        'TALENT_ACQUISITION',
+        'CANDIDATE_DOCUMENT_UPLOADED',
+        'CANDIDATE',
+        candidateId,
+        true,
+        'LOW',
+        `Document '${documentName}' (v${docRecord.version}) uploaded for candidate ${candidate.fullName} (${candidate.candidateCode})`,
+        {
+          documentId: docRecord.id,
+          documentType,
+          fileName: file.name,
+          fileSize: file.size,
+          version: docRecord.version,
+          status: docRecord.status
+        }
+      );
+
+      // 11. Notification
+      const notification: any = {
+        id: `NOTIF-DOC-${Date.now()}`,
+        title: `Document Submitted: ${documentName}`,
+        message: `${fullName || 'HR'} uploaded ${documentName} (v${docRecord.version}) for candidate ${candidate.fullName}.`,
+        type: 'INFO',
+        roleScope: ['HR', 'COMPANY_ADMIN'],
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        metadata: { candidateId, documentId: docRecord.id, documentType }
+      };
+      await FirestoreService.createNotification(companyId, notification);
+
+      return { success: true, documentId: docRecord.id, fileUrl };
+    } catch (err: any) {
+      console.error('[TalentAcquisitionService] uploadCandidateDocument failure:', err);
+      return { success: false, error: `Upload failed: ${err.message}` };
+    }
+  }
+
+  /**
+   * Reviews and verifies a candidate document with audit trail and compliance checks.
+   */
+  public static async verifyCandidateDocument(
+    session: UserSession,
+    documentId: string,
+    decision: 'VERIFIED' | 'REJECTED' | 'CORRECTION_REQUIRED',
+    reasonOrNotes?: string,
+    expiryDate?: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const { companyId, userId, fullName, role } = session;
+
+    try {
+      // 1. Authorization check
+      const isAuthorized = ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'HR'].includes(role);
+      if (!isAuthorized) {
+        return { success: false, error: 'Unauthorized: Only HR Administrators can verify candidate documents.' };
+      }
+
+      // 2. Reason validation for negative or corrective decisions
+      if ((decision === 'REJECTED' || decision === 'CORRECTION_REQUIRED') && (!reasonOrNotes || !reasonOrNotes.trim())) {
+        return { 
+          success: false, 
+          error: `Mandatory findings: Please provide a reason for marking this document as ${decision.replace(/_/g, ' ').toLowerCase()}.` 
+        };
+      }
+
+      // 3. Fetch Document Record
+      const docRef = doc(db, 'companies', companyId, 'candidateDocuments', documentId);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        return { success: false, error: 'Document record not found.' };
+      }
+      const existingDoc = docSnap.data() as CandidateDocumentRecord;
+
+      // 4. Fetch Candidate Record for Context
+      const candRef = doc(db, 'companies', companyId, 'candidates', existingDoc.candidateId);
+      const candSnap = await getDoc(candRef);
+      const candidate = candSnap.exists() ? (candSnap.data() as CandidateRecord) : null;
+
+      // 5. Calculate Expiry
+      const targetExpiry = expiryDate || existingDoc.expiryDate;
+      let isExpired = false;
+      if (targetExpiry) {
+        const exp = new Date(targetExpiry);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        isExpired = exp < today;
+      }
+
+      const timestamp = new Date().toISOString();
+
+      // 6. Update Record
+      const updatedDoc: CandidateDocumentRecord = {
+        ...existingDoc,
+        status: decision as CandidateDocVerificationStatus,
+        verifiedAt: decision === 'VERIFIED' ? timestamp : undefined,
+        verifiedBy: decision === 'VERIFIED' ? (fullName || userId) : undefined,
+        rejectionReason: decision === 'REJECTED' ? reasonOrNotes?.trim() : undefined,
+        correctionNotes: decision === 'CORRECTION_REQUIRED' ? reasonOrNotes?.trim() : undefined,
+        expiryDate: targetExpiry,
+        isExpired,
+        updatedAt: timestamp
+      };
+
+      await FirestoreService.saveCandidateDocument(companyId, updatedDoc);
+
+      // 7. Audit Trail
+      const actionType = decision === 'VERIFIED' 
+        ? 'CANDIDATE_DOCUMENT_VERIFIED' 
+        : decision === 'REJECTED' 
+          ? 'CANDIDATE_DOCUMENT_REJECTED' 
+          : 'CANDIDATE_DOCUMENT_CORRECTION_REQUESTED';
+
+      await AuditTrailService.logAction(
+        session,
+        'TALENT_ACQUISITION',
+        actionType,
+        'CANDIDATE',
+        existingDoc.candidateId,
+        true,
+        decision === 'REJECTED' ? 'MEDIUM' : 'LOW',
+        `Document '${existingDoc.documentName}' marked as ${decision} for candidate ${candidate?.fullName || existingDoc.candidateId}`,
+        {
+          documentId: existingDoc.id,
+          documentType: existingDoc.documentType,
+          decision,
+          reasonOrNotes,
+          verifiedBy: fullName || userId,
+          expiryDate: targetExpiry
+        }
+      );
+
+      // 8. Notification
+      const notification: any = {
+        id: `NOTIF-DOCREV-${Date.now()}`,
+        title: `Document ${decision}: ${existingDoc.documentName}`,
+        message: `${existingDoc.documentName} for ${candidate?.fullName || 'candidate'} was marked ${decision.replace(/_/g, ' ').toLowerCase()}.${reasonOrNotes ? ` Reason: ${reasonOrNotes}` : ''}`,
+        type: decision === 'VERIFIED' ? 'SUCCESS' : decision === 'REJECTED' ? 'ERROR' : 'WARNING',
+        roleScope: ['HR', 'COMPANY_ADMIN'],
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        metadata: { candidateId: existingDoc.candidateId, documentId: existingDoc.id, status: decision }
+      };
+      await FirestoreService.createNotification(companyId, notification);
+
+      await this.syncCandidateVerificationStatus(session, existingDoc.candidateId);
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('[TalentAcquisitionService] verifyCandidateDocument failure:', err);
+      return { success: false, error: `Verification failed: ${err.message}` };
+    }
+  }
+
+  /**
+   * Deletes a candidate document record and its associated storage file.
+   */
+  public static async deleteCandidateDocument(
+    session: UserSession,
+    documentId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const { companyId, userId, role } = session;
+
+    try {
+      const isAuthorized = ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'HR'].includes(role);
+      if (!isAuthorized) {
+        return { success: false, error: 'Unauthorized: Only HR or Admins can delete candidate documents.' };
+      }
+
+      const docRef = doc(db, 'companies', companyId, 'candidateDocuments', documentId);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        return { success: false, error: 'Document not found.' };
+      }
+      const docData = docSnap.data() as CandidateDocumentRecord;
+
+      // Delete storage file if path exists
+      if (docData.storagePath) {
+        await StorageService.deleteFile(docData.storagePath, session).catch(() => {});
+      }
+
+      // Delete firestore record
+      await FirestoreService.deleteCandidateDocument(companyId, documentId);
+
+      // Audit Trail
+      await AuditTrailService.logAction(
+        session,
+        'TALENT_ACQUISITION',
+        'CANDIDATE_DOCUMENT_DELETED',
+        'CANDIDATE',
+        docData.candidateId,
+        true,
+        'MEDIUM',
+        `Document '${docData.documentName}' deleted for candidate ${docData.candidateId}`,
+        { documentId, documentType: docData.documentType, fileName: docData.fileName }
+      );
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('[TalentAcquisitionService] deleteCandidateDocument failure:', err);
+      return { success: false, error: `Deletion failed: ${err.message}` };
+    }
+  }
+
+  /**
+   * Checks candidate documents for expired items or upcoming expiration within 30 days.
+   */
+  public static async checkDocumentExpirations(
+    session: UserSession,
+    candidateId?: string
+  ): Promise<{
+    expired: CandidateDocumentRecord[];
+    expiringSoon: CandidateDocumentRecord[];
+    totalChecked: number;
+  }> {
+    const { companyId } = session;
+    const docsCol = collection(db, 'companies', companyId, 'candidateDocuments');
+    let q = query(docsCol);
+    if (candidateId) {
+      q = query(docsCol, where('candidateId', '==', candidateId));
+    }
+
+    const snap = await getDocs(q);
+    const allDocs = snap.docs.map(d => d.data() as CandidateDocumentRecord);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+    const expired: CandidateDocumentRecord[] = [];
+    const expiringSoon: CandidateDocumentRecord[] = [];
+
+    for (const docRec of allDocs) {
+      if (!docRec.expiryDate) continue;
+
+      const expDate = new Date(docRec.expiryDate);
+      if (isNaN(expDate.getTime())) continue;
+
+      if (expDate < today) {
+        expired.push(docRec);
+        if (!docRec.isExpired) {
+          // Update isExpired status flag
+          await FirestoreService.saveCandidateDocument(companyId, {
+            ...docRec,
+            isExpired: true,
+            updatedAt: new Date().toISOString()
+          });
+        }
+      } else if (expDate <= thirtyDaysFromNow) {
+        expiringSoon.push(docRec);
+      }
+    }
+
+    return {
+      expired,
+      expiringSoon,
+      totalChecked: allDocs.length
+    };
+  }
+
+  // ==========================================================================
+  // CANDIDATE STATUS LIFECYCLE (MODULE 12 / POINT 11)
+  // ==========================================================================
+
+  /**
+   * Centralized method to update candidate status/stage with business rules and audit history.
+   * Prevents manual/unauthorized bypass of the recruitment lifecycle.
+   */
+  public static async updateCandidateStatus(
+    session: UserSession,
+    candidateId: string,
+    newStage: CandidateStage,
+    reason?: string,
+    sourceEvent?: string,
+    notes?: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const { companyId, userId, fullName, role } = session;
+
+    try {
+      if (!['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'HR', 'HIRING_MANAGER'].includes(role)) {
+        return { success: false, error: 'Unauthorized to change candidate status.' };
+      }
+
+      const candSnap = await getDoc(doc(db, 'companies', companyId, 'candidates', candidateId));
+      if (!candSnap.exists()) {
+        return { success: false, error: 'Candidate not found.' };
+      }
+      const candidate = candSnap.data() as CandidateRecord;
+
+      const currentStage = candidate.stage;
+
+      // Prevent identical state update
+      if (currentStage === newStage) {
+        return { success: true }; // No-op, already in this state
+      }
+
+      // Valid transitions and prerequisite enforcement
+      const validTransitions: Record<CandidateStage, CandidateStage[]> = {
+        'REGISTERED': ['APPLIED', 'SCREENING', 'REJECTED', 'WITHDRAWN'],
+        'APPLIED': ['SCREENING', 'REJECTED', 'WITHDRAWN'],
+        'SCREENING': ['SHORTLISTED', 'REJECTED', 'ON_HOLD', 'WITHDRAWN'],
+        'SHORTLISTED': ['INTERVIEW_SCHEDULED', 'REJECTED', 'WITHDRAWN'],
+        'INTERVIEW_SCHEDULED': ['INTERVIEW_COMPLETED', 'REJECTED', 'WITHDRAWN', 'SHORTLISTED'], // back to shortlisted if cancelled
+        'INTERVIEW_COMPLETED': ['SELECTED', 'REJECTED', 'ON_HOLD', 'WITHDRAWN'],
+        'SELECTED': ['OFFER_PREPARATION', 'BACKGROUND_VERIFICATION', 'DOCUMENT_VERIFICATION', 'READY_FOR_ONBOARDING', 'REJECTED', 'WITHDRAWN'],
+        'OFFER_PREPARATION': ['OFFER_EXTENDED', 'REJECTED', 'WITHDRAWN', 'ON_HOLD'],
+        'OFFER_EXTENDED': ['OFFER_ACCEPTED', 'REJECTED', 'WITHDRAWN'],
+        'OFFER_ACCEPTED': ['BACKGROUND_VERIFICATION', 'DOCUMENT_VERIFICATION', 'READY_FOR_ONBOARDING', 'REJECTED', 'WITHDRAWN'],
+        'BACKGROUND_VERIFICATION': ['DOCUMENT_VERIFICATION', 'READY_FOR_ONBOARDING', 'VERIFICATION_FAILED', 'REJECTED', 'WITHDRAWN'],
+        'DOCUMENT_VERIFICATION': ['READY_FOR_ONBOARDING', 'VERIFICATION_FAILED', 'REJECTED', 'WITHDRAWN'],
+        'READY_FOR_ONBOARDING': ['ONBOARDING', 'REJECTED', 'WITHDRAWN', 'ON_HOLD'],
+        'ONBOARDING': ['CONVERTED_TO_EMPLOYEE', 'REJECTED', 'WITHDRAWN'],
+        'CONVERTED_TO_EMPLOYEE': [], // Terminal
+        'REJECTED': ['SCREENING', 'SHORTLISTED'], // Allow reopening
+        'ON_HOLD': ['SCREENING', 'SHORTLISTED', 'INTERVIEW_COMPLETED', 'READY_FOR_ONBOARDING', 'REJECTED', 'WITHDRAWN'],
+        'WITHDRAWN': ['SCREENING'], // Allow reopening
+        'DISQUALIFIED': [], // Terminal
+        'VERIFICATION_FAILED': ['REJECTED', 'WITHDRAWN']
+      };
+
+      const allowedNextStages = validTransitions[currentStage] || [];
+      if (!allowedNextStages.includes(newStage)) {
+        return { success: false, error: `Invalid status transition from ${currentStage} to ${newStage}.` };
+      }
+
+      // Special rule: Rejection requires a reason
+      if (newStage === 'REJECTED' && !reason?.trim()) {
+        return { success: false, error: 'Rejection requires a valid reason.' };
+      }
+
+      const timestamp = new Date().toISOString();
+      const historyEntry: CandidateStatusHistory = {
+        stage: newStage,
+        changedBy: userId,
+        changedByName: fullName || userId,
+        changedAt: timestamp,
+        reason,
+        sourceEvent,
+        notes
+      };
+
+      const updatedHistory = [...(candidate.statusHistory || [])];
+      
+      // Also log the very first state if history is empty
+      if (updatedHistory.length === 0) {
+        updatedHistory.push({
+          stage: currentStage,
+          changedBy: 'SYSTEM',
+          changedByName: 'System',
+          changedAt: candidate.createdAt,
+          sourceEvent: 'Initial Registration'
+        });
+      }
+
+      updatedHistory.push(historyEntry);
+
+      const updateData: any = {
+        ...candidate,
+        stage: newStage,
+        statusHistory: updatedHistory,
+        updatedAt: timestamp
+      };
+
+      if (newStage === 'REJECTED') {
+        updateData.rejectionReason = reason;
+      }
+
+      await FirestoreService.saveCandidate(companyId, updateData);
+
+      // Handle Requisition Capacity (Module 12 / Point 3.7)
+      if (candidate.requisitionId) {
+        let deltaPipeline = 0;
+        
+        // If moving out of active pipeline (REJECTED, ONBOARDED, WITHDRAWN, DISQUALIFIED, VERIFICATION_FAILED)
+        const isActive = (s: CandidateStage) => 
+          s !== 'REJECTED' && 
+          s !== 'CONVERTED_TO_EMPLOYEE' && 
+          s !== 'WITHDRAWN' &&
+          s !== 'DISQUALIFIED' &&
+          s !== 'VERIFICATION_FAILED';
+        
+        if (isActive(currentStage) && !isActive(newStage)) {
+          deltaPipeline = -1;
+        } else if (!isActive(currentStage) && isActive(newStage)) {
+          deltaPipeline = 1;
+        }
+
+        if (deltaPipeline !== 0) {
+          await this.updateRequisitionCapacity(companyId, candidate.requisitionId, 0, deltaPipeline);
+        }
+      }
+
+      // Audit Log
+      await AuditTrailService.logAction(
+        session,
+        'TALENT_ACQUISITION',
+        'CANDIDATE_STATUS',
+        'CANDIDATE',
+        candidateId,
+        true,
+        'LOW',
+        `Updated candidate ${candidate.fullName} status from ${currentStage} to ${newStage}`,
+        {
+          previousStage: currentStage,
+          newStage,
+          reason,
+          sourceEvent
+        }
+      );
+
+      // Notify
+      const notification: any = {
+        id: `NOTIF-STAT-${Date.now()}`,
+        title: `Candidate Status Updated: ${newStage.replace(/_/g, ' ')}`,
+        message: `${candidate.fullName}'s status changed to ${newStage.replace(/_/g, ' ')}${reason ? ` - ${reason}` : ''}.`,
+        type: newStage === 'REJECTED' || newStage === 'VERIFICATION_FAILED' ? 'WARNING' : 'INFO',
+        roleScope: ['HR', 'COMPANY_ADMIN', 'HIRING_MANAGER'],
+        timestamp,
+        isRead: false,
+        metadata: { candidateId, newStage }
+      };
+      await FirestoreService.createNotification(companyId, notification);
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error updating candidate status:', err);
+      return { success: false, error: err.message || 'Failed to update candidate status.' };
+    }
+  }
+  // --- OFFER MANAGEMENT ---
+  
+  static async prepareOffer(
+    session: UserSession,
+    companyId: string,
+    candidateId: string,
+    requisitionId: string,
+    offerDetails: {
+      offeredDesignation: string;
+      offeredSalaryMonthly: number;
+      currency: string;
+      joiningDate: string;
+      benefits?: string[];
+    }
+  ): Promise<{ success: boolean; error?: string; offerId?: string }> {
+    try {
+      if (!['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'HR'].includes(session.role)) {
+        return { success: false, error: 'Unauthorized to prepare offer.' };
+      }
+
+      const candidateSnap = await getDoc(doc(db, 'companies', companyId, 'candidates', candidateId));
+      if (!candidateSnap.exists()) return { success: false, error: 'Candidate not found.' };
+
+      // Generate Offer Record
+      const offerId = `OFF-${Date.now()}`;
+      const offerRecord: any = {
+        id: offerId,
+        companyId,
+        candidateId,
+        requisitionId,
+        offerCode: offerId,
+        ...offerDetails,
+        status: 'DRAFT',
+        preparedBy: session.userId,
+        preparedAt: new Date().toISOString()
+      };
+
+      const offerRef = doc(db, 'companies', companyId, 'offers', offerId);
+      await setDoc(offerRef, offerRecord);
+
+      // Advance Status
+      await this.updateCandidateStatus(
+        session, candidateId, 'OFFER_PREPARATION', 'Offer drafting initiated'
+      );
+
+      // Audit Log
+      await AuditTrailService.logAction(
+        session, 'TALENT_ACQUISITION', 'OFFER_PREPARED', 'OFFER', offerId, true, 'HIGH',
+        `Offer prepared for candidate ${candidateId}`, { candidateId }
+      );
+
+      return { success: true, offerId };
+    } catch (err: any) {
+      console.error('Error preparing offer:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Synchronizes candidate ATS stage based on background verifications and documents.
+   * To be called after a verification status updates.
+   */
+  public static async syncCandidateVerificationStatus(
+    session: UserSession,
+    candidateId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const { companyId } = session;
+    try {
+      const candSnap = await getDoc(doc(db, 'companies', companyId, 'candidates', candidateId));
+      if (!candSnap.exists()) return { success: false, error: 'Candidate not found.' };
+      const candidate = candSnap.data() as CandidateRecord;
+
+      // 1. Fetch all Background Verifications
+      const bgQuery = query(
+        collection(db, 'companies', companyId, 'backgroundVerifications'),
+        where('candidateId', '==', candidateId)
+      );
+      const bgSnap = await getDocs(bgQuery);
+      const verifications = bgSnap.docs.map(d => d.data() as BackgroundVerificationRecord);
+
+      // 2. Fetch all Candidate Documents
+      const docQuery = query(
+        collection(db, 'companies', companyId, 'candidateDocuments'),
+        where('candidateId', '==', candidateId)
+      );
+      const docSnap = await getDocs(docQuery);
+      const documents = docSnap.docs.map(d => d.data() as CandidateDocumentRecord);
+
+      // Evaluate logic
+      const hasFailedBg = verifications.some(v => v.result === 'FAILED');
+      const hasRejectedDoc = documents.some(d => d.status === 'REJECTED');
+      const hasPendingBg = verifications.some(v => v.result === 'PENDING' || v.result === 'CLARIFICATION_REQUIRED');
+      const hasPendingDoc = documents.some(d => ['SUBMITTED', 'MISSING', 'CORRECTION_REQUIRED', 'RESUBMITTED', 'UNDER_REVIEW'].includes(d.status));
+
+      const isAadhaarVerified = candidate.aadhaarVerificationStatus === 'VERIFIED';
+      const isPoliceVerified = candidate.policeVerificationStatus === 'VERIFIED';
+      const isAadhaarFailed = candidate.aadhaarVerificationStatus === 'FAILED';
+      const isPoliceFailed = candidate.policeVerificationStatus === 'FAILED';
+
+      if (hasFailedBg || hasRejectedDoc || isAadhaarFailed || isPoliceFailed) {
+        // Move to VERIFICATION_FAILED
+        if (candidate.stage !== 'VERIFICATION_FAILED') {
+          await this.updateCandidateStatus(session, candidateId, 'VERIFICATION_FAILED', 'One or more verifications/documents failed.');
+        }
+      } else if (!hasPendingBg && !hasPendingDoc && isAadhaarVerified && isPoliceVerified) {
+        // All CLEARED and VERIFIED
+        if (candidate.stage !== 'READY_FOR_ONBOARDING') {
+          await this.updateCandidateStatus(session, candidateId, 'READY_FOR_ONBOARDING', 'All mandatory verifications cleared successfully.');
+        }
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('[TalentAcquisitionService] syncCandidateVerificationStatus failure:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+
+  public static async checkConversionEligibility(session: UserSession, candidateId: string) {
+    try {
+      const companyId = session.companyId;
+      const candSnap = await getDoc(doc(db, 'companies', companyId, 'candidates', candidateId));
+      if (!candSnap.exists()) return { success: false, error: 'Candidate not found' };
+      const candidate = candSnap.data() as CandidateRecord;
+
+      if (candidate.stage === 'CONVERTED_TO_EMPLOYEE' || candidate.convertedToEmployeeId) {
+        return { success: false, error: 'Candidate is already converted to an employee.' };
+      }
+
+      const hasSelectedStage = candidate.statusHistory?.some(h => h.stage === 'SELECTED') || candidate.stage === 'READY_FOR_ONBOARDING' || candidate.stage === 'DOCUMENT_VERIFICATION' || candidate.stage === 'BACKGROUND_VERIFICATION';
+
+      const bgQuery = query(collection(db, 'companies', companyId, 'backgroundVerifications'), where('candidateId', '==', candidateId));
+      const bgSnap = await getDocs(bgQuery);
+      const bgVerifications = bgSnap.docs.map(d => d.data() as BackgroundVerificationRecord);
+      const bgCompleted = bgVerifications.length > 0 && !bgVerifications.some(v => v.result !== 'CLEARED');
+
+      const aadhaarVerified = candidate.aadhaarVerificationStatus === 'VERIFIED';
+      const policeVerified = candidate.policeVerificationStatus === 'VERIFIED';
+
+      const docQuery = query(collection(db, 'companies', companyId, 'candidateDocuments'), where('candidateId', '==', candidateId));
+      const docSnap = await getDocs(docQuery);
+      const documents = docSnap.docs.map(d => d.data() as CandidateDocumentRecord);
+      const requiredDocs = STANDARD_CANDIDATE_DOCUMENTS.filter(d => d.isRequired);
+      const uploadedDocTypes = documents.filter(d => d.status === 'VERIFIED').map(d => d.documentType);
+      const docsAvailable = requiredDocs.every(req => uploadedDocTypes.includes(req.documentType));
+
+      const infoAvailable = !!(candidate.jobTitleAppliedFor);
+
+      const isEligible = hasSelectedStage && bgCompleted && aadhaarVerified && policeVerified && docsAvailable && infoAvailable;
+
+      return {
+        success: true,
+        isEligible,
+        checklist: {
+          atsSelection: !!hasSelectedStage,
+          backgroundVerification: bgCompleted,
+          aadhaarVerification: aadhaarVerified,
+          policeVerification: policeVerified,
+          documents: docsAvailable,
+          infoReady: infoAvailable
+        }
+      };
+
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  }
+
+  public static async convertCandidateToEmployeeAtomic(
+    session: UserSession,
+    candidateId: string,
+    employeeData: Partial<EmployeeRecord>
+  ): Promise<{ success: boolean; employeeId?: string; error?: string }> {
+    try {
+      const companyId = session.companyId;
+      const candidateRef = doc(db, 'companies', companyId, 'candidates', candidateId);
+      
+      const newEmployeeId = employeeData.id || `EMP-${Date.now()}`;
+      const employeeRef = doc(db, 'companies', companyId, 'employees', newEmployeeId);
+
+      const result = await runTransaction(db, async (transaction) => {
+        const candidateSnap = await transaction.get(candidateRef);
+        if (!candidateSnap.exists()) throw new Error('Candidate not found');
+        const candidate = candidateSnap.data() as CandidateRecord;
+
+        if (candidate.stage === 'CONVERTED_TO_EMPLOYEE' || candidate.convertedToEmployeeId) {
+          throw new Error('Candidate already converted.');
+        }
+
+        if (candidate.aadhaarVerificationStatus !== 'VERIFIED' || candidate.policeVerificationStatus !== 'VERIFIED') {
+           throw new Error('Candidate does not meet mandatory verification requirements for conversion.');
+        }
+
+        const newEmployee: EmployeeRecord = {
+          ...employeeData,
+          id: newEmployeeId,
+          employeeId: employeeData.employeeId || newEmployeeId,
+          employeeCode: employeeData.employeeCode || newEmployeeId,
+          companyId,
+          firstName: candidate.fullName.split(' ')[0],
+          lastName: candidate.fullName.split(' ').slice(1).join(' ') || ' ',
+          email: candidate.email || '',
+          contactNumber: candidate.phoneNumber,
+          dateOfBirth: candidate.dateOfBirth,
+          gender: candidate.gender,
+          maskedAadhaar: candidate.aadhaarNumber ? `XXXX-XXXX-${candidate.aadhaarNumber.slice(-4)}` : '',
+          panNumber: candidate.panNumber || '',
+          lifecycleStatus: 'ONBOARDING',
+          status: 'PENDING_VERIFICATION',
+          onboardingTasks: [],
+          documents: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          createdBy: session.userId,
+          updatedBy: session.userId,
+          assignedSiteId: employeeData.assignedSiteId || candidate.siteId || 'SITE-001',
+          departmentId: employeeData.departmentId || 'DEP-001',
+          assignedRegionId: employeeData.assignedRegionId || 'REG-001',
+          assignedBranchId: employeeData.assignedBranchId || 'BR-001',
+          designation: employeeData.designation || candidate.jobTitleAppliedFor,
+          joinedDate: employeeData.joinedDate || new Date().toISOString().split('T')[0],
+          employmentType: employeeData.employmentType || 'PERMANENT',
+          role: employeeData.role || 'EMPLOYEE'
+        } as EmployeeRecord;
+
+        transaction.set(employeeRef, newEmployee);
+
+        const newHistory = [...(candidate.statusHistory || []), {
+          stage: 'CONVERTED_TO_EMPLOYEE' as CandidateStage,
+          changedAt: new Date().toISOString(),
+          changedBy: session.userId,
+          notes: `Converted to Employee ${newEmployee.employeeCode}`
+        }];
+
+        transaction.update(candidateRef, {
+          stage: 'CONVERTED_TO_EMPLOYEE',
+          convertedToEmployeeId: newEmployeeId,
+          updatedAt: new Date().toISOString(),
+          statusHistory: newHistory
+        });
+
+        if (candidate.requisitionId) {
+           const requisitionRef = doc(db, 'companies', companyId, 'jobRequisitions', candidate.requisitionId);
+           const reqSnap = await transaction.get(requisitionRef);
+           if (reqSnap.exists()) {
+              const reqData = reqSnap.data();
+              const newFilled = (reqData.filledPositions || 0) + 1;
+              const newPipeline = Math.max(0, (reqData.pipelineCount || 0) - 1);
+              const newStatus = (newFilled >= reqData.openPositions && reqData.status === 'OPEN') ? 'FILLED' : reqData.status;
+              transaction.update(requisitionRef, {
+                 filledPositions: newFilled,
+                 pipelineCount: newPipeline,
+                 status: newStatus,
+                 updatedAt: new Date().toISOString()
+              });
+           }
+        }
+        
+        return { employeeId: newEmployeeId, employeeCode: newEmployee.employeeCode, fullName: candidate.fullName };
+      });
+
+      await AuditTrailService.logAction(
+        session,
+        'TALENT_ACQUISITION',
+        'CANDIDATE_CONVERTED',
+        'EMPLOYEE',
+        result.employeeId,
+        true,
+        'HIGH',
+        `Candidate ${result.fullName} converted to employee ${result.employeeCode}`,
+        { candidateId, employeeId: result.employeeId, applicationId: candidateId }
+      );
+
+      const notification: any = {
+        id: `NOTIF-CONV-${Date.now()}`,
+        title: `Employee Converted`,
+        message: `${result.fullName} has been converted to Employee (${result.employeeCode}).`,
+        type: 'SUCCESS',
+        roleScope: ['HR', 'COMPANY_ADMIN'],
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        metadata: { employeeId: result.employeeId, candidateId }
+      };
+      await FirestoreService.createNotification(companyId, notification);
+
+      const docQuery = query(collection(db, 'companies', companyId, 'candidateDocuments'), where('candidateId', '==', candidateId));
+      const docSnap = await getDocs(docQuery);
+      
+      if (!docSnap.empty) {
+         const empDocs = docSnap.docs.map((d: any) => {
+             const cDoc = d.data();
+             return {
+                 id: cDoc.id,
+                 type: cDoc.documentType,
+                 title: cDoc.documentName,
+                 fileUrl: cDoc.fileUrl,
+                 fileName: cDoc.fileName,
+                 uploadDate: cDoc.uploadedAt,
+                 status: cDoc.status === 'VERIFIED' ? 'VERIFIED' : 'PENDING'
+             };
+         });
+         await updateDoc(employeeRef, {
+             documents: empDocs
+         });
+      }
+
+      return { success: true, employeeId: result.employeeId };
+    } catch (err: any) {
+      console.error('[TalentAcquisitionService] convertCandidateToEmployeeAtomic failure:', err);
+      return { success: false, error: err.message };
     }
   }
 }

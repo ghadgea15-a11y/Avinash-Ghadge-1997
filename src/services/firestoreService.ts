@@ -92,6 +92,7 @@ import {
   TicketStatusTransitionPayload,
   JobRequisitionRecord,
   CandidateRecord,
+  CandidateDocumentRecord,
   ScreeningRecord,
   InterviewRecord,
   SelectionRecord,
@@ -7399,6 +7400,48 @@ const allAttendances: any[] = [];
       return true;
     } catch (err) {
       console.error('Error saving selection record:', err);
+      return false;
+    }
+  }
+
+  static subscribeToCandidateDocuments(companyId: string, candidateId?: string, onUpdate?: (docs: CandidateDocumentRecord[]) => void): () => void {
+    const colRef = collection(db, 'companies', companyId, 'candidateDocuments');
+    let q = query(colRef);
+    if (candidateId) {
+      q = query(colRef, where('candidateId', '==', candidateId));
+    }
+    return onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => d.data() as CandidateDocumentRecord);
+      list.sort((a, b) => new Date(b.createdAt || b.updatedAt).getTime() - new Date(a.createdAt || a.updatedAt).getTime());
+      if (onUpdate) {
+        onUpdate(list);
+      }
+    }, (err) => {
+      console.error('Error subscribing to candidate documents:', err);
+    });
+  }
+
+  static async saveCandidateDocument(companyId: string, docRecord: CandidateDocumentRecord): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'candidateDocuments', docRecord.id);
+      await setDoc(docRef, {
+        ...docRecord,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error('Error saving candidate document:', err);
+      return false;
+    }
+  }
+
+  static async deleteCandidateDocument(companyId: string, docId: string): Promise<boolean> {
+    try {
+      const docRef = doc(db, 'companies', companyId, 'candidateDocuments', docId);
+      await deleteDoc(docRef);
+      return true;
+    } catch (err) {
+      console.error('Error deleting candidate document:', err);
       return false;
     }
   }

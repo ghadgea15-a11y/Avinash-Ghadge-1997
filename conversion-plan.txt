@@ -1,0 +1,18 @@
+1. Implement checkConversionEligibility in TalentAcquisitionService.
+   - Fetches Candidate, Verifications, Documents.
+   - Returns a checklist: { isEligible, checklist: { atsStage, background, aadhaar, police, docs, site } }
+2. Implement atomic convertCandidateToEmployee in TalentAcquisitionService using runTransaction.
+   - Generates employee ID if not provided.
+   - Generates EmployeeCode if not provided.
+   - Maps data.
+   - Performs transaction:
+     - Check candidate again (ensure not converted).
+     - Check code uniqueness in transaction if possible? Firestore can't do "where" in transaction easily, so we might need a separate collection for codes, or just query outside and hope for no collisions, OR check code uniqueness before transaction.
+     - Set new employee doc.
+     - Update candidate doc (stage = 'CONVERTED_TO_EMPLOYEE', convertedToEmployeeId).
+     - Update requisition count (if applicable).
+     - Copy candidate documents to employee documents.
+   - After transaction:
+     - Audit log.
+     - Notification.
+3. Update UI in TalentAcquisitionScreen to use these.

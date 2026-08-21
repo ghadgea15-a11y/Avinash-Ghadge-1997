@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useTheme } from '../../context/ThemeContext';
-import { PhaseAScreen, UserSession, CompanyTenant } from '../../types';
+import * as fs from 'fs';
+
+const content = `import React, { useState, useEffect } from 'react';
+import { useStore } from '../../store';
 import { 
   TrainingProgramRecord, 
   TrainingEnrollmentRecord,
@@ -13,12 +14,8 @@ import { Search, Plus, Filter, FileText, CheckCircle, XCircle, Clock, Calendar, 
 import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 
-export const TrainingLmsScreen: React.FC<{
-  userSession: UserSession;
-  activeCompany: CompanyTenant | null;
-  onNavigate: React.Dispatch<React.SetStateAction<PhaseAScreen>>;
-}> = ({ userSession, activeCompany, onNavigate }) => {
-  const { isDark } = useTheme();
+export const TrainingLmsScreen = () => {
+  const { isDark, userSession, activeCompany } = useStore();
   const [activeTab, setActiveTab] = useState<'PROGRAMS' | 'SESSIONS' | 'ENROLLMENTS'>('PROGRAMS');
   
   const [programs, setPrograms] = useState<TrainingProgramRecord[]>([]);
@@ -113,7 +110,7 @@ export const TrainingLmsScreen: React.FC<{
     const res = await LearningManagementService.bulkEnrollEmployees(userSession, bulkEnrollData.sessionId, bulkEnrollData.employeeIds);
     if (res.success) {
       setIsBulkEnrollModalOpen(false);
-      alert(`Successfully enrolled ${res.enrolled} employees.`);
+      alert(\`Successfully enrolled \${res.enrolled} employees.\`);
       loadData();
     } else {
       alert(res.error);
@@ -189,11 +186,11 @@ export const TrainingLmsScreen: React.FC<{
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`pb-3 text-sm font-bold border-b-2 transition-colors ${
+            className={\`pb-3 text-sm font-bold border-b-2 transition-colors \${
               activeTab === tab.id 
                 ? 'border-purple-600 text-purple-600 dark:text-purple-400' 
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-            }`}
+            }\`}
           >
             {tab.label}
           </button>
@@ -241,12 +238,12 @@ export const TrainingLmsScreen: React.FC<{
                   <div key={s.id} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
                     <div className="flex justify-between items-start mb-3">
                       <h3 className="font-bold text-slate-900 dark:text-white">{prog?.title || 'Unknown Program'}</h3>
-                      <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
+                      <span className={\`text-xs font-bold px-2 py-1 rounded-lg \${
                         s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                         s.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
                         s.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                         'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                      }`}>{s.status}</span>
+                      }\`}>{s.status}</span>
                     </div>
                     <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400 mb-4">
                       <div className="flex items-center justify-between">
@@ -298,18 +295,18 @@ export const TrainingLmsScreen: React.FC<{
                         <td className="px-4 py-3">{enr.programTitle}</td>
                         <td className="px-4 py-3">{enr.scheduledDate}</td>
                         <td className="px-4 py-3">
-                          <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
+                          <span className={\`text-xs font-bold px-2 py-1 rounded-lg \${
                             enr.attendanceStatus === 'PRESENT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                             enr.attendanceStatus === 'ABSENT' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' :
                             'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-slate-400'
-                          }`}>{enr.attendanceStatus}</span>
+                          }\`}>{enr.attendanceStatus}</span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
+                          <span className={\`text-xs font-bold px-2 py-1 rounded-lg \${
                             enr.resultStatus === 'PASSED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                             enr.resultStatus === 'FAILED' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' :
                             'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                          }`}>{enr.resultStatus}</span>
+                          }\`}>{enr.resultStatus}</span>
                         </td>
                         <td className="px-4 py-3 text-right">
                           {enr.resultStatus === 'ENROLLED' || enr.resultStatus === 'IN_PROGRESS' ? (
@@ -556,3 +553,6 @@ export const TrainingLmsScreen: React.FC<{
     </div>
   );
 };
+`;
+
+fs.writeFileSync('src/components/screens/TrainingLmsScreen.tsx', content);

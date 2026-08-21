@@ -144,6 +144,10 @@ export function NavigationDrawer({
                 <NavItem icon={Building2} label="7. CRM Client Accounts" screen="CLIENT_MANAGEMENT" />
                 <NavItem icon={LifeBuoy} label="11. Service Desk & SLA" screen="SERVICE_DESK" />
                 <NavItem icon={ShoppingCart} label="14. Procurement SRM & PO" screen="PROCUREMENT_SRM" />
+                <NavItem icon={Building2} label="14.1 Vendor Management" screen="VENDOR_MANAGEMENT" />
+                <NavItem icon={FileSignature} label="14.2 RFQ Management" screen="RFQ_MANAGEMENT" />
+                <NavItem icon={ShoppingCart} label="14.3 Purchase Orders" screen="PURCHASE_ORDERS" />
+                <NavItem icon={Receipt} label="14.4 3-Way Match" screen="THREE_WAY_MATCH" />
               </div>
 
               <div>
@@ -151,7 +155,9 @@ export function NavigationDrawer({
                   Talent, Learning & Governance
                 </span>
                 <NavItem icon={UserCheck} label="12. Talent Acquisition & ATS" screen="TALENT_ACQUISITION" />
-                <NavItem icon={GraduationCap} label="13. LMS & PSARA Compliance" screen="TRAINING_LMS" />
+                <NavItem icon={GraduationCap} label="13.1 LMS & PSARA Compliance" screen="TRAINING_LMS" />
+                <NavItem icon={ShieldAlert} label="13.3 Mandatory Refreshers" screen="MANDATORY_REFRESHERS" />
+                <NavItem icon={Award} label="13.2 Certifications Expiry" screen="CERTIFICATION_TRACKING" />
                 <NavItem icon={BarChart3} label="8. BI Reports & Analytics" screen="REPORTS_ANALYTICS" />
                 <NavItem icon={CheckSquare} label="9. BPM Task Management" screen="TASK_MANAGEMENT" />
                 <NavItem icon={Award} label="10. GRC Policy & Approvals" screen="APPROVAL_MANAGEMENT" />

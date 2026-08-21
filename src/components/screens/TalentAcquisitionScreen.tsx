@@ -22,7 +22,12 @@ import {
   BackgroundVerificationRecord,
   BgVerificationType,
   BgVerificationStatus,
-  BgVerificationResult
+  BgVerificationResult,
+  CandidateDocumentRecord,
+  CandidateDocumentType,
+  CandidateDocVerificationStatus,
+  STANDARD_CANDIDATE_DOCUMENTS,
+  CandidateDocumentChecklistItem
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { TalentAcquisitionService } from '../../services/talentAcquisitionService';
@@ -53,7 +58,16 @@ import {
   Clock3,
   UserPlus2,
   Trash2,
-  CheckCircle2
+  CheckCircle2,
+  Upload,
+  FileCheck,
+  Eye,
+  AlertTriangle,
+  History,
+  Clock,
+  RotateCcw,
+  ExternalLink,
+  FileBadge
 } from 'lucide-react';
 
 interface TalentAcquisitionScreenProps {
@@ -91,6 +105,9 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState<boolean>(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState<boolean>(false);
   const [isProcessVerificationModalOpen, setIsProcessVerificationModalOpen] = useState<boolean>(false);
+  const [isAadhaarModalOpen, setIsAadhaarModalOpen] = useState<boolean>(false);
+  const [aadhaarState, setAadhaarState] = useState<'REQUEST_CONSENT' | 'AWAITING_CONSENT' | 'PROCESSING' | 'RESULT'>('REQUEST_CONSENT');
+  const [aadhaarResult, setAadhaarResult] = useState<any>(null);
   const [profileTab, setProfileTab] = useState<'SUMMARY' | 'DETAIL' | 'DOCUMENTS'>('SUMMARY');
   const [isReqModalOpen, setIsReqModalOpen] = useState<boolean>(false);
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateRecord | null>(null);
@@ -98,6 +115,8 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
   const [selectedInterview, setSelectedInterview] = useState<InterviewRecord | null>(null);
   const [selectedVerification, setSelectedVerification] = useState<BackgroundVerificationRecord | null>(null);
   const [isConverting, setIsConverting] = useState<boolean>(false);
+  const [conversionEligibility, setConversionEligibility] = useState<any>(null);
+  const [isChecklistModalOpen, setIsChecklistModalOpen] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState<boolean>(false);
   const [isSubmittingScreening, setIsSubmittingScreening] = useState<boolean>(false);
   const [isSchedulingInterview, setIsSchedulingInterview] = useState<boolean>(false);
@@ -121,7 +140,35 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
     status: 'IN_PROGRESS' as BgVerificationStatus,
     result: 'PENDING' as BgVerificationResult,
     findings: '',
-    notes: ''
+    notes: '',
+    assignedVerifierId: '',
+    evidenceFile: null as File | null
+  });
+
+  // Candidate Document Verification State (Module 12 / Point 10)
+  const [candidateDocuments, setCandidateDocuments] = useState<CandidateDocumentRecord[]>([]);
+  const [selectedCandidateDoc, setSelectedCandidateDoc] = useState<CandidateDocumentRecord | null>(null);
+  const [isUploadDocModalOpen, setIsUploadDocModalOpen] = useState<boolean>(false);
+  const [isReviewDocModalOpen, setIsReviewDocModalOpen] = useState<boolean>(false);
+  const [isVersionHistoryModalOpen, setIsVersionHistoryModalOpen] = useState<boolean>(false);
+  const [isUploadingDoc, setIsUploadingDoc] = useState<boolean>(false);
+  const [isReviewingDoc, setIsReviewingDoc] = useState<boolean>(false);
+  const [docFilterCategory, setDocFilterCategory] = useState<string>('ALL');
+
+  // Document Upload Form
+  const [uploadDocFormData, setUploadDocFormData] = useState({
+    documentType: 'RESUME' as CandidateDocumentType,
+    documentName: '',
+    isRequired: true,
+    expiryDate: '',
+    file: null as File | null
+  });
+
+  // Document Review Form
+  const [reviewDocFormData, setReviewDocFormData] = useState({
+    decision: 'VERIFIED' as 'VERIFIED' | 'REJECTED' | 'CORRECTION_REQUIRED',
+    reasonOrNotes: '',
+    expiryDate: ''
   });
 
   // Screening Form
@@ -241,6 +288,10 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
       setVerifications(verList);
     });
 
+    const unsubCandidateDocs = FirestoreService.subscribeToCandidateDocuments(activeCompany.companyId, undefined, (docList) => {
+      setCandidateDocuments(docList);
+    });
+
     const unsubEmployees = FirestoreService.subscribeToEmployees(userSession!, activeCompany.companyId, (empList: EmployeeRecord[]) => {
       setEmployees(empList);
     });
@@ -266,6 +317,7 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
       unsubInterviews();
       unsubSelections();
       unsubVerifications();
+      unsubCandidateDocs();
       unsubEmployees();
       unsubDeps();
       unsubSites();
@@ -445,6 +497,39 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
     if (!result.success) alert(result.error);
   };
 
+
+
+
+  const handleInitiateAadhaarWorkflow = async (candidate: CandidateRecord) => {
+    if (!userSession) return;
+    
+    try {
+      const result = await TalentAcquisitionService.processAadhaarVerification(userSession, candidate.id);
+      if (result.success) {
+        alert("Aadhaar workflow initiated. Please process it in the Verifications tab.");
+      } else {
+        alert(result.message);
+      }
+    } catch (err: any) {
+      alert(err.message || 'An error occurred while initiating Aadhaar Verification');
+    }
+  };
+
+  const handleInitiatePoliceWorkflow = async (candidate: CandidateRecord) => {
+    if (!userSession) return;
+    
+    try {
+      const result = await TalentAcquisitionService.requestPoliceVerification(userSession, candidate.id);
+      if (result.success) {
+        alert("Police Verification workflow initiated. Please process it in the Verifications tab.");
+      } else {
+        alert(result.message);
+      }
+    } catch (err: any) {
+      alert(err.message || 'An error occurred while requesting Police Verification');
+    }
+  };
+
   const handleStartVerificationRequest = (candidate: CandidateRecord) => {
     setSelectedCandidate(candidate);
     const sel = selections.find(s => s.candidateId === candidate.id && s.decision === 'SELECTED');
@@ -491,7 +576,9 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
       status: verification.status === 'REQUESTED' ? 'ASSIGNED' : verification.status,
       result: verification.result,
       findings: verification.findings || '',
-      notes: verification.notes || ''
+      notes: verification.notes || '',
+      assignedVerifierId: verification.assignedVerifierId || '',
+      evidenceFile: null
     });
     setIsProcessVerificationModalOpen(true);
   };
@@ -500,12 +587,40 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
     e.preventDefault();
     if (!userSession || !selectedVerification) return;
 
+    if (bgvProcessFormData.result === 'FAILED' && !bgvProcessFormData.findings.trim()) {
+      alert('Findings or Rejection Reason is required when a verification fails.');
+      return;
+    }
+
     setIsUpdatingVerification(true);
+    
+    // Handle File Upload first if present
+    if (bgvProcessFormData.evidenceFile) {
+      const uploadResult = await TalentAcquisitionService.uploadVerificationEvidence(
+        userSession,
+        selectedVerification.id,
+        bgvProcessFormData.evidenceFile
+      );
+      if (!uploadResult.success) {
+        alert(uploadResult.error || 'Failed to upload evidence');
+        setIsUpdatingVerification(false);
+        return;
+      }
+    }
+
+    let verifierName = undefined;
+    if (bgvProcessFormData.assignedVerifierId) {
+      const emp = employees.find(e => e.id === bgvProcessFormData.assignedVerifierId);
+      if (emp) verifierName = `${emp.firstName} ${emp.lastName}`;
+    }
+
     const result = await TalentAcquisitionService.updateVerificationStatus(userSession, selectedVerification.id, {
       status: bgvProcessFormData.status,
       result: bgvProcessFormData.result,
       findings: bgvProcessFormData.findings,
-      notes: bgvProcessFormData.notes
+      notes: bgvProcessFormData.notes,
+      assignedVerifierId: bgvProcessFormData.assignedVerifierId || undefined,
+      assignedVerifierName: verifierName
     });
 
     if (result.success) {
@@ -728,35 +843,223 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
     }
   };
 
-  const handleUpdateCandidateStage = async (candidate: CandidateRecord, newStage: CandidateStage) => {
+  const handleUpdateCandidateStatus = async (candidate: CandidateRecord, newStage: CandidateStage, reason?: string) => {
     if (!activeCompany || !userSession) return;
 
     try {
-      const result = await TalentAcquisitionService.updateCandidateStage(userSession, candidate, newStage);
+      const result = await TalentAcquisitionService.updateCandidateStatus(userSession, candidate.id, newStage, reason, 'Manual UI Update');
       if (result.success) {
-        setSelectedCandidate({ ...candidate, stage: newStage });
+        setSelectedCandidate(prev => prev ? { 
+          ...prev, 
+          stage: newStage,
+          rejectionReason: reason || prev.rejectionReason,
+          statusHistory: [
+            ...(prev.statusHistory || []),
+            {
+              stage: newStage,
+              changedBy: userSession.userId,
+              changedByName: userSession.fullName || userSession.userId,
+              changedAt: new Date().toISOString(),
+              reason,
+              sourceEvent: 'Manual UI Update'
+            }
+          ]
+        } : null);
       } else {
-        alert(result.error || 'Failed to update stage');
+        alert(result.error || 'Failed to update status');
       }
     } catch (err) {
-      console.error('Error updating candidate stage:', err);
+      console.error('Error updating candidate status:', err);
     }
   };
 
-  const handleUpdateVerification = async (candidate: CandidateRecord, field: 'aadhaar' | 'police', status: VerificationStatus) => {
-    if (!activeCompany) return;
+  // ==========================================================================
+  // CANDIDATE DOCUMENT VERIFICATION HANDLERS (MODULE 12 / POINT 10)
+  // ==========================================================================
+
+  const handleOpenUploadDocModal = (
+    docType?: CandidateDocumentType,
+    isReq?: boolean,
+    defaultName?: string
+  ) => {
+    const standard = STANDARD_CANDIDATE_DOCUMENTS.find(d => d.documentType === docType);
+    setUploadDocFormData({
+      documentType: docType || 'RESUME',
+      documentName: defaultName || standard?.documentName || '',
+      isRequired: isReq !== undefined ? isReq : (standard?.isRequired ?? false),
+      expiryDate: '',
+      file: null
+    });
+    setIsUploadDocModalOpen(true);
+  };
+
+  const handleUploadDocSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeCompany || !userSession || !selectedCandidate) return;
+
+    if (!uploadDocFormData.file) {
+      alert('Please select a file to upload.');
+      return;
+    }
+
+    setIsUploadingDoc(true);
+    try {
+      const result = await TalentAcquisitionService.uploadCandidateDocument(
+        userSession,
+        selectedCandidate.id,
+        {
+          documentType: uploadDocFormData.documentType,
+          documentName: uploadDocFormData.documentName.trim() || undefined,
+          isRequired: uploadDocFormData.isRequired,
+          expiryDate: uploadDocFormData.expiryDate || undefined,
+          file: uploadDocFormData.file,
+          selectionId: selectedCandidate.id,
+          requisitionId: selectedCandidate.requisitionId
+        }
+      );
+
+      if (result.success) {
+        setIsUploadDocModalOpen(false);
+        setUploadDocFormData({
+          documentType: 'RESUME',
+          documentName: '',
+          isRequired: true,
+          expiryDate: '',
+          file: null
+        });
+      } else {
+        alert(result.error || 'Document upload failed');
+      }
+    } catch (err: any) {
+      console.error('Error uploading candidate document:', err);
+      alert(err.message || 'An unexpected error occurred during upload.');
+    } finally {
+      setIsUploadingDoc(false);
+    }
+  };
+
+  const handleOpenReviewDocModal = (docRecord: CandidateDocumentRecord) => {
+    setSelectedCandidateDoc(docRecord);
+    setReviewDocFormData({
+      decision: 'VERIFIED',
+      reasonOrNotes: '',
+      expiryDate: docRecord.expiryDate || ''
+    });
+    setIsReviewDocModalOpen(true);
+  };
+
+  const handleReviewDocSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeCompany || !userSession || !selectedCandidateDoc) return;
+
+    if (
+      (reviewDocFormData.decision === 'REJECTED' || reviewDocFormData.decision === 'CORRECTION_REQUIRED') &&
+      !reviewDocFormData.reasonOrNotes.trim()
+    ) {
+      alert(`Please provide a reason or note for ${reviewDocFormData.decision === 'REJECTED' ? 'rejecting' : 'requesting correction on'} this document.`);
+      return;
+    }
+
+    setIsReviewingDoc(true);
+    try {
+      const result = await TalentAcquisitionService.verifyCandidateDocument(
+        userSession,
+        selectedCandidateDoc.id,
+        reviewDocFormData.decision,
+        reviewDocFormData.reasonOrNotes,
+        reviewDocFormData.expiryDate || undefined
+      );
+
+      if (result.success) {
+        setIsReviewDocModalOpen(false);
+        setSelectedCandidateDoc(null);
+        setReviewDocFormData({
+          decision: 'VERIFIED',
+          reasonOrNotes: '',
+          expiryDate: ''
+        });
+      } else {
+        alert(result.error || 'Verification failed');
+      }
+    } catch (err: any) {
+      console.error('Error verifying candidate document:', err);
+      alert(err.message || 'An unexpected error occurred during verification.');
+    } finally {
+      setIsReviewingDoc(false);
+    }
+  };
+
+  const handleDeleteDoc = async (docRecord: CandidateDocumentRecord) => {
+    if (!activeCompany || !userSession) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete '${docRecord.documentName}'? This action cannot be undone.`
+    );
+    if (!confirmed) return;
 
     try {
-      const updated: CandidateRecord = {
-        ...candidate,
-        aadhaarVerificationStatus: field === 'aadhaar' ? status : candidate.aadhaarVerificationStatus,
-        policeVerificationStatus: field === 'police' ? status : candidate.policeVerificationStatus,
-        updatedAt: new Date().toISOString()
-      };
-      await FirestoreService.saveCandidate(activeCompany.companyId, updated);
-      setSelectedCandidate(updated);
-    } catch (err) {
-      console.error('Error updating verification:', err);
+      const result = await TalentAcquisitionService.deleteCandidateDocument(userSession, docRecord.id);
+      if (!result.success) {
+        alert(result.error || 'Failed to delete document');
+      }
+    } catch (err: any) {
+      console.error('Error deleting document:', err);
+      alert(err.message || 'An error occurred while deleting document.');
+    }
+  };
+
+  const handleOpenVersionHistoryModal = (docRecord: CandidateDocumentRecord) => {
+    setSelectedCandidateDoc(docRecord);
+    setIsVersionHistoryModalOpen(true);
+  };
+
+  
+
+  const handlePrepareOffer = async (candidate: CandidateRecord) => {
+    if (!activeCompany || !userSession) return;
+    const salaryStr = window.prompt(`Enter monthly offered salary for ${candidate.fullName} (Number):`, String(candidate.expectedSalaryMonthly || 0));
+    if (!salaryStr) return;
+    const salary = parseInt(salaryStr, 10) || candidate.expectedSalaryMonthly || 0;
+
+    try {
+      const result = await TalentAcquisitionService.prepareOffer(
+        userSession,
+        activeCompany.companyId,
+        candidate.id,
+        candidate.requisitionId || 'REQ-UNKNOWN',
+        {
+          offeredDesignation: candidate.jobTitleAppliedFor,
+          offeredSalaryMonthly: salary,
+          currency: 'INR',
+          joiningDate: new Date().toISOString().split('T')[0]
+        }
+      );
+      if (!result.success) {
+        alert(result.error);
+      } else {
+        alert(`Offer ${result.offerId} drafted successfully and candidate moved to OFFER_PREPARATION.`);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error drafting offer.');
+    }
+  };
+
+
+  const handleCheckConversion = async (candidate: CandidateRecord) => {
+    if (!userSession) return;
+    setIsConverting(true);
+    try {
+      const result = await TalentAcquisitionService.checkConversionEligibility(userSession, candidate.id);
+      if (result.success) {
+        setConversionEligibility(result);
+        setIsChecklistModalOpen(true);
+      } else {
+        alert(result.error || 'Failed to check conversion eligibility');
+      }
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setIsConverting(false);
     }
   };
 
@@ -767,9 +1070,8 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
     try {
       const defaultSite = sites[0]?.id || 'SITE-001';
       const defaultDep = departments[0]?.id || 'DEP-SEC';
-      const actor = { id: userSession.userId, name: userSession.fullName };
-
-      const empId = await FirestoreService.convertCandidateToEmployee(activeCompany.companyId, candidate, {
+      
+      const result = await TalentAcquisitionService.convertCandidateToEmployeeAtomic(userSession, candidate.id, {
         assignedSiteId: defaultSite,
         departmentId: defaultDep,
         assignedRegionId: sites.find(s => s.id === defaultSite)?.branchId || 'REG-001',
@@ -779,17 +1081,21 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
         employmentType: 'PERMANENT',
         role: 'GUARD',
         assignedAreaId: 'AREA-001',
-      }, actor);
+      });
 
-      if (empId) {
+      if (result.success && result.employeeId) {
+        setIsChecklistModalOpen(false);
         setConversionSuccessMsg(`Successfully converted ${candidate.fullName} into Employee Master record!`);
-        setCandidates(prev => prev.map(c => c.id === candidate.id ? { ...c, stage: 'ONBOARDED', convertedToEmployeeId: empId } : c));
+        setCandidates(prev => prev.map(c => c.id === candidate.id ? { ...c, stage: 'CONVERTED_TO_EMPLOYEE', convertedToEmployeeId: result.employeeId! } : c));
         if (selectedCandidate?.id === candidate.id) {
-          setSelectedCandidate(prev => prev ? { ...prev, stage: 'ONBOARDED', convertedToEmployeeId: empId } : null);
+          setSelectedCandidate(prev => prev ? { ...prev, stage: 'CONVERTED_TO_EMPLOYEE', convertedToEmployeeId: result.employeeId! } : null);
         }
+      } else {
+        alert(result.error || 'Conversion failed.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Conversion failed:', err);
+      alert(err.message || 'Error converting candidate.');
     } finally {
       setIsConverting(false);
     }
@@ -810,15 +1116,15 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300">Applied</span>;
       case 'SCREENING':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300">Screening</span>;
-      case 'INTERVIEW':
+      case 'INTERVIEW_SCHEDULED':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300">Interview</span>;
       case 'BACKGROUND_VERIFICATION':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">Verification</span>;
       case 'SELECTED':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">Selected</span>;
-      case 'OFFER_EXTENDED':
+      case 'SELECTED':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300">Offer Sent</span>;
-      case 'ONBOARDED':
+      case 'CONVERTED_TO_EMPLOYEE':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300">Onboarded</span>;
       case 'REJECTED':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">Rejected</span>;
@@ -864,21 +1170,21 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
         <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
           <span className="text-xs font-semibold text-slate-500 uppercase">Active Applicants</span>
           <p className="text-2xl font-bold mt-1 text-teal-600 dark:text-teal-400">
-            {candidates.filter(c => c.stage !== 'REJECTED' && c.stage !== 'ONBOARDED').length}
+            {candidates.filter(c => c.stage !== 'REJECTED' && c.stage !== 'CONVERTED_TO_EMPLOYEE').length}
           </p>
           <span className="text-xs text-slate-500">In assessment pipeline</span>
         </div>
         <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
           <span className="text-xs font-semibold text-slate-500 uppercase">Selected / Ready</span>
           <p className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
-            {candidates.filter(c => c.stage === 'SELECTED' || c.stage === 'OFFER_EXTENDED').length}
+            {candidates.filter(c => c.stage === 'SELECTED' || c.stage === 'READY_FOR_ONBOARDING').length}
           </p>
           <span className="text-xs text-slate-500">Eligible for 1-click hire</span>
         </div>
         <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
           <span className="text-xs font-semibold text-slate-500 uppercase">Onboarded Total</span>
           <p className="text-2xl font-bold mt-1 text-indigo-600 dark:text-indigo-400">
-            {candidates.filter(c => c.stage === 'ONBOARDED').length}
+            {candidates.filter(c => c.stage === 'CONVERTED_TO_EMPLOYEE').length}
           </p>
           <span className="text-xs text-slate-500">Converted to full staff</span>
         </div>
@@ -934,7 +1240,7 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
-          Selection Review ({candidates.filter(c => c.stage === 'INTERVIEW').length})
+          Selection Review ({candidates.filter(c => c.stage === 'INTERVIEW_SCHEDULED').length})
         </button>
         <button
           onClick={() => setActiveTab('VERIFICATIONS')}
@@ -978,11 +1284,11 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
               <option value="ALL">All Stages</option>
               <option value="APPLIED">Applied</option>
               <option value="SCREENING">Screening</option>
-              <option value="INTERVIEW">Interview</option>
+              <option value="INTERVIEW_SCHEDULED">Interview</option>
               <option value="BACKGROUND_VERIFICATION">Background Verification</option>
               <option value="SELECTED">Selected</option>
-              <option value="OFFER_EXTENDED">Offer Extended</option>
-              <option value="ONBOARDED">Onboarded</option>
+              <option value="SELECTED">Offer Extended</option>
+              <option value="CONVERTED_TO_EMPLOYEE">Onboarded</option>
               <option value="REJECTED">Rejected</option>
             </select>
           </div>
@@ -1068,7 +1374,7 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                               <ShieldCheck className="w-3.5 h-3.5" />
                               <span>Screen</span>
                             </button>
-                          ) : c.stage === 'INTERVIEW' ? (
+                          ) : c.stage === 'INTERVIEW_SCHEDULED' ? (
                             <div className="flex items-center gap-2 justify-end">
                               {interviews.some(i => i.candidateId === c.id && i.status === 'COMPLETED') && (
                                 <button
@@ -1093,8 +1399,20 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                                 <span>Schedule</span>
                               </button>
                             </div>
-                          ) : c.stage === 'SELECTED' || c.stage === 'OFFER_EXTENDED' ? (
+                          ) : c.stage === 'SELECTED' || c.stage === 'READY_FOR_ONBOARDING' ? (
                             <div className="flex items-center gap-2 justify-end">
+                              {c.stage === 'SELECTED' && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePrepareOffer(c);
+                                  }}
+                                  className="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1"
+                                >
+                                  <FileText className="w-3.5 h-3.5" />
+                                  <span>Offer</span>
+                                </button>
+                              )}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1512,14 +1830,14 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            {candidates.filter(c => c.stage === 'INTERVIEW').length === 0 ? (
+            {candidates.filter(c => c.stage === 'INTERVIEW_SCHEDULED').length === 0 ? (
               <div className="p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl">
                 <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-slate-300" />
                 <h3 className="font-bold text-lg text-slate-700 dark:text-slate-300">Queue is Empty</h3>
                 <p className="text-sm text-slate-500 mt-1">No candidates are currently pending a selection decision.</p>
               </div>
             ) : (
-              candidates.filter(c => c.stage === 'INTERVIEW').map((c) => {
+              candidates.filter(c => c.stage === 'INTERVIEW_SCHEDULED').map((c) => {
                 const req = requisitions.find(r => r.id === c.requisitionId);
                 const interviewList = interviews.filter(i => i.candidateId === c.id);
                 const latestInt = interviewList.sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())[0];
@@ -2304,17 +2622,25 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                       <div className="p-3 rounded-lg border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 flex items-center justify-between">
                         <div>
                           <div className="font-semibold text-xs">Aadhaar KYC</div>
-                          <div className="text-[11px] text-slate-500">{selectedCandidate.aadhaarNumber || 'Not submitted'}</div>
+                          <div className="text-[11px] text-slate-500">{selectedCandidate.aadhaarNumber ? 'XXXXXXXX' + selectedCandidate.aadhaarNumber.slice(-4) : 'Not submitted'}</div>
                         </div>
-                        <select
-                          value={selectedCandidate.aadhaarVerificationStatus}
-                          onChange={(e) => handleUpdateVerification(selectedCandidate, 'aadhaar', e.target.value as VerificationStatus)}
-                          className="text-xs p-1 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700"
-                        >
-                          <option value="PENDING">Pending</option>
-                          <option value="VERIFIED">Verified</option>
-                          <option value="FAILED">Failed</option>
-                        </select>
+                        <div className="flex flex-col gap-1 items-end">
+                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                             selectedCandidate.aadhaarVerificationStatus === 'VERIFIED' ? 'bg-emerald-100 text-emerald-700' :
+                             selectedCandidate.aadhaarVerificationStatus === 'FAILED' ? 'bg-rose-100 text-rose-700' :
+                             'bg-amber-100 text-amber-700'
+                           }`}>
+                             {selectedCandidate.aadhaarVerificationStatus}
+                           </span>
+                           {selectedCandidate.aadhaarVerificationStatus === 'PENDING' && (
+                             <button
+                               onClick={() => handleInitiateAadhaarWorkflow(selectedCandidate)}
+                               className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                             >
+                               Initiate Auth
+                             </button>
+                           )}
+                        </div>
                       </div>
 
                       <div className="p-3 rounded-lg border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 flex items-center justify-between">
@@ -2322,15 +2648,23 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                           <div className="font-semibold text-xs">Police Clearance</div>
                           <div className="text-[11px] text-slate-500">PSARA Requirement</div>
                         </div>
-                        <select
-                          value={selectedCandidate.policeVerificationStatus}
-                          onChange={(e) => handleUpdateVerification(selectedCandidate, 'police', e.target.value as VerificationStatus)}
-                          className="text-xs p-1 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700"
-                        >
-                          <option value="PENDING">Pending</option>
-                          <option value="VERIFIED">Verified</option>
-                          <option value="FAILED">Failed</option>
-                        </select>
+                        <div className="flex flex-col gap-1 items-end">
+                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                             selectedCandidate.policeVerificationStatus === 'VERIFIED' ? 'bg-emerald-100 text-emerald-700' :
+                             selectedCandidate.policeVerificationStatus === 'FAILED' ? 'bg-rose-100 text-rose-700' :
+                             'bg-amber-100 text-amber-700'
+                           }`}>
+                             {selectedCandidate.policeVerificationStatus}
+                           </span>
+                           {selectedCandidate.policeVerificationStatus === 'PENDING' && (
+                             <button
+                               onClick={() => handleInitiatePoliceWorkflow(selectedCandidate)}
+                               className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                             >
+                               Request PV
+                             </button>
+                           )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2339,10 +2673,19 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                   <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-teal-50/50 border-teal-100'}`}>
                     <h4 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">Hiring Pipeline Progression</h4>
                     <div className="flex flex-wrap gap-2">
-                      {(['APPLIED', 'SCREENING', 'INTERVIEW', 'BACKGROUND_VERIFICATION', 'SELECTED', 'OFFER_EXTENDED', 'REJECTED'] as CandidateStage[]).map((st) => (
+                      {(['REGISTERED', 'APPLIED', 'SCREENING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'INTERVIEW_COMPLETED', 'SELECTED', 'OFFER_PREPARATION', 'OFFER_EXTENDED', 'OFFER_ACCEPTED', 'BACKGROUND_VERIFICATION', 'DOCUMENT_VERIFICATION', 'READY_FOR_ONBOARDING', 'ONBOARDING', 'CONVERTED_TO_EMPLOYEE', 'REJECTED', 'ON_HOLD', 'WITHDRAWN', 'DISQUALIFIED', 'VERIFICATION_FAILED'] as CandidateStage[]).map((st) => (
                         <button
                           key={st}
-                          onClick={() => handleUpdateCandidateStage(selectedCandidate, st)}
+                          onClick={() => {
+                            if (st === 'REJECTED' || st === 'ON_HOLD' || st === 'WITHDRAWN' || st === 'DISQUALIFIED' || st === 'VERIFICATION_FAILED') {
+                              const reason = window.prompt(`Please provide a reason for setting status to ${st}:`);
+                              if (reason !== null) {
+                                handleUpdateCandidateStatus(selectedCandidate, st, reason);
+                              }
+                            } else {
+                              handleUpdateCandidateStatus(selectedCandidate, st);
+                            }
+                          }}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                             selectedCandidate.stage === st
                               ? 'bg-teal-600 text-white shadow-sm'
@@ -2355,8 +2698,50 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                     </div>
                   </div>
 
+                  {/* Candidate Status History */}
+                  <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
+                    <h4 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-4">Status History & Audit Trail</h4>
+                    {(!selectedCandidate.statusHistory || selectedCandidate.statusHistory.length === 0) ? (
+                      <p className="text-sm text-slate-500 italic">No status history available.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {selectedCandidate.statusHistory.map((history, idx) => (
+                          <div key={idx} className="flex gap-4">
+                            <div className="flex flex-col items-center">
+                              <div className="w-2.5 h-2.5 rounded-full bg-teal-500 ring-4 ring-teal-50 dark:ring-slate-800" />
+                              {idx < selectedCandidate.statusHistory!.length - 1 && (
+                                <div className="w-px h-full bg-slate-200 dark:bg-slate-700 mt-2" />
+                              )}
+                            </div>
+                            <div className="pb-4">
+                              <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                {history.stage.replace(/_/g, ' ')}
+                              </p>
+                              <div className="text-xs text-slate-500 mt-1">
+                                <span>{new Date(history.changedAt).toLocaleString()}</span>
+                                <span className="mx-2">•</span>
+                                <span>By {history.changedByName || history.changedBy}</span>
+                                {history.sourceEvent && (
+                                  <>
+                                    <span className="mx-2">•</span>
+                                    <span>{history.sourceEvent}</span>
+                                  </>
+                                )}
+                              </div>
+                              {history.reason && (
+                                <p className="text-xs font-medium text-rose-600 dark:text-rose-400 mt-1">
+                                  Reason: {history.reason}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   {/* 1-Click Employee Conversion Action */}
-                  {selectedCandidate.stage !== 'ONBOARDED' && (
+                  {selectedCandidate.stage !== 'CONVERTED_TO_EMPLOYEE' && (
                     <div className="p-4 rounded-xl border border-teal-300 dark:border-teal-800 bg-teal-50/50 dark:bg-teal-950/40 flex items-center justify-between">
                       <div>
                         <h5 className="font-bold text-sm text-teal-900 dark:text-teal-200 flex items-center gap-1.5">
@@ -2368,7 +2753,7 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                         </p>
                       </div>
                       <button
-                        onClick={() => handle1ClickConvert(selectedCandidate)}
+                        onClick={() => handleCheckConversion(selectedCandidate)}
                         disabled={isConverting}
                         className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-sm transition"
                       >
@@ -2466,54 +2851,510 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                 </div>
               )}
 
-              {profileTab === 'DOCUMENTS' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-teal-50 dark:bg-teal-900/30 text-teal-600 rounded-lg">
-                          <FileText className="w-5 h-5" />
+              {profileTab === 'DOCUMENTS' && (() => {
+                const candDocs = candidateDocuments.filter(d => d.candidateId === selectedCandidate.id);
+                const reqDocs = STANDARD_CANDIDATE_DOCUMENTS.filter(d => d.isRequired);
+                const verifiedReqCount = reqDocs.filter(rd => 
+                  candDocs.some(cd => cd.documentType === rd.documentType && cd.status === 'VERIFIED')
+                ).length;
+                const reqProgress = Math.round((verifiedReqCount / (reqDocs.length || 1)) * 100);
+
+                const totalVerified = candDocs.filter(d => d.status === 'VERIFIED').length;
+                const totalUnderReview = candDocs.filter(d => ['SUBMITTED', 'RESUBMITTED', 'UNDER_REVIEW'].includes(d.status)).length;
+                const totalActionRequired = candDocs.filter(d => ['CORRECTION_REQUIRED', 'REJECTED'].includes(d.status)).length;
+                const totalExpired = candDocs.filter(d => d.isExpired || (d.expiryDate && new Date(d.expiryDate) < new Date())).length;
+                const missingReqCount = reqDocs.length - verifiedReqCount;
+
+                // Category filtering
+                const filteredChecklist = docFilterCategory === 'ALL' 
+                  ? STANDARD_CANDIDATE_DOCUMENTS 
+                  : STANDARD_CANDIDATE_DOCUMENTS.filter(d => d.category === docFilterCategory);
+
+                // Custom/Extra uploaded documents not in standard list
+                const customUploadedDocs = candDocs.filter(d => 
+                  !STANDARD_CANDIDATE_DOCUMENTS.some(sd => sd.documentType === d.documentType) || d.documentType === 'OTHER'
+                );
+
+                return (
+                  <div className="space-y-6">
+                    {/* Compliance & Verification Header */}
+                    <div className={`p-5 rounded-2xl border ${
+                      isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'
+                    }`}>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">
+                              Document Verification & Compliance
+                            </h3>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1">
+                            Verify statutory identity, background certificates, and qualification records for onboarding.
+                          </p>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold truncate">Resume / CV</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">Primary Document</p>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenUploadDocModal()}
+                          className="flex items-center gap-2 px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition shadow-sm self-start sm:self-auto"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload Document</span>
+                        </button>
+                      </div>
+
+                      {/* Required Documents Progress */}
+                      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/60">
+                        <div className="flex justify-between items-center text-xs mb-1.5 font-bold">
+                          <span className="text-slate-600 dark:text-slate-300">
+                            Mandatory Documents Verified: {verifiedReqCount} of {reqDocs.length}
+                          </span>
+                          <span className={`${reqProgress === 100 ? 'text-emerald-600 font-extrabold' : 'text-teal-600'}`}>
+                            {reqProgress}% Complete
+                          </span>
                         </div>
-                        {selectedCandidate.resumeUrl ? (
-                          <a 
-                            href={selectedCandidate.resumeUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-teal-600"
+                        <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              reqProgress === 100 ? 'bg-emerald-500' : reqProgress >= 50 ? 'bg-teal-500' : 'bg-amber-500'
+                            }`}
+                            style={{ width: `${reqProgress}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Summary Metrics Chips */}
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-4">
+                        <div className={`p-2.5 rounded-xl text-center border ${
+                          isDark ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                        }`}>
+                          <div className="text-base font-black">{totalVerified}</div>
+                          <div className="text-[10px] font-bold uppercase tracking-wider">Verified</div>
+                        </div>
+
+                        <div className={`p-2.5 rounded-xl text-center border ${
+                          isDark ? 'bg-indigo-950/20 border-indigo-800/40 text-indigo-300' : 'bg-indigo-50 border-indigo-200 text-indigo-800'
+                        }`}>
+                          <div className="text-base font-black">{totalUnderReview}</div>
+                          <div className="text-[10px] font-bold uppercase tracking-wider">Under Review</div>
+                        </div>
+
+                        <div className={`p-2.5 rounded-xl text-center border ${
+                          isDark ? 'bg-amber-950/20 border-amber-800/40 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800'
+                        }`}>
+                          <div className="text-base font-black">{totalActionRequired}</div>
+                          <div className="text-[10px] font-bold uppercase tracking-wider">Action Req.</div>
+                        </div>
+
+                        <div className={`p-2.5 rounded-xl text-center border ${
+                          totalExpired > 0
+                            ? isDark ? 'bg-rose-950/30 border-rose-800/60 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800'
+                            : isDark ? 'bg-slate-800/40 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-600'
+                        }`}>
+                          <div className="text-base font-black">{totalExpired}</div>
+                          <div className="text-[10px] font-bold uppercase tracking-wider">Expired</div>
+                        </div>
+
+                        <div className={`p-2.5 rounded-xl text-center border ${
+                          missingReqCount > 0
+                            ? isDark ? 'bg-rose-950/20 border-rose-800/40 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800'
+                            : isDark ? 'bg-slate-800/40 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-600'
+                        }`}>
+                          <div className="text-base font-black">{missingReqCount}</div>
+                          <div className="text-[10px] font-bold uppercase tracking-wider">Missing Req.</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Category Filter Pills */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                      {['ALL', 'IDENTITY', 'STATUTORY', 'FINANCIAL', 'PROFESSIONAL', 'GENERAL'].map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setDocFilterCategory(cat)}
+                          className={`px-3 py-1 text-xs font-bold rounded-lg transition whitespace-nowrap ${
+                            docFilterCategory === cat
+                              ? 'bg-teal-600 text-white shadow-sm'
+                              : isDark 
+                                ? 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200' 
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {cat === 'ALL' ? 'All Categories' : cat.charAt(0) + cat.slice(1).toLowerCase()}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Standard Checklist Documents Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {filteredChecklist.map((item) => {
+                        const uploadedDoc = candDocs.find(d => d.documentType === item.documentType);
+
+                        if (uploadedDoc) {
+                          const isDocExpired = uploadedDoc.isExpired || (uploadedDoc.expiryDate && new Date(uploadedDoc.expiryDate) < new Date());
+                          const isExpiringSoon = !isDocExpired && uploadedDoc.expiryDate && (() => {
+                            const exp = new Date(uploadedDoc.expiryDate);
+                            const t30 = new Date();
+                            t30.setDate(t30.getDate() + 30);
+                            return exp <= t30;
+                          })();
+
+                          return (
+                            <div
+                              key={item.documentType}
+                              className={`p-4 rounded-2xl border flex flex-col justify-between transition ${
+                                isDark ? 'bg-slate-850 border-slate-700/80 hover:border-slate-600' : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                              }`}
+                            >
+                              <div>
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-center gap-2.5">
+                                    <div className={`p-2 rounded-xl ${
+                                      uploadedDoc.status === 'VERIFIED'
+                                        ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
+                                        : uploadedDoc.status === 'REJECTED'
+                                          ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400'
+                                          : uploadedDoc.status === 'CORRECTION_REQUIRED'
+                                            ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400'
+                                            : 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400'
+                                    }`}>
+                                      <FileText className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                      <div className="flex items-center gap-1.5">
+                                        <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                                          {uploadedDoc.documentName || item.documentName}
+                                        </h4>
+                                        <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                          v{uploadedDoc.version || 1}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                                          {item.category}
+                                        </span>
+                                        {item.isRequired && (
+                                          <span className="text-[9px] font-bold text-rose-500">
+                                            *Mandatory
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Status Pill */}
+                                  <div>
+                                    {uploadedDoc.status === 'VERIFIED' && (
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                        <CheckCircle2 className="w-3 h-3" />
+                                        Verified
+                                      </span>
+                                    )}
+                                    {uploadedDoc.status === 'SUBMITTED' && (
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300">
+                                        <Clock className="w-3 h-3" />
+                                        Submitted
+                                      </span>
+                                    )}
+                                    {uploadedDoc.status === 'RESUBMITTED' && (
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">
+                                        <RotateCcw className="w-3 h-3" />
+                                        Resubmitted
+                                      </span>
+                                    )}
+                                    {uploadedDoc.status === 'UNDER_REVIEW' && (
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                                        <Clock className="w-3 h-3" />
+                                        Under Review
+                                      </span>
+                                    )}
+                                    {uploadedDoc.status === 'CORRECTION_REQUIRED' && (
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                                        <AlertTriangle className="w-3 h-3" />
+                                        Correction Req.
+                                      </span>
+                                    )}
+                                    {uploadedDoc.status === 'REJECTED' && (
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                                        <XCircle className="w-3 h-3" />
+                                        Rejected
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Meta details */}
+                                <div className="mt-3 text-[11px] text-slate-500 space-y-1">
+                                  <div className="flex justify-between items-center">
+                                    <span className="truncate max-w-[180px] font-medium text-slate-700 dark:text-slate-300">
+                                      {uploadedDoc.fileName || 'document_file'}
+                                    </span>
+                                    {uploadedDoc.fileSize && (
+                                      <span className="text-[10px] text-slate-400">
+                                        {(uploadedDoc.fileSize / 1024).toFixed(0)} KB
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {uploadedDoc.verifiedBy && (
+                                    <div className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                                      Verified by {uploadedDoc.verifiedBy} on {new Date(uploadedDoc.verifiedAt || '').toLocaleDateString()}
+                                    </div>
+                                  )}
+
+                                  {uploadedDoc.expiryDate && (
+                                    <div className={`text-[10px] font-bold ${
+                                      isDocExpired 
+                                        ? 'text-rose-600 dark:text-rose-400' 
+                                        : isExpiringSoon 
+                                          ? 'text-amber-600 dark:text-amber-400' 
+                                          : 'text-slate-400'
+                                    }`}>
+                                      {isDocExpired 
+                                        ? `⚠️ Expired on ${uploadedDoc.expiryDate}` 
+                                        : isExpiringSoon 
+                                          ? `⚠️ Expires soon: ${uploadedDoc.expiryDate}` 
+                                          : `Valid till: ${uploadedDoc.expiryDate}`}
+                                    </div>
+                                  )}
+
+                                  {/* Notes or Rejection Reason Box */}
+                                  {uploadedDoc.rejectionReason && (
+                                    <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 text-rose-700 dark:text-rose-300 text-[10px] mt-2">
+                                      <strong>Rejection Reason:</strong> {uploadedDoc.rejectionReason}
+                                    </div>
+                                  )}
+
+                                  {uploadedDoc.correctionNotes && (
+                                    <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-300 text-[10px] mt-2">
+                                      <strong>Correction Requested:</strong> {uploadedDoc.correctionNotes}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Action Buttons Toolbar */}
+                              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1.5">
+                                <div className="flex items-center gap-1">
+                                  {uploadedDoc.fileUrl && (
+                                    <a
+                                      href={uploadedDoc.fileUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="p-1.5 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/30 rounded-lg text-xs font-bold transition flex items-center gap-1"
+                                      title="Open File"
+                                    >
+                                      <Eye className="w-3.5 h-3.5" />
+                                      <span>View</span>
+                                    </a>
+                                  )}
+
+                                  {(uploadedDoc.history?.length || (uploadedDoc.version && uploadedDoc.version > 1)) ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenVersionHistoryModal(uploadedDoc)}
+                                      className="p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition flex items-center gap-1"
+                                      title="Version History"
+                                    >
+                                      <History className="w-3.5 h-3.5" />
+                                      <span>History</span>
+                                    </button>
+                                  ) : null}
+                                </div>
+
+                                <div className="flex items-center gap-1">
+                                  {/* Re-upload / Replace */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenUploadDocModal(item.documentType, item.isRequired, item.documentName)}
+                                    className="p-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-lg text-xs font-medium transition flex items-center gap-1"
+                                    title="Upload New Version"
+                                  >
+                                    <RotateCcw className="w-3.5 h-3.5" />
+                                    <span>Replace</span>
+                                  </button>
+
+                                  {/* Review & Verify Button (For HR/Admin) */}
+                                  {['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'HR'].includes(userSession?.role || '') && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenReviewDocModal(uploadedDoc)}
+                                      className="px-2.5 py-1 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg text-[11px] font-bold transition flex items-center gap-1"
+                                    >
+                                      <FileCheck className="w-3 h-3 text-teal-400" />
+                                      <span>Review</span>
+                                    </button>
+                                  )}
+
+                                  {/* Delete Document */}
+                                  {['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN'].includes(userSession?.role || '') && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteDoc(uploadedDoc)}
+                                      className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg text-xs transition"
+                                      title="Delete Document"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        // Missing Document Placeholder Card
+                        return (
+                          <div
+                            key={item.documentType}
+                            className={`p-4 rounded-2xl border-2 border-dashed flex flex-col justify-between transition ${
+                              item.isRequired
+                                ? isDark ? 'bg-slate-900/40 border-rose-900/40' : 'bg-rose-50/30 border-rose-200'
+                                : isDark ? 'bg-slate-900/20 border-slate-800' : 'bg-slate-50 border-slate-200'
+                            }`}
                           >
-                            <ArrowRight className="w-4 h-4" />
-                          </a>
-                        ) : (
-                          <span className="text-[10px] font-bold text-rose-500">Missing</span>
-                        )}
-                      </div>
+                            <div>
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-2.5">
+                                  <div className={`p-2 rounded-xl ${
+                                    item.isRequired
+                                      ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400'
+                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                                  }`}>
+                                    <FileText className="w-4 h-4" />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                      {item.documentName}
+                                    </h4>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                                        {item.category}
+                                      </span>
+                                      {item.isRequired ? (
+                                        <span className="text-[9px] font-bold text-rose-500">
+                                          *Mandatory
+                                        </span>
+                                      ) : (
+                                        <span className="text-[9px] font-medium text-slate-400">
+                                          Optional
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <span className={`px-2 py-0.5 text-[9px] font-bold rounded-full ${
+                                  item.isRequired
+                                    ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
+                                    : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                }`}>
+                                  Missing
+                                </span>
+                              </div>
+
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2.5 leading-relaxed">
+                                {item.description}
+                              </p>
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-slate-800/60 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenUploadDocModal(item.documentType, item.isRequired, item.documentName)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                              >
+                                <Upload className="w-3.5 h-3.5" />
+                                <span>Upload Now</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
 
-                    <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 rounded-lg">
-                          <ShieldCheck className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold truncate">Aadhaar Card</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">Identity Proof</p>
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400">Stored</span>
-                      </div>
-                    </div>
-                  </div>
+                    {/* Additional Custom Uploaded Documents */}
+                    {customUploadedDocs.length > 0 && (
+                      <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <h4 className="text-xs font-bold uppercase text-slate-500 flex items-center gap-2">
+                          <FileBadge className="w-4 h-4 text-teal-600" />
+                          Supplementary & Custom Documents ({customUploadedDocs.length})
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {customUploadedDocs.map((docRec) => (
+                            <div
+                              key={docRec.id}
+                              className={`p-4 rounded-2xl border flex flex-col justify-between ${
+                                isDark ? 'bg-slate-850 border-slate-700' : 'bg-white border-slate-200'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="p-2 rounded-xl bg-teal-100 dark:bg-teal-900/40 text-teal-600">
+                                    <FileText className="w-4 h-4" />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                                      {docRec.documentName}
+                                    </h4>
+                                    <span className="text-[10px] text-slate-400">
+                                      {docRec.fileName} • {((docRec.fileSize || 0) / 1024).toFixed(0)} KB
+                                    </span>
+                                  </div>
+                                </div>
 
-                  <div className="p-10 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
-                    <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                    <p className="text-xs text-slate-500 font-medium">Additional Document Repository</p>
-                    <p className="text-[10px] text-slate-400 mt-1">Certificates, Background Reports, and Offer Letters will appear here.</p>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  docRec.status === 'VERIFIED'
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                    : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300'
+                                }`}>
+                                  {docRec.status}
+                                </span>
+                              </div>
+
+                              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                {docRec.fileUrl && (
+                                  <a
+                                    href={docRec.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1.5 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/30 rounded-lg text-xs font-bold transition flex items-center gap-1"
+                                  >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    <span>View</span>
+                                  </a>
+                                )}
+                                <div className="flex items-center gap-1">
+                                  {['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'HR'].includes(userSession?.role || '') && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenReviewDocModal(docRec)}
+                                      className="px-2.5 py-1 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-[11px] font-bold transition flex items-center gap-1"
+                                    >
+                                      <FileCheck className="w-3 h-3 text-teal-400" />
+                                      <span>Review</span>
+                                    </button>
+                                  )}
+                                  {['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN'].includes(userSession?.role || '') && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteDoc(docRec)}
+                                      className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg text-xs"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -3387,6 +4228,7 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                     <option value="IDENTITY">ID / Document Check</option>
                     <option value="ADDRESS">Address Verification</option>
                     <option value="REFERENCE">Professional Reference</option>
+                    <option value="POLICE">Police / Criminal Record Check</option>
                     <option value="OTHER">Other / Misc Check</option>
                   </select>
                 </div>
@@ -3507,6 +4349,22 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
               </div>
 
               <div className="space-y-2">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Assigned Verifier</label>
+                <select
+                  value={bgvProcessFormData.assignedVerifierId}
+                  onChange={(e) => setBgvProcessFormData(prev => ({ ...prev, assignedVerifierId: e.target.value }))}
+                  className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                    isDark ? 'bg-slate-800 border-slate-700 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:border-indigo-400'
+                  }`}
+                >
+                  <option value="">-- Unassigned --</option>
+                  {employees.filter(e => e.role === 'HR' || e.role === 'HR_ADMIN' || e.role === 'COMPANY_ADMIN').map(e => (
+                    <option key={e.id} value={e.id}>{e.firstName} {e.lastName} ({e.role})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
                 <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Verification Findings</label>
                 <textarea
                   value={bgvProcessFormData.findings}
@@ -3528,6 +4386,21 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                   rows={2}
                   className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
                     isDark ? 'bg-slate-800 border-slate-700 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 focus:border-indigo-400'
+                  }`}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Upload Evidence Document (Optional)</label>
+                <input
+                  type="file"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setBgvProcessFormData(prev => ({ ...prev, evidenceFile: e.target.files![0] }));
+                    }
+                  }}
+                  className={`w-full px-3 py-2.5 text-sm rounded-xl border focus:outline-none transition-all ${
+                    isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-300 text-slate-700'
                   }`}
                 />
               </div>
@@ -3555,6 +4428,478 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Upload Document Modal (Module 12 / Point 10) */}
+      {isUploadDocModalOpen && selectedCandidate && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+          <form
+            onSubmit={handleUploadDocSubmit}
+            className={`w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border flex flex-col ${
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            }`}
+          >
+            <div className={`p-6 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-teal-100 dark:bg-teal-900/40 rounded-xl text-teal-600">
+                  <Upload className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Upload Candidate Document</h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{selectedCandidate.fullName} ({selectedCandidate.candidateCode})</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsUploadDocModalOpen(false)}
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Document Type</label>
+                <select
+                  value={uploadDocFormData.documentType}
+                  onChange={(e) => {
+                    const dt = e.target.value as CandidateDocumentType;
+                    const standard = STANDARD_CANDIDATE_DOCUMENTS.find(s => s.documentType === dt);
+                    setUploadDocFormData(prev => ({
+                      ...prev,
+                      documentType: dt,
+                      documentName: standard?.documentName || dt.replace(/_/g, ' '),
+                      isRequired: standard?.isRequired ?? false
+                    }));
+                  }}
+                  className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                    isDark ? 'bg-slate-800 border-slate-700 focus:border-teal-500' : 'bg-slate-50 border-slate-200 focus:border-teal-400'
+                  }`}
+                >
+                  {STANDARD_CANDIDATE_DOCUMENTS.map(sd => (
+                    <option key={sd.documentType} value={sd.documentType}>
+                      {sd.documentName} {sd.isRequired ? '(Mandatory)' : ''}
+                    </option>
+                  ))}
+                  <option value="OTHER">Other Custom Document</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Document Label / Title</label>
+                <input
+                  type="text"
+                  required
+                  value={uploadDocFormData.documentName}
+                  onChange={(e) => setUploadDocFormData(prev => ({ ...prev, documentName: e.target.value }))}
+                  placeholder="e.g. Police Clearance Certificate, BCA Degree"
+                  className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                    isDark ? 'bg-slate-800 border-slate-700 focus:border-teal-500' : 'bg-slate-50 border-slate-200 focus:border-teal-400'
+                  }`}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Expiry Date (If Applicable)</label>
+                  <input
+                    type="date"
+                    value={uploadDocFormData.expiryDate}
+                    onChange={(e) => setUploadDocFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                    className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                      isDark ? 'bg-slate-800 border-slate-700 focus:border-teal-500' : 'bg-slate-50 border-slate-200 focus:border-teal-400'
+                    }`}
+                  />
+                  <span className="text-[10px] text-slate-400">Required for licenses, PCC & passports</span>
+                </div>
+
+                <div className="flex items-center gap-3 pt-6">
+                  <input
+                    type="checkbox"
+                    id="isRequiredDoc"
+                    checked={uploadDocFormData.isRequired}
+                    onChange={(e) => setUploadDocFormData(prev => ({ ...prev, isRequired: e.target.checked }))}
+                    className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
+                  />
+                  <label htmlFor="isRequiredDoc" className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Mandatory for Onboarding
+                  </label>
+                </div>
+              </div>
+
+              {/* File Dropzone */}
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Select File</label>
+                <div className={`p-6 border-2 border-dashed rounded-2xl text-center transition ${
+                  isDark ? 'bg-slate-800/40 border-slate-700 hover:border-teal-500' : 'bg-slate-50 border-slate-300 hover:border-teal-500'
+                }`}>
+                  <input
+                    type="file"
+                    id="candDocFileInput"
+                    required
+                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setUploadDocFormData(prev => ({ ...prev, file: e.target.files![0] }));
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <label htmlFor="candDocFileInput" className="cursor-pointer block">
+                    <Upload className="w-8 h-8 text-teal-600 mx-auto mb-2" />
+                    {uploadDocFormData.file ? (
+                      <div>
+                        <p className="text-xs font-bold text-teal-600 truncate max-w-xs mx-auto">
+                          {uploadDocFormData.file.name}
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          {(uploadDocFormData.file.size / 1024).toFixed(0)} KB • Click to change
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                          Click to browse or drag & drop document
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          Supported formats: PDF, JPG, PNG, WEBP (Max 10MB)
+                        </p>
+                      </div>
+                    )}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsUploadDocModalOpen(false)}
+                className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isUploadingDoc || !uploadDocFormData.file}
+                className="px-8 py-2.5 rounded-xl text-sm font-bold bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 transition flex items-center gap-2 disabled:opacity-50"
+              >
+                {isUploadingDoc && <RefreshCw className="w-4 h-4 animate-spin" />}
+                <span>Upload & Save</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Review & Verify Document Modal (Module 12 / Point 10) */}
+      {isReviewDocModalOpen && selectedCandidateDoc && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+          <form
+            onSubmit={handleReviewDocSubmit}
+            className={`w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border flex flex-col ${
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            }`}
+          >
+            <div className={`p-6 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-slate-800 text-teal-400 rounded-xl">
+                  <FileCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Review & Verify Document</h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                    {selectedCandidateDoc.documentName} (v{selectedCandidateDoc.version || 1})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsReviewDocModalOpen(false)}
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+              {/* Document Overview Card */}
+              <div className={`p-4 rounded-2xl border flex items-center justify-between ${
+                isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'
+              }`}>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    {selectedCandidateDoc.fileName}
+                  </h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Submitted by {selectedCandidateDoc.submittedBy} on {new Date(selectedCandidateDoc.submittedAt || selectedCandidateDoc.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                {selectedCandidateDoc.fileUrl && (
+                  <a
+                    href={selectedCandidateDoc.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Open File</span>
+                  </a>
+                )}
+              </div>
+
+              {/* Decision Toggle */}
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">Verification Decision</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setReviewDocFormData(prev => ({ ...prev, decision: 'VERIFIED' }))}
+                    className={`py-3 px-2 rounded-2xl text-xs font-bold border transition flex flex-col items-center gap-1.5 ${
+                      reviewDocFormData.decision === 'VERIFIED'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20'
+                        : isDark ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Verified</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setReviewDocFormData(prev => ({ ...prev, decision: 'CORRECTION_REQUIRED' }))}
+                    className={`py-3 px-2 rounded-2xl text-xs font-bold border transition flex flex-col items-center gap-1.5 ${
+                      reviewDocFormData.decision === 'CORRECTION_REQUIRED'
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-600/20'
+                        : isDark ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Need Fix</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setReviewDocFormData(prev => ({ ...prev, decision: 'REJECTED' }))}
+                    className={`py-3 px-2 rounded-2xl text-xs font-bold border transition flex flex-col items-center gap-1.5 ${
+                      reviewDocFormData.decision === 'REJECTED'
+                        ? 'bg-rose-600 text-white border-rose-600 shadow-md shadow-rose-600/20'
+                        : isDark ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    <XCircle className="w-4 h-4" />
+                    <span>Reject</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Remarks / Findings */}
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">
+                  {reviewDocFormData.decision === 'VERIFIED'
+                    ? 'Internal Remarks (Optional)'
+                    : 'Mandatory Rejection / Correction Reason'}
+                </label>
+                <textarea
+                  required={reviewDocFormData.decision !== 'VERIFIED'}
+                  value={reviewDocFormData.reasonOrNotes}
+                  onChange={(e) => setReviewDocFormData(prev => ({ ...prev, reasonOrNotes: e.target.value }))}
+                  placeholder={
+                    reviewDocFormData.decision === 'VERIFIED'
+                      ? 'e.g. Identity and signatures matched original records.'
+                      : 'e.g. Scanned copy is blurred, please upload clear high-resolution document.'
+                  }
+                  rows={3}
+                  className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                    isDark ? 'bg-slate-800 border-slate-700 focus:border-teal-500' : 'bg-slate-50 border-slate-200 focus:border-teal-400'
+                  }`}
+                />
+              </div>
+
+              {/* Expiry Date Adjustment */}
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-widest">
+                  Verified Document Expiry Date
+                </label>
+                <input
+                  type="date"
+                  value={reviewDocFormData.expiryDate}
+                  onChange={(e) => setReviewDocFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                  className={`w-full px-4 py-3 text-sm rounded-2xl border focus:outline-none transition-all ${
+                    isDark ? 'bg-slate-800 border-slate-700 focus:border-teal-500' : 'bg-slate-50 border-slate-200 focus:border-teal-400'
+                  }`}
+                />
+                <span className="text-[10px] text-slate-400">Leave blank if this document has no legal expiration.</span>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsReviewDocModalOpen(false)}
+                className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isReviewingDoc}
+                className={`px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg transition flex items-center gap-2 ${
+                  reviewDocFormData.decision === 'VERIFIED'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                    : reviewDocFormData.decision === 'CORRECTION_REQUIRED'
+                      ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20'
+                      : 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20'
+                }`}
+              >
+                {isReviewingDoc && <RefreshCw className="w-4 h-4 animate-spin" />}
+                <span>Confirm Review</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Document Version History Modal (Module 12 / Point 10) */}
+      {isVersionHistoryModalOpen && selectedCandidateDoc && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+          <div
+            className={`w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden border flex flex-col ${
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            }`}
+          >
+            <div className={`p-6 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl text-indigo-600">
+                  <History className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Document Version History</h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{selectedCandidateDoc.documentName}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsVersionHistoryModalOpen(false)}
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              {/* Current Active Version */}
+              <div className={`p-4 rounded-2xl border-2 ${
+                isDark ? 'bg-slate-800/60 border-teal-600/60' : 'bg-teal-50/40 border-teal-300'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black bg-teal-600 text-white">
+                      Current v{selectedCandidateDoc.version || 1}
+                    </span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                      {selectedCandidateDoc.fileName}
+                    </span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    selectedCandidateDoc.status === 'VERIFIED'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-indigo-100 text-indigo-800'
+                  }`}>
+                    {selectedCandidateDoc.status}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-500 mt-2 space-y-0.5">
+                  <p>Uploaded by: {selectedCandidateDoc.submittedBy} on {new Date(selectedCandidateDoc.submittedAt || selectedCandidateDoc.createdAt).toLocaleString()}</p>
+                  {selectedCandidateDoc.fileSize && <p>Size: {(selectedCandidateDoc.fileSize / 1024).toFixed(0)} KB</p>}
+                </div>
+                {selectedCandidateDoc.fileUrl && (
+                  <div className="mt-3">
+                    <a
+                      href={selectedCandidateDoc.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-teal-600 hover:underline"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>View Current File</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Historical Versions */}
+              {selectedCandidateDoc.history && selectedCandidateDoc.history.length > 0 ? (
+                <div className="space-y-3 pt-2">
+                  <h4 className="text-xs font-bold uppercase text-slate-500 tracking-wider">
+                    Previous Revisions ({selectedCandidateDoc.history.length})
+                  </h4>
+                  {selectedCandidateDoc.history.slice().reverse().map((ver, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-3.5 rounded-2xl border ${
+                        isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                            v{ver.version}
+                          </span>
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[200px]">
+                            {ver.fileName}
+                          </span>
+                        </div>
+                        {ver.status && (
+                          <span className="text-[10px] font-bold text-slate-400">
+                            {ver.status}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-[10px] text-slate-400 mt-1">
+                        Uploaded by {ver.uploadedBy} on {new Date(ver.uploadedAt).toLocaleString()}
+                      </div>
+
+                      {ver.rejectionReason && (
+                        <p className="text-[10px] text-rose-500 mt-1">
+                          <strong>Finding:</strong> {ver.rejectionReason}
+                        </p>
+                      )}
+
+                      {ver.fileUrl && (
+                        <div className="mt-2">
+                          <a
+                            href={ver.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:text-teal-600"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            <span>View Version {ver.version}</span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 text-center py-4">No previous revisions recorded for this document.</p>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsVersionHistoryModalOpen(false)}
+                className="px-6 py-2.5 text-sm font-bold bg-slate-800 text-white hover:bg-slate-900 rounded-xl transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

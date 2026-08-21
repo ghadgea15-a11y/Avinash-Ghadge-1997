@@ -51,7 +51,13 @@ import { AssetTrackingScreen } from './components/screens/AssetTrackingScreen';
 import { ServiceDeskScreen } from './components/screens/ServiceDeskScreen';
 import { TalentAcquisitionScreen } from './components/screens/TalentAcquisitionScreen';
 import { TrainingLmsScreen } from './components/screens/TrainingLmsScreen';
+import { MandatoryRefreshersScreen } from './components/screens/MandatoryRefreshersScreen';
+import { CertificationTrackingScreen } from './components/screens/CertificationTrackingScreen';
 import { ProcurementSrmScreen } from './components/screens/ProcurementSrmScreen';
+import { VendorDirectoryScreen } from './components/screens/VendorDirectoryScreen';
+import { RfqManagementScreen } from './components/screens/RfqManagementScreen';
+import { PurchaseOrderManagementScreen } from './components/screens/PurchaseOrderManagementScreen';
+import { ThreeWayMatchScreen } from './components/screens/ThreeWayMatchScreen';
 
 import { TaskManagementScreen } from './components/screens/TaskManagementScreen';
 import { AnnouncementsScreen } from './components/screens/AnnouncementsScreen';
@@ -604,6 +610,20 @@ export function App() {
                       />
                     )}
 
+                    {currentScreen === 'CERTIFICATION_TRACKING' && (
+                      <CertificationTrackingScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+                    {currentScreen === 'MANDATORY_REFRESHERS' && activeCompany && (
+                      <MandatoryRefreshersScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
                     {currentScreen === 'TRAINING_LMS' && (
                       <TrainingLmsScreen
                         userSession={userSession}
@@ -612,6 +632,34 @@ export function App() {
                       />
                     )}
 
+                                        {currentScreen === 'VENDOR_MANAGEMENT' && (
+                      <VendorDirectoryScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+                                        {currentScreen === 'RFQ_MANAGEMENT' && (
+                      <RfqManagementScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+                                        {currentScreen === 'PURCHASE_ORDERS' && (
+                      <PurchaseOrderManagementScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+                                        {currentScreen === 'THREE_WAY_MATCH' && (
+                      <ThreeWayMatchScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
                     {currentScreen === 'PROCUREMENT_SRM' && (
                       <ProcurementSrmScreen
                         userSession={userSession}

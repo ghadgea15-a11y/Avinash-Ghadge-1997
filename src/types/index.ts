@@ -82,6 +82,8 @@ export interface SubscriptionPlan {
   planCode: string; // e.g. 'STARTER', 'PRO', 'ENTERPRISE'
   planName: string;
   description: string;
+  isDeployable?: boolean;
+  rosterBlockReason?: string;
   status: 'ACTIVE' | 'ARCHIVED';
   billingCycle: 'MONTHLY' | 'YEARLY' | 'CUSTOM';
   monthlyPrice: number;
@@ -2110,7 +2112,13 @@ export type PhaseAScreen =
   | 'SERVICE_DESK'
   | 'TALENT_ACQUISITION'
   | 'TRAINING_LMS'
+  | 'MANDATORY_REFRESHERS'
+  | 'CERTIFICATION_TRACKING'
   | 'PROCUREMENT_SRM'
+  | 'VENDOR_MANAGEMENT'
+  | 'RFQ_MANAGEMENT'
+  | 'PURCHASE_ORDERS'
+  | 'THREE_WAY_MATCH'
   | 'SAFETY_MANAGEMENT'
   | 'COMPLIANCE';
 
@@ -2425,6 +2433,20 @@ export interface ContractRecord {
   status: ContractStatus;
   scopeOfService?: string;
   termsAndConditions?: string;
+  currency?: string;
+  approvalWorkflow?: {
+    currentApprovalTier: 'A2' | 'A1' | 'A0' | 'COMPLETED';
+    approvalTrail: {
+      tier: 'A2' | 'A1' | 'A0';
+      approvedBy?: string;
+      status: 'PENDING' | 'APPROVED' | 'REJECTED';
+      timestamp?: string;
+      comments?: string;
+    }[];
+  };
+  pdfUrl?: string;
+  version?: number;
+  rfqId?: string;
   renewalType: 'AUTO' | 'MANUAL' | 'NON_RENEWABLE';
   noticePeriodDays?: number;
   
@@ -2511,6 +2533,164 @@ export interface DeploymentHistoryRecord {
   changedAt: string;
   reason?: string;
 }
+
+
+
+
+// ============================================================================
+// MODULE 14.1: VENDOR MANAGEMENT SYSTEM
+// ============================================================================
+
+export type VendorTier = 'TIER_1_PREFERRED' | 'TIER_2_APPROVED' | 'TIER_3_PROVISIONAL' | 'BLACKLISTED';
+export type VendorStatus = 'DRAFT' | 'UNDER_REVIEW' | 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
+export type VendorDocType = 'GST_CERTIFICATE' | 'PAN_CARD' | 'MSME_CERTIFICATE' | 'CANCELLED_CHEQUE' | 'PSARA_LICENSE' | 'ISO_CERTIFICATE';
+
+export interface SrmVendorRecord {
+  id: string; // vendorId
+  companyId: string;
+  businessName: string;
+  legalEntityName: string;
+  category: string;
+  subCategories: string[];
+  tier: VendorTier;
+  status: VendorStatus;
+  contactPerson: {
+    name: string;
+    phone: string;
+    email: string;
+  };
+  billingAddress: string;
+  bankDetails: {
+    accountName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName: string;
+  };
+  taxDetails: {
+    gstin: string;
+    panNumber: string;
+    msmeRegistrationNumber: string;
+  };
+  complianceScore: number;
+  ratingAverage: number;
+  creditPeriodDays: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VendorDocumentRecord {
+  id: string; // docId
+  companyId: string;
+  vendorId: string;
+  docType: VendorDocType;
+  fileUrl: string;
+  expiryDate?: string;
+  verificationStatus: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  verifiedBy?: string;
+  verifiedAt?: string;
+  rejectionReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VendorPerformanceLog {
+  id: string; // logId
+  companyId: string;
+  vendorId: string;
+  evaluationDate: string; // ISO
+  onTimeDeliveryRate: number;
+  qualityDefectRate: number;
+  priceCompetitivenessScore: number;
+  slaBreachCount: number;
+  overallScore: number;
+  evaluatedBy: string;
+  createdAt: string;
+}
+
+// ============================================================================
+// MODULE 13.3: MANDATORY REFRESHERS SYSTEM
+// ============================================================================
+export interface MandatoryRefresherConfig {
+  id: string; // Internal GUID
+  companyId: string;
+  courseId: string; // Link to TrainingProgramRecord or Certification
+  courseName: string;
+  recurrenceIntervalMonths: number;
+  gracePeriodDays: number;
+  targetRoles: UserRole[]; // Which roles need this refresher
+  blockingPolicy: 'WARN' | 'BLOCK_ROSTER' | 'MARK_NON_DEPLOYABLE';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type RefresherStatus = 'ACTIVE' | 'DUE_SOON' | 'IN_GRACE_PERIOD' | 'OVERDUE_LOCKED';
+
+export interface RefresherCompletionRecord {
+  completionDate: string; // ISO String
+  certificateId?: string;
+  trainerName?: string;
+  score?: number;
+}
+
+export interface EmployeeRefresherStatus {
+  id: string; // employeeId_courseId
+  companyId: string;
+  employeeId: string;
+  employeeName: string;
+  courseId: string;
+  courseName: string;
+  lastCompletedDate: string; // ISO String
+  nextDueDate: string; // ISO String
+  gracePeriodExpiryDate: string; // ISO String
+  status: RefresherStatus;
+  completionHistory: RefresherCompletionRecord[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RefresherEnrollment {
+  id: string;
+  companyId: string;
+  sessionId: string;
+  courseId: string;
+  employeeId: string;
+  employeeName: string;
+  attendanceStatus: 'PENDING' | 'ATTENDED' | 'MISSED';
+  assessmentScore?: number;
+  enrolledAt: string;
+}
+
+// ============================================================================
+// MODULE 13: POINT 2 - CERTIFICATION EXPIRY TRACKING
+// ============================================================================
+export type CertificationStatus = 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED' | 'RENEWED' | 'REVOKED';
+
+export interface EmployeeCertificationRecord {
+  id: string; // Internal GUID
+  companyId: string;
+  employeeId: string;
+  employeeName: string;
+  certificationName: string;
+  certificationType: string;
+  issuingAuthority: string;
+  certificateNumber: string;
+  issueDate: string; // ISO Date
+  expiryDate?: string; // ISO Date
+  isMandatory: boolean;
+  status: CertificationStatus;
+  documentUrl?: string;
+  verificationStatus: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  verifiedBy?: string;
+  verifiedAt?: string;
+  siteId?: string;
+  department?: string;
+  designation?: string;
+  previousCertificationId?: string; // For renewal chain
+  renewedByCertificationId?: string; // Points to the new active certificate
+  createdAt: string;
+  updatedAt: string;
+}
+
 
 // ============================================================================
 // MODULE 11: SERVICE MANAGEMENT / CLIENT HELPDESK
@@ -3287,14 +3467,36 @@ export type RequisitionStatus =
   | 'FILLED' 
   | 'REJECTED';
 export type CandidateStage = 
-  | 'APPLIED' 
-  | 'SCREENING' 
-  | 'INTERVIEW' 
-  | 'BACKGROUND_VERIFICATION' 
-  | 'SELECTED' 
-  | 'OFFER_EXTENDED' 
-  | 'ONBOARDED' 
-  | 'REJECTED';
+  | 'REGISTERED'
+  | 'APPLIED'
+  | 'SCREENING'
+  | 'SHORTLISTED'
+  | 'INTERVIEW_SCHEDULED'
+  | 'INTERVIEW_COMPLETED'
+  | 'SELECTED'
+  | 'OFFER_PREPARATION'
+  | 'OFFER_EXTENDED'
+  | 'OFFER_ACCEPTED'
+  | 'BACKGROUND_VERIFICATION'
+  | 'DOCUMENT_VERIFICATION'
+  | 'READY_FOR_ONBOARDING'
+  | 'ONBOARDING'
+  | 'CONVERTED_TO_EMPLOYEE'
+  | 'REJECTED'
+  | 'ON_HOLD'
+  | 'WITHDRAWN'
+  | 'DISQUALIFIED'
+  | 'VERIFICATION_FAILED';
+
+export interface CandidateStatusHistory {
+  stage: CandidateStage;
+  changedBy: string;
+  changedByName?: string;
+  changedAt: string;
+  reason?: string;
+  sourceEvent?: string;
+  notes?: string;
+}
 
 export type VerificationStatus = 'PENDING' | 'VERIFIED'
   | 'IN_PROGRESS' | 'FAILED' | 'EXEMPTED';
@@ -3444,7 +3646,7 @@ export interface SelectionRecord {
   updatedAt: string;
 }
 
-export type BgVerificationType = 'EMPLOYMENT' | 'EDUCATION' | 'IDENTITY' | 'ADDRESS' | 'REFERENCE' | 'OTHER';
+export type BgVerificationType = 'EMPLOYMENT' | 'EDUCATION' | 'IDENTITY' | 'ADDRESS' | 'REFERENCE' | 'OTHER' | 'AADHAAR' | 'POLICE';
 export type BgVerificationStatus = 'REQUESTED' | 'ASSIGNED' | 'IN_PROGRESS' | 'EVIDENCE_SUBMITTED' | 'UNDER_REVIEW' | 'CLEARED' | 'FAILED' | 'CLARIFICATION_REQUIRED' | 'CLOSED';
 export type BgVerificationResult = 'CLEARED' | 'FAILED' | 'PENDING' | 'CLARIFICATION_REQUIRED';
 
@@ -3456,6 +3658,9 @@ export interface BackgroundVerificationRecord {
   requisitionId: string;
   verificationCode: string; // e.g. BGV-2026-101
   type: BgVerificationType;
+  consentStatus?: 'PENDING' | 'GRANTED' | 'REVOKED';
+  consentTimestamp?: string;
+  verificationMethod?: string;
   assignedVerifierId?: string;
   assignedVerifierName?: string;
   requestDate: string;
@@ -3535,6 +3740,7 @@ export interface CandidateRecord {
   resumeUrl?: string; // Reference to Storage
   source?: string; // e.g. "Direct", "LinkedIn", "Referral"
   stage: CandidateStage;
+  statusHistory?: CandidateStatusHistory[];
   interviewFeedback?: string;
   interviewerRating?: number; // 1-5
   rejectionReason?: string;
@@ -3555,6 +3761,105 @@ export interface CandidateRegistrationResult {
   isDuplicate?: boolean;
   error?: string;
 }
+
+// ----------------------------------------------------------------------------
+// Candidate Document Verification Types (Module 12 / Point 10)
+// ----------------------------------------------------------------------------
+
+export type CandidateDocumentType = 
+  | 'RESUME'
+  | 'AADHAAR_CARD'
+  | 'PAN_CARD'
+  | 'VOTER_ID'
+  | 'DRIVING_LICENSE'
+  | 'PASSPORT'
+  | 'POLICE_CLEARANCE'
+  | 'EDUCATION_CERTIFICATE'
+  | 'EXPERIENCE_LETTER'
+  | 'PHOTOGRAPH'
+  | 'BANK_PASSBOOK'
+  | 'MEDICAL_FITNESS'
+  | 'OTHER';
+
+export type CandidateDocVerificationStatus = 
+  | 'MISSING'
+  | 'SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'VERIFIED'
+  | 'REJECTED'
+  | 'CORRECTION_REQUIRED'
+  | 'RESUBMITTED';
+
+export interface CandidateDocumentVersion {
+  version: number;
+  fileName: string;
+  fileUrl: string;
+  storagePath?: string;
+  fileSize: number;
+  fileType: string;
+  uploadedAt: string;
+  uploadedBy: string;
+  status: CandidateDocVerificationStatus;
+  rejectionReason?: string;
+  correctionNotes?: string;
+}
+
+export interface CandidateDocumentRecord {
+  id: string;
+  companyId: string;
+  candidateId: string;
+  selectionId?: string;
+  requisitionId?: string;
+  documentType: CandidateDocumentType;
+  documentName: string;
+  isRequired: boolean;
+  fileUrl?: string;
+  storagePath?: string;
+  fileName?: string;
+  fileSize?: number;
+  fileType?: string;
+  status: CandidateDocVerificationStatus;
+  version: number;
+  history?: CandidateDocumentVersion[];
+  submittedAt?: string;
+  submittedBy?: string;
+  verifiedAt?: string;
+  verifiedBy?: string;
+  rejectionReason?: string;
+  correctionNotes?: string;
+  expiryDate?: string; // YYYY-MM-DD
+  isExpired?: boolean;
+  metadata?: Record<string, any>;
+  auditReference?: string;
+  bpmInstanceId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CandidateDocumentChecklistItem {
+  documentType: CandidateDocumentType;
+  documentName: string;
+  description: string;
+  isRequired: boolean;
+  hasExpiry: boolean;
+  category: 'IDENTITY' | 'STATUTORY' | 'PROFESSIONAL' | 'FINANCIAL' | 'GENERAL';
+}
+
+export const STANDARD_CANDIDATE_DOCUMENTS: CandidateDocumentChecklistItem[] = [
+  { documentType: 'RESUME', documentName: 'Resume / CV', description: 'Curriculum vitae detailing career and education', isRequired: true, hasExpiry: false, category: 'GENERAL' },
+  { documentType: 'PHOTOGRAPH', documentName: 'Passport Size Photograph', description: 'Recent colour photo with clear face profile', isRequired: true, hasExpiry: false, category: 'GENERAL' },
+  { documentType: 'AADHAAR_CARD', documentName: 'Aadhaar Card', description: 'UIDAI identity document for KYC verification', isRequired: true, hasExpiry: false, category: 'IDENTITY' },
+  { documentType: 'PAN_CARD', documentName: 'PAN Card', description: 'Permanent Account Number card for statutory payroll and TDS', isRequired: true, hasExpiry: false, category: 'STATUTORY' },
+  { documentType: 'POLICE_CLEARANCE', documentName: 'Police Verification / PCC', description: 'Police character verification certificate for PSARA compliance', isRequired: true, hasExpiry: true, category: 'STATUTORY' },
+  { documentType: 'EDUCATION_CERTIFICATE', documentName: 'Highest Educational Certificate', description: 'Degree, diploma or matriculation passing certificate', isRequired: true, hasExpiry: false, category: 'PROFESSIONAL' },
+  { documentType: 'EXPERIENCE_LETTER', documentName: 'Experience / Relieving Letter', description: 'Previous employer service or relieving letter', isRequired: false, hasExpiry: false, category: 'PROFESSIONAL' },
+  { documentType: 'BANK_PASSBOOK', documentName: 'Bank Passbook / Cancelled Cheque', description: 'Salary account details with printed account number and IFSC', isRequired: true, hasExpiry: false, category: 'FINANCIAL' },
+  { documentType: 'MEDICAL_FITNESS', documentName: 'Medical Fitness Certificate', description: 'Registered medical practitioner physical fitness declaration', isRequired: false, hasExpiry: true, category: 'STATUTORY' },
+  { documentType: 'DRIVING_LICENSE', documentName: 'Driving License', description: 'Valid transport/motor driving license (if applicable)', isRequired: false, hasExpiry: true, category: 'IDENTITY' },
+  { documentType: 'VOTER_ID', documentName: 'Voter Identity Card / EPIC', description: 'Election Commission of India identity document', isRequired: false, hasExpiry: false, category: 'IDENTITY' },
+  { documentType: 'PASSPORT', documentName: 'Passport', description: 'Indian Republic passport copy', isRequired: false, hasExpiry: true, category: 'IDENTITY' },
+  { documentType: 'OTHER', documentName: 'Other Supporting Document', description: 'Additional certifications, training letters, or affidavits', isRequired: false, hasExpiry: false, category: 'GENERAL' },
+];
 
 // ============================================================================
 // MODULE 13: LEARNING & COMPLIANCE / LMS
@@ -3588,7 +3893,25 @@ export interface TrainingProgramRecord {
   updatedAt: string;
 }
 
+
+export interface TrainingSessionRecord {
+  id: string;
+  companyId: string;
+  programId: string;
+  trainerId?: string;
+  trainerName: string;
+  scheduledDate: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  maxParticipants: number;
+  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TrainingEnrollmentRecord {
+  sessionId?: string;
   id: string;
   companyId: string;
   programId: string;
@@ -3616,7 +3939,7 @@ export interface TrainingEnrollmentRecord {
 // MODULE 14: PROCUREMENT & SOURCING / SRM
 // ============================================================================
 export type ProcurementStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'PO_ISSUED' | 'PARTIALLY_DELIVERED' | 'FULFILLED' | 'CANCELLED';
-export type PurchaseOrderStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'ISSUED' | 'PARTIALLY_RECEIVED' | 'COMPLETED' | 'CANCELLED';
+export type PurchaseOrderStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ISSUED' | 'ISSUED_TO_VENDOR' | 'PARTIALLY_RECEIVED' | 'PARTIALLY_DELIVERED' | 'COMPLETED' | 'CANCELLED';
 
 export interface RequisitionLineItem {
   itemId?: string;
@@ -4548,3 +4871,204 @@ export interface DetectedRiskEvent {
   updatedAt: string;
 }
 
+export type OfferStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'EXTENDED' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
+
+export interface OfferRecord {
+  id: string;
+  companyId: string;
+  candidateId: string;
+  requisitionId: string;
+  offerCode: string;
+  offeredDesignation: string;
+  offeredSalaryMonthly: number;
+  currency: string;
+  benefits?: string[];
+  joiningDate: string;
+  status: OfferStatus;
+  preparedBy: string;
+  preparedAt: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  candidateResponseAt?: string;
+  rejectionReason?: string;
+}
+
+
+// ============================================================================
+// MODULE 14.2: RFQ MANAGEMENT SYSTEM
+// ============================================================================
+
+export type RfqStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED_FOR_BIDDING' | 'UNDER_EVALUATION' | 'AWARDED' | 'CANCELLED';
+export type BidStatus = 'DRAFT' | 'SUBMITTED' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
+
+export interface RfqLineItem {
+  itemId: string;
+  itemName: string;
+  specification: string;
+  quantity: number;
+  uom: string;
+  targetUnitPrice?: number; // internal
+}
+
+export interface RfqRequest {
+  id: string; // rfqId
+  companyId: string;
+  rfqNumber: string;
+  title: string;
+  category: string;
+  description: string;
+  scopeOfWork: string;
+  requiredDeliveryDate: string; // ISO
+  deliverySiteId: string;
+  deliveryAddress: string;
+  submissionDeadline: string; // ISO
+  status: RfqStatus;
+  invitedVendorIds: string[]; // array of vendor IDs or 'ALL_CATEGORY_VENDORS'
+  lineItems: RfqLineItem[];
+  evaluationCriteria: {
+    priceWeightage: number;
+    deliverySpeedWeightage: number;
+    vendorRatingWeightage: number;
+  };
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RfqLineItemQuote {
+  itemId: string;
+  offeredUnitPrice: number;
+  taxPercent: number;
+  hsnCode: string;
+  lineTotal: number;
+  leadTimeDays: number;
+  remarks: string;
+}
+
+export interface RfqBid {
+  id: string; // bidId
+  companyId: string;
+  rfqId: string;
+  vendorId: string;
+  vendorName: string;
+  bidStatus: BidStatus;
+  lineItemQuotes: RfqLineItemQuote[];
+  subTotal: number;
+  totalTax: number;
+  grandTotal: number;
+  paymentTermsOffered: string;
+  quoteValidityDate: string; // ISO
+  attachedQuoteUrl?: string;
+  submittedAt?: string;
+  score?: {
+    technicalScore: number;
+    commercialScore: number;
+    totalRank: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RfqEvaluationLog {
+  id: string; // evalId
+  companyId: string;
+  rfqId: string;
+  comparisonMatrix: string; // JSON snapshot
+  awardedBidId: string;
+  awardedVendorId: string;
+  justification: string;
+  approvedBy: string;
+  awardedAt: string;
+}
+
+
+export interface PoAmendmentRecord {
+  id: string; // amendmentId
+  companyId: string;
+  poId: string;
+  previousVersion: number;
+  updatedVersion: number;
+  changeLog: any[]; // Delta fields
+  revisedBy: string;
+  approvedBy?: string;
+  reasonForAmendment: string;
+  timestamp: string; // ISO
+}
+
+
+// ============================================================================
+// MODULE 14.4: 3-WAY MATCHING
+// ============================================================================
+
+export interface VendorInvoiceRecord {
+  id: string;
+  companyId: string;
+  invoiceNumber: string;
+  vendorId: string;
+  poId: string;
+  poNumber: string;
+  grnId?: string;
+  invoiceDate: string;
+  receivedDate: string;
+  dueDate: string;
+  currency: string;
+  subTotal: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  totalAmount: number;
+  invoicePdfUrl?: string;
+  paymentStatus: 'UNMATCHED' | 'MATCH_PASSED' | 'MATCH_FAILED_HOLD' | 'APPROVED_FOR_PAYMENT' | 'PAID';
+  lineItems: {
+    itemId: string;
+    itemName: string;
+    hsnCode?: string;
+    billedQty: number;
+    unitRate: number;
+    taxRate: number;
+    lineTotal: number;
+  }[];
+  uploadedBy: string;
+  createdAt: string;
+}
+
+export interface ThreeWayMatchRecord {
+  id: string;
+  companyId: string;
+  poId: string;
+  grnId: string;
+  invoiceId: string;
+  vendorId: string;
+  matchStatus: 'PERFECT_MATCH' | 'TOLERANCE_PASSED' | 'VARIANCE_DETECTED' | 'MANUALLY_OVERRIDDEN' | 'REJECTED';
+  toleranceConfigUsed: {
+    quantityTolerancePercent: number;
+    priceTolerancePercent: number;
+    maxAmountVarianceLimit: number;
+  };
+  lineItemMatches: {
+    itemId: string;
+    itemName?: string;
+    poQty: number;
+    grnQty: number;
+    invQty: number;
+    poRate: number;
+    invRate: number;
+    qtyMatch: boolean;
+    rateMatch: boolean;
+    taxMatch: boolean;
+    varianceNotes?: string;
+  }[];
+  totalPoAmount: number;
+  totalGrnAmount: number;
+  totalInvoiceAmount: number;
+  varianceAmount: number;
+  varianceType: 'NONE' | 'OVER_BILLING_QTY' | 'RATE_HIKE' | 'TAX_MISMATCH' | 'UNRECEIVED_GOODS_BILLED' | 'MULTIPLE';
+  auditTrail: {
+    action: string;
+    actionBy: string;
+    timestamp: string;
+    comments?: string;
+  }[];
+  passedAt?: string;
+  reviewedBy?: string;
+}
