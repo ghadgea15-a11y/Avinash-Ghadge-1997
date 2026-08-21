@@ -59,6 +59,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
   // Company Admin
   const [adminFullName, setAdminFullName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('TempP@ssw0rd123!');
   const [adminPhone, setAdminPhone] = useState('');
 
   // Branding & Portal
@@ -155,7 +156,8 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
         adminInfo: {
           fullName: adminFullName.trim(),
           email: adminEmail.trim().toLowerCase(),
-          mobileNumber: adminPhone.trim()
+          mobileNumber: adminPhone.trim(),
+          password: adminPassword
         },
         enabledModules: selectedModules,
         createdByUid: currentSession.userId,
@@ -450,6 +452,19 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
                   placeholder="e.g. admin@apexsecurity.com"
+                  className={`w-full px-3 py-2 text-xs rounded-xl border ${
+                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                  } focus:outline-none focus:border-amber-500 font-mono`}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-300 block mb-1">Admin Temporary Password *</label>
+                <input
+                  type="text"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  placeholder="e.g. TempP@ssw0rd123!"
                   className={`w-full px-3 py-2 text-xs rounded-xl border ${
                     isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
                   } focus:outline-none focus:border-amber-500 font-mono`}

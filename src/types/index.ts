@@ -603,6 +603,9 @@ export interface EmployeeRecord {
   vendorId?: string; // If employmentType is CONTRACT
   status: 'ACTIVE' | 'PENDING_VERIFICATION' | 'SUSPENDED' | 'TERMINATED' | 'DEACTIVATED';
   lifecycleStatus: EmployeeLifecycleStatus;
+  lmsComplianceStatus?: 'COMPLIANT' | 'NON_COMPLIANT' | 'PENDING_TRAINING' | 'EXPIRED';
+  latestLmsCertExpiry?: string;
+  convertedFromCandidateId?: string;
   onboardingTasks?: OnboardingTask[];
   
   assignedRegionId: string;
@@ -637,6 +640,9 @@ export interface EmployeeRecord {
   
   documents: EmployeeDocumentRecord[];
   pin?: string; // 4-6 digit security PIN
+  hasSystemAccess?: boolean;
+  invitationId?: string;
+  invitationSentAt?: string;
   
   createdAt: string;
   updatedAt: string;
@@ -800,6 +806,9 @@ export interface UserMembershipRecord {
   fullName: string;
   role: UserRole;
   companyId: string;
+  employeeId?: string;
+  siteId?: string;
+  departmentId?: string;
   assignedRegionId?: string;
   assignedAreaId?: string;
   assignedBranchId?: string;
@@ -808,6 +817,7 @@ export interface UserMembershipRecord {
   authorityLevel?: AuthorityLevel;
   dataScope?: DataScope;
   status: 'ACTIVE' | 'SUSPENDED';
+  assignedAt?: string;
   updatedAt?: string;
 }
 
@@ -2433,7 +2443,6 @@ export interface ContractRecord {
   status: ContractStatus;
   scopeOfService?: string;
   termsAndConditions?: string;
-  currency?: string;
   approvalWorkflow?: {
     currentApprovalTier: 'A2' | 'A1' | 'A0' | 'COMPLETED';
     approvalTrail: {
@@ -3979,11 +3988,15 @@ export interface ProcurementRequisitionRecord {
 export interface PurchaseOrderLineItem {
   itemId?: string;
   itemName: string;
+  description?: string;
   unit: string;
+  uom?: string;
   quantityOrdered: number;
+  quantity?: number;
   quantityReceived: number;
   unitPrice: number;
   taxPercent: number;
+  gstRate?: number;
   totalAmount: number;
 }
 
@@ -4002,6 +4015,13 @@ export interface PurchaseOrderRecord {
   expectedDeliveryDate: string;
   paymentTerms: 'ADVANCE' | 'NET_15' | 'NET_30' | 'NET_45' | 'ON_DELIVERY';
   items: PurchaseOrderLineItem[];
+  lineItems?: PurchaseOrderLineItem[];
+  approvalWorkflow?: any;
+  pdfUrl?: string;
+  billingAddress?: string;
+  subTotal?: number;
+  totalTax?: number;
+  vendorGst?: string;
   subtotal: number;
   taxAmount: number;
   grandTotal: number;
@@ -4043,548 +4063,259 @@ export interface GoodsReceiptNoteRecord {
   createdAt: string;
 }
 
+
+export type PoLineItem = PurchaseOrderLineItem;
+
 export interface ThreeWayMatchRecord {
   id: string;
   companyId: string;
   poId: string;
-  poNumber: string;
+  poNumber?: string;
   grnId: string;
-  grnNumber: string;
-  vendorInvoiceNumber: string;
-  vendorInvoiceDate: string;
-  poTotalAmount: number;
-  grnAcceptedValue: number;
-  invoiceTotalAmount: number;
-  varianceAmount: number;
-  isMatched: boolean;
-  matchStatus: 'EXACT_MATCH' | 'TOLERANCE_ACCEPTED' | 'DISCREPANCY_FLAGGED' | 'RESOLVED';
+  grnNumber?: string;
+  vendorInvoiceNumber?: string;
+  vendorInvoiceDate?: string;
+  poTotalAmount?: number;
+  grnAcceptedValue?: number;
+  invoiceTotalAmount?: number;
+  varianceAmount?: number;
+  isMatched?: boolean;
+  matchStatus: 'EXACT_MATCH' | 'TOLERANCE_ACCEPTED' | 'DISCREPANCY_FLAGGED' | 'RESOLVED' | 'PERFECT_MATCH' | 'TOLERANCE_PASSED' | 'VARIANCE_DETECTED' | 'MANUALLY_OVERRIDDEN' | 'REJECTED';
   flaggedReason?: string;
   reviewedByUserId?: string;
-  approvedForPayment: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-
-export interface LeavePolicyRecord {
-  id: string;
-  companyId: string;
-  leaveCode: string;
-  leaveName: string;
-  description?: string;
-  annualEntitlement: number;
-  maxCarryForward: number;
-  isPaid: boolean;
-  requiresApproval: boolean;
-  genderRestriction?: 'ALL' | 'MALE' | 'FEMALE';
-  status: 'ACTIVE' | 'INACTIVE';
-  createdAt: string;
-}
-
-export interface HolidayRecord {
-  id: string;
-  companyId: string;
-  name: string;
-  date: string; // YYYY-MM-DD
-  type: 'NATIONAL' | 'FESTIVAL' | 'OTHER';
-}
-
-export interface LeaveBalanceDetail {
-  leaveCode: string;
-  leaveName: string;
-  openingBalance: number;
-  accrued: number;
-  used: number;
-  pending: number;
-  adjusted: number;
-  carriedForward: number;
-  encashed: number;
-  availableBalance: number;
-}
-export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'DEMO' | 'CONVERTED' | 'LOST';
-
-export interface LeadActivity {
-  id: string;
-  action: string;
-  notes: string;
-  timestamp: string;
-  actorId?: string;
-  actorName?: string;
-}
-
-export interface LeadRecord {
-  id: string; // leadId
-  name: string;
-  company: string;
-  email: string;
-  phone: string;
-  designation?: string;
-  city?: string;
-  workforceSize?: string;
-  interestedModules?: string;
-  message?: string;
-  utmSource?: string;
-  landingPage?: string;
-  status: LeadStatus;
-  notes?: string;
-  activityHistory?: LeadActivity[];
-  createdAt: string;
+  approvedForPayment?: boolean;
+  invoiceId?: string;
+  vendorId?: string;
+  toleranceConfigUsed?: { quantityTolerancePercent: number; priceTolerancePercent: number; maxAmountVarianceLimit: number; };
+  lineItemMatches?: any[];
+  createdAt?: string;
   updatedAt?: string;
 }
 
-export interface AbsenceRegularizationRecord {
-  id: string;
-  employeeId: string;
-  companyId: string;
-  date: string;
-  reason: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  createdAt: number;
-  updatedAt: number;
-}
+// Missing Types & Interface Definitions
+export type SensitiveDataCategory = 
+  | 'IDENTITY_DOCUMENTS' 
+  | 'SALARY_PAYROLL' 
+  | 'STATUTORY_INFO' 
+  | 'CONTACT_INFO' 
+  | 'ATTENDANCE_LOCATION' 
+  | 'CONTRACTS_COMMERCIAL' 
+  | 'FINANCIAL_RECORDS' 
+  | 'AUTH_SECURITY'
+  | 'EMPLOYEE_PERSONAL'
+  | 'SECURITY_AUDIT';
 
-export interface MaintenancePlan {
-  maintenancePlanId: string;
-  companyId: string;
-  assetId: string;
-  siteId: string;
-  maintenanceType: 'PREVENTIVE' | 'INSPECTION' | 'CALIBRATION' | 'SAFETY_CHECK' | 'SERVICING' | 'OTHER';
-  frequency: number;
-  frequencyUnit: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'YEARLY' | 'CUSTOM';
-  startDate: string;
-  nextDueDate: string;
-  lastCompletedDate?: string;
-  gracePeriod: number;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  assignedTo?: string;
-  status: 'ACTIVE' | 'INACTIVE';
-  createdAt: string;
-  updatedAt: string;
-}
+export type DataSensitivityLevel = 'PUBLIC' | 'INTERNAL' | 'CONFIDENTIAL' | 'RESTRICTED';
 
-export interface MaintenanceOccurrence {
-  maintenanceOccurrenceId: string;
-  maintenancePlanId: string;
-  companyId: string;
-  assetId: string;
-  workOrderId?: string;
-  dueDate: string;
-  status: 'UPCOMING' | 'DUE' | 'OVERDUE' |'IN_PROGRESS'| 'COMPLETED' | 'SKIPPED' | 'CANCELLED';
-  createdAt: string;
-}
+export type DataMaskingPattern = 'AADHAAR' | 'PAN' | 'BANK_ACCOUNT' | 'PHONE' | 'EMAIL' | 'SALARY' | 'GPS' | 'FULL_REDACT';
 
-export type WarrantyStatus = 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED' | 'CLAIM_IN_PROGRESS' | 'CLAIM_RESOLVED' | 'CANCELLED';
-
-export interface WarrantyRecord {
-  id: string; // warrantyId
-  companyId: string;
-  assetId: string;
-  warrantyProvider?: string; // vendorId or name
-  warrantyNumber: string;
-  warrantyType: 'MANUFACTURER' | 'EXTENDED' | 'SERVICE_CONTRACT' | 'OTHER';
-  startDate: string;
-  endDate: string;
-  coverageDescription?: string;
-  exclusions?: string;
-  terms?: string;
-  status: WarrantyStatus;
-  claimEligibility: boolean;
-  serviceContact?: string;
-  documentUrls?: string[];
-  createdBy: string;
-  createdAt: string;
-  updatedBy: string;
-  updatedAt: string;
-}
-
-export type WarrantyClaimStatus = 'CLAIM_CREATED' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'SERVICE_IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
-
-export interface WarrantyClaimRecord {
-  id: string; // claimId
-  companyId: string;
-  warrantyId: string;
-  assetId: string;
-  issueDescription: string;
-  reportedBy: string;
-  reportedByName?: string;
-  reportedAt: string;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  evidenceUrls?: string[];
-  vendorId?: string;
-  claimReference?: string;
-  status: WarrantyClaimStatus;
-  workOrderId?: string;
-  incidentId?: string;
-  resolutionNotes?: string;
-  resolvedAt?: string;
-  resolvedBy?: string;
-  closedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export * from './ops';
-
-// ==========================================
-export type StockTransactionType = 
-  | 'PURCHASE_INWARD' 
-  | 'ISSUE_TO_EMPLOYEE' 
-  | 'SITE_TRANSFER' 
-  | 'RETURN_FROM_EMPLOYEE' 
-  | 'DAMAGE_SCRAP' 
-  | 'AUDIT_ADJUSTMENT';
-
-export interface StockTransactionRecord {
-  id: string;
-  companyId: string;
-  itemId: string;
-  itemName: string;
-  itemCode: string;
-  transactionType: StockTransactionType;
-  quantity: number;
-  previousStock: number;
-  newStock: number;
-  unitCost?: number;
-  totalValue?: number;
-  referenceNumber?: string;
-  employeeId?: string;
-  employeeName?: string;
-  fromSiteId?: string;
-  toSiteId?: string;
-  siteName?: string;
-  vendorSupplier?: string;
-  remarks?: string;
-  performedByUid: string;
-  performedByName: string;
-  createdAt: string;
-}
-
-// SCM & INVENTORY ENHANCEMENTS
-// ==========================================
-
-export interface StockLocationRecord {
-  id: string;
-  companyId: string;
-  siteId?: string;
-  departmentId?: string;
-  name: string;
-  type: 'CENTRAL_STORE' | 'BRANCH_STORE' | 'SITE_STORE' | 'DEPARTMENT_STORE' | 'OTHER';
-  status: 'ACTIVE' | 'INACTIVE';
-  createdAt: string;
-}
-
-export type StockTransactionTypeExtended = 
-  | 'OPENING_BALANCE'
-  | 'RECEIPT'
-  | 'ISSUE'
-  | 'TRANSFER'
-  | 'RETURN'
-  | 'ADJUSTMENT'
-  | 'CONSUMPTION';
-
-export interface StockLedgerRecord {
-  id: string;
-  companyId: string;
-  itemId: string;
-  locationId: string;
-  transactionType: StockTransactionTypeExtended;
-  
-  quantity: number;
-  previousBalance: number;
-  newBalance: number;
-  
-  unitCost?: number;
-  totalValue?: number;
-  
-  referenceId?: string; // Gate Pass ID, PO ID, etc.
-  referenceType?: 'GATE_PASS' | 'ADJUSTMENT' | 'MANUAL';
-  
-  batchNumber?: string;
-  serialNumber?: string;
-  condition?: string;
-  
-  reason?: string;
-  evidenceUrls?: string[];
-  
-  performedByUid: string;
-  performedByName: string;
-  createdAt: string;
-}
-
-export interface GatePassLineItem {
-  itemId: string;
-  itemName: string;
-  itemCode: string;
-  unit: string;
-  quantity: number;
-  returnedQuantity?: number;
-  serialNumbers?: string[];
-  batchNumbers?: string[];
-  remarks?: string;
-}
-
-export type GatePassType = 'INWARD' | 'OUTWARD' | 'RETURNABLE' | 'NON_RETURNABLE';
-export type GatePassStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'DISPATCHED' | 'GATE_VERIFIED' | 'RECEIVED' | 'RETURN_PENDING' | 'RETURNED' | 'CLOSED' | 'CANCELLED';
-
-export interface GatePassRecord {
-  id: string;
-  companyId: string;
-  passNumber: string;
-  passType: GatePassType;
-  status: GatePassStatus;
-  
-  sourceLocationId?: string;
-  sourceLocationName?: string;
-  destinationLocationId?: string;
-  destinationLocationName?: string;
-  
-  lines: GatePassLineItem[];
-  
-  requesterId: string;
-  requesterName: string;
-  recipientName: string;
-  recipientPhone?: string;
-  recipientCompany?: string;
-  
-  purpose: string;
-  vehicleNumber?: string;
-  expectedReturnDate?: string;
-  
-  evidenceUrls?: string[];
-  transferOrderId?: string;
-  createdAt: string;
-  submittedAt?: string;
-  approvedAt?: string;
-  approvedByUid?: string;
-  approvedByName?: string;
-  dispatchedAt?: string;
-  verifiedAt?: string;
-  verifiedByUid?: string;
-  verifiedByName?: string;
-  receivedAt?: string;
-  returnedAt?: string;
-  closedAt?: string;
-  
-  rejectionReason?: string;
-}
-
-export interface StockBalanceRecord {
-  id: string; // usually `${locationId}_${itemId}`
-  companyId: string;
-  locationId: string;
-  itemId: string;
-  quantity: number;
-  reservedQuantity?: number;
-  lastUpdatedAt: string;
-  status?: 'NORMAL' | 'LOW_STOCK' | 'CRITICAL_STOCK' | 'OUT_OF_STOCK' | 'OVER_STOCK';
-}
-
-export interface InventoryAlertRecord {
-  id: string;
-  companyId: string;
-  locationId: string;
-  itemId: string;
-  itemName: string;
-  previousStatus: string;
-  newStatus: string;
-  previousQuantity: number;
-  currentQuantity: number;
-  thresholdValue: number;
-  eventType: 'LOW_STOCK_DETECTED' | 'CRITICAL_STOCK_DETECTED' | 'OUT_OF_STOCK_DETECTED' | 'RECOVERY_DETECTED';
-  notificationId?: string;
-  acknowledged: boolean;
-  acknowledgedByUid?: string;
-  acknowledgedByName?: string;
-  acknowledgedAt?: string;
-  notes?: string;
-  createdAt: string;
-}
-
-export interface TransferOrderLine {
-  itemId: string;
-  itemName: string;
-  requestedQuantity: number;
-  approvedQuantity?: number;
-  reservedQuantity?: number;
-  dispatchedQuantity?: number;
-  receivedQuantity?: number;
-  damagedQuantity?: number;
-  missingQuantity?: number;
-  unitOfMeasure: string;
-}
-
-export type TransferOrderStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'RESERVED' | 'DISPATCHED' | 'IN_TRANSIT' | 'RECEIVED' | 'PARTIALLY_RECEIVED' | 'COMPLETED' | 'REJECTED' | 'CANCELLED' | 'EXCEPTION';
-
-export interface TransferOrderRecord {
-  id: string;
-  companyId: string;
-  transferNumber: string;
-  sourceLocationId: string;
-  destinationLocationId: string;
-  sourceSiteId?: string;
-  destinationSiteId?: string;
-  requestedByUid: string;
-  requestedByName: string;
-  approvedByUid?: string;
-  approvedByName?: string;
-  dispatchedByUid?: string;
-  dispatchedByName?: string;
-  receivedByUid?: string;
-  receivedByName?: string;
-  
-  purpose: string;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-  status: TransferOrderStatus;
-  
-  expectedDeliveryDate?: string;
-  actualDispatchDate?: string;
-  actualReceiptDate?: string;
-  remarks?: string;
-  
-  gatePassId?: string;
-  incidentId?: string; 
-  
-  lines: TransferOrderLine[];
-  
-  createdAt: string;
-  updatedAt: string;
-}
-
-// ============================================================================
-// MODULE 7.2: CRM - SLA PERFORMANCE SCORECARDS
-// ============================================================================
-
-export type SlaMeasurementType = 
-  | 'RESOLUTION_TIME'
-  | 'RESPONSE_TIME'
-  | 'ATTENDANCE_COMPLIANCE'
-  | 'TASK_COMPLETION'
-  | 'SERVICE_AVAILABILITY';
-
-export type SlaStatus = 'ACTIVE' | 'DRAFT' | 'INACTIVE';
-
-export type SlaSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-
-export interface SlaDefinitionRecord {
-  id: string; // slaId
-  companyId: string;
-  clientId: string;
-  contractId: string;
-  siteId?: string; // Optional if applies to all sites
-  slaCode: string;
-  slaName: string;
+export interface SensitiveFieldDefinition {
+  fieldKey: string;
+  category: SensitiveDataCategory;
+  sensitivityLevel: DataSensitivityLevel;
+  maskingPattern: DataMaskingPattern;
   description: string;
-  measurementType: SlaMeasurementType;
-  targetValue: number;
-  targetUnit: 'MINUTES' | 'HOURS' | 'DAYS' | 'PERCENTAGE';
-  severity: SlaSeverity;
-  effectiveFrom: string; // ISO Date
-  effectiveTo?: string; // ISO Date
-  status: SlaStatus;
-  applicableService?: string; // e.g. "Security", "Cleaning"
-  createdBy: string;
-  createdAt: string;
-  updatedBy: string;
+  exemptRoles: UserRole[];
+  exemptAuthorityLevels: AuthorityLevel[];
+}
+
+export interface SensitiveDataAccessContext {
+  targetCompanyId: string;
+  category: SensitiveDataCategory;
+  targetSiteId?: string;
+  targetEmployeeId?: string;
+  resourceId?: string;
+  resourceType?: string;
+  fieldKey?: string;
+  requestedAction?: string;
+}
+
+export interface SensitiveDataAccessResult {
+  allowed: boolean;
+  reason?: string;
+  maskedData?: any;
+  violatesTenant?: boolean;
+  violatesSite?: boolean;
+  violatesRole?: boolean;
+  violatesScope?: boolean;
+  requiresMasking?: boolean;
+  maskingPattern?: DataMaskingPattern | string;
+}
+
+export type DetectedRiskStatus = 'DETECTED' | 'INVESTIGATING' | 'CONFIRMED' | 'RESOLVED' | 'DISMISSED' | 'CLOSED' | 'FALSE_POSITIVE' | 'INVESTIGATION' | 'REMEDIATION';
+
+export interface DetectedRiskEvent {
+  id: string;
+  companyId: string;
+  ruleId: string;
+  ruleName: string;
+  eventType: string;
+  source?: string;
+  userId?: string;
+  userRole?: string;
+  timestamp: string;
+  severity: SecuritySeverity;
+  evidence: string;
+  description: string;
+  status: DetectedRiskStatus;
+  closureNotes?: string;
+  closedAt?: string;
+  investigationNotes?: string;
+  remediation?: string;
   updatedAt: string;
 }
 
-export type SlaBreachStatus = 'OPEN' | 'ESCALATED' | 'RESOLVED' | 'CLOSED';
+export type ContractExpiryMilestone = 90 | 60 | 30 | 15 | 7 | 1 | 0;
 
-export interface SlaBreachRecord {
-  id: string; // breachId
+export interface ContractExpiryEventRecord {
+  id: string;
   companyId: string;
-  clientId: string;
   contractId: string;
-  siteId?: string;
-  slaId: string;
-  sourceRecordId: string; // e.g. ticketId, workOrderId
-  targetValue: number;
-  actualValue: number;
-  variance: number; // actual - target
-  detectedAt: string; // ISO timestamp
-  severity: SlaSeverity;
-  status: SlaBreachStatus;
-  escalationId?: string; // If escalated using BPM
+  contractTitle?: string;
+  clientId?: string;
+  clientName?: string;
+  endDate?: string;
+  expiryDate?: string;
+  daysRemaining: number;
+  milestone: ContractExpiryMilestone | number;
+  status: 'PENDING_NOTIFICATION' | 'NOTIFIED' | 'ESCALATED' | 'RENEWED' | 'TERMINATED' | 'IGNORED';
+  notifiedAt?: string;
+  notificationId?: string;
+  escalationId?: string;
+  detectedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type BulkOperationType = 
+  | 'BULK_UPDATE' 
+  | 'BULK_DELETE' 
+  | 'BULK_ASSIGN' 
+  | 'BULK_STATUS_CHANGE' 
+  | 'BULK_PUBLISH' 
+  | 'BULK_UNPUBLISH' 
+  | 'BULK_APPROVE' 
+  | 'BULK_REJECT' 
+  | 'BULK_IMPORT'
+  | 'EXPORT_BANK_TXT'
+  | 'EXPORT_BANK_CMS_FILE'
+  | 'EXPORT_CSV'
+  | 'EXPORT_DOCX'
+  | 'EXPORT_EXCEL'
+  | 'EXPORT_JSON'
+  | 'EXPORT_PDF'
+  | 'EXPORT_ZIP';
+
+export type ExportDataFormat = 'CSV' | 'EXCEL' | 'PDF' | 'JSON' | 'BANK_TXT' | 'ZIP' | 'DOCX' | 'BANK_CMS_FILE';
+
+export type SensitiveDataClassification = 
+  | 'PUBLIC' 
+  | 'GENERAL_OPERATIONAL' 
+  | 'EMPLOYEE_PII' 
+  | 'PAYROLL_SALARY' 
+  | 'BANK_DISBURSEMENT' 
+  | 'STATUTORY_COMPLIANCE' 
+  | 'CLIENT_CONTRACT' 
+  | 'FINANCIAL_LEDGER'
+  | 'OPERATIONS_SECURITY'
+  | 'INVENTORY_SCM'
+  | 'GENERAL';
+
+export interface SecurityGovernanceConfig {
+  companyId: string;
+  businessHoursStart: number;
+  businessHoursEnd: number;
+  bulkWarningThreshold: number;
+  exportWarningThreshold: number;
+  sensitiveExportNotificationThreshold: SecuritySeverity | string;
+  repeatedDownloadWindowMinutes: number;
+  repeatedDownloadMaxCount: number;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export interface BulkAndExportAlertRecord {
+  id: string;
+  companyId: string;
+  category: 'AFTER_HOURS_DOWNLOAD' | 'BULK_EDIT' | 'SENSITIVE_EXPORT' | 'HIGH_VOLUME_EXPORT' | 'REPEATED_DOWNLOAD' | 'REPEATED_ACTIVITY';
+  eventType: 'BULK_OPERATION' | 'DATA_EXPORT';
+  userId: string;
+  userRole: UserRole;
+  userEmployeeId?: string;
+  userName: string;
+  module: string;
+  entityType: string;
+  operation?: BulkOperationType;
+  exportFormat?: ExportDataFormat;
+  dataClassification?: SensitiveDataClassification;
+  affectedRecordCount?: number;
+  recordCount?: number;
+  exportName?: string;
+  isAfterHours: boolean;
+  localTimeHour: number;
+  riskScore: number;
+  severity: SecuritySeverity;
+  rulesTriggered: string[];
+  evidence: string;
+  timestamp: string;
+  status: 'DETECTED' | 'ACKNOWLEDGED' | 'INVESTIGATING' | 'DISMISSED' | 'RESOLVED' | 'UNDER_REVIEW';
+  correlationId?: string;
+  affectedRecordIds?: string[];
+  reviewedAt?: string;
+  reviewedBy?: string;
   resolutionNotes?: string;
-  resolvedAt?: string;
-  resolvedBy?: string;
+  metadata?: Record<string, any>;
 }
 
-export interface SlaScorecardMetric {
-  slaId: string;
-  slaName: string;
-  targetValue: number;
-  targetUnit: string;
-  actualValue: number;
-  compliancePercentage: number;
-  totalMeasuredEvents: number;
-  breaches: number;
-  isMet: boolean;
+export type KpiTrendDirection = 'UP' | 'DOWN' | 'STABLE';
+export type KpiStatus = 'ON_TARGET' | 'WARNING' | 'CRITICAL' | 'NO_TARGET';
+export type SnapshotStatus = 'GENERATING' | 'PARTIAL' | 'COMPLETE' | 'FAILED';
+export type DataQuality = 'COMPLETE' | 'PARTIAL' | 'INSUFFICIENT';
+
+export interface KpiDefinition {
+  kpiId: string;
+  name: string;
+  category: string;
+  description: string;
+  calculationType: string;
+  source: string;
+  unit: string;
+  frequency: string;
+  active: boolean;
+  visibilityPermissions: string[];
+  higherIsBetter: boolean;
+  target?: number;
+  warningThreshold?: number;
+  criticalThreshold?: number;
 }
 
-export interface SlaScorecardRecord {
-  id: string; // scorecardId e.g. companyId_contractId_YYYY_MM
+export interface KpiValue {
+  kpiId: string;
+  name: string;
+  category: string;
+  currentValue: number;
+  previousValue: number | null;
+  difference: number | null;
+  percentageChange: number | null;
+  trendDirection: KpiTrendDirection;
+  status: KpiStatus;
+  target?: number;
+  unit: string;
+}
+
+export interface KpiSnapshot {
+  id: string;
   companyId: string;
-  clientId: string;
-  contractId: string;
-  siteId?: string; // Can be for specific site or aggregate
-  periodType: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM';
-  periodStartDate: string; // ISO Date
-  periodEndDate: string; // ISO Date
-  
-  metrics: SlaScorecardMetric[];
-  
-  overallCompliance: number;
-  totalBreaches: number;
-  criticalBreaches: number;
-  
+  snapshotDate: string;
+  periodStart: string;
+  periodEnd: string;
   generatedAt: string;
-  version: number;
-}
-
-// ============================================================================
-// MODULE 7.3: CRM - BILLING RATE MATRICES
-// ============================================================================
-
-export type BillingRateType = 
-  | 'PER_EMPLOYEE'
-  | 'PER_SHIFT'
-  | 'PER_DAY'
-  | 'PER_HOUR'
-  | 'PER_SERVICE'
-  | 'FIXED_MONTHLY'
-  | 'VARIABLE_QUANTITY';
-
-export type BillingRateStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'ACTIVE' | 'EXPIRED' | 'REJECTED';
-
-export interface BillingRateMatrixRecord {
-  id: string; // rateMatrixId
-  companyId: string;
-  clientId: string;
-  contractId: string;
-  
-  siteId?: string; // Optional: If empty, applies to all sites under contract
-  serviceId?: string; // Optional: If empty, applies generically
-  designationId?: string; // Optional: For specific roles
-  
-  rateType: BillingRateType;
-  unit: string; // e.g. 'Shift', 'Hour', 'Month', 'Employee'
-  rate: number;
-  currency: string;
-  
-  taxApplicability?: string; // Tax references
-  
-  effectiveFrom: string; // ISO Date
-  effectiveTo?: string; // ISO Date
-  
-  status: BillingRateStatus;
-  
-  createdBy: string;
-  createdAt: string;
-  updatedBy: string;
-  updatedAt: string;
-  approvedBy?: string;
-  approvedAt?: string;
+  timezone?: string;
+  values: KpiValue[];
+  calculationVersion: string;
+  status: SnapshotStatus;
+  dataQuality: DataQuality;
+  moduleDataQuality?: Record<string, DataQuality>;
 }
 
 export interface BillingPreviewRecord {
@@ -4593,482 +4324,765 @@ export interface BillingPreviewRecord {
   serviceId?: string;
   periodStart: string;
   periodEnd: string;
-  applicableRate: number;
-  rateType: BillingRateType;
+  applicableRate?: number;
+  rateType?: string;
   quantity: number;
-  unit: string;
+  unit?: string;
   grossAmount: number;
-  currency: string;
+  currency?: string;
   generatedAt: string;
   sourceReference?: string;
 }
 
-// ============================================================================
-// MODULE 7.4: CRM - CONTRACT EXPIRATION ALERTS
-// ============================================================================
-
-export type ContractExpiryMilestone = 90 | 60 | 30 | 15 | 7 | 1 | 0; // 0 = EXPIRED
-
-export interface ContractExpiryEventRecord {
-  id: string; // e.g. EXP-contractId-milestone
-  companyId: string;
-  clientId: string;
-  contractId: string;
-  milestone: ContractExpiryMilestone;
-  expiryDate: string; // ISO string of contract endDate
-  daysRemaining: number;
-  detectedAt: string; // ISO string
-  notificationId?: string; // Reference to notification event
-  escalationId?: string; // Reference to escalation/BPM
-  status: 'PENDING_NOTIFICATION' | 'NOTIFIED' | 'ESCALATED' | 'RESOLVED';
-}
-export * from './bi';
-export * from './bpm';
-
-export type SecuritySeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-
-export interface SecurityEventRecord {
-  eventId: string;
-  companyId: string;
-  userId: string;
-  employeeId?: string;
-  role: string;
-  action: string;
-  resource: string;
-  resourceId: string;
-  timestamp: string;
-  severity: SecuritySeverity;
-  source: string;
-  ipAddress?: string;
-  deviceMetadata?: string;
-  success: boolean;
-  reason?: string;
-  correlationId?: string;
+export interface LeaveBalanceDetail {
+  leaveTypeId?: string;
+  leaveTypeName?: string;
+  leaveCode?: string;
+  leaveName?: string;
+  total?: number;
+  used?: number;
+  remaining?: number;
+  openingBalance?: number;
+  accrued?: number;
+  carriedForward?: number;
+  adjusted?: number;
+  encashed?: number;
+  pending?: number;
+  availableBalance?: number;
 }
 
-export interface SecurityAnomalyRecord {
-  anomalyId: string;
-  companyId: string;
-  severity: SecuritySeverity;
-  type: string;
-  score: number;
-  triggeringEvents: string[]; // eventIds
-  reason: string;
-  detectedAt: string;
-  status: 'DETECTED' | 'UNDER_REVIEW' | 'CONFIRMED' | 'FALSE_POSITIVE' | 'RESOLVED';
-  resolutionNotes?: string;
-  resolvedByUserId?: string;
-  resolvedAt?: string;
-  recommendedAction?: string;
-}
-
-
-// ==========================================
-// MODULE 10 / POINT 4: BULK & EXPORT GOVERNANCE
-// ==========================================
-
-export type SensitiveDataClassification = 
-  | 'EMPLOYEE_PII' 
-  | 'PAYROLL_SALARY' 
-  | 'BANK_DISBURSEMENT' 
-  | 'STATUTORY_COMPLIANCE' 
-  | 'CLIENT_CONTRACT' 
-  | 'OPERATIONS_SECURITY' 
-  | 'INVENTORY_SCM'
-  | 'GENERAL';
-
-export type BulkOperationType = 
-  | 'BULK_UPDATE' 
-  | 'BULK_ASSIGN' 
-  | 'BULK_PUBLISH' 
-  | 'BULK_UNPUBLISH'
-  | 'BULK_DELETE' 
-  | 'BULK_IMPORT' 
-  | 'BULK_STATUS_CHANGE' 
-  | 'BULK_APPROVE'
-  | 'BATCH_RECALCULATE';
-
-export type ExportDataFormat = 'CSV' | 'EXCEL' | 'PDF' | 'BANK_CMS_FILE' | 'JSON' | 'DOCUMENT';
-
-export interface BulkAndExportAlertRecord {
+export interface LeavePolicyRecord {
   id: string;
   companyId: string;
-  category: 'BULK_EDIT' | 'AFTER_HOURS_DOWNLOAD' | 'SENSITIVE_EXPORT' | 'HIGH_VOLUME_EXPORT' | 'UNAUTHORIZED_EXPORT' | 'REPEATED_ACTIVITY';
-  eventType: 'BULK_OPERATION' | 'DATA_EXPORT';
-  userId: string;
-  userRole: string;
-  userEmployeeId?: string;
-  userName?: string;
-  module: string;
-  entityType: string;
-  operation: string;
-  affectedRecordCount: number;
-  exportFormat?: ExportDataFormat;
-  dataClassification?: SensitiveDataClassification;
-  isAfterHours: boolean;
-  localTimeHour: number;
-  riskScore: number;
-  severity: SecuritySeverity;
-  rulesTriggered: string[];
-  evidence: string;
-  timestamp: string;
-  status: 'DETECTED' | 'UNDER_REVIEW' | 'CONFIRMED' | 'FALSE_POSITIVE' | 'RESOLVED';
-  reviewedBy?: string;
-  reviewedAt?: string;
-  resolutionNotes?: string;
-  correlationId: string;
-  affectedRecordIds?: string[];
-  metadata?: Record<string, any>;
-}
-
-export interface SecurityGovernanceConfig {
-  companyId: string;
-  businessHoursStart: number; // 0-23, default 8 (08:00)
-  businessHoursEnd: number;   // 0-23, default 20 (20:00)
-  bulkWarningThreshold: number; // default 25 records
-  exportWarningThreshold: number; // default 100 records
-  sensitiveExportNotificationThreshold: SecuritySeverity; // default 'MEDIUM'
-  repeatedDownloadWindowMinutes: number; // default 10 mins
-  repeatedDownloadMaxCount: number; // default 3
+  name: string;
+  leaveCode?: string;
+  leaveName?: string;
+  annualEntitlement?: number;
+  leaveTypes?: Array<{
+    id: string;
+    name: string;
+    annualQuota: number;
+    carryForwardMax?: number;
+  }>;
+  createdAt: string;
   updatedAt?: string;
-  updatedBy?: string;
 }
 
-export * from './compliance';
-export * from './complianceControl';
-export * from './dataPrivacy';
+export interface HolidayRecord {
+  id: string;
+  companyId: string;
+  name: string;
+  date: string;
+  isOptional?: boolean;
+  createdAt: string;
+}
 
-export * from './risk';
-export * from './complianceObligation';
+export type StockTransactionType = 
+  | 'IN' 
+  | 'OUT' 
+  | 'ADJUST' 
+  | 'TRANSFER'
+  | 'PURCHASE_INWARD' 
+  | 'ISSUE_TO_EMPLOYEE' 
+  | 'RETURN_FROM_EMPLOYEE' 
+  | 'AUDIT_ADJUSTMENT' 
+  | 'DAMAGE_WRITE_OFF' 
+  | 'LOCATION_TRANSFER';
 
-// -------------------------------------------------------------
-// MODULE 10 - POINT 10: Security Assurance & Release Gate
-// -------------------------------------------------------------
+export interface StockTransactionRecord {
+  id: string;
+  companyId: string;
+  itemId: string;
+  itemName?: string;
+  itemCode?: string;
+  locationId?: string;
+  fromSiteId?: string;
+  toSiteId?: string;
+  siteId?: string;
+  siteName?: string;
+  fromSiteName?: string;
+  toSiteName?: string;
+  type?: StockTransactionType | 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
+  transactionType?: string;
+  quantity: number;
+  unitCost?: number;
+  totalValue?: number;
+  previousStock?: number;
+  newStock?: number;
+  performedByUid?: string;
+  performedByName?: string;
+  employeeId?: string;
+  employeeName?: string;
+  vendorSupplier?: string;
+  referenceNumber?: string;
+  notes?: string;
+  remarks?: string;
+  timestamp?: string;
+  createdAt?: string;
+  referenceId?: string;
+}
 
-export type SecurityAssuranceStatus = 'PASS' | 'FAIL' | 'BLOCKED';
-export type SecurityFindingSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-export type SecurityFindingStatus = 'DETECTED' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'RETEST_PENDING' | 'VERIFIED'
-  | 'IN_PROGRESS' | 'CLOSED';
+export interface InventoryAlertRecord {
+  id: string;
+  companyId: string;
+  itemId: string;
+  itemName: string;
+  locationId?: string;
+  alertType?: 'LOW_STOCK' | 'OUT_OF_STOCK' | 'EXPIRY' | 'OVERSTOCK' | string;
+  currentStock?: number;
+  currentQuantity?: number;
+  threshold?: number;
+  previousStatus?: string;
+  newStatus?: string;
+  severity: SecuritySeverity | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  status: 'OPEN' | 'ACKNOWLEDGED' | 'RESOLVED' | string;
+  acknowledged?: boolean;
+  acknowledgedByName?: string;
+  createdAt: string;
+  acknowledgedAt?: string;
+  resolvedAt?: string;
+}
+
+export interface StockLocationRecord {
+  id: string;
+  companyId: string;
+  name: string;
+  code?: string;
+  type?: string;
+  siteId?: string;
+  address?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt?: string;
+}
+
+export interface StockLedgerRecord {
+  id: string;
+  companyId: string;
+  itemId: string;
+  locationId: string;
+  transactionType: string;
+  quantity: number;
+  previousBalance: number;
+  newBalance: number;
+  unitCost?: number;
+  reason?: string;
+  referenceId?: string;
+  referenceType?: string;
+  performedByUid: string;
+  performedByName: string;
+  createdAt: string;
+}
+
+export interface StockBalanceRecord {
+  id?: string;
+  companyId?: string;
+  itemId?: string;
+  locationId?: string;
+  quantity: number;
+  status?: string;
+  lastUpdatedAt?: string;
+}
+
+export interface GatePassLineItem {
+  itemId: string;
+  itemName: string;
+  itemCode?: string;
+  unit?: string;
+  quantity: number;
+  returnedQuantity?: number;
+}
+
+export interface GatePassRecord {
+  id?: string;
+  companyId: string;
+  passNumber: string;
+  passType: 'INWARD' | 'OUTWARD' | 'RETURNABLE' | 'NON_RETURNABLE';
+  status: 'DRAFT' | 'APPROVED' | 'DISPATCHED' | 'VERIFIED' | 'REJECTED' | 'GATE_VERIFIED' | 'CLOSED' | 'RETURN_PENDING' | 'SUBMITTED';
+  sourceLocationId?: string;
+  sourceLocationName?: string;
+  destinationLocationId?: string;
+  destinationLocationName?: string;
+  lines: GatePassLineItem[];
+  requesterId: string;
+  requesterName: string;
+  recipientName?: string;
+  purpose?: string;
+  transferOrderId?: string;
+  vehicleNumber?: string;
+  submittedAt?: string;
+  approvedAt?: string;
+  approvedByUid?: string;
+  approvedByName?: string;
+  verifiedAt?: string;
+  verifiedByUid?: string;
+  verifiedByName?: string;
+  closedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface MaintenancePlan {
+  id: string;
+  maintenancePlanId?: string;
+  companyId: string;
+  siteId?: string;
+  assetId: string;
+  title: string;
+  description?: string;
+  maintenanceType?: string;
+  priority?: string;
+  frequency: any;
+  frequencyUnit?: string;
+  gracePeriod?: number;
+  gracePeriodDays?: number;
+  assignedToUid?: string;
+  assignedTo?: string;
+  startDate?: string;
+  status: 'ACTIVE' | 'PAUSED';
+  nextDueDate: string;
+  lastCompletedDate?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface MaintenanceOccurrence {
+  id: string;
+  maintenanceOccurrenceId?: string;
+  companyId: string;
+  planId?: string;
+  maintenancePlanId?: string;
+  workOrderId?: string;
+  assetId: string;
+  scheduledDate?: string;
+  dueDate?: string;
+  completedDate?: string;
+  performedByUid?: string;
+  status: 'PENDING' | 'COMPLETED' | 'MISSED' | 'CANCELLED' | 'UPCOMING' | 'OVERDUE' | 'DUE' | 'IN_PROGRESS';
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type SlaMeasurementType = 'PERCENTAGE' | 'HOURS' | 'MINUTES' | 'DAYS' | 'NUMERIC' | string;
+export type SlaSeverity = SecuritySeverity | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface SlaDefinitionRecord {
+  id: string;
+  companyId: string;
+  name?: string;
+  category?: string;
+  targetResponseMinutes?: number;
+  targetResolutionMinutes?: number;
+  penaltyPercentage?: number;
+  status: 'ACTIVE' | 'INACTIVE';
+  slaId?: string;
+  slaCode?: string;
+  slaName?: string;
+  clientId?: string;
+  contractId?: string;
+  description?: string;
+  targetValue?: number;
+  targetUnit?: string;
+  measurementType?: string;
+  severity?: SecuritySeverity;
+  effectiveFrom?: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
+}
+
+export interface SlaBreachRecord {
+  id: string;
+  companyId: string;
+  slaId?: string;
+  ticketId?: string;
+  clientId?: string;
+  contractId?: string;
+  siteId?: string;
+  sourceRecordId?: string;
+  incidentType?: string;
+  breachType?: 'RESPONSE' | 'RESOLUTION' | string;
+  breachedAt?: string;
+  detectedAt?: string;
+  targetValue?: number;
+  actualValue?: number;
+  variance?: number;
+  resolutionTimeMinutes?: number;
+  penaltyAmount?: number;
+  severity?: SecuritySeverity;
+  status: 'OPEN' | 'INVESTIGATING' | 'WAIVED' | 'PENALIZED' | 'ESCALATED';
+}
+
+export interface SlaScorecardMetric {
+  metricName?: string;
+  targetValue?: number;
+  actualValue?: number;
+  achieved?: boolean;
+  slaId?: string;
+  slaName?: string;
+  targetUnit?: string;
+  breaches?: any;
+  compliancePercentage?: number;
+  totalMeasuredEvents?: number;
+  isMet?: boolean;
+}
+
+export interface SlaScorecardRecord {
+  id: string;
+  companyId: string;
+  siteId?: string;
+  clientId?: string;
+  contractId?: string;
+  month?: string;
+  overallScore?: number;
+  metrics: SlaScorecardMetric[];
+  status?: 'DRAFT' | 'PUBLISHED';
+  evaluatedAt?: string;
+  periodType?: string;
+  periodStartDate?: string;
+  periodEndDate?: string;
+  overallCompliance?: number;
+  totalBreaches?: number;
+  criticalBreaches?: number;
+  generatedAt?: string;
+  version?: number;
+}
+
+export type BillingRateType = 'PER_SHIFT' | 'MONTHLY_FIXED' | 'HOURLY' | 'DAILY' | string;
+
+export interface BillingRateMatrixRecord {
+  id: string;
+  companyId: string;
+  clientId?: string;
+  role?: string;
+  ratePerHour?: number;
+  ratePerShift?: number;
+  overtimeRatePerHour?: number;
+  effectiveFrom?: string;
+  rateType?: string;
+  rate?: number;
+  siteId?: string;
+  serviceId?: string;
+  designationId?: string;
+  unit?: string;
+  currency?: string;
+  status?: string;
+  contractId?: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
+}
+
+export type TransferOrderStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'DISPATCHED' | 'IN_TRANSIT' | 'PARTIALLY_RECEIVED' | 'COMPLETED' | 'EXCEPTION' | 'REJECTED' | 'RESERVED';
+
+export interface TransferOrderLine {
+  itemId: string;
+  itemName: string;
+  unitOfMeasure: string;
+  requestedQuantity: number;
+  approvedQuantity?: number;
+  dispatchedQuantity?: number;
+  receivedQuantity?: number;
+  damagedQuantity?: number;
+  missingQuantity?: number;
+  reservedQuantity?: number;
+}
+
+export interface TransferOrderRecord {
+  id: string;
+  companyId: string;
+  transferOrderNumber?: string;
+  transferNumber?: string;
+  sourceLocationId: string;
+  destinationLocationId: string;
+  status: TransferOrderStatus;
+  priority?: string;
+  requestedByUid: string;
+  requestedByName: string;
+  approvedByUid?: string;
+  dispatchedByUid?: string;
+  dispatchedByName?: string;
+  actualDispatchDate?: string;
+  expectedDeliveryDate?: string;
+  purpose?: string;
+  gatePassId?: string;
+  lines: TransferOrderLine[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type SecuritySeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type SecurityFindingStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'ACCEPTED_RISK' | 'DETECTED';
 
 export interface SecurityFinding {
   id: string;
-  companyId: string;
-  runId: string;
-  checkId: string;
-  module: string;
-  testName: string;
-  severity: SecurityFindingSeverity;
-  failureReason: string;
-  affectedResource: string;
+  title?: string;
+  severity: SecuritySeverity;
   status: SecurityFindingStatus;
-  assignedTo?: string;
-  remediationNotes?: string;
-  timestamp: string;
-  updatedAt: string;
-}
-
-export interface ReleaseGateSignOff {
-  id: string;
-  companyId: string;
-  runId: string;
-  reviewerId: string;
-  reviewerRole: string;
-  reviewerName: string;
-  timestamp: string;
-  version: string;
-  securityResult: SecurityAssuranceStatus;
-  approvalDecision: 'APPROVED' | 'REJECTED';
-  comments?: string;
+  description?: string;
+  remediation?: string;
+  detectedAt?: string;
+  companyId?: string;
+  runId?: string;
+  checkId?: string;
+  module?: string;
+  testName?: string;
+  failureReason?: string;
+  affectedResource?: string;
+  timestamp?: string;
+  updatedAt?: string;
 }
 
 export interface SecurityAssuranceRun {
   id: string;
   companyId: string;
-  version: string;
-  status: SecurityAssuranceStatus;
-  totalChecks: number;
-  passed: number;
-  failed: number;
-  blocked: number;
+  runDate?: string;
+  status: 'PASSED' | 'FAILED' | 'WARNING' | 'BLOCKED' | 'PASS' | 'FAIL';
+  findingsCount?: number;
   findings: SecurityFinding[];
-  executedAt: string;
-  signOffStatus: 'PENDING' | 'SIGNED_OFF';
-  signOffId?: string;
-  webBuildStatus: 'PASS' | 'FAIL' | 'UNKNOWN';
-  androidBuildStatus: 'PASS' | 'FAIL' | 'UNKNOWN';
+  score?: number;
+  version?: string;
+  totalChecks?: number;
+  passed?: number;
+  failed?: number;
+  blocked?: number;
+  executedAt?: string;
+  signOffStatus?: string;
+  webBuildStatus?: string;
+  androidBuildStatus?: string;
 }
 
+export interface ReleaseGateSignOff {
+  id: string;
+  version: string;
+  runId?: string;
+  reviewerId?: string;
+  signedOffBy?: string;
+  signedOffAt?: string;
+  status?: 'APPROVED' | 'BLOCKED';
+  approvalDecision?: string;
+  reviewerRole?: string;
+  reviewerName?: string;
+  companyId?: string;
+  timestamp?: string;
+  securityResult?: string;
+  comments?: string;
+  notes?: string;
+}
 
-// ==========================================
-// MODULE 10 / POINT 11: CONTINUOUS SECURITY MONITORING
-// ==========================================
+export interface SecurityEventRecord {
+  id?: string;
+  companyId: string;
+  eventType?: string;
+  severity: SecuritySeverity;
+  userId?: string;
+  role?: string;
+  success?: boolean;
+  action?: string;
+  reason?: string;
+  resource?: string;
+  resourceId?: string;
+  source?: string;
+  ipAddress?: string;
+  details?: Record<string, any>;
+  timestamp: string;
+  eventId?: string;
+}
 
-export type DetectionRuleEventType = 
-  | 'AUTH_FAILED_LOGIN'
-  | 'AUTH_UNAUTHORIZED_ACCESS'
-  | 'CROSS_COMPANY_ACCESS'
-  | 'CROSS_SITE_ACCESS'
-  | 'PERMISSION_CHANGED'
-  | 'ROLE_CHANGED'
-  | 'BULK_DATA_MODIFICATION'
-  | 'BULK_EXPORT'
-  | 'SUSPICIOUS_MUSTER_ACTIVITY'
-  | 'AFTER_HOURS_ACTIVITY'
-  | 'APPROVAL_FAILURE'
-  | 'ADMIN_ACTION'
-  | 'SECURITY_RULE_DENIAL'
-  | 'ANY';
-
-export type DetectedRiskSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export interface SecurityAnomalyRecord {
+  id?: string;
+  companyId: string;
+  anomalyType?: string;
+  anomalyId?: string;
+  type?: string;
+  reason?: string;
+  status?: 'DETECTED' | 'RESOLVED' | 'INVESTIGATING' | 'DISMISSED' | 'FALSE_POSITIVE' | 'CONFIRMED' | 'UNDER_REVIEW';
+  resolvedByUserId?: string;
+  resolvedAt?: string;
+  resolutionNotes?: string;
+  triggeringEvents?: string[];
+  severity: SecuritySeverity;
+  score: number;
+  details?: string;
+  detectedAt: string;
+  recommendedAction?: string;
+}
 
 export interface SecurityDetectionRule {
-  id: string; 
-  companyId: string;
-  eventType: DetectionRuleEventType;
+  id: string;
+  companyId?: string;
   name: string;
-  description: string;
-  condition: 'COUNT_GREATER_THAN' | 'COUNT_GREATER_THAN_EQUAL'; 
-  threshold: number; 
-  timeWindowMinutes: number; 
-  severity: DetectedRiskSeverity;
-  riskCategory: string;
+  description?: string;
+  condition?: string;
+  eventType: string;
+  threshold: number;
+  windowMinutes?: number;
+  timeWindowMinutes?: number;
+  severity: SecuritySeverity;
+  riskCategory?: string;
+  effectiveDate?: string;
   enabled: boolean;
-  effectiveDate: string; 
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface RiskMitigationAction {
+  id: string;
+  title: string;
+  assignedTo: string;
+  dueDate: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'COMPLETED';
+}
+
+export interface RiskRecord {
+  id: string;
+  companyId: string;
+  title: string;
+  category: string;
+  likelihood: 'LOW' | 'MEDIUM' | 'HIGH';
+  impact: 'LOW' | 'MEDIUM' | 'HIGH';
+  score: number;
+  mitigationPlan?: string;
+  actions?: RiskMitigationAction[];
+  status: 'IDENTIFIED' | 'MITIGATED' | 'ACCEPTED' | 'CLOSED';
   createdAt: string;
-  updatedAt: string;
 }
 
-export type DetectedRiskStatus = 
-  | 'DETECTED' 
-  | 'REVIEWED' 
-  | 'CONFIRMED' 
-  | 'FALSE_POSITIVE' 
-  | 'INVESTIGATION' 
-  | 'REMEDIATION' 
-  | 'RETEST' 
-  | 'CLOSED';
+export type WarrantyStatus = 'ACTIVE' | 'EXPIRED' | 'VOID' | 'PENDING_REGISTRATION' | 'EXPIRING_SOON' | 'CANCELLED' | 'CLAIM_IN_PROGRESS' | 'CLAIM_RESOLVED';
+export type WarrantyClaimStatus = 'CLAIM_CREATED' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REPLACED' | 'REPAIRED' | 'REJECTED' | 'RESOLVED' | 'CLOSED' | 'SERVICE_IN_PROGRESS';
 
-export interface DetectedRiskEvent {
+export interface WarrantyRecord {
   id: string;
   companyId: string;
-  ruleId: string;
-  ruleName: string;
-  eventType: DetectionRuleEventType;
-  source: string; 
-  siteId?: string;
+  assetId: string;
+  vendorId?: string;
+  warrantyNumber?: string;
+  warrantyPeriodMonths?: number;
+  startDate: string;
+  endDate: string;
+  status: WarrantyStatus;
+  coverageDetails?: string;
+  coverageDescription?: string;
+  warrantyProvider?: string;
+  warrantyType?: string;
+  claimIds?: string[];
+  claimEligibility?: any;
+  documentUrls?: string[];
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface WarrantyClaimRecord {
+  id: string;
+  companyId: string;
+  warrantyId: string;
+  assetId: string;
+  claimDate?: string;
+  issueDescription: string;
+  status: WarrantyClaimStatus;
+  resolutionNotes?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  reportedBy?: string;
+  reportedByName?: string;
+  reportedAt?: string;
+  workOrderId?: string;
+  priority?: string;
+  claimNumber?: string;
+  claimTitle?: string;
+  attachments?: string[];
+  documents?: string[];
+  evidenceUrls?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type SosStatus = 'TRIGGERED' | 'ACKNOWLEDGED' | 'RESPONDING' | 'RESPONSE_STARTED' | 'RESOLVED' | 'CLOSED' | 'FALSE_ALARM' | 'CANCELLED';
+
+export interface SosEventRecord {
+  id: string;
+  companyId: string;
   userId?: string;
-  userRole?: string;
-  timestamp: string; 
-  severity: DetectedRiskSeverity;
-  evidence: string; 
-  description: string;
-  status: DetectedRiskStatus;
-  assignedReviewerId?: string;
-  investigationNotes?: string;
-  remediation?: string;
-  closureNotes?: string;
+  userName?: string;
+  employeeId?: string;
+  triggeredByUserId?: string;
+  regionId?: string;
+  branchId?: string;
+  siteId?: string;
+  source?: 'WEB' | 'ANDROID' | 'KIOSK' | string;
+  emergencyType?: any;
+  severity?: any;
+  latitude: number;
+  longitude: number;
+  locationAccuracy?: number;
+  locationTimestamp?: string;
+  status: SosStatus | string;
+  triggeredAt: string;
+  acknowledgedAt?: string;
+  acknowledgedBy?: string;
+  responseStartedAt?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
   closedAt?: string;
-  updatedAt: string;
+  incidentId?: string;
+  patrolTourId?: string;
+  workOrderId?: string;
+  trackingSessionId?: string;
+  escalationLevel?: number;
+  lastEscalatedAt?: string;
+  cancellationReason?: string;
+  resolutionNotes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export type OfferStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'EXTENDED' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
-
-export interface OfferRecord {
+export interface TrackingSessionRecord {
   id: string;
   companyId: string;
-  candidateId: string;
-  requisitionId: string;
-  offerCode: string;
-  offeredDesignation: string;
-  offeredSalaryMonthly: number;
-  currency: string;
-  benefits?: string[];
-  joiningDate: string;
-  status: OfferStatus;
-  preparedBy: string;
-  preparedAt: string;
-  approvedBy?: string;
-  approvedAt?: string;
-  candidateResponseAt?: string;
-  rejectionReason?: string;
+  userId?: string;
+  userName?: string;
+  employeeId?: string;
+  siteId?: string;
+  purposeType?: any;
+  purposeId?: string;
+  startedAt?: string;
+  startTime?: string;
+  endedAt?: string;
+  endTime?: string;
+  status: any;
+  startedBy?: string;
+  endedBy?: string;
+  locationPolicy?: any;
+  lastLatitude?: number;
+  lastLongitude?: number;
+  lastPingAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
+export interface GpsLocationEvent {
+  id: string;
+  trackingSessionId?: string;
+  companyId: string;
+  userId?: string;
+  siteId?: string;
+  employeeId?: string;
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  speed?: number;
+  heading?: number;
+  bearing?: number;
+  source?: 'FUSED' | 'GPS' | 'NETWORK' | string;
+  sequenceNumber?: number;
+  isStale?: boolean;
+  timestamp: string;
+}
 
-// ============================================================================
-// MODULE 14.2: RFQ MANAGEMENT SYSTEM
-// ============================================================================
+export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'DEMO' | 'DEMO_SCHEDULED' | 'PROPOSAL_SENT' | 'CONVERTED' | 'LOST';
 
-export type RfqStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED_FOR_BIDDING' | 'UNDER_EVALUATION' | 'AWARDED' | 'CANCELLED';
-export type BidStatus = 'DRAFT' | 'SUBMITTED' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
+export interface LeadActivity {
+  id: string;
+  action: string;
+  notes?: string;
+  timestamp: string;
+  actorId?: string;
+  actorName?: string;
+}
+
+export interface LeadRecord {
+  id: string;
+  name?: string;
+  company?: string;
+  companyName?: string;
+  contactPerson?: string;
+  email: string;
+  phone?: string;
+  status: LeadStatus;
+  notes?: string;
+  interestedModules?: string[] | string;
+  workforceSize?: string;
+  message?: string;
+  activityHistory?: LeadActivity[];
+  createdAt: string;
+  updatedAt?: string;
+}
 
 export interface RfqLineItem {
   itemId: string;
   itemName: string;
-  specification: string;
+  specification?: string;
   quantity: number;
   uom: string;
-  targetUnitPrice?: number; // internal
+}
+
+export interface RfqEvaluationCriteria {
+  priceWeightage: number;
+  deliverySpeedWeightage: number;
+  vendorRatingWeightage: number;
 }
 
 export interface RfqRequest {
-  id: string; // rfqId
+  id: string;
   companyId: string;
   rfqNumber: string;
   title: string;
-  category: string;
-  description: string;
-  scopeOfWork: string;
-  requiredDeliveryDate: string; // ISO
-  deliverySiteId: string;
-  deliveryAddress: string;
-  submissionDeadline: string; // ISO
-  status: RfqStatus;
-  invitedVendorIds: string[]; // array of vendor IDs or 'ALL_CATEGORY_VENDORS'
+  category?: string;
+  description?: string;
+  scopeOfWork?: string;
+  requiredDeliveryDate?: string;
+  deliverySiteId?: string;
+  deliveryAddress?: string;
+  submissionDeadline?: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'UNDER_EVALUATION' | 'AWARDED' | 'CLOSED' | 'CANCELLED';
+  invitedVendorIds?: string[];
   lineItems: RfqLineItem[];
-  evaluationCriteria: {
-    priceWeightage: number;
-    deliverySpeedWeightage: number;
-    vendorRatingWeightage: number;
-  };
-  createdBy: string;
+  evaluationCriteria?: RfqEvaluationCriteria;
+  createdBy?: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
-export interface RfqLineItemQuote {
+export interface RfqBidLineQuote {
   itemId: string;
   offeredUnitPrice: number;
   taxPercent: number;
-  hsnCode: string;
+  hsnCode?: string;
   lineTotal: number;
-  leadTimeDays: number;
-  remarks: string;
+  leadTimeDays?: number;
+  remarks?: string;
+}
+
+export interface RfqBidScore {
+  technicalScore?: number;
+  commercialScore?: number;
+  totalRank?: number;
 }
 
 export interface RfqBid {
-  id: string; // bidId
+  id: string;
   companyId: string;
   rfqId: string;
   vendorId: string;
   vendorName: string;
-  bidStatus: BidStatus;
-  lineItemQuotes: RfqLineItemQuote[];
+  bidStatus: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED' | 'AWARDED';
+  lineItemQuotes: RfqBidLineQuote[];
   subTotal: number;
   totalTax: number;
   grandTotal: number;
-  paymentTermsOffered: string;
-  quoteValidityDate: string; // ISO
-  attachedQuoteUrl?: string;
+  paymentTermsOffered?: string;
+  quoteValidityDate?: string;
   submittedAt?: string;
-  score?: {
-    technicalScore: number;
-    commercialScore: number;
-    totalRank: number;
-  };
+  score?: RfqBidScore;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
-export interface RfqEvaluationLog {
-  id: string; // evalId
-  companyId: string;
-  rfqId: string;
-  comparisonMatrix: string; // JSON snapshot
-  awardedBidId: string;
-  awardedVendorId: string;
-  justification: string;
-  approvedBy: string;
-  awardedAt: string;
-}
+export type KpiCategory = 'WORKFORCE' | 'OPERATIONS' | 'FINANCE' | 'ASSETS' | 'INVENTORY' | 'CRM' | string;
 
+export * from './compliance';
 
-export interface PoAmendmentRecord {
-  id: string; // amendmentId
-  companyId: string;
-  poId: string;
-  previousVersion: number;
-  updatedVersion: number;
-  changeLog: any[]; // Delta fields
-  revisedBy: string;
-  approvedBy?: string;
-  reasonForAmendment: string;
-  timestamp: string; // ISO
-}
-
-
-// ============================================================================
-// MODULE 14.4: 3-WAY MATCHING
-// ============================================================================
-
-export interface VendorInvoiceRecord {
-  id: string;
-  companyId: string;
-  invoiceNumber: string;
-  vendorId: string;
-  poId: string;
-  poNumber: string;
-  grnId?: string;
-  invoiceDate: string;
-  receivedDate: string;
-  dueDate: string;
-  currency: string;
-  subTotal: number;
-  cgst: number;
-  sgst: number;
-  igst: number;
-  totalAmount: number;
-  invoicePdfUrl?: string;
-  paymentStatus: 'UNMATCHED' | 'MATCH_PASSED' | 'MATCH_FAILED_HOLD' | 'APPROVED_FOR_PAYMENT' | 'PAID';
-  lineItems: {
-    itemId: string;
-    itemName: string;
-    hsnCode?: string;
-    billedQty: number;
-    unitRate: number;
-    taxRate: number;
-    lineTotal: number;
-  }[];
-  uploadedBy: string;
-  createdAt: string;
-}
-
-export interface ThreeWayMatchRecord {
-  id: string;
-  companyId: string;
-  poId: string;
-  grnId: string;
-  invoiceId: string;
-  vendorId: string;
-  matchStatus: 'PERFECT_MATCH' | 'TOLERANCE_PASSED' | 'VARIANCE_DETECTED' | 'MANUALLY_OVERRIDDEN' | 'REJECTED';
-  toleranceConfigUsed: {
-    quantityTolerancePercent: number;
-    priceTolerancePercent: number;
-    maxAmountVarianceLimit: number;
-  };
-  lineItemMatches: {
-    itemId: string;
-    itemName?: string;
-    poQty: number;
-    grnQty: number;
-    invQty: number;
-    poRate: number;
-    invRate: number;
-    qtyMatch: boolean;
-    rateMatch: boolean;
-    taxMatch: boolean;
-    varianceNotes?: string;
-  }[];
-  totalPoAmount: number;
-  totalGrnAmount: number;
-  totalInvoiceAmount: number;
-  varianceAmount: number;
-  varianceType: 'NONE' | 'OVER_BILLING_QTY' | 'RATE_HIKE' | 'TAX_MISMATCH' | 'UNRECEIVED_GOODS_BILLED' | 'MULTIPLE';
-  auditTrail: {
-    action: string;
-    actionBy: string;
-    timestamp: string;
-    comments?: string;
-  }[];
-  passedAt?: string;
-  reviewedBy?: string;
-}

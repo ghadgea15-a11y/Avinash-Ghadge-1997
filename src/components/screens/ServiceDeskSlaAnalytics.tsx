@@ -58,7 +58,7 @@ export function ServiceDeskSlaAnalytics({
         slaService.getSlaBreaches(activeCompany.companyId),
         slaService.getServiceSlaPolicies(activeCompany.companyId, true)
       ]);
-      setBreaches(breachList.sort((a, b) => new Date(b.detectedAt).getTime() - new Date(a.detectedAt).getTime()));
+      setBreaches(breachList.sort((a, b) => new Date(b.detectedAt || 0).getTime() - new Date(a.detectedAt || 0).getTime()));
       setPolicies(policyList);
     } catch (e) {
       console.warn('[ServiceDeskSlaAnalytics] Error loading data:', e);
@@ -349,13 +349,13 @@ export function ServiceDeskSlaAnalytics({
                             </span>
                           </td>
                           <td className="py-3 px-4 font-medium text-slate-600 dark:text-slate-300">
-                            {Math.round(b.targetValue / 60 * 10) / 10} hours
+                            {Math.round((b.targetValue || 0) / 60 * 10) / 10} hours
                           </td>
                           <td className="py-3 px-4 font-bold text-red-600 dark:text-red-400">
-                            +{Math.round((b.variance || 0) / 60 * 10) / 10}h ({b.variance}m)
+                            +{Math.round((b.variance || 0) / 60 * 10) / 10}h ({b.variance ?? 0}m)
                           </td>
                           <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">
-                            {new Date(b.detectedAt).toLocaleString()}
+                            {b.detectedAt ? new Date(b.detectedAt).toLocaleString() : 'N/A'}
                           </td>
                         </tr>
                       );

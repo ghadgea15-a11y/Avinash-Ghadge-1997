@@ -31,17 +31,17 @@ export const SlaBreachList: React.FC<{ breaches: SlaBreachRecord[], onRefresh: (
               <td className="px-6 py-4">
                 <div className="text-sm font-medium text-slate-900 flex items-center gap-1">
                   <AlertCircle className="w-4 h-4 text-red-500" />
-                  {new Date(b.detectedAt).toLocaleDateString()}
+                  {b.detectedAt ? new Date(b.detectedAt).toLocaleDateString() : 'N/A'}
                 </div>
-                <div className="text-xs text-slate-500 mt-0.5">{new Date(b.detectedAt).toLocaleTimeString()}</div>
+                <div className="text-xs text-slate-500 mt-0.5">{b.detectedAt ? new Date(b.detectedAt).toLocaleTimeString() : ''}</div>
               </td>
               <td className="px-6 py-4">
-                <div className="text-sm text-slate-900 font-medium">{b.slaId}</div>
-                <div className="text-xs text-slate-500">Contract: {b.contractId}</div>
+                <div className="text-sm text-slate-900 font-medium">{b.slaId || 'SLA'}</div>
+                <div className="text-xs text-slate-500">Contract: {b.contractId || 'N/A'}</div>
               </td>
               <td className="px-6 py-4">
-                <div className="text-sm text-slate-900">Actual: {b.actualValue.toFixed(1)}</div>
-                <div className="text-xs text-red-600 font-medium">Target: {b.targetValue} (Var: +{b.variance.toFixed(1)})</div>
+                <div className="text-sm text-slate-900">Actual: {(b.actualValue ?? 0).toFixed(1)}</div>
+                <div className="text-xs text-red-600 font-medium">Target: {b.targetValue ?? 0} (Var: +{(b.variance ?? 0).toFixed(1)})</div>
               </td>
               <td className="px-6 py-4">
                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -49,7 +49,7 @@ export const SlaBreachList: React.FC<{ breaches: SlaBreachRecord[], onRefresh: (
                   b.severity === 'HIGH' ? 'bg-orange-100 text-orange-800' :
                   'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {b.severity}
+                  {b.severity || 'MEDIUM'}
                 </span>
               </td>
               <td className="px-6 py-4">
@@ -58,7 +58,7 @@ export const SlaBreachList: React.FC<{ breaches: SlaBreachRecord[], onRefresh: (
                   b.status === 'ESCALATED' ? 'bg-purple-100 text-purple-800' :
                   'bg-green-100 text-green-800'
                 }`}>
-                  {b.status}
+                  {b.status || 'OPEN'}
                 </span>
               </td>
             </tr>

@@ -326,7 +326,7 @@ export class WarrantyService {
             title: `Warranty Service: Asset ${claim.assetId}`,
             description: `Warranty claim service. Issue: ${claim.issueDescription}`,
             category: 'MAINTENANCE',
-            priority: claim.priority,
+            priority: (claim.priority as any) || 'MEDIUM',
             status: 'DRAFT',
             locationRequirement: 'NONE',
             evidenceRequirement: true,

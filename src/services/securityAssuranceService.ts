@@ -239,7 +239,7 @@ export class SecurityAssuranceService {
                 reviewerRole: session.role,
                 reviewerName: session.fullName,
                 timestamp: now,
-                version: run.version,
+                version: run.version || '1.0.0',
                 securityResult: run.status,
                 approvalDecision: decision,
                 comments

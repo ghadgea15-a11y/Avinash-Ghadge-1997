@@ -49,13 +49,14 @@ export class ContinuousMonitoringService {
 
       // We only evaluate rules that are active and effective
       const applicableRules = rules.filter(r => 
-        new Date(r.effectiveDate) <= now && 
+        (!r.effectiveDate || new Date(r.effectiveDate) <= now) && 
         (r.eventType === 'ANY' || r.eventType === event.action)
       );
 
       for (const rule of applicableRules) {
+        const windowMins = rule.timeWindowMinutes || rule.windowMinutes || 15;
         // Query recent events matching the rule's criteria
-        const startTime = new Date(now.getTime() - rule.timeWindowMinutes * 60000);
+        const startTime = new Date(now.getTime() - windowMins * 60000);
         
         const q = query(
           collection(db, 'companies', companyId, 'security_events'),

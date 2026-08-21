@@ -1,7 +1,7 @@
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, orderBy, runTransaction } from 'firebase/firestore';
 import { db } from '../firebase';
 import { 
-  UserSession, TransferOrderRecord, StockBalanceRecord, 
+  UserSession, TransferOrderRecord, TransferOrderLine, StockBalanceRecord, 
   InventoryItemRecord, GatePassRecord, StockLedgerRecord
 } from '../types';
 import { ScmService } from './scmService';
@@ -153,7 +153,7 @@ export class TransferService {
         status: 'DISPATCHED', // Starts dispatched so security verifies it out
         sourceLocationId: transfer.sourceLocationId,
         destinationLocationId: transfer.destinationLocationId,
-        lines: transfer.lines.map(l => ({ itemId: l.itemId, itemName: l.itemName, itemCode: 'NA', unit: l.unitOfMeasure, quantity: l.dispatchedQuantity || 0 })),
+        lines: transfer.lines.map((l: TransferOrderLine) => ({ itemId: l.itemId, itemName: l.itemName, itemCode: 'NA', unit: l.unitOfMeasure, quantity: l.dispatchedQuantity || 0 })),
         requesterId: session.userId,
         requesterName: session.fullName,
         recipientName: transfer.requestedByName,
@@ -197,7 +197,7 @@ export class TransferService {
       let hasException = false;
 
       for (const rLine of receiptLines) {
-        const line = transfer.lines.find(l => l.itemId === rLine.itemId);
+        const line = transfer.lines.find((l: TransferOrderLine) => l.itemId === rLine.itemId);
         if (line) {
           line.receivedQuantity = (line.receivedQuantity || 0) + rLine.received;
           line.damagedQuantity = (line.damagedQuantity || 0) + rLine.damaged;

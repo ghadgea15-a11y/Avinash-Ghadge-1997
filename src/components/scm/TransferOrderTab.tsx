@@ -133,10 +133,12 @@ function CreateTransferModal({ session, company, locations, items, onClose, onSu
     try {
       const item = items.find((i: any) => i.id === itemId);
       const transferId = `TRF-${Date.now()}`;
+      const tNum = `TR-${Math.floor(Math.random()*10000)}`;
       await TransferService.createTransfer(session, {
         id: transferId,
-        companyId: company.companyId,
-        transferNumber: `TR-${Math.floor(Math.random()*10000)}`,
+        companyId: company.companyId || company.id || session.companyId || '',
+        transferNumber: tNum,
+        transferOrderNumber: tNum,
         sourceLocationId: source,
         destinationLocationId: dest,
         requestedByUid: session.userId,
@@ -145,7 +147,7 @@ function CreateTransferModal({ session, company, locations, items, onClose, onSu
         priority: 'MEDIUM',
         status: 'SUBMITTED',
         lines: [
-          { itemId, itemName: item.itemName, requestedQuantity: parseInt(qty), unitOfMeasure: item.unit }
+          { itemId, itemName: item?.itemName || 'Item', requestedQuantity: parseInt(qty) || 1, unitOfMeasure: item?.unit || 'Nos' }
         ],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()

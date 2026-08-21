@@ -100,7 +100,7 @@ export const contractExpiryEngine = {
         const notification: AppNotification = {
           id: notifId,
           title: `Contract Expiring Soon: ${evt.milestone} days`,
-          message: `Contract ID ${evt.contractId} is expiring in ${evt.daysRemaining} days (on ${new Date(evt.expiryDate).toLocaleDateString()}). Please initiate renewal or termination workflow.`,
+          message: `Contract ID ${evt.contractId} is expiring in ${evt.daysRemaining} days (on ${new Date(evt.expiryDate || evt.endDate || '').toLocaleDateString()}). Please initiate renewal or termination workflow.`,
           type: evt.daysRemaining <= 15 ? 'ALERT' : 'WARNING',
           timestamp: new Date().toISOString(),
           isRead: false,

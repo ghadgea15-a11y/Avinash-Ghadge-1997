@@ -33,7 +33,8 @@ import {
   Briefcase,
   Calendar,
   User,
-  Plus
+  Plus,
+  KeyRound
 } from 'lucide-react';
 import { 
   EmployeeRecord, 
@@ -152,7 +153,8 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
   // Form state for registration / edit
   const [formData, setFormData] = useState({
-    employeeId: '', // Business ID (e.g. EMP-101)
+    hasSystemAccess: false,
+      employeeId: '', // Business ID (e.g. EMP-101)
     employeeCode: '', // Secondary code
     firstName: '',
     middleName: '',
@@ -331,8 +333,22 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       errors.contactNumber = 'Enter a valid 10-12 digit phone number';
     }
 
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+    if (formData.hasSystemAccess) {
+      if (!formData.email || !formData.email.trim()) {
+        errors.email = 'Email is mandatory when System Access is required';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+        errors.email = 'Invalid email address format';
+      }
+    } else if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       errors.email = 'Invalid email address format';
+    }
+
+    if (!formData.assignedSiteId) {
+      errors.assignedSiteId = 'Valid duty site assignment is required';
+    }
+
+    if (!formData.departmentId) {
+      errors.departmentId = 'Department assignment is required';
     }
 
     if (!formData.emergencyName.trim()) errors.emergencyName = 'Emergency contact name required';
@@ -363,6 +379,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
     setEditingEmployeeId(emp.id);
     setFormData({
+      hasSystemAccess: !!emp.hasSystemAccess,
       employeeId: emp.employeeId || '',
       employeeCode: emp.employeeCode || '',
       firstName: emp.firstName || '',
@@ -459,6 +476,28 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     if (success) {
       setFeedbackMessage({ text: 'Exit/Separation process initiated.', type: 'SUCCESS' });
       setShowExitModal(false);
+    }
+  };
+
+  const handleSendInvitation = async (emp: EmployeeRecord) => {
+    if (!canManageEmployees) {
+      setFeedbackMessage({ text: 'Permission Denied: Only Admins and HR can send invitations.', type: 'ERROR' });
+      return;
+    }
+    if (!emp.email) {
+      setFeedbackMessage({ text: 'Employee must have a registered email address to receive system access.', type: 'ERROR' });
+      return;
+    }
+    setSubmitting(true);
+    const result = await FirestoreService.inviteEmployeeUser(currentCompanyId, emp.id);
+    setSubmitting(false);
+    if (result.success) {
+      const msg = result.resetLink 
+        ? `System access invitation generated! Login setup link: ${result.resetLink}` 
+        : `System access invitation sent to ${emp.email}!`;
+      setFeedbackMessage({ text: msg, type: 'SUCCESS' });
+    } else {
+      setFeedbackMessage({ text: result.message || 'Failed to send invitation.', type: 'ERROR' });
     }
   };
 
@@ -589,6 +628,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       createdAt: editingEmployeeId ? (employees.find(e => e.id === empId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       documents: existingDocs,
+      hasSystemAccess: formData.hasSystemAccess,
       createdBy: editingEmployeeId ? (employees.find(e => e.id === empId)?.createdBy || userSession?.userId || 'SYSTEM') : (userSession?.userId || 'SYSTEM'),
       updatedBy: userSession?.userId || 'SYSTEM'
     };
@@ -596,8 +636,19 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     if (isOnline) {
       const success = await FirestoreService.saveEmployee(currentCompanyId, recordPayload, actor);
       if (success) {
+        let inviteInfo = '';
+        if (formData.hasSystemAccess) {
+          const inviteRes = await FirestoreService.inviteEmployeeUser(currentCompanyId, empId);
+          if (inviteRes.success) {
+            inviteInfo = inviteRes.resetLink 
+              ? ` System access provisioned! Login setup link: ${inviteRes.resetLink}` 
+              : ' System access invitation sent!';
+          } else {
+            inviteInfo = ` System access setup: ${inviteRes.message || 'Pending authorization'}`;
+          }
+        }
         setFeedbackMessage({ 
-          text: `Employee ${formData.employeeId} (${recordPayload.firstName} ${recordPayload.lastName}) ${editingEmployeeId ? 'updated' : 'registered'} successfully!`, 
+          text: `Employee ${formData.employeeId} (${recordPayload.firstName} ${recordPayload.lastName}) ${editingEmployeeId ? 'updated' : 'registered'} successfully!${inviteInfo}`, 
           type: 'SUCCESS' 
         });
       } else {
@@ -619,6 +670,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     setProfilePictureFile(null);
     setAadharFile(null);
     setFormData({
+      hasSystemAccess: false,
       employeeId: '',
       employeeCode: '',
       firstName: '',
@@ -1192,10 +1244,32 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                           <Building className="w-3 h-3 text-slate-500 shrink-0" />
                           <span className="truncate">Site: {emp.assignedSiteId}</span>
                         </p>
+                        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1 ${
+                            emp.hasSystemAccess || emp.authUid
+                              ? 'bg-indigo-950 text-indigo-300 border-indigo-800'
+                              : 'bg-slate-950 text-slate-400 border-slate-800'
+                          }`}>
+                            <KeyRound className="w-2.5 h-2.5" />
+                            {emp.authUid ? 'App Access: ACTIVE' : emp.hasSystemAccess ? 'App Access: INVITED' : 'HR Record Only'}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1">
+                      {canManageEmployees && (emp.hasSystemAccess || !emp.authUid) && emp.email && (
+                        <button
+                          onClick={() => handleSendInvitation(emp)}
+                          className={`p-2 rounded-xl border transition ${
+                            isDark ? 'bg-indigo-950/60 border-indigo-800 hover:bg-indigo-900 text-indigo-300' : 'bg-indigo-50 border-indigo-200 hover:bg-indigo-100 text-indigo-700'
+                          }`}
+                          title="Send/Resend System Access Invitation"
+                        >
+                          <Mail className="w-4 h-4" />
+                        </button>
+                      )}
+
                       <button
                         onClick={() => setSelectedEmployee(emp)}
                         className={`p-2 rounded-xl border transition ${
@@ -1369,7 +1443,9 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Email Address */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Email Address</label>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                Email Address {formData.hasSystemAccess ? <span className="text-indigo-400 font-black">* (Required for App Access)</span> : <span className="text-slate-500 font-normal">(Optional for HR only)</span>}
+              </label>
               <input
                 type="email"
                 value={formData.email}
@@ -1649,6 +1725,48 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             </div>
           </div>
 
+          {/* System Access & RBAC Credentials Card */}
+          <div className={`p-4 rounded-2xl border transition-all ${
+            formData.hasSystemAccess
+              ? isDark ? 'bg-indigo-950/30 border-indigo-500/50' : 'bg-indigo-50/70 border-indigo-200'
+              : isDark ? 'bg-slate-950/40 border-slate-800/80' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className={`p-2.5 rounded-xl border mt-0.5 ${
+                  formData.hasSystemAccess
+                    ? 'bg-indigo-600 text-white border-indigo-400'
+                    : isDark ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-200 text-slate-600 border-slate-300'
+                }`}>
+                  <KeyRound className="w-4 h-4" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.hasSystemAccess}
+                      onChange={(e) => setFormData(prev => ({ ...prev, hasSystemAccess: e.target.checked }))}
+                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span>System Access Required (Web & Mobile Login Account)</span>
+                  </label>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    {formData.hasSystemAccess
+                      ? `When saved, a Firebase Authentication login account will be provisioned. User will be linked to tenant with role '${formData.role}' at Site '${formData.assignedSiteId}'.`
+                      : 'Staff HR record only. No Firebase Authentication credentials will be created for this employee.'}
+                  </p>
+                </div>
+              </div>
+              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 border ${
+                formData.hasSystemAccess
+                  ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
+                  : 'bg-slate-800 text-slate-400 border-slate-700'
+              }`}>
+                {formData.hasSystemAccess ? 'AUTH PROVISIONING: ENABLED' : 'HR RECORD ONLY'}
+              </span>
+            </div>
+          </div>
+
           <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
             <button
               type="button"
@@ -1862,6 +1980,50 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   <span className="text-slate-500">Emergency: </span>
                   <span className="font-bold">{selectedEmployee.emergencyContact?.name || 'N/A'}</span> ({selectedEmployee.emergencyContact?.relation || 'Spouse'}) — {selectedEmployee.emergencyContact?.phone || 'N/A'}
                 </div>
+              </div>
+
+              {/* System Access & RBAC Identity Card */}
+              <div className="p-3.5 rounded-2xl bg-indigo-950/20 border border-indigo-500/30 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <KeyRound className="w-4 h-4 text-indigo-400" />
+                    <span className="text-xs font-bold text-indigo-200">System Access & RBAC Linkage</span>
+                  </div>
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                    selectedEmployee.authUid 
+                      ? 'bg-emerald-950 text-emerald-400 border-emerald-800' 
+                      : selectedEmployee.hasSystemAccess 
+                      ? 'bg-amber-950 text-amber-400 border-amber-800' 
+                      : 'bg-slate-800 text-slate-400 border-slate-700'
+                  }`}>
+                    {selectedEmployee.authUid ? 'AUTH LINKED (ACTIVE)' : selectedEmployee.hasSystemAccess ? 'INVITATION PENDING' : 'HR RECORD ONLY'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
+                  <div>
+                    <span className="text-slate-500 text-[10px]">Auth UID: </span>
+                    <span className="font-mono text-[10px]">{selectedEmployee.authUid || 'Unlinked'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 text-[10px]">RBAC Role: </span>
+                    <span className="font-bold text-indigo-300">{selectedEmployee.role}</span>
+                  </div>
+                </div>
+                {canManageEmployees && selectedEmployee.email && (
+                  <div className="pt-2 border-t border-indigo-500/20 flex items-center justify-between gap-2">
+                    <span className="text-[10px] text-slate-400">
+                      {selectedEmployee.authUid ? 'Re-send password setup or login link:' : 'Grant/send login credentials:'}
+                    </span>
+                    <button
+                      onClick={() => handleSendInvitation(selectedEmployee)}
+                      disabled={submitting}
+                      className="px-3 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                    >
+                      <Mail className="w-3 h-3" />
+                      <span>{selectedEmployee.authUid ? 'Resend Login Link' : 'Send Invite'}</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* KYC Documents Section Replaced with Tab */}

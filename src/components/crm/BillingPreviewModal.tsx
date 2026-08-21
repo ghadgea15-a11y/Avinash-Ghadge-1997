@@ -147,11 +147,11 @@ export const BillingPreviewModal: React.FC<Props> = ({ session, company, contrac
                     {previews.map((p, idx) => (
                       <tr key={idx} className="hover:bg-slate-50">
                         <td className="px-6 py-4">
-                          <div className="font-medium text-slate-900">{p.rateType.replace(/_/g, ' ')}</div>
+                          <div className="font-medium text-slate-900">{(p.rateType || 'Standard').replace(/_/g, ' ')}</div>
                           <div className="text-xs text-slate-500">{p.siteId ? `Site: ${p.siteId}` : 'All Sites'}</div>
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-900">
-                           {p.currency} {p.applicableRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                           {p.currency} {(p.applicableRate ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         <td className="px-6 py-4 text-sm font-medium text-slate-900">
                            {p.quantity} {p.unit}

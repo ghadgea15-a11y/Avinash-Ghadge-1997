@@ -257,7 +257,9 @@ export class ScmService {
   }
 
   static async submitGatePass(session: UserSession, pass: GatePassRecord): Promise<void> {
-    const passRef = doc(db, 'companies', pass.companyId, 'gate_passes', pass.id);
+    const passId = pass.id || `GP-${Date.now()}`;
+    const passRef = doc(db, 'companies', pass.companyId, 'gate_passes', passId);
+    pass.id = passId;
     pass.submittedAt = new Date().toISOString();
     await setDoc(passRef, pass);
   }

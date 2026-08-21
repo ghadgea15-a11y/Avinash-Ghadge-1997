@@ -79,12 +79,12 @@ export class LeaveService {
    */
   static calculateAvailableBalance(detail: LeaveBalanceDetail): number {
     return (
-      detail.openingBalance +
-      detail.accrued +
-      detail.carriedForward +
-      detail.adjusted -
-      detail.used -
-      detail.encashed
+      (detail.openingBalance ?? 0) +
+      (detail.accrued ?? 0) +
+      (detail.carriedForward ?? 0) +
+      (detail.adjusted ?? 0) -
+      (detail.used ?? 0) -
+      (detail.encashed ?? 0)
     );
   }
 

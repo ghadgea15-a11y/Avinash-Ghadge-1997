@@ -55,10 +55,12 @@ export const SuperAdminLeadsScreen: React.FC<SuperAdminLeadsScreenProps> = ({
   }, []);
 
   const filteredLeads = leads.filter(lead => {
+    const leadName = lead.name || lead.contactPerson || '';
+    const leadCompany = lead.company || lead.companyName || '';
     const matchesSearch = 
-      lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.email.toLowerCase().includes(searchTerm.toLowerCase());
+      leadName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      leadCompany.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (lead.email || '').toLowerCase().includes(searchTerm.toLowerCase());
       
     const matchesStatus = statusFilter === 'ALL' || lead.status === statusFilter;
     

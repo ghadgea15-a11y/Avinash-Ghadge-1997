@@ -27,20 +27,22 @@ export interface SosEventRecord {
   companyId: string;
   regionId?: string;
   branchId?: string;
-  siteId: string;
-  employeeId: string;
-  triggeredByUserId: string;
+  siteId?: string;
+  employeeId?: string;
+  userId?: string;
+  userName?: string;
+  triggeredByUserId?: string;
   
-  source: 'WEB' | 'ANDROID' | 'KIOSK';
-  emergencyType: SosEmergencyType;
-  severity: SosSeverity;
-  status: SosStatus;
+  source?: 'WEB' | 'ANDROID' | 'KIOSK' | string;
+  emergencyType?: SosEmergencyType | string;
+  severity?: SosSeverity | string;
+  status: SosStatus | string;
   
   // Location
   latitude: number;
   longitude: number;
   locationAccuracy?: number;
-  locationTimestamp: string;
+  locationTimestamp?: string;
   
   // Timestamps & Actors
   triggeredAt: string;
@@ -58,15 +60,15 @@ export interface SosEventRecord {
   trackingSessionId?: string;
   
   // Escalation
-  escalationLevel: number;
+  escalationLevel?: number;
   lastEscalatedAt?: string;
   
   // Closure
   cancellationReason?: string;
   resolutionNotes?: string;
   
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type TrackingPurposeType = 

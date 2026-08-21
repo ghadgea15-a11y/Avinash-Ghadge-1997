@@ -1,5 +1,6 @@
-import { auth } from './firebase';
+import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
 import React, { useState, useEffect } from 'react';
 import { CompanyTenant, UserSession, PhaseAScreen, UserRole } from './types';
 import { SessionManager } from './services/sessionManager';
@@ -154,6 +155,52 @@ export function App() {
       return () => unsub();
     }
   }, [userSession]);
+
+  // Realtime user profile & membership listener (account status, role changes, site reassignments)
+  useEffect(() => {
+    if (!userSession || !userSession.userId || userSession.role === 'SUPER_ADMIN') return;
+    
+    // 1. Listen to users/{userId}
+    const userDocRef = doc(db, 'users', userSession.userId);
+    const unsubUser = onSnapshot(userDocRef, (snap) => {
+      if (snap.exists()) {
+        const uData = snap.data();
+        if (uData.accountStatus === 'DISABLED' || uData.accountStatus === 'SUSPENDED') {
+          handleLogout();
+          return;
+        }
+        if (uData.role && uData.role !== userSession.role) {
+          setUserSession(prev => prev ? { ...prev, role: uData.role } : null);
+        }
+      }
+    }, (err) => console.warn('[App] Realtime user listener:', err));
+
+    // 2. Listen to users/{userId}/memberships/{companyId}
+    const memDocRef = doc(db, 'users', userSession.userId, 'memberships', userSession.companyId);
+    const unsubMem = onSnapshot(memDocRef, (snap) => {
+      if (snap.exists()) {
+        const mData = snap.data();
+        if (mData.status === 'SUSPENDED') {
+          handleLogout();
+          return;
+        }
+        if (mData.role && mData.role !== userSession.role) {
+          setUserSession(prev => prev ? { ...prev, role: mData.role } : null);
+        }
+        if (mData.siteId && mData.siteId !== userSession.assignedSiteId) {
+          setUserSession(prev => prev ? { ...prev, assignedSiteId: mData.siteId } : null);
+        }
+        if (mData.departmentId && mData.departmentId !== userSession.departmentId) {
+          setUserSession(prev => prev ? { ...prev, departmentId: mData.departmentId } : null);
+        }
+      }
+    }, (err) => console.warn('[App] Realtime membership listener:', err));
+
+    return () => {
+      unsubUser();
+      unsubMem();
+    };
+  }, [userSession?.userId, userSession?.companyId]);
 
   // Sync queue count monitor
   useEffect(() => {
@@ -632,39 +679,39 @@ export function App() {
                       />
                     )}
 
-                                        {currentScreen === 'VENDOR_MANAGEMENT' && (
+                    {currentScreen === 'VENDOR_MANAGEMENT' && (
                       <VendorDirectoryScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany!}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
-                                        {currentScreen === 'RFQ_MANAGEMENT' && (
+                    {currentScreen === 'RFQ_MANAGEMENT' && (
                       <RfqManagementScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany!}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
-                                        {currentScreen === 'PURCHASE_ORDERS' && (
+                    {currentScreen === 'PURCHASE_ORDERS' && (
                       <PurchaseOrderManagementScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany!}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
-                                        {currentScreen === 'THREE_WAY_MATCH' && (
+                    {currentScreen === 'THREE_WAY_MATCH' && (
                       <ThreeWayMatchScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany!}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
                     {currentScreen === 'PROCUREMENT_SRM' && (
                       <ProcurementSrmScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany!}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 

@@ -28,15 +28,15 @@ export const SlaDefinitionList: React.FC<{ definitions: SlaDefinitionRecord[], o
           {definitions.map(def => (
             <tr key={def.id} className="hover:bg-slate-50">
               <td className="px-6 py-4">
-                <div className="font-medium text-slate-900">{def.slaName}</div>
-                <div className="text-xs text-slate-500">{def.slaCode} • {def.measurementType.replace('_', ' ')}</div>
+                <div className="font-medium text-slate-900">{def.slaName || def.name || 'SLA'}</div>
+                <div className="text-xs text-slate-500">{def.slaCode || def.slaId || 'N/A'} • {def.measurementType ? def.measurementType.replace('_', ' ') : 'Metric'}</div>
               </td>
               <td className="px-6 py-4">
-                <div className="text-sm text-slate-900 line-clamp-1">{def.contractId}</div>
-                <div className="text-xs text-slate-500">{def.clientId}</div>
+                <div className="text-sm text-slate-900 line-clamp-1">{def.contractId || 'All Contracts'}</div>
+                <div className="text-xs text-slate-500">{def.clientId || 'All Clients'}</div>
               </td>
               <td className="px-6 py-4 text-sm font-medium text-slate-900">
-                {def.targetValue} {def.targetUnit}
+                {def.targetValue ?? def.targetResponseMinutes ?? 0} {def.targetUnit || 'Minutes'}
               </td>
               <td className="px-6 py-4">
                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${

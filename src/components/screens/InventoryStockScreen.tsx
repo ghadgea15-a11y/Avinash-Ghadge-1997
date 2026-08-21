@@ -213,11 +213,11 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
 
     const todayStr = new Date().toISOString().slice(0, 10);
     const todayInward = transactions
-      .filter(t => t.transactionType === 'PURCHASE_INWARD' && t.createdAt.startsWith(todayStr))
+      .filter(t => t.transactionType === 'PURCHASE_INWARD' && (t.createdAt || '').startsWith(todayStr))
       .reduce((sum, t) => sum + t.quantity, 0);
 
     const todayOutward = transactions
-      .filter(t => (t.transactionType === 'ISSUE_TO_EMPLOYEE' || t.transactionType === 'DAMAGE_SCRAP') && t.createdAt.startsWith(todayStr))
+      .filter(t => (t.transactionType === 'ISSUE_TO_EMPLOYEE' || t.transactionType === 'DAMAGE_SCRAP') && (t.createdAt || '').startsWith(todayStr))
       .reduce((sum, t) => sum + t.quantity, 0);
 
     return {
@@ -1043,7 +1043,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                           {/* Date & Ref */}
                           <td className="px-4 py-3">
                             <div className="font-bold text-slate-900 dark:text-white">
-                              {new Date(tx.createdAt).toLocaleDateString('en-GB')}
+                              {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('en-GB') : 'N/A'}
                             </div>
                             <div className="text-[11px] text-slate-500 font-mono">
                               {tx.referenceNumber || tx.id}

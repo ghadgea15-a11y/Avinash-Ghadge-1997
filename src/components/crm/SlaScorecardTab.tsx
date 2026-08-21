@@ -34,8 +34,8 @@ export const SlaScorecardTab: React.FC<Props> = ({ session, company }) => {
         slaService.getSlaBreaches(company.companyId)
       ]);
       setDefinitions(defs);
-      setScorecards(cards.sort((a,b) => b.generatedAt.localeCompare(a.generatedAt)));
-      setBreaches(brs.sort((a,b) => b.detectedAt.localeCompare(a.detectedAt)));
+      setScorecards(cards.sort((a,b) => (b.generatedAt || '').localeCompare(a.generatedAt || '')));
+      setBreaches(brs.sort((a,b) => (b.detectedAt || '').localeCompare(a.detectedAt || '')));
     } catch (err) {
       console.error(err);
     } finally {

@@ -1,3 +1,4 @@
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { 
   updateDoc,
   collection, 
@@ -380,8 +381,67 @@ export class FirestoreService {
   /**
    * Create or update Employee document in Firestore (Dual-writing for 100% sync)
    */
+  static async inviteEmployeeUser(companyId: string, employeeId: string): Promise<{ success: boolean; resetLink?: string; message?: string }> {
+    try {
+      const { getFunctions, httpsCallable } = await import('firebase/functions');
+      const functions = getFunctions();
+      const inviteEmployee = httpsCallable(functions, 'inviteEmployee');
+      const result = await inviteEmployee({ companyId, employeeId }) as any;
+      if (result.data && result.data.success) {
+        return { 
+          success: true, 
+          resetLink: result.data.resetLink,
+          message: result.data.message || 'Invitation sent successfully.' 
+        };
+      }
+      return { success: false, message: result.data?.message || 'Failed to create system invitation.' };
+    } catch (err: any) {
+      console.warn('[FirestoreService] Cloud function inviteEmployee unavailable, using client fallback:', err);
+      try {
+        const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+        const empSnap = await getDoc(empRef);
+        if (!empSnap.exists()) return { success: false, message: 'Employee record not found.' };
+        const emp = empSnap.data() as EmployeeRecord;
+        if (!emp.email) return { success: false, message: 'Email address is required for system access.' };
+
+        const email = emp.email.trim().toLowerCase();
+        const invId = `INV-${employeeId}-${Date.now().toString(36).toUpperCase()}`;
+        const invRef = doc(db, 'companies', companyId, 'invitations', invId);
+        const timestamp = new Date().toISOString();
+
+        await setDoc(invRef, {
+          id: invId,
+          companyId,
+          employeeId,
+          email,
+          role: emp.role || 'GUARD',
+          siteId: emp.assignedSiteId || '',
+          departmentId: emp.departmentId || '',
+          status: 'PENDING',
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          createdAt: timestamp,
+          updatedAt: timestamp
+        });
+
+        await setDoc(empRef, { 
+          hasSystemAccess: true, 
+          invitationId: invId, 
+          invitationSentAt: timestamp,
+          updatedAt: timestamp 
+        }, { merge: true });
+
+        return { 
+          success: true, 
+          message: `System access invitation recorded for ${email}.` 
+        };
+      } catch (clientErr: any) {
+        console.error('[FirestoreService] inviteEmployeeUser fallback error:', clientErr);
+        return { success: false, message: clientErr.message || 'Invitation failed.' };
+      }
+    }
+  }
+
   static async saveEmployee(companyId: string, employee: EmployeeRecord, actor: { id: string, name: string }): Promise<boolean> {
-    const legacyPath = `users/${employee.id}`;
     const newPath = `companies/${companyId}/employees/${employee.id}`;
     try {
       const isUpdate = !!employee.updatedAt && employee.createdAt !== employee.updatedAt;
@@ -389,6 +449,7 @@ export class FirestoreService {
       const payload = {
         ...employee,
         companyId, // ensure companyId matches
+        hasSystemAccess: !!employee.hasSystemAccess,
         updatedAt: new Date().toISOString(),
         updatedBy: actor.id
       };
@@ -397,11 +458,31 @@ export class FirestoreService {
       const refNew = doc(db, 'companies', companyId, 'employees', employee.id);
       await setDoc(refNew, payload, { merge: true });
 
-      // 2. Write to legacy root 'users' collection (Web login support)
-      // Only write to 'users' if the employee has app access (authUid exists)
+      // 2. If employee is linked to Firebase Auth UID, synchronize profile and membership
       if (employee.authUid) {
-        const refLegacy = doc(db, 'users', employee.id);
-        await setDoc(refLegacy, payload, { merge: true });
+        const userRef = doc(db, 'users', employee.authUid);
+        await setDoc(userRef, {
+          fullName: `${employee.firstName} ${employee.lastName}`.trim(),
+          role: employee.role,
+          companyId: companyId,
+          departmentId: employee.departmentId || '',
+          assignedSiteId: employee.assignedSiteId || '',
+          mobileNumber: employee.contactNumber || '',
+          accountStatus: (employee.status === 'SUSPENDED' || employee.status === 'TERMINATED' || employee.status === 'DEACTIVATED') ? 'DISABLED' : 'ACTIVE',
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+
+        const memRef = doc(db, 'users', employee.authUid, 'memberships', companyId);
+        await setDoc(memRef, {
+          userId: employee.authUid,
+          companyId: companyId,
+          employeeId: employee.id,
+          role: employee.role,
+          siteId: employee.assignedSiteId || '',
+          departmentId: employee.departmentId || '',
+          status: (employee.status === 'SUSPENDED' || employee.status === 'TERMINATED' || employee.status === 'DEACTIVATED') ? 'SUSPENDED' : 'ACTIVE',
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
       }
 
       // 3. Audit Log
@@ -437,7 +518,7 @@ export class FirestoreService {
 
       return true;
     } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `${newPath} & ${legacyPath}`);
+      handleFirestoreError(err, OperationType.WRITE, newPath);
       return false;
     }
   }
@@ -3720,215 +3801,35 @@ export class FirestoreService {
   /**
    * Create a brand new Company along with its Company Admin and Module Entitlements
    */
+
   static async createCompanyWithAdmin(params: {
     company: CompanyTenant;
-    adminInfo: { fullName: string; email: string; mobileNumber?: string };
+    adminInfo: { fullName: string; email: string; mobileNumber?: string; password?: string };
     enabledModules: string[];
     createdByUid: string;
     createdByName: string;
   }): Promise<{ success: boolean; message: string; companyId: string }> {
-    const { company, adminInfo, enabledModules, createdByUid, createdByName } = params;
-    const cleanCompanyId = company.companyId.trim().toUpperCase();
-
-    if (!cleanCompanyId) {
-      return { success: false, message: 'Company Code is required.', companyId: '' };
-    }
-
     try {
-      const timestamp = new Date().toISOString();
-
-      // 1. Check if Company Code already exists
-      const compRef = doc(db, 'companies', cleanCompanyId);
-      let existingSnap: any;
-      try {
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
-        existingSnap = await Promise.race([getDoc(compRef), timeoutPromise]);
-      } catch (err: any) {
-        if (err.message === 'timeout' || err.code === 'unavailable' || err.message?.includes('offline')) {
-          console.warn('[FirestoreService] Network timeout or offline, bypassing company code existence check.');
-        } else {
-          throw err;
-        }
+      /* imported at top if possible */
+      const functions = getFunctions();
+      const provisionTenant = httpsCallable(functions, 'provisionTenant');
+      
+      const result = await provisionTenant(params) as any;
+      if (result.data && result.data.success) {
+        return { 
+          success: true, 
+          message: `Company "${params.company.brandName}" (${result.data.companyId}) created successfully.`,
+          companyId: result.data.companyId 
+        };
+      } else {
+        return { success: false, message: 'Failed to create company.', companyId: '' };
       }
-
-      if (existingSnap && existingSnap.exists()) {
-        return { success: false, message: `Company Code "${cleanCompanyId}" is already registered.`, companyId: cleanCompanyId };
-      }
-
-      // 2. Save Company document
-      const companyPayload: CompanyTenant = {
-        ...company,
-        companyId: cleanCompanyId,
-        status: company.status || 'ACTIVE',
-        licenseTier: company.licenseTier || 'ENTERPRISE',
-        enabledModules: enabledModules.length > 0 ? enabledModules : MASTER_APP_MODULES.map(m => m.key),
-        adminName: adminInfo.fullName,
-        adminEmail: adminInfo.email,
-        createdAt: timestamp
-      };
-
-      await setDoc(compRef, companyPayload, { merge: true });
-
-      // 3. Save Code mappings for public lookup
-      await setDoc(doc(db, 'company_codes', cleanCompanyId), {
-        code: cleanCompanyId,
-        companyId: cleanCompanyId,
-        brandName: company.brandName,
-        createdAt: timestamp
-      }, { merge: true });
-
-      // 4. Create Default Departments for the company
-      const defaultDepts = [
-        { id: 'DEPT-OPS', name: 'Operations & Field', code: 'OPS' },
-        { id: 'DEPT-SEC', name: 'Security & Guarding', code: 'SEC' },
-        { id: 'DEPT-ADMIN', name: 'Administration', code: 'ADMIN' },
-        { id: 'DEPT-HR', name: 'Human Resources', code: 'HR' }
-      ];
-
-      for (const dept of defaultDepts) {
-        await setDoc(doc(db, 'companies', cleanCompanyId, 'departments', dept.id), {
-          id: dept.id,
-          name: dept.name,
-          code: dept.code,
-          companyId: cleanCompanyId,
-          createdAt: timestamp
-        }, { merge: true });
-      }
-
-      // 5. Create Default Branch & Primary Site
-      await setDoc(doc(db, 'companies', cleanCompanyId, 'branches', 'MAIN'), {
-        id: 'MAIN',
-        branchId: 'MAIN',
-        branchName: `${company.brandName} Head Branch`,
-        code: 'MAIN',
-        city: company.city || 'Mumbai',
-        state: company.state || 'Maharashtra',
-        companyId: cleanCompanyId,
-        createdAt: timestamp
-      }, { merge: true });
-
-      await setDoc(doc(db, 'companies', cleanCompanyId, 'sites', 'SITE-HQ'), {
-        id: 'SITE-HQ',
-        siteId: 'SITE-HQ',
-        siteName: `${company.brandName} Main Site / HQ`,
-        branchId: 'MAIN',
-        address: company.address || `${company.brandName} Operations Center`,
-        city: company.city || 'Mumbai',
-        state: company.state || 'Maharashtra',
-        country: company.country || 'India',
-        companyId: cleanCompanyId,
-        status: 'ACTIVE',
-        createdAt: timestamp
-      }, { merge: true });
-
-      // 6. Create Initial Subscription & Entitlements
-      const planCode = company.licenseTier === 'STARTER' ? 'PLAN_STARTER' : company.licenseTier === 'PROFESSIONAL' ? 'PLAN_PRO' : 'PLAN_ENTERPRISE';
-      const maxEmployees = company.maxEmployeesAllowed || 1000;
-      const subId = `SUB-${cleanCompanyId}`;
-
-      const initialSub = {
-        subscriptionId: subId,
-        companyId: cleanCompanyId,
-        planId: planCode,
-        status: 'ACTIVE',
-        billingCycle: 'MONTHLY',
-        currentPeriodStart: timestamp,
-        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-        cancelAtPeriodEnd: false,
-        employeeLimit: maxEmployees,
-        userLimit: company.licenseTier === 'STARTER' ? 2 : company.licenseTier === 'PROFESSIONAL' ? 5 : 25,
-        storageLimitMB: company.licenseTier === 'STARTER' ? 1024 : company.licenseTier === 'PROFESSIONAL' ? 5120 : 51200,
-        source: 'SYSTEM',
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        createdBy: createdByUid,
-        updatedBy: createdByUid
-      };
-
-      await setDoc(doc(db, 'companies', cleanCompanyId, 'subscriptions', subId), initialSub, { merge: true });
-
-      // Save Module Entitlements
-      const finalModules = enabledModules.length > 0 ? enabledModules : MASTER_APP_MODULES.map(m => m.key);
-      for (const modKey of finalModules) {
-        const entId = `${cleanCompanyId}_${modKey}`;
-        await setDoc(doc(db, 'companies', cleanCompanyId, 'entitlements', entId), {
-          id: entId,
-          companyId: cleanCompanyId,
-          moduleId: modKey,
-          enabled: true,
-          source: 'PLAN',
-          planId: planCode,
-          subscriptionId: subId,
-          validFrom: timestamp,
-          overriddenBySuperAdmin: false
-        }, { merge: true });
-      }
-
-      // 7. Create Company Admin user account record
-      const adminEmail = adminInfo.email.trim().toLowerCase();
-      const adminUid = `ADMIN-${cleanCompanyId}-${Date.now().toString().slice(-4)}`;
-
-      const adminUserDoc = {
-        uid: adminUid,
-        email: adminEmail,
-        fullName: adminInfo.fullName,
-        companyId: cleanCompanyId,
-        companyName: company.brandName,
-        departmentId: 'DEPT-ADMIN',
-        departmentName: 'Administration',
-        mobileNumber: adminInfo.mobileNumber || '',
-        role: 'COMPANY_ADMIN' as UserRole,
-        accountStatus: 'ACTIVE' as AccountStatus,
-        emailVerified: true,
-        companyAdminApproval: 'APPROVED' as ApprovalStatus,
-        hrApproval: 'APPROVED' as ApprovalStatus,
-        createdAt: timestamp,
-        updatedAt: timestamp
-      };
-
-      // Store in root users collection
-      await setDoc(doc(db, 'users', adminUid), adminUserDoc, { merge: true });
-
-      // Store in employees subcollection
-      await setDoc(doc(db, 'companies', cleanCompanyId, 'employees', adminUid), {
-        id: adminUid,
-        employeeId: `ADM-001`,
-        companyId: cleanCompanyId,
-        firstName: adminInfo.fullName.split(' ')[0] || 'Company',
-        lastName: adminInfo.fullName.split(' ').slice(1).join(' ') || 'Admin',
-        email: adminEmail,
-        contactNumber: adminInfo.mobileNumber || '',
-        role: 'COMPANY_ADMIN',
-        status: 'ACTIVE',
-        departmentId: 'DEPT-ADMIN',
-        designation: 'Company Administrator',
-        assignedBranchId: 'MAIN',
-        assignedRegionId: 'HQ',
-        assignedSiteId: 'SITE-HQ',
-        createdBy: createdByUid,
-        createdAt: timestamp,
-        updatedAt: timestamp
-      }, { merge: true });
-
-      // 8. Log Audit Event
-      await this.logAuditEvent(
-        cleanCompanyId,
-        createdByUid,
-        createdByName,
-        'CREATE_COMPANY',
-        `Created company ${company.brandName} (${cleanCompanyId}) with Admin ${adminInfo.email} and ${finalModules.length} enabled modules.`
-      );
-
-      return {
-        success: true,
-        message: `Company "${company.brandName}" (${cleanCompanyId}) created successfully. Admin account assigned to ${adminEmail}.`,
-        companyId: cleanCompanyId
-      };
     } catch (err: any) {
       console.error('[FirestoreService] createCompanyWithAdmin error:', err);
-      return { success: false, message: err.message || 'Failed to create company.', companyId: cleanCompanyId };
+      return { success: false, message: err.message || 'Failed to create company.', companyId: '' };
     }
   }
+
 
   // ==========================================
   // LEAVE MANAGEMENT (HRMS) METHODS
@@ -7714,7 +7615,7 @@ const allAttendances: any[] = [];
     const q = query(colRef);
     return onSnapshot(q, (snap) => {
       const list = snap.docs.map(d => d.data() as ThreeWayMatchRecord);
-      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       onUpdate(list);
     });
   }

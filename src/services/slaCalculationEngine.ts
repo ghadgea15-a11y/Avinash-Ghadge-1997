@@ -67,6 +67,7 @@ export const slaCalculationEngine = {
       let measured = 0;
       let breachedEvents = 0;
       let totalActual = 0;
+      const targetVal = def.targetValue ?? 0;
 
       if (def.measurementType === 'RESOLUTION_TIME' || def.measurementType === 'RESPONSE_TIME') {
         // Measure using Tickets
@@ -89,7 +90,7 @@ export const slaCalculationEngine = {
             totalActual += actualInUnit;
 
             // Check breach
-            if (actualInUnit > def.targetValue) {
+            if (actualInUnit > targetVal) {
               breachedEvents++;
               newBreaches.push({
                 id: `BR-${Date.now()}-${t.id}`,
@@ -98,9 +99,9 @@ export const slaCalculationEngine = {
                 contractId,
                 slaId: def.id,
                 sourceRecordId: t.id,
-                targetValue: def.targetValue,
+                targetValue: targetVal,
                 actualValue: actualInUnit,
-                variance: actualInUnit - def.targetValue,
+                variance: actualInUnit - targetVal,
                 detectedAt: new Date().toISOString(),
                 severity: def.severity,
                 status: 'OPEN'
@@ -125,7 +126,7 @@ export const slaCalculationEngine = {
             if (def.targetUnit === 'DAYS') actualInUnit = diffHrs / 24;
 
             totalActual += actualInUnit;
-            if (actualInUnit > def.targetValue) {
+            if (actualInUnit > targetVal) {
                breachedEvents++;
                newBreaches.push({
                 id: `BR-${Date.now()}-${w.id}`,
@@ -134,9 +135,9 @@ export const slaCalculationEngine = {
                 contractId,
                 slaId: def.id,
                 sourceRecordId: w.id,
-                targetValue: def.targetValue,
+                targetValue: targetVal,
                 actualValue: actualInUnit,
-                variance: actualInUnit - def.targetValue,
+                variance: actualInUnit - targetVal,
                 detectedAt: new Date().toISOString(),
                 severity: def.severity,
                 status: 'OPEN'
@@ -144,7 +145,7 @@ export const slaCalculationEngine = {
             }
           }
         }
-} else if (def.measurementType === 'ATTENDANCE_COMPLIANCE') {
+      } else if (def.measurementType === 'ATTENDANCE_COMPLIANCE') {
         measured = attendances.length;
         
         let compliantCount = 0;
@@ -157,7 +158,7 @@ export const slaCalculationEngine = {
         const attendanceRate = measured > 0 ? (compliantCount / measured) * 100 : 100;
         totalActual = attendanceRate;
         
-        if (attendanceRate < def.targetValue) {
+        if (attendanceRate < targetVal) {
            breachedEvents++;
            newBreaches.push({
               id: `BR-${Date.now()}-ATT`,
@@ -166,9 +167,9 @@ export const slaCalculationEngine = {
               contractId,
               slaId: def.id,
               sourceRecordId: 'ATT-AGGREGATE',
-              targetValue: def.targetValue,
+              targetValue: targetVal,
               actualValue: attendanceRate,
-              variance: def.targetValue - attendanceRate,
+              variance: targetVal - attendanceRate,
               detectedAt: new Date().toISOString(),
               severity: def.severity,
               status: 'OPEN'
@@ -178,7 +179,7 @@ export const slaCalculationEngine = {
         measured = 1;
         const uptime = 99.9;
         totalActual = uptime;
-        if (uptime < def.targetValue) {
+        if (uptime < targetVal) {
            breachedEvents++;
         }
       }
@@ -189,19 +190,19 @@ export const slaCalculationEngine = {
       
       if (def.targetUnit === 'PERCENTAGE') {
         compliance = avgActual;
-        isMet = compliance >= def.targetValue;
+        isMet = compliance >= targetVal;
       } else {
-        if (avgActual > def.targetValue) {
+        if (avgActual > targetVal) {
           isMet = false;
           // Rough compliance percentage calculation
-          compliance = Math.max(0, 100 - ((avgActual - def.targetValue) / def.targetValue) * 100);
+          compliance = Math.max(0, 100 - ((avgActual - targetVal) / (targetVal || 1)) * 100);
         }
       }
 
       metrics.push({
         slaId: def.id,
         slaName: def.slaName,
-        targetValue: def.targetValue,
+        targetValue: targetVal,
         targetUnit: def.targetUnit,
         actualValue: avgActual,
         compliancePercentage: measured === 0 ? 100 : compliance,
@@ -211,9 +212,9 @@ export const slaCalculationEngine = {
       });
     }
 
-    const totalBreaches = metrics.reduce((acc, m) => acc + m.breaches, 0);
+    const totalBreaches = metrics.reduce((acc, m) => acc + (typeof m.breaches === 'number' ? m.breaches : (m.breaches?.length || 0)), 0);
     const criticalBreaches = newBreaches.filter(b => b.severity === 'CRITICAL').length;
-    const overallCompliance = metrics.length > 0 ? (metrics.reduce((acc, m) => acc + m.compliancePercentage, 0) / metrics.length) : 100;
+    const overallCompliance = metrics.length > 0 ? (metrics.reduce((acc, m) => acc + (m.compliancePercentage || 0), 0) / metrics.length) : 100;
 
     const scorecard: SlaScorecardRecord = {
       id: `SC-${contractId}-${Date.now()}`,

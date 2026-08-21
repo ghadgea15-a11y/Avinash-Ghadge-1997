@@ -4,18 +4,20 @@ import { ScmService } from '../../services/scmService';
 import { Search, CheckCircle } from 'lucide-react';
 
 export function GateVerificationTab({ session, company }: { session: UserSession, company: CompanyTenant }) {
+  const companyId = company.companyId || (company as any).id || session.companyId || '';
   const [passes, setPasses] = useState<GatePassRecord[]>([]);
 
   const loadPasses = async () => {
-    const all = await ScmService.getGatePasses(company.companyId);
+    if (!companyId) return;
+    const all = await ScmService.getGatePasses(companyId);
     setPasses(all.filter(p => p.status === 'DISPATCHED' || (p.passType === 'INWARD' && p.status === 'APPROVED')));
   };
 
-  useEffect(() => { loadPasses(); }, [company.companyId]);
+  useEffect(() => { loadPasses(); }, [companyId]);
 
   const handleVerify = async (pass: GatePassRecord) => {
     try {
-      await ScmService.verifyGatePass(session, pass.id, company.companyId);
+      await ScmService.verifyGatePass(session, pass.id || '', companyId);
       loadPasses();
     } catch (e: any) {
       alert(e.message);

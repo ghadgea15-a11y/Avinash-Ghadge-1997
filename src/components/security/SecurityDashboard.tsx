@@ -254,7 +254,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
                               {anomaly.status}
                             </span>
                           </div>
-                          <h3 className="text-xl font-bold text-gray-900">{anomaly.type.replace(/_/g, ' ')}</h3>
+                          <h3 className="text-xl font-bold text-gray-900">{(anomaly.type || anomaly.anomalyType || 'ANOMALY').replace(/_/g, ' ')}</h3>
                           <p className="text-gray-500 mt-1">Detected: {new Date(anomaly.detectedAt).toLocaleString()}</p>
                         </div>
                       </div>
@@ -268,8 +268,8 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
                       <div className="mt-6 border-t border-gray-100 pt-6">
                         <h4 className="font-semibold text-gray-900 mb-4">Related Security Events ({anomaly.triggeringEvents?.length || 0})</h4>
                         <div className="space-y-3">
-                          {events.filter(e => anomaly.triggeringEvents?.includes(e.eventId)).map(evt => (
-                            <div key={evt.eventId} className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                          {events.filter(e => e.eventId && anomaly.triggeringEvents?.includes(e.eventId)).map(evt => (
+                            <div key={evt.eventId || evt.id} className="bg-gray-50 p-4 rounded-lg border border-gray-100">
                               <div className="flex justify-between">
                                 <span className="font-medium text-gray-900">{evt.action}</span>
                                 <span className="text-sm text-gray-500">{new Date(evt.timestamp).toLocaleString()}</span>
@@ -280,7 +280,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
                               </div>
                             </div>
                           ))}
-                          {events.filter(e => anomaly.triggeringEvents?.includes(e.eventId)).length === 0 && (
+                          {events.filter(e => e.eventId && anomaly.triggeringEvents?.includes(e.eventId)).length === 0 && (
                             <p className="text-sm text-gray-500">Related event details may have been rotated or are unavailable.</p>
                           )}
                         </div>
@@ -327,65 +327,68 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
                       anomalies
                         .filter(a => filterStatus === 'ALL' || a.status === filterStatus)
                         .filter(a => filterSeverity === 'ALL' || a.severity === filterSeverity)
-                        .map(anomaly => (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} key={anomaly.anomalyId} className="p-6 hover:bg-gray-50 transition-colors">
-                          <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                              <span className={`px-2.5 py-1 text-xs font-bold rounded-full border ${getSeverityColor(anomaly.severity)}`}>
-                                {anomaly.severity}
-                              </span>
-                              <h4 className="font-semibold text-gray-900 cursor-pointer hover:text-indigo-600" onClick={() => setViewingAnomalyId(anomaly.anomalyId)}>
-                                {anomaly.type.replace(/_/g, ' ')}
-                              </h4>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <Clock className="w-4 h-4" />
-                                {new Date(anomaly.detectedAt).toLocaleString()}
+                        .map(anomaly => {
+                          const aId = anomaly.anomalyId || anomaly.id || '';
+                          return (
+                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} key={aId} className="p-6 hover:bg-gray-50 transition-colors">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex items-center gap-3">
+                                <span className={`px-2.5 py-1 text-xs font-bold rounded-full border ${getSeverityColor(anomaly.severity)}`}>
+                                  {anomaly.severity}
+                                </span>
+                                <h4 className="font-semibold text-gray-900 cursor-pointer hover:text-indigo-600" onClick={() => setViewingAnomalyId(aId)}>
+                                  {(anomaly.type || anomaly.anomalyType || 'ANOMALY').replace(/_/g, ' ')}
+                                </h4>
                               </div>
-                              <button onClick={() => setViewingAnomalyId(anomaly.anomalyId)} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1">
-                                <Eye className="w-4 h-4" /> View Evidence
-                              </button>
-                            </div>
-                          </div>
-                          
-                          <p className="text-gray-600 text-sm mb-4">{anomaly.reason}</p>
-                          
-                          {anomaly.recommendedAction && (
-                            <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-lg text-sm text-indigo-800 mb-4">
-                              <span className="font-semibold">Recommendation:</span> {anomaly.recommendedAction}
-                            </div>
-                          )}
-                          
-                          <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                            <div className="flex gap-2">
-                              <span className="text-sm font-medium text-gray-500">Status: </span>
-                              <span className="text-sm font-semibold text-gray-900">{anomaly.status}</span>
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                  <Clock className="w-4 h-4" />
+                                  {new Date(anomaly.detectedAt).toLocaleString()}
+                                </div>
+                                <button onClick={() => setViewingAnomalyId(aId)} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1">
+                                  <Eye className="w-4 h-4" /> View Evidence
+                                </button>
+                              </div>
                             </div>
                             
-                            <div className="flex gap-2">
-                              {anomaly.status === 'DETECTED' && (
-                                <button onClick={() => handleUpdateStatus(anomaly.anomalyId, 'UNDER_REVIEW')} className="px-3 py-1.5 bg-yellow-100 text-yellow-800 rounded-lg text-sm font-medium hover:bg-yellow-200">
-                                  Mark Review
-                                </button>
-                              )}
-                              {(anomaly.status === 'DETECTED' || anomaly.status === 'UNDER_REVIEW') && (
-                                <>
-                                  <button onClick={() => handleUpdateStatus(anomaly.anomalyId, 'CONFIRMED')} className="px-3 py-1.5 bg-red-100 text-red-800 rounded-lg text-sm font-medium hover:bg-red-200">
-                                    Confirm
+                            <p className="text-gray-600 text-sm mb-4">{anomaly.reason}</p>
+                            
+                            {anomaly.recommendedAction && (
+                              <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-lg text-sm text-indigo-800 mb-4">
+                                <span className="font-semibold">Recommendation:</span> {anomaly.recommendedAction}
+                              </div>
+                            )}
+                            
+                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                              <div className="flex gap-2">
+                                <span className="text-sm font-medium text-gray-500">Status: </span>
+                                <span className="text-sm font-semibold text-gray-900">{anomaly.status}</span>
+                              </div>
+                              
+                              <div className="flex gap-2">
+                                {anomaly.status === 'DETECTED' && (
+                                  <button onClick={() => handleUpdateStatus(aId, 'UNDER_REVIEW')} className="px-3 py-1.5 bg-yellow-100 text-yellow-800 rounded-lg text-sm font-medium hover:bg-yellow-200">
+                                    Mark Review
                                   </button>
-                                  <button onClick={() => handleUpdateStatus(anomaly.anomalyId, 'FALSE_POSITIVE')} className="px-3 py-1.5 bg-gray-100 text-gray-800 rounded-lg text-sm font-medium hover:bg-gray-200">
-                                    False Positive
-                                  </button>
-                                  <button onClick={() => handleUpdateStatus(anomaly.anomalyId, 'RESOLVED')} className="px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">
-                                    Resolve
-                                  </button>
-                                </>
-                              )}
+                                )}
+                                {(anomaly.status === 'DETECTED' || anomaly.status === 'UNDER_REVIEW') && (
+                                  <>
+                                    <button onClick={() => handleUpdateStatus(aId, 'CONFIRMED')} className="px-3 py-1.5 bg-red-100 text-red-800 rounded-lg text-sm font-medium hover:bg-red-200">
+                                      Confirm
+                                    </button>
+                                    <button onClick={() => handleUpdateStatus(aId, 'FALSE_POSITIVE')} className="px-3 py-1.5 bg-gray-100 text-gray-800 rounded-lg text-sm font-medium hover:bg-gray-200">
+                                      False Positive
+                                    </button>
+                                    <button onClick={() => handleUpdateStatus(aId, 'RESOLVED')} className="px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">
+                                      Resolve
+                                    </button>
+                                  </>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      ))
+                          </motion.div>
+                        );
+                        })
                     )}
                   </div>
                 </>
@@ -445,7 +448,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
-              Mark as {selectedAnomaly.status.replace(/_/g, ' ')}
+              Mark as {selectedAnomaly.status?.replace(/_/g, ' ') || 'RESOLVED'}
             </h3>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">

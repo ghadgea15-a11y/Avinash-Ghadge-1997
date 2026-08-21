@@ -253,7 +253,7 @@ export function RfqManagementScreen({ userSession, activeCompany, onNavigate }: 
                             <span className="text-slate-700 font-medium">{rfq.category}</span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-slate-600">
-                            {format(new Date(rfq.submissionDeadline), 'dd MMM yyyy, HH:mm')}
+                            {rfq.submissionDeadline ? format(new Date(rfq.submissionDeadline), 'dd MMM yyyy, HH:mm') : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadge(rfq.status)}`}>

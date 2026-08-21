@@ -750,13 +750,13 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                           <div className="text-xs text-slate-500">PO: {m.poNumber} • GRN: {m.grnNumber}</div>
                         </td>
                         <td className="p-3.5 font-bold text-slate-800 dark:text-slate-200">
-                          ₹{m.poTotalAmount.toLocaleString()}
+                          ₹{(m.poTotalAmount ?? 0).toLocaleString()}
                         </td>
                         <td className="p-3.5 font-bold text-emerald-600 dark:text-emerald-400">
-                          ₹{m.grnAcceptedValue.toLocaleString()}
+                          ₹{(m.grnAcceptedValue ?? 0).toLocaleString()}
                         </td>
                         <td className="p-3.5">
-                          <div className="font-bold text-slate-800 dark:text-slate-200">₹{m.invoiceTotalAmount.toLocaleString()}</div>
+                          <div className="font-bold text-slate-800 dark:text-slate-200">₹{(m.invoiceTotalAmount ?? 0).toLocaleString()}</div>
                           <div className="text-xs text-slate-500">Inv: {m.vendorInvoiceNumber}</div>
                         </td>
                         <td className="p-3.5">

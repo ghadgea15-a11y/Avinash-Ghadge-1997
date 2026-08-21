@@ -130,7 +130,7 @@ export const billingRateService = {
           rateType: rate.rateType,
           quantity: qty,
           unit: rate.unit,
-          grossAmount: qty * rate.rate,
+          grossAmount: qty * (rate.rate ?? 0),
           currency: rate.currency,
           generatedAt: new Date().toISOString(),
           sourceReference: sourceRef

@@ -5,15 +5,17 @@ import { Plus, Search, AlertTriangle } from 'lucide-react';
 import { ReportLossDamageModal } from '../eam/ReportLossDamageModal';
 
 export function GatePassTab({ session, company }: { session: UserSession, company: CompanyTenant }) {
+  const companyId = company.companyId || (company as any).id || session.companyId || '';
   const [passes, setPasses] = useState<GatePassRecord[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [returnPass, setReturnPass] = useState<GatePassRecord | null>(null);
 
   const loadPasses = async () => {
-    setPasses(await ScmService.getGatePasses(company.companyId));
+    if (!companyId) return;
+    setPasses(await ScmService.getGatePasses(companyId));
   };
 
-  useEffect(() => { loadPasses(); }, [company.companyId]);
+  useEffect(() => { loadPasses(); }, [companyId]);
 
   return (
     <div className="flex h-full flex-col space-y-4">
@@ -56,14 +58,14 @@ export function GatePassTab({ session, company }: { session: UserSession, compan
                 <td className="px-4 py-3">
                   {p.status === 'SUBMITTED' && (
                     <button onClick={async () => {
-                      await ScmService.approveGatePass(session, p.id, company.companyId);
+                      await ScmService.approveGatePass(session, p.id || '', companyId);
                       loadPasses();
                     }} className="text-blue-600 hover:underline mr-2 text-xs font-medium">Approve</button>
                   )}
                   {p.status === 'APPROVED' && (
                     <button onClick={async () => {
                       try {
-                        await ScmService.dispatchGatePass(session, p.id, company.companyId);
+                        await ScmService.dispatchGatePass(session, p.id || '', companyId);
                         loadPasses();
                       } catch (e: any) { alert(e.message); }
                     }} className="text-purple-600 hover:underline text-xs font-medium">Dispatch</button>
@@ -71,7 +73,7 @@ export function GatePassTab({ session, company }: { session: UserSession, compan
                   {p.status === 'GATE_VERIFIED' && p.passType === 'INWARD' && (
                     <button onClick={async () => {
                       try {
-                        await ScmService.receiveGatePass(session, p.id, company.companyId);
+                        await ScmService.receiveGatePass(session, p.id || '', companyId);
                         loadPasses();
                       } catch (e: any) { alert(e.message); }
                     }} className="text-green-600 hover:underline text-xs font-medium ml-2">Receive Stock</button>
@@ -79,7 +81,7 @@ export function GatePassTab({ session, company }: { session: UserSession, compan
                   {p.status === 'RETURN_PENDING' && (
                     <button onClick={async () => {
                       try {
-                        await ScmService.returnGatePassMaterials(session, p.id, company.companyId, p.lines.map(l => ({ itemId: l.itemId, returnedQuantity: l.quantity })));
+                        await ScmService.returnGatePassMaterials(session, p.id || '', companyId, p.lines.map(l => ({ itemId: l.itemId, returnedQuantity: l.quantity })));
                         loadPasses();
                       } catch (e: any) { alert(e.message); }
                     }} className="text-orange-600 hover:underline text-xs font-medium ml-2">Mark Returned</button>

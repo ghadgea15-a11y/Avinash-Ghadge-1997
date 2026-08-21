@@ -147,7 +147,7 @@ export class SecurityAuditService {
             'REPEATED_FAILED_ACTIONS',
             'CRITICAL',
             90,
-            recentFailedEvents.map(e => e.eventId),
+            recentFailedEvents.map(e => e.eventId || e.id || 'unknown'),
             `User ${triggerEvent.userId} had ${recentFailedEvents.length} failed actions in 15 minutes.`
           );
         }
@@ -173,7 +173,7 @@ export class SecurityAuditService {
             'UNAUTHORIZED_ACCESS_ATTEMPTS',
             'HIGH',
             85,
-            recentUnauthorized.map(e => e.eventId),
+            recentUnauthorized.map(e => e.eventId || e.id || 'unknown'),
             `User ${triggerEvent.userId} had ${recentUnauthorized.length} unauthorized access attempts in 1 hour.`
           );
         } else if (recentUnauthorized.length === 1) {
@@ -184,8 +184,8 @@ export class SecurityAuditService {
             'UNAUTHORIZED_ACCESS_ATTEMPTS',
             'MEDIUM',
             60,
-            [triggerEvent.eventId],
-            `User ${triggerEvent.userId} attempted unauthorized access: ${triggerEvent.reason}`
+            [triggerEvent.eventId || triggerEvent.id || 'unknown'],
+            `User ${triggerEvent.userId} attempted unauthorized access: ${triggerEvent.reason || triggerEvent.details?.reason || ''}`
           );
         }
       }
@@ -197,8 +197,8 @@ export class SecurityAuditService {
           'CROSS_COMPANY_ACCESS',
           'CRITICAL',
           100,
-          [triggerEvent.eventId],
-          `User ${triggerEvent.userId} attempted cross-tenant access: ${triggerEvent.reason}`
+          [triggerEvent.eventId || triggerEvent.id || 'unknown'],
+          `User ${triggerEvent.userId} attempted cross-tenant access: ${triggerEvent.reason || triggerEvent.details?.reason || ''}`
         );
       }
 
@@ -209,8 +209,8 @@ export class SecurityAuditService {
           'CROSS_SITE_ACCESS',
           'HIGH',
           80,
-          [triggerEvent.eventId],
-          `User ${triggerEvent.userId} attempted cross-site access: ${triggerEvent.reason}`
+          [triggerEvent.eventId || triggerEvent.id || 'unknown'],
+          `User ${triggerEvent.userId} attempted cross-site access: ${triggerEvent.reason || triggerEvent.details?.reason || ''}`
         );
       }
 
@@ -234,7 +234,7 @@ export class SecurityAuditService {
             'SUSPICIOUS_PROXY_ACTIVITY',
             'HIGH',
             75,
-            recentProxyEvents.map(e => e.eventId),
+            recentProxyEvents.map(e => e.eventId || e.id || 'unknown'),
             `User ${triggerEvent.userId} performed ${recentProxyEvents.length} proxy actions in 1 hour.`
           );
         }
@@ -249,8 +249,8 @@ export class SecurityAuditService {
             'AFTER_HOURS_ADMIN_ACTIVITY',
             'MEDIUM',
             65,
-            [triggerEvent.eventId],
-            `Admin ${triggerEvent.userId} performed action '${triggerEvent.action}' outside normal business hours.`
+            [triggerEvent.eventId || triggerEvent.id || 'event-unknown'],
+            `Admin ${triggerEvent.userId} performed action '${triggerEvent.action || triggerEvent.eventType}' outside normal business hours.`
           );
         }
       }
@@ -275,7 +275,7 @@ export class SecurityAuditService {
             'ABNORMAL_APPROVAL_ACTIVITY',
             'HIGH',
             80,
-            recentApprovals.map(e => e.eventId),
+            recentApprovals.map(e => e.eventId || e.id || 'unknown'),
             `User ${triggerEvent.userId} processed ${recentApprovals.length} workflow approvals in under 15 minutes.`
           );
         }
@@ -339,10 +339,10 @@ export class SecurityAuditService {
           companyId,
           module: 'SECURITY',
           transactionType: 'SECURITY_ANOMALY',
-          transactionId: anomaly.anomalyId,
-          subjectId: anomaly.anomalyId,
+          transactionId: anomaly.anomalyId || anomaly.id || 'ANOMALY',
+          subjectId: anomaly.anomalyId || anomaly.id || 'ANOMALY',
           data: { ...anomaly, isGovernanceRequired: true },
-          correlationId: anomaly.anomalyId,
+          correlationId: anomaly.anomalyId || anomaly.id || 'ANOMALY',
           source: 'SECURITY_AUDIT'
         }).catch(err => console.error('[SecurityAuditService] GRC escalation failed:', err));
       }
@@ -364,19 +364,22 @@ export class SecurityAuditService {
 
   private static async notifyAdmins(companyId: string, anomaly: SecurityAnomalyRecord) {
     try {
+      const anomId = anomaly.anomalyId || anomaly.id || 'ANOMALY';
+      const anomType = anomaly.type || anomaly.anomalyType || 'SECURITY_ANOMALY';
+      const anomReason = anomaly.reason || anomaly.details || '';
       // Deterministic notification ID for idempotency
-      const notificationId = `NOTIF-${anomaly.anomalyId}`;
+      const notificationId = `NOTIF-${anomId}`;
       const notification = {
         id: notificationId,
         companyId,
         userId: 'SYSTEM',
-        title: `Security Anomaly: ${anomaly.type.replace(/_/g, ' ')}`,
-        message: `A ${anomaly.severity} severity anomaly was detected: ${anomaly.reason}`,
+        title: `Security Anomaly: ${anomType.replace(/_/g, ' ')}`,
+        message: `A ${anomaly.severity} severity anomaly was detected: ${anomReason}`,
         type: anomaly.severity === 'CRITICAL' || anomaly.severity === 'HIGH' ? 'ALERT' : 'WARNING',
         isRead: false,
         timestamp: new Date().toISOString(),
         severity: anomaly.severity,
-        referenceId: anomaly.anomalyId,
+        referenceId: anomId,
         referenceType: 'SECURITY_ANOMALY',
         roleScope: ['SUPER_ADMIN', 'COMPANY_ADMIN']
       };
@@ -392,10 +395,10 @@ export class SecurityAuditService {
           undefined,
           'AUTOMATED_SECURITY_RESPONSE',
           'security_anomalies',
-          anomaly.anomalyId,
+          anomId,
           true,
           'HIGH',
-          `Dispatched critical security alert to tenant administrators for anomaly ${anomaly.type}`,
+          `Dispatched critical security alert to tenant administrators for anomaly ${anomType}`,
           undefined
         );
       }

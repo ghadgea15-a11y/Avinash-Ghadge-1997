@@ -85,11 +85,14 @@ export class MaintenanceService {
       }
 
       const now = new Date().toISOString();
-      const planRef = doc(db, 'companies', companyId, 'maintenance_plans', plan.maintenancePlanId);
+      const planId = plan.maintenancePlanId || plan.id || `PLAN-${Date.now()}`;
+      const planRef = doc(db, 'companies', companyId, 'maintenance_plans', planId);
       
       const isNew = !plan.createdAt;
       const updatedPlan: MaintenancePlan = {
         ...plan,
+        id: planId,
+        maintenancePlanId: planId,
         companyId,
         createdAt: plan.createdAt || now,
         updatedAt: now
@@ -126,23 +129,26 @@ export class MaintenanceService {
     const horizon = new Date();
     horizon.setMonth(horizon.getMonth() + monthsAhead);
 
-    let currentDueDate = plan.startDate;
+    let currentDueDate = plan.startDate || plan.nextDueDate || new Date().toISOString();
     const occurrencesCol = collection(db, 'companies', companyId, 'maintenance_occurrences');
 
     // To prevent infinite loops if frequency is 0 (validated in save)
     let safetyCounter = 0;
+    const planId = plan.maintenancePlanId || plan.id || 'PLAN';
     while (new Date(currentDueDate) <= horizon && safetyCounter < 100) {
       // Create a stable deterministic ID for idempotency: planId_YYYY-MM-DD
       const datePart = currentDueDate.split('T')[0];
-      const occurrenceId = `OCC_${plan.maintenancePlanId}_${datePart}`;
+      const occurrenceId = `OCC_${planId}_${datePart}`;
       
       const occRef = doc(occurrencesCol, occurrenceId);
       
       // We only set if it doesn't exist to preserve any manual changes or WO links
       // But for simplicity in this logic, we use setDoc with merge: true for the core fields
       const occurrence: MaintenanceOccurrence = {
+        id: occurrenceId,
         maintenanceOccurrenceId: occurrenceId,
-        maintenancePlanId: plan.maintenancePlanId,
+        planId: planId,
+        maintenancePlanId: planId,
         companyId,
         assetId: plan.assetId,
         dueDate: currentDueDate,
@@ -193,21 +199,23 @@ export class MaintenanceService {
           
           if (occ.workOrderId) return; // Already has a WO
 
-          const planSnap = await transaction.get(doc(db, 'companies', companyId, 'maintenance_plans', occ.maintenancePlanId));
+          const targetPlanId = occ.maintenancePlanId || occ.planId || '';
+          const planSnap = await transaction.get(doc(db, 'companies', companyId, 'maintenance_plans', targetPlanId));
           if (!planSnap.exists()) return;
           const plan = planSnap.data() as MaintenancePlan;
 
-          const woId = `WO_MNT_${occ.maintenanceOccurrenceId}`;
+          const occId = occ.maintenanceOccurrenceId || occ.id || 'OCC';
+          const woId = `WO_MNT_${occId}`;
           const workOrder: WorkOrderRecord = {
             id: woId,
             companyId,
             siteId: plan.siteId,
-            title: `Maintenance: ${plan.maintenanceType} - Asset ${occ.assetId}`,
-            description: `Scheduled maintenance based on plan ${plan.maintenancePlanId}. Frequency: ${plan.frequency} ${plan.frequencyUnit}.`,
+            title: `Maintenance: ${plan.maintenanceType || 'Routine'} - Asset ${occ.assetId}`,
+            description: `Scheduled maintenance based on plan ${plan.maintenancePlanId || plan.id}. Frequency: ${plan.frequency} ${plan.frequencyUnit || 'MONTHLY'}.`,
             category: 'MAINTENANCE',
-            priority: plan.priority,
+            priority: (plan.priority as any) || 'MEDIUM',
             status: 'SUBMITTED',
-            assignedTo: plan.assignedTo || '',
+            assignedTo: plan.assignedTo || plan.assignedToUid || '',
             dueAt: occ.dueDate,
             createdAt: new Date().toISOString(),
             createdBy: actor.id,
@@ -226,7 +234,7 @@ export class MaintenanceService {
 
           transaction.update(occDoc.ref, { 
             workOrderId: woId,
-            status: 'IN_PROGRESS',
+            status: 'PENDING',
             updatedAt: new Date().toISOString()
           });
 
@@ -288,16 +296,20 @@ export class MaintenanceService {
       });
 
       // Update Plan's last completed date and next due date
-      const planRef = doc(db, 'companies', companyId, 'maintenance_plans', occ.maintenancePlanId);
-      const planSnap = await getDoc(planRef);
-      if (planSnap.exists()) {
-        const plan = planSnap.data() as MaintenancePlan;
-        const nextDue = this.calculateNextDueDate(now, plan.frequency, plan.frequencyUnit);
-        batch.update(planRef, {
-          lastCompletedDate: now,
-          nextDueDate: nextDue,
-          updatedAt: now
-        });
+      const planId = occ.maintenancePlanId || occ.planId || '';
+      if (planId) {
+        const planRef = doc(db, 'companies', companyId, 'maintenance_plans', planId);
+        const planSnap = await getDoc(planRef);
+        if (planSnap.exists()) {
+          const plan = planSnap.data() as MaintenancePlan;
+          const freq = typeof plan.frequency === 'number' ? plan.frequency : 1;
+          const nextDue = this.calculateNextDueDate(now, freq, plan.frequencyUnit);
+          batch.update(planRef, {
+            lastCompletedDate: now,
+            nextDueDate: nextDue,
+            updatedAt: now
+          });
+        }
       }
 
       // Restore Asset Status (to AVAILABLE or similar)

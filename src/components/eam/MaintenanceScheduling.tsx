@@ -65,10 +65,12 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
     if (!newPlan.assetId || !newPlan.siteId) return;
 
     const planData: MaintenancePlan = {
+      id: `PLAN-${Date.now()}`,
       maintenancePlanId: `PLAN-${Date.now()}`,
       companyId,
       assetId: newPlan.assetId,
       siteId: newPlan.siteId,
+      title: (newPlan as any).title || `${newPlan.maintenanceType || 'Preventive'} Maintenance`,
       maintenanceType: newPlan.maintenanceType as any,
       frequency: newPlan.frequency || 1,
       frequencyUnit: newPlan.frequencyUnit as any,
@@ -221,7 +223,7 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
                         <div className="flex items-center gap-4 mt-1 text-xs text-slate-500">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" />
-                            Due: {new Date(occ.dueDate).toLocaleDateString()}
+                            Due: {occ.dueDate ? new Date(occ.dueDate).toLocaleDateString() : 'N/A'}
                           </span>
                           {occ.workOrderId && (
                             <span className="flex items-center gap-1 text-indigo-600 font-medium">

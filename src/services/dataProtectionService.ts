@@ -462,7 +462,7 @@ export class DataProtectionService {
           session.role,
           session.employeeId,
           action,
-          context.resourceType,
+          context.resourceType || 'DATA_PROTECTION',
           context.resourceId || context.category,
           false,
           severity,

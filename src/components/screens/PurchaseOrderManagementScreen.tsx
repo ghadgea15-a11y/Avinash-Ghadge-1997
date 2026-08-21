@@ -421,11 +421,11 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
                        <tfoot className="bg-slate-50 border-t border-slate-200 font-medium">
                          <tr>
                            <td colSpan={4} className="px-4 py-3 text-right text-slate-600">Subtotal</td>
-                           <td className="px-4 py-3 text-right">₹{selectedPO.subTotal.toLocaleString()}</td>
+                           <td className="px-4 py-3 text-right">₹{(selectedPO.subTotal ?? selectedPO.subtotal ?? 0).toLocaleString()}</td>
                          </tr>
                          <tr>
                            <td colSpan={4} className="px-4 py-3 text-right text-slate-600">Tax</td>
-                           <td className="px-4 py-3 text-right">₹{selectedPO.totalTax.toLocaleString()}</td>
+                           <td className="px-4 py-3 text-right">₹{(selectedPO.totalTax ?? selectedPO.taxAmount ?? 0).toLocaleString()}</td>
                          </tr>
                          <tr>
                            <td colSpan={4} className="px-4 py-3 text-right text-slate-900 font-bold">Grand Total</td>

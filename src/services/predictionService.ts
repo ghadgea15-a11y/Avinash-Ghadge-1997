@@ -207,11 +207,12 @@ export class PredictionService {
       result.dataQuality = 'SUFFICIENT';
       
       const createdAt = new Date(ticket.createdAt);
-      const targetValue = slaDef.targetValue;
+      const targetValue = slaDef.targetValue ?? (slaDef.targetResponseMinutes || 60);
       let targetMs = 0;
       if (slaDef.targetUnit === 'MINUTES') targetMs = targetValue * 60000;
-      if (slaDef.targetUnit === 'HOURS') targetMs = targetValue * 3600000;
-      if (slaDef.targetUnit === 'DAYS') targetMs = targetValue * 86400000;
+      else if (slaDef.targetUnit === 'HOURS') targetMs = targetValue * 3600000;
+      else if (slaDef.targetUnit === 'DAYS') targetMs = targetValue * 86400000;
+      else targetMs = targetValue * 60000;
 
       const deadline = new Date(createdAt.getTime() + targetMs);
       const remainingMs = deadline.getTime() - today.getTime();
@@ -326,13 +327,14 @@ export class PredictionService {
       let employeeCountRequired = 0;
       
       for (const br of billingRates) {
+        const rateVal = br.rate ?? br.ratePerHour ?? 0;
         if (br.rateType === 'FIXED_MONTHLY') {
-          estMonthlyRevenue += br.rate;
-        } else if (br.rateType === 'PER_EMPLOYEE') {
+          estMonthlyRevenue += rateVal;
+        } else if (br.rateType === 'PER_EMPLOYEE' || !br.rateType) {
            // We need to know how many deployed
            const depSnap = await getDocs(query(collection(db, 'companies', companyId, 'deployments'), where('contractId', '==', contractId)));
            const deployedCount = depSnap.docs.length;
-           estMonthlyRevenue += (br.rate * deployedCount);
+           estMonthlyRevenue += (rateVal * (deployedCount || 1));
            employeeCountRequired += deployedCount;
         }
       }

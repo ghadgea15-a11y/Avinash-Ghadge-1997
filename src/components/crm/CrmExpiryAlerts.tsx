@@ -107,7 +107,7 @@ export const CrmExpiryAlerts: React.FC<Props> = ({ session, company, contracts }
               <div>
                 <p className="font-medium text-slate-900">{getContractName(evt.contractId)}</p>
                 <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
-                  <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Ends: {new Date(evt.expiryDate).toLocaleDateString()}</span>
+                  <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Ends: {new Date(evt.expiryDate || Date.now()).toLocaleDateString()}</span>
                   <span className="font-medium text-slate-700">
                     {evt.daysRemaining < 0 ? `Expired ${Math.abs(evt.daysRemaining)} days ago` : 
                      evt.daysRemaining === 0 ? 'Expires today' : 

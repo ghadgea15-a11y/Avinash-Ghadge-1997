@@ -151,7 +151,7 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
                         <AlertTriangle className="w-4 h-4" />
                       </span>
                       <div>
-                        <h4 className="font-medium text-slate-900">{event.emergencyType.replace(/_/g, ' ')}</h4>
+                        <h4 className="font-medium text-slate-900">{(event.emergencyType || 'EMERGENCY').replace(/_/g, ' ')}</h4>
                         <p className="text-xs text-slate-500 flex items-center gap-1">
                           <Clock className="w-3 h-3" /> {new Date(event.triggeredAt).toLocaleTimeString()}
                         </p>
@@ -197,7 +197,7 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
               historyEvents.map(event => (
                 <div key={event.id} className="p-4 opacity-75">
                    <div className="flex justify-between">
-                     <span className="font-medium text-slate-800">{event.emergencyType.replace(/_/g, ' ')}</span>
+                     <span className="font-medium text-slate-800">{(event.emergencyType || 'EMERGENCY').replace(/_/g, ' ')}</span>
                      <span className="text-xs text-slate-500">{new Date(event.triggeredAt).toLocaleDateString()}</span>
                    </div>
                    <p className="text-xs text-slate-500 mt-1">Status: {event.status}</p>
@@ -254,7 +254,7 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
             </div>
             <div className="p-6">
                <div className="bg-slate-50 p-4 rounded-lg mb-6 space-y-2 text-sm">
-                 <p><span className="text-slate-500">Event Type:</span> <span className="font-semibold">{selectedEvent.emergencyType.replace(/_/g, ' ')}</span></p>
+                 <p><span className="text-slate-500">Event Type:</span> <span className="font-semibold">{(selectedEvent.emergencyType || 'EMERGENCY').replace(/_/g, ' ')}</span></p>
                  <p><span className="text-slate-500">Status:</span> <span>{selectedEvent.status}</span></p>
                  <p><span className="text-slate-500">Triggered By:</span> {employees.find(e => e.id === selectedEvent.employeeId)?.firstName}</p>
                  <p><span className="text-slate-500">Location:</span> {selectedEvent.latitude.toFixed(5)}, {selectedEvent.longitude.toFixed(5)}</p>

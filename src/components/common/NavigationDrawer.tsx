@@ -24,7 +24,9 @@ import {
   IdCard,
   ShieldAlert,
   ListTodo,
-  Layers
+  Layers,
+  FileSignature,
+  Receipt
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 

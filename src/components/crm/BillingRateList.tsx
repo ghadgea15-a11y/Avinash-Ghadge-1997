@@ -13,7 +13,8 @@ export const BillingRateList: React.FC<{ rates: BillingRateMatrixRecord[], contr
     );
   }
 
-  const getContractName = (id: string) => {
+  const getContractName = (id?: string) => {
+    if (!id) return 'All Contracts';
     return contracts.find(c => c.id === id)?.contractNumber || id;
   };
 
@@ -38,18 +39,18 @@ export const BillingRateList: React.FC<{ rates: BillingRateMatrixRecord[], contr
                   <div className="text-xs text-slate-500">{r.siteId || 'All Sites'}</div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm text-slate-900 font-medium">{r.rateType.replace(/_/g, ' ')}</div>
-                  <div className="text-xs text-slate-500">Unit: {r.unit}</div>
+                  <div className="text-sm text-slate-900 font-medium">{r.rateType ? r.rateType.replace(/_/g, ' ') : 'Standard'}</div>
+                  <div className="text-xs text-slate-500">Unit: {r.unit || 'Month'}</div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm font-semibold text-slate-900">
-                    {r.currency} {r.rate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {r.currency || 'INR'} {(r.rate ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-slate-900 flex items-center gap-1">
-                     {new Date(r.effectiveFrom).toLocaleDateString()} 
-                     {r.effectiveTo ? ` - ${new Date(r.effectiveTo).toLocaleDateString()}` : ' - Onwards'}
+                     {r.effectiveFrom ? new Date(r.effectiveFrom).toLocaleDateString() : 'N/A'} 
+                     {(r as any).effectiveTo ? ` - ${new Date((r as any).effectiveTo).toLocaleDateString()}` : ' - Onwards'}
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -58,7 +59,7 @@ export const BillingRateList: React.FC<{ rates: BillingRateMatrixRecord[], contr
                     r.status === 'PENDING_APPROVAL' ? 'bg-amber-100 text-amber-800' :
                     'bg-slate-100 text-slate-800'
                   }`}>
-                    {r.status.replace(/_/g, ' ')}
+                    {r.status ? r.status.replace(/_/g, ' ') : 'ACTIVE'}
                   </span>
                 </td>
               </tr>
