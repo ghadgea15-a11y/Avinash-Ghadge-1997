@@ -64,41 +64,54 @@ export function GpsTracking({ session, sites, employees, selectedSiteId }: GpsTr
     }
   };
 
-  // Simulation effect for generating GPS points
+  // Tracking effect for generating real GPS points
   useEffect(() => {
     if (!isSimulating || !activeSession || !session.companyId) return;
 
+    if (!navigator.geolocation) {
+      console.warn("Geolocation is not supported by this browser.");
+      return;
+    }
+
     let seq = locationEvents.length;
-    let baseLat = 19.0760;
-    let baseLng = 72.8777;
 
-    const interval = setInterval(async () => {
-      seq++;
-      const lat = baseLat + (Math.random() * 0.005 * (Math.random() > 0.5 ? 1 : -1));
-      const lng = baseLng + (Math.random() * 0.005 * (Math.random() > 0.5 ? 1 : -1));
+    const watchId = navigator.geolocation.watchPosition(
+      async (position) => {
+        seq++;
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const accuracy = position.coords.accuracy;
 
-      const event: GpsLocationEvent = {
-        id: `GPS-${Date.now()}`,
-        trackingSessionId: activeSession.id,
-        companyId: session.companyId,
-        siteId: activeSession.siteId,
-        employeeId: activeSession.employeeId,
-        latitude: lat,
-        longitude: lng,
-        accuracy: 5 + Math.random() * 10,
-        timestamp: new Date().toISOString(),
-        source: 'FUSED',
-        sequenceNumber: seq
-      };
+        const event: GpsLocationEvent = {
+          id: `GPS-${Date.now()}`,
+          trackingSessionId: activeSession.id,
+          companyId: session.companyId,
+          siteId: activeSession.siteId,
+          employeeId: activeSession.employeeId,
+          latitude: lat,
+          longitude: lng,
+          accuracy: accuracy,
+          timestamp: new Date().toISOString(),
+          source: 'GPS',
+          sequenceNumber: seq
+        };
+        await FirestoreService.recordGpsEvent(session.companyId, event);
+        
+        // Update local state directly for immediate UI feedback
+        setLocationEvents(prev => [...prev, event]);
+      },
+      (error) => {
+        console.warn("Error watching position", error);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 27000
+      }
+    );
 
-      await FirestoreService.recordGpsEvent(session.companyId, event);
-      
-      // Update local state directly for immediate UI feedback without needing complex subscriptions in this demo
-      setLocationEvents(prev => [...prev, event]);
-    }, 5000); // simulate point every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [isSimulating, activeSession, session.companyId, locationEvents.length]);
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [isSimulating, activeSession, session.companyId]);
 
   return (
     <div className="space-y-6">

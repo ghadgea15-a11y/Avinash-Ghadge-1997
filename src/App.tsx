@@ -35,7 +35,8 @@ import { KotlinCodeViewer } from './components/screens/KotlinCodeViewer';
 import { SignUpScreen } from './components/screens/SignUpScreen';
 import { ApprovalPendingScreen } from './components/screens/ApprovalPendingScreen';
 import { ApprovalManagementScreen } from './components/screens/ApprovalManagementScreen';
-import { SuperAdminDashboard } from './components/screens/SuperAdminDashboard';
+import { SuperAdminGate } from './components/guards/SuperAdminGate';
+import { PlatformDashboard } from './pages/super-admin/Dashboard';
 import { EnterpriseDashboardScreen } from './components/screens/EnterpriseDashboardScreen';
 import { CompanyBillingScreen } from './components/screens/CompanyBillingScreen';
 import { SuperAdminCreateCompany } from './components/screens/SuperAdminCreateCompany';
@@ -81,8 +82,18 @@ export function App() {
     return 'LANDING';
   };
 
-  const [currentScreen, setCurrentScreen] = useState<PhaseAScreen>(getInitialScreen);
+  const [currentScreen, _setRawCurrentScreen] = useState<PhaseAScreen>(getInitialScreen);
   const [activeCompany, setActiveCompany] = useState<CompanyTenant | null>(null);
+
+  const setCurrentScreen = (screenOrUpdater: React.SetStateAction<PhaseAScreen>) => {
+    _setRawCurrentScreen((prev) => {
+      const nextScreen = typeof screenOrUpdater === 'function' ? screenOrUpdater(prev) : screenOrUpdater;
+      if (nextScreen === 'LOGIN' && !activeCompany && !SessionManager.getActiveCompany()) {
+        return 'COMPANY_CODE';
+      }
+      return nextScreen;
+    });
+  };
   const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(OfflineSyncService.isOnline());
   const [viewportMode, setViewportMode] = useState<'PHONE' | 'TABLET' | 'FULLSCREEN'>('PHONE');
@@ -224,24 +235,6 @@ export function App() {
     }
   };
 
-  const handleRoleSwitch = (newRole: UserRole) => {
-    if (!userSession) return;
-    const updatedSession: UserSession = {
-      ...userSession,
-      role: newRole
-    };
-    setUserSession(updatedSession);
-    SessionManager.setUserSession(updatedSession);
-    if (newRole === "SUPER_ADMIN") {
-      setCurrentScreen("SUPER_ADMIN_DASHBOARD");
-    } else if (newRole === "GUARD" || newRole === "FIELD_OFFICER") {
-      setCurrentScreen("ATTENDANCE_SHIFTS");
-    } else if (newRole === "SAFETY_OFFICER" || newRole === "EHS") {
-      setCurrentScreen("SAFETY_MANAGEMENT");
-    } else {
-      setCurrentScreen("EMPLOYEES");
-    }
-  };
 
   const handleSyncOfflineQueue = async () => {
     await OfflineSyncService.syncPendingQueue();
@@ -289,7 +282,7 @@ export function App() {
       {/* 1. PUBLIC MARKETING WEBSITE: Rendered directly as a standalone full-width website */}
       {currentScreen === 'LANDING' ? (
         <div className="min-h-screen w-full font-sans transition-colors duration-200">
-          <LandingPageScreen onNavigate={setCurrentScreen} />
+          <LandingPageScreen onNavigate={(s) => setCurrentScreen(s as any)} />
         </div>
       ) : currentScreen === 'LEGAL_POLICIES' ? (
         /* Standalone Legal & Compliance Policy Center */
@@ -390,7 +383,7 @@ export function App() {
             userSession={userSession}
             activeCompany={activeCompany}
             unreadNotifCount={unreadNotifCount}
-            onRoleSwitch={handleRoleSwitch}
+            
             onLockSession={handleLockSession}
             onLogout={handleLogout}
             isOnline={isOnline}
@@ -417,80 +410,71 @@ export function App() {
                     onOpenDrawer={() => setIsDrawerOpen(true)}
                     unreadNotifCount={unreadNotifCount}
                     userSession={userSession}
-                    onRoleSwitch={handleRoleSwitch}
+                    
                   />
                 )}
 
                 {/* Inner Screen Content View */}
                 <div className="flex-1 flex flex-col justify-between overflow-hidden relative w-full">
                   <div className="flex-1 overflow-y-auto w-full">
-                    {currentScreen === 'SUPER_ADMIN_DASHBOARD' && (
-                      <SuperAdminDashboard
-                        currentSession={userSession}
-                        onNavigate={setCurrentScreen}
-                      />
-                    )}
-
-                    {currentScreen === 'SUPER_ADMIN_CREATE_COMPANY' && (
-                      <SuperAdminCreateCompany
-                        currentSession={userSession}
-                        onNavigate={setCurrentScreen}
-                        onCompanyCreated={(companyId) => {
-                          setCurrentScreen('SUPER_ADMIN_DASHBOARD');
-                        }}
-                      />
-                    )}
-
-                    {currentScreen === 'SUPER_ADMIN_MODULES' && (
-                      <SuperAdminModulesScreen
-                        currentSession={userSession}
-                        onNavigate={setCurrentScreen}
-                      />
-                    )}
-
-                    {currentScreen === 'SUPER_ADMIN_COMPANIES' && (
-                      <SuperAdminCompaniesScreen
-                        currentSession={userSession}
-                        onNavigate={setCurrentScreen}
-                      />
-                    )}
-
-                    {currentScreen === 'SUPER_ADMIN_COMPANY_DETAILS' && (
-                      <SuperAdminCompaniesScreen
-                        currentSession={userSession}
-                        onNavigate={setCurrentScreen}
-                      />
-                    )}
-
-                    {currentScreen === 'SUPER_ADMIN_USERS' && (
-                      <ApprovalManagementScreen
-                        session={userSession}
-                        onNavigateBack={() => setCurrentScreen('SUPER_ADMIN_DASHBOARD')}
-                      />
-                    )}
-
-                    
-            {currentScreen === 'SUPER_ADMIN_SUBSCRIPTIONS' && (
-              <SuperAdminSubscriptionsScreen 
-                userSession={userSession!} 
-                onNavigate={setCurrentScreen} 
-              />
-            )}
-
-                    {currentScreen === 'SUPER_ADMIN_PENDING_APPROVALS' && (
-                      <ApprovalManagementScreen
-                        session={userSession}
-                        onNavigateBack={() => setCurrentScreen('SUPER_ADMIN_DASHBOARD')}
-                      />
-                    )}
-
-                    {currentScreen === 'SUPER_ADMIN_LEADS' && (
-                      <SuperAdminLeadsScreen
-                        currentSession={userSession!}
-                        onNavigate={setCurrentScreen}
-                      />
-                    )}
-
+    {currentScreen.startsWith('SUPER_ADMIN') && (
+  <SuperAdminGate userSession={userSession} onNavigate={(s) => setCurrentScreen(s as any)}>
+    {currentScreen === 'SUPER_ADMIN_DASHBOARD' && (
+      <PlatformDashboard session={userSession} />
+    )}
+    {currentScreen === 'SUPER_ADMIN_CREATE_COMPANY' && (
+      <SuperAdminCreateCompany
+        currentSession={userSession}
+        onNavigate={setCurrentScreen}
+        onCompanyCreated={(companyId) => {
+          setCurrentScreen('SUPER_ADMIN_DASHBOARD');
+        }}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_MODULES' && (
+      <SuperAdminModulesScreen
+        currentSession={userSession}
+        onNavigate={setCurrentScreen}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_COMPANIES' && (
+      <SuperAdminCompaniesScreen
+        currentSession={userSession}
+        onNavigate={setCurrentScreen}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_COMPANY_DETAILS' && (
+      <SuperAdminCompaniesScreen
+        currentSession={userSession}
+        onNavigate={setCurrentScreen}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_USERS' && (
+      <ApprovalManagementScreen
+        session={userSession}
+        onNavigateBack={() => setCurrentScreen('SUPER_ADMIN_DASHBOARD')}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_SUBSCRIPTIONS' && (
+      <SuperAdminSubscriptionsScreen 
+        userSession={userSession!} 
+        onNavigate={setCurrentScreen} 
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_PENDING_APPROVALS' && (
+      <ApprovalManagementScreen
+        session={userSession}
+        onNavigateBack={() => setCurrentScreen('SUPER_ADMIN_DASHBOARD')}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_LEADS' && (
+      <SuperAdminLeadsScreen
+        currentSession={userSession!}
+        onNavigate={setCurrentScreen}
+      />
+    )}
+  </SuperAdminGate>
+)}
                     {currentScreen === 'APPROVAL_PENDING' && (
                       <ApprovalPendingScreen
                         session={userSession}

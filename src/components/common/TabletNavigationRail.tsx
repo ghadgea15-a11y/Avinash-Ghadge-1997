@@ -37,7 +37,6 @@ interface TabletNavigationRailProps {
   onOpenDrawer: () => void;
   unreadNotifCount: number;
   userSession: UserSession | null;
-  onRoleSwitch: (role: UserRole) => void;
 }
 
 export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
@@ -46,7 +45,6 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
   onOpenDrawer,
   unreadNotifCount,
   userSession,
-  onRoleSwitch
 }) => {
   const { themeMode, setThemeMode, isDark } = useTheme();
 

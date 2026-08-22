@@ -16,7 +16,7 @@ import {
   X
 } from 'lucide-react';
 import { CompanyTenant, UserSession, UserRole, PhaseAScreen } from '../../types';
-import { FirebaseAuthService, RESERVED_SUPER_ADMIN_EMAILS } from '../../services/firebaseAuthService';
+import { FirebaseAuthService } from '../../services/firebaseAuthService';
 import { SessionManager } from '../../services/sessionManager';
 import { AppLogo } from '../common/AppLogo';
 import { useTheme } from '../../context/ThemeContext';
@@ -29,10 +29,10 @@ interface LoginScreenProps {
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   onLoginSuccess,
-  onNavigate
+  onNavigate,
+  activeCompany
 }) => {
   const { isDark } = useTheme();
-  const [companyCode, setCompanyCode] = useState('');
   const [showCompanyCode, setShowCompanyCode] = useState(false);
   const [emailOrId, setEmailOrId] = useState('');
   const [passwordOrPin, setPasswordOrPin] = useState('');
@@ -42,6 +42,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // MFA States
+  const [mfaResolver, setMfaResolver] = useState<any | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaError, setMfaError] = useState<string | null>(null);
 
   
   React.useEffect(() => {
@@ -49,7 +54,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     if (saved && saved.remember) {
       if (saved.emailOrId) setEmailOrId(saved.emailOrId);
       if (saved.passwordOrPin) setPasswordOrPin(saved.passwordOrPin);
-      if (saved.companyCode) setCompanyCode(saved.companyCode);
       setRememberMe(true);
     } else {
       // Clear fields if remember me was not active or expired (> 5 min)
@@ -73,41 +77,116 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       return;
     }
 
-    const isSuperAdminEmail = RESERVED_SUPER_ADMIN_EMAILS.includes(emailOrId.trim().toLowerCase());
-    const effectiveCompanyCode = companyCode.trim() 
-      ? companyCode.trim().toUpperCase() 
-      : (isSuperAdminEmail ? 'GLOBAL_ADMIN' : '');
-
-    if (!effectiveCompanyCode) {
-      setError('Please enter your Company Code.');
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
-      // First verify the company code
-      const company = await FirebaseAuthService.verifyCompanyCode(effectiveCompanyCode);
-      SessionManager.setActiveCompany(company);
+      const companyIdToUse = activeCompany?.companyId || SessionManager.getActiveCompany()?.companyId || undefined;
 
-      // Then authenticate the user
+      // Authenticate the user
       const session = await FirebaseAuthService.authenticateUser({
-        companyId: company.companyId,
+        companyId: companyIdToUse,
         emailOrId: emailOrId.trim(),
         passwordOrPin: passwordOrPin,
         isPinMode: !emailOrId.includes('@')
       });
       
-      SessionManager.setUserSession(session);
-      SessionManager.setSavedCredentials(emailOrId.trim(), passwordOrPin, effectiveCompanyCode, rememberMe);
+      // If the user's company is different from the locally active one (e.g. cross-tenant or first login)
+      let resolvedCompany = activeCompany || SessionManager.getActiveCompany();
+      if (!resolvedCompany || resolvedCompany.companyId !== session.companyId) {
+        if (session.companyId === 'GLOBAL_ADMIN') {
+          resolvedCompany = {
+            companyId: 'GLOBAL_ADMIN',
+            companyLegalName: 'Super Administration',
+            brandName: 'System Core',
+            status: 'ACTIVE',
+            primaryColorHex: '#4f46e5',
+            secondaryColorHex: '#4338ca',
+            email: session.email,
+            maxEmployeesAllowed: 9999,
+            maxSitesAllowed: 9999,
+            allowedBranches: [],
+            enabledModules: [],
+            licenseTier: 'ENTERPRISE'
+          } as CompanyTenant;
+        } else {
+          resolvedCompany = await FirebaseAuthService.verifyCompanyCode(session.companyId);
+        }
+        SessionManager.setActiveCompany(resolvedCompany);
+      }
 
-      onLoginSuccess(session, company);
-    } catch (err: unknown) {
+      SessionManager.setUserSession(session);
+      SessionManager.setSavedCredentials(emailOrId.trim(), passwordOrPin, session.companyId, rememberMe);
+
+      onLoginSuccess(session, resolvedCompany as CompanyTenant);
+    } catch (err: any) {
+      if (err.message === 'MFA_REQUIRED') {
+        setMfaResolver(err.resolver);
+        setMfaError(null);
+        setMfaCode('');
+        return;
+      }
       if (err instanceof Error) {
         setError(err.message);
       } else {
         setError('Authentication failed. Please verify your credentials and try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mfaCode || mfaCode.length < 6) {
+      setMfaError('Please enter a valid 6-digit code.');
+      return;
+    }
+
+    setLoading(true);
+    setMfaError(null);
+
+    try {
+      const companyIdToUse = activeCompany?.companyId || SessionManager.getActiveCompany()?.companyId || undefined;
+      const session = await FirebaseAuthService.authenticateWithMfa(
+        mfaResolver,
+        mfaCode,
+        companyIdToUse,
+        emailOrId.trim()
+      );
+
+      let resolvedCompany = activeCompany || SessionManager.getActiveCompany();
+      if (!resolvedCompany || resolvedCompany.companyId !== session.companyId) {
+        if (session.companyId === 'GLOBAL_ADMIN') {
+          resolvedCompany = {
+            companyId: 'GLOBAL_ADMIN',
+            companyLegalName: 'Super Administration',
+            brandName: 'System Core',
+            status: 'ACTIVE',
+            primaryColorHex: '#4f46e5',
+            secondaryColorHex: '#4338ca',
+            email: session.email,
+            maxEmployeesAllowed: 9999,
+            maxSitesAllowed: 9999,
+            allowedBranches: [],
+            enabledModules: [],
+            licenseTier: 'ENTERPRISE'
+          } as CompanyTenant;
+        } else {
+          resolvedCompany = await FirebaseAuthService.verifyCompanyCode(session.companyId);
+        }
+        SessionManager.setActiveCompany(resolvedCompany);
+      }
+
+      SessionManager.setUserSession(session);
+      SessionManager.setSavedCredentials(emailOrId.trim(), passwordOrPin, session.companyId, rememberMe);
+
+      onLoginSuccess(session, resolvedCompany as CompanyTenant);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setMfaError(err.message);
+      } else {
+        setMfaError('MFA Verification failed.');
       }
     } finally {
       setLoading(false);
@@ -145,7 +224,86 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   };
 
 
+  if (mfaResolver) {
+    return (
+      <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} flex flex-col justify-center px-6`}>
+        <div className="w-full max-w-sm mx-auto space-y-6">
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 mb-2">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <h2 className="text-xl font-bold">Two-Factor Authentication</h2>
+            <p className="text-sm text-slate-500">
+              Enter the 6-digit code from your authenticator app.
+            </p>
+          </div>
+          
+          <form onSubmit={handleMfaSubmit} className="space-y-4">
+            <div>
+              <label className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'} block mb-1`}>
+                Authenticator Code
+              </label>
+              <input
+                type="text"
+                maxLength={6}
+                value={mfaCode}
+                onChange={(e) => {
+                  setMfaCode(e.target.value.replace(/[^0-9]/g, ''));
+                  setMfaError(null);
+                }}
+                placeholder="123456"
+                className={`w-full transition-colors duration-300 ${
+                  isDark 
+                    ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500' 
+                    : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'
+                } rounded-xl px-4 py-3 text-center text-2xl tracking-[0.5em] focus:outline-none font-mono`}
+              />
+            </div>
+            
+            {mfaError && (
+              <div className="p-3 bg-rose-950/80 border border-rose-800 rounded-xl text-xs text-rose-300 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />
+                <span>{mfaError}</span>
+              </div>
+            )}
+            
+            <button
+              type="submit"
+              disabled={loading || mfaCode.length < 6}
+              className={`w-full font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30 disabled:opacity-50`}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Verifying...</span>
+                </>
+              ) : (
+                <>
+                  <span>Verify Code</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => {
+                setMfaResolver(null);
+                setMfaCode('');
+                setMfaError(null);
+              }}
+              className="w-full py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            >
+              Back to Login
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
+
     <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} flex flex-col justify-between p-6 relative`}>
       {/* Top Navigation Bar: Back to Home & Menu */}
       <div className="flex items-center justify-between w-full mb-2">
@@ -289,33 +447,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             </div>
           </div>
 
-          <div>
-            <label className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'} block mb-1`}>
-              Company Code
-            </label>
-            <div className="relative">
-              <input
-                type={showCompanyCode ? "text" : "password"}
-                value={companyCode}
-                onChange={(e) => setCompanyCode(e.target.value.toUpperCase())}
-                placeholder="Company Code"
-                autoComplete="off"
-                className={`w-full transition-colors duration-300 ${
-                  isDark 
-                    ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500' 
-                    : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'
-                } rounded-xl px-4 py-2.5 text-xs focus:outline-none font-mono uppercase tracking-wider pr-10`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowCompanyCode(!showCompanyCode)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
-                title={showCompanyCode ? "Hide Company Code" : "Show Company Code"}
-              >
-                {showCompanyCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
 
           <div className="flex items-center justify-between pt-1">
             <label className={`flex items-center gap-2 cursor-pointer text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>

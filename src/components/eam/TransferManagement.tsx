@@ -88,7 +88,7 @@ export function TransferManagement({ session, assets, sites, employees, transfer
                       {new Date(trf.requestedAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {true ? ( // Simplification for demo: allowing receive
+                      {['COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 'SUPERVISOR'].includes(session.role) || session.employeeId === trf.toCustodianId ? (
                         <button 
                           onClick={() => handleReceive(trf)}
                           disabled={submitting === trf.id}

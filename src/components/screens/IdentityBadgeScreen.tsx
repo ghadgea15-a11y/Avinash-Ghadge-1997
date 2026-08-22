@@ -64,7 +64,7 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
       setLoading(false);
     });
 
-    FirestoreService.getEmployees(activeCompany.companyId).then(setEmployees);
+    FirestoreService.getEmployees(userSession, activeCompany.companyId).then(setEmployees);
 
     return () => {
       unsubBadges();
@@ -552,12 +552,7 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
                       <button className="flex items-center justify-center gap-2 py-3 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-sm font-bold">
                         <QrCode size={18} /> Open Scanner
                       </button>
-                      <button 
-                        onClick={() => setVerifyInput('IDB-DEMO-123')}
-                        className="text-xs text-indigo-600 hover:underline text-center col-span-2"
-                      >
-                        Try Demo QR Identifier
-                      </button>
+
                     </div>
                   </div>
                 ) : (

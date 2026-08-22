@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CompanyTenant, UserSession, RfqRequest, RfqBid } from '../../types';
 import { Search, Plus, Filter, FileText, CheckCircle, Clock, Ban, Award, FileSignature, ArrowRight, DollarSign, Download, Upload, Percent } from 'lucide-react';
 import { format } from 'date-fns';
+import { ScmService } from '../../services/scmService';
 
 interface Props {
   userSession: UserSession;
@@ -20,106 +21,22 @@ export function RfqManagementScreen({ userSession, activeCompany, onNavigate }: 
   const [showMatrix, setShowMatrix] = useState(false);
 
   useEffect(() => {
-    // Mock Data Fetch
-    setTimeout(() => {
-      const mockRfqs: RfqRequest[] = [
-        {
-          id: 'RFQ-2026-0089',
-          companyId: activeCompany.companyId,
-          rfqNumber: 'RFQ-2026-0089',
-          title: 'Q3 Uniform & Gear Procurement',
-          category: 'Security Gear',
-          description: 'Procurement of standardized uniforms, boots, and batons for new 500 guards.',
-          scopeOfWork: 'Supply and deliver 500 sets within 30 days of PO issuance.',
-          requiredDeliveryDate: '2026-10-15T00:00:00Z',
-          deliverySiteId: 'HQ-01',
-          deliveryAddress: 'Central Hub, Delhi',
-          submissionDeadline: '2026-09-10T23:59:59Z',
-          status: 'UNDER_EVALUATION',
-          invitedVendorIds: ['ALL_CATEGORY_VENDORS'],
-          lineItems: [
-            { itemId: 'LI-1', itemName: 'Security Uniform Set (M, L, XL)', specification: 'Poly-cotton blend, embroidered logo', quantity: 500, uom: 'Sets' },
-            { itemId: 'LI-2', itemName: 'Tactical Boots', specification: 'Leather, steel-toe, size 8-11', quantity: 500, uom: 'Pairs' }
-          ],
-          evaluationCriteria: { priceWeightage: 70, deliverySpeedWeightage: 15, vendorRatingWeightage: 15 },
-          createdBy: 'A2_MGR_01',
-          createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
-          updatedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
-        },
-        {
-          id: 'RFQ-2026-0090',
-          companyId: activeCompany.companyId,
-          rfqNumber: 'RFQ-2026-0090',
-          title: 'IT Hardware Refresh (Laptops)',
-          category: 'IT Hardware',
-          description: 'Procurement of 50 ThinkPad/Latitude laptops for HQ staff.',
-          scopeOfWork: 'Supply with 3yr ADP.',
-          requiredDeliveryDate: '2026-09-30T00:00:00Z',
-          deliverySiteId: 'HQ-01',
-          deliveryAddress: 'Central Hub, Delhi',
-          submissionDeadline: new Date(Date.now() + 5 * 86400000).toISOString(),
-          status: 'PUBLISHED',
-          invitedVendorIds: ['VND-1003', 'VND-2005'],
-          lineItems: [
-            { itemId: 'LI-1', itemName: 'Business Laptops', specification: 'i7, 16GB RAM, 512GB SSD', quantity: 50, uom: 'Units' }
-          ],
-          evaluationCriteria: { priceWeightage: 80, deliverySpeedWeightage: 20, vendorRatingWeightage: 0 },
-          createdBy: 'A2_MGR_01',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }
-      ];
-
-      const mockBids: RfqBid[] = [
-        {
-          id: 'BID-001',
-          companyId: activeCompany.companyId,
-          rfqId: 'RFQ-2026-0089',
-          vendorId: 'VND-1001',
-          vendorName: 'Apex Security Gear',
-          bidStatus: 'SUBMITTED',
-          lineItemQuotes: [
-            { itemId: 'LI-1', offeredUnitPrice: 1200, taxPercent: 18, hsnCode: '6203', lineTotal: 600000, leadTimeDays: 15, remarks: 'In stock' },
-            { itemId: 'LI-2', offeredUnitPrice: 1500, taxPercent: 18, hsnCode: '6403', lineTotal: 750000, leadTimeDays: 20, remarks: 'Subject to size availability' }
-          ],
-          subTotal: 1350000,
-          totalTax: 243000,
-          grandTotal: 1593000,
-          paymentTermsOffered: '30 days Net',
-          quoteValidityDate: '2026-10-10T00:00:00Z',
-          submittedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-          score: { technicalScore: 90, commercialScore: 85, totalRank: 1 },
-          createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-          updatedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-        },
-        {
-          id: 'BID-002',
-          companyId: activeCompany.companyId,
-          rfqId: 'RFQ-2026-0089',
-          vendorId: 'VND-1004',
-          vendorName: 'Defense Supplies Ltd',
-          bidStatus: 'SUBMITTED',
-          lineItemQuotes: [
-            { itemId: 'LI-1', offeredUnitPrice: 1350, taxPercent: 18, hsnCode: '6203', lineTotal: 675000, leadTimeDays: 10, remarks: 'Premium quality' },
-            { itemId: 'LI-2', offeredUnitPrice: 1400, taxPercent: 18, hsnCode: '6403', lineTotal: 700000, leadTimeDays: 10, remarks: 'Fast delivery' }
-          ],
-          subTotal: 1375000,
-          totalTax: 247500,
-          grandTotal: 1622500,
-          paymentTermsOffered: 'Advance 50%',
-          quoteValidityDate: '2026-10-10T00:00:00Z',
-          submittedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-          score: { technicalScore: 95, commercialScore: 80, totalRank: 2 },
-          createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-          updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-        }
-      ];
-
-      setRfqs(mockRfqs);
-      setBids(mockBids);
-      setLoading(false);
-    }, 800);
-  }, [activeCompany.companyId]);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const fetchedRfqs = await ScmService.getRfqs(userSession, activeCompany.companyId);
+        const fetchedBids = await ScmService.getRfqBids(userSession, activeCompany.companyId);
+        setRfqs(fetchedRfqs);
+        setBids(fetchedBids);
+      } catch (error) {
+        console.error('Failed to fetch RFQ data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [userSession, activeCompany.companyId]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {

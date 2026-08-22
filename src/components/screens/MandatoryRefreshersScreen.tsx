@@ -3,6 +3,7 @@ import { CompanyTenant, UserSession, EmployeeRefresherStatus, MandatoryRefresher
 import { AlertCircle, CheckCircle, Clock, ShieldAlert, Calendar, UserX, FileText } from 'lucide-react';
 import { getFirestore, collection, query, getDocs } from 'firebase/firestore';
 import { format } from 'date-fns';
+import { LearningManagementService } from '../../services/learningManagementService';
 
 interface Props {
   userSession: UserSession;
@@ -17,91 +18,20 @@ export function MandatoryRefreshersScreen({ userSession, activeCompany, onNaviga
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
-        const db = getFirestore();
-        // Mock data fetch since we don't have existing seeds for this new feature yet
-        // In a real app we'd fetch from Firestore
-        
-        // Simulating data:
-        setTimeout(() => {
-          setConfigs([
-            {
-              id: 'C-01',
-              companyId: activeCompany.companyId,
-              courseId: 'CR-FIRE',
-              courseName: 'Fire Safety & Evacuation (Annual)',
-              recurrenceIntervalMonths: 12,
-              gracePeriodDays: 30,
-              targetRoles: ['EMPLOYEE', 'GUARD', 'SUPERVISOR'],
-              blockingPolicy: 'BLOCK_ROSTER',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            },
-            {
-              id: 'C-02',
-              companyId: activeCompany.companyId,
-              courseId: 'CR-PSARA',
-              courseName: 'PSARA Refresher (Bi-Annual)',
-              recurrenceIntervalMonths: 24,
-              gracePeriodDays: 15,
-              targetRoles: ['GUARD', 'SUPERVISOR'],
-              blockingPolicy: 'WARN',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          ]);
-
-          const now = new Date();
-          const pastDate = new Date(now);
-          pastDate.setDate(now.getDate() - 400); // More than 1 year ago
-
-          const futureDate = new Date(now);
-          futureDate.setDate(now.getDate() + 15); // Due in 15 days
-
-          const overdueDate = new Date(now);
-          overdueDate.setDate(now.getDate() - 10); // Overdue by 10 days
-
-          setStatuses([
-            {
-              id: 'EMP-001_CR-FIRE',
-              companyId: activeCompany.companyId,
-              employeeId: 'EMP-001',
-              employeeName: 'Rahul Sharma',
-              courseId: 'CR-FIRE',
-              courseName: 'Fire Safety & Evacuation (Annual)',
-              lastCompletedDate: pastDate.toISOString(),
-              nextDueDate: overdueDate.toISOString(),
-              gracePeriodExpiryDate: new Date(overdueDate.getTime() + (30 * 24 * 60 * 60 * 1000)).toISOString(),
-              status: 'IN_GRACE_PERIOD',
-              completionHistory: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            },
-            {
-              id: 'EMP-002_CR-FIRE',
-              companyId: activeCompany.companyId,
-              employeeId: 'EMP-002',
-              employeeName: 'Amit Kumar',
-              courseId: 'CR-FIRE',
-              courseName: 'Fire Safety & Evacuation (Annual)',
-              lastCompletedDate: new Date().toISOString(),
-              nextDueDate: new Date(now.getTime() + 365*24*60*60*1000).toISOString(),
-              gracePeriodExpiryDate: new Date(now.getTime() + 395*24*60*60*1000).toISOString(),
-              status: 'ACTIVE',
-              completionHistory: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          ]);
-          setLoading(false);
-        }, 800);
+        const fetchedConfigs = await LearningManagementService.getMandatoryRefresherConfigs(userSession, activeCompany.companyId);
+        const fetchedStatuses = await LearningManagementService.getEmployeeRefresherStatuses(userSession, activeCompany.companyId);
+        setConfigs(fetchedConfigs);
+        setStatuses(fetchedStatuses);
       } catch (err) {
-        console.error(err);
+        console.error('Failed to fetch refreshers:', err);
+      } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [activeCompany.companyId]);
+  }, [userSession, activeCompany.companyId]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

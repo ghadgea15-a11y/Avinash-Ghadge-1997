@@ -42,29 +42,6 @@ export const ComplianceControlViewer: React.FC<Props> = ({ session }) => {
     loadData();
   }, [session.companyId]);
 
-  const handleCreateTestException = async () => {
-    try {
-      await ComplianceControlService.recordTest(session, {
-        id: `TST-${Date.now()}`,
-        companyId: session.companyId,
-        controlId: controls[0]?.id || 'CTL-001',
-        testerId: session.userId,
-        testDate: new Date().toISOString(),
-        testPeriodStart: new Date(Date.now() - 30*24*60*60*1000).toISOString(),
-        testPeriodEnd: new Date().toISOString(),
-        testProcedure: 'Review access logs for unauthorized attempts',
-        expectedResult: 'No unauthorized access',
-        actualResult: 'Found 3 unauthorized access attempts from unknown IPs',
-        evidenceUrls: [],
-        result: 'INEFFECTIVE',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-      loadData();
-    } catch (err: any) {
-      setError(err.message || 'Failed to create test exception');
-    }
-  };
 
   if (loading) {
     return (
@@ -85,12 +62,6 @@ export const ComplianceControlViewer: React.FC<Props> = ({ session }) => {
           </h2>
           <p className="text-gray-500 mt-1">Enterprise Compliance Control & Control Testing</p>
         </div>
-        <button 
-          onClick={handleCreateTestException}
-          className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition"
-        >
-          Simulate Test Failure
-        </button>
       </div>
 
       {error && (
@@ -138,31 +109,6 @@ export const ComplianceControlViewer: React.FC<Props> = ({ session }) => {
       <div className="bg-white rounded-lg shadow border border-gray-200">
         <div className="border-b border-gray-200">
           <nav className="flex -mb-px px-6" aria-label="Tabs">
-            <button
-              onClick={() => setActiveTab('CONTROLS')}
-              className={`py-4 px-1 text-sm font-medium border-b-2 mr-8 ${
-                activeTab === 'CONTROLS'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Control Register
-            </button>
-            <button
-              onClick={() => setActiveTab('EXCEPTIONS')}
-              className={`py-4 px-1 text-sm font-medium border-b-2 ${
-                activeTab === 'EXCEPTIONS'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Exceptions & Remediation
-              {exceptions.filter(e => e.status !== 'CLOSED').length > 0 && (
-                <span className="ml-2 bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs">
-                  {exceptions.filter(e => e.status !== 'CLOSED').length}
-                </span>
-              )}
-            </button>
           </nav>
         </div>
         

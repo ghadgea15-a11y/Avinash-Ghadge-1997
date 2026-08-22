@@ -62,7 +62,7 @@ export const CertificationTrackingScreen: React.FC<{
       
       const [certs, emps] = await Promise.all([
         CertificationTrackingService.getCompanyCertifications(activeCompany.companyId),
-        FirestoreService.getEmployees(activeCompany.companyId)
+        FirestoreService.getEmployees(userSession, activeCompany.companyId)
       ]);
       setCertifications(certs);
       setEmployees(emps);

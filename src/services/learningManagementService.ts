@@ -6,13 +6,33 @@ import {
   TrainingProgramRecord, 
   TrainingSessionRecord, 
   TrainingEnrollmentRecord,
-  EmployeeRecord
+  EmployeeRecord,
+  MandatoryRefresherConfig,
+  EmployeeRefresherStatus
 } from '../types';
 import { FirestoreService } from './firestoreService';
 import { StorageService } from './storageService';
 import { AuditTrailService } from './auditTrailService';
+import { QueryScopeEngine } from './queryScopeEngine';
 
 export class LearningManagementService {
+
+  // ============================================================================
+  // REFRESHERS
+  // ============================================================================
+  static async getMandatoryRefresherConfigs(session: UserSession, companyId: string): Promise<MandatoryRefresherConfig[]> {
+    const constraints = QueryScopeEngine.buildScope(session, 'REFRESHER_CONFIGS');
+    const q = query(collection(db, 'companies', companyId, 'refresher_configs'), ...constraints);
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.data() as MandatoryRefresherConfig);
+  }
+
+  static async getEmployeeRefresherStatuses(session: UserSession, companyId: string): Promise<EmployeeRefresherStatus[]> {
+    const constraints = QueryScopeEngine.buildScope(session, 'REFRESHER_STATUSES');
+    const q = query(collection(db, 'companies', companyId, 'refresher_statuses'), ...constraints);
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.data() as EmployeeRefresherStatus);
+  }
 
   // ============================================================================
   // PROGRAMS

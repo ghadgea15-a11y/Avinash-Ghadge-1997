@@ -49,7 +49,7 @@ export class CertificationTrackingService {
 
   static async evaluateExpiryStatuses(companyId: string): Promise<void> {
     // In a real scheduled cloud function, this would run nightly.
-    // For now, we simulate it or run it on dashboard load.
+    // For now, we run it on dashboard load.
     const allCerts = await this.getCompanyCertifications(companyId);
     
     const batch = writeBatch(db);
@@ -81,7 +81,7 @@ export class CertificationTrackingService {
           updatedAt: now.toISOString()
         });
 
-        // Notify if it just expired or is expiring soon (we should avoid spamming, but for demo we create notification)
+        // Notify if it just expired or is expiring soon (we should avoid spamming, create notification)
         if (newStatus === 'EXPIRED') {
           notifications.push({
             id: uuidv4(),

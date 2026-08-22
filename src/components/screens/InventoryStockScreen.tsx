@@ -194,7 +194,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
     });
 
     FirestoreService.getSites(companyId).then(setSites);
-    FirestoreService.getEmployees(companyId).then(setEmployees);
+    FirestoreService.getEmployees(userSession, companyId).then(setEmployees);
 
     return () => {
       unsubItems();

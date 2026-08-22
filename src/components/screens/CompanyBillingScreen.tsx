@@ -48,7 +48,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
         SubscriptionService.getCompanySubscription(userSession.companyId),
         SubscriptionService.getAllPlans(),
         SubscriptionService.getCompanyEntitlements(userSession.companyId),
-        FirestoreService.getEmployees(userSession.companyId)
+        FirestoreService.getEmployees(userSession, userSession.companyId)
       ]);
 
       setSubscription(sub);

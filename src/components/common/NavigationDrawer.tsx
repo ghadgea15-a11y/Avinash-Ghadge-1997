@@ -35,7 +35,6 @@ interface NavigationDrawerProps {
   onClose: () => void;
   currentScreen: string;
   onNavigate: (screen: PhaseAScreen) => void;
-  onRoleSwitch?: (newRole: any) => void;
   onLockSession?: () => void;
   onLogout?: () => void;
   isOnline?: boolean;
@@ -52,7 +51,6 @@ export function NavigationDrawer({
   userSession,
   activeCompany,
   unreadNotifCount = 0,
-  onRoleSwitch,
   onLockSession,
   onLogout,
   isOnline

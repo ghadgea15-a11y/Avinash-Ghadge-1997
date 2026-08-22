@@ -180,7 +180,7 @@ export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps>
       setCompanyBanks(banks);
     }).catch(err => console.error('Failed to load company banks:', err));
 
-    FirestoreService.getEmployees(companyId).then((emps) => {
+    FirestoreService.getEmployees(userSession, companyId).then((emps) => {
       setEmployees(emps);
       setLoading(false);
     }).catch(() => setLoading(false));

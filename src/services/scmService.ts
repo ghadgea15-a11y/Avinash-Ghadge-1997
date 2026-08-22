@@ -6,10 +6,42 @@ import { db } from '../firebase';
 import { 
   UserSession, InventoryItemRecord, StockLocationRecord, 
   StockLedgerRecord, StockBalanceRecord, GatePassRecord, 
-  GatePassLineItem, IncidentReportRecord
+  GatePassLineItem, IncidentReportRecord, RfqRequest, RfqBid,
+  SrmVendorRecord
 } from '../types';
+import { QueryScopeEngine } from './queryScopeEngine';
 
 export class ScmService {
+
+  // ---------------------------------------------------------
+  // VENDORS
+  // ---------------------------------------------------------
+  static async getSrmVendors(session: UserSession, companyId: string): Promise<SrmVendorRecord[]> {
+    const constraints = QueryScopeEngine.buildScope(session, 'VENDORS');
+    const q = query(collection(db, 'companies', companyId, 'srm_vendors'), ...constraints);
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => d.data() as SrmVendorRecord);
+  }
+
+  // ---------------------------------------------------------
+  // RFQS
+  // ---------------------------------------------------------
+  static async getRfqs(session: UserSession, companyId: string): Promise<RfqRequest[]> {
+    const constraints = QueryScopeEngine.buildScope(session, 'RFQS');
+    const q = query(collection(db, 'companies', companyId, 'rfqs'), ...constraints);
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => d.data() as RfqRequest);
+  }
+
+  static async getRfqBids(session: UserSession, companyId: string, rfqId?: string): Promise<RfqBid[]> {
+    const constraints = QueryScopeEngine.buildScope(session, 'RFQ_BIDS');
+    if (rfqId) {
+      constraints.push(where('rfqId', '==', rfqId));
+    }
+    const q = query(collection(db, 'companies', companyId, 'rfq_bids'), ...constraints);
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => d.data() as RfqBid);
+  }
 
   static evaluateThreshold(quantity: number, item: InventoryItemRecord): 'NORMAL' | 'LOW_STOCK' | 'CRITICAL_STOCK' | 'OUT_OF_STOCK' | 'OVER_STOCK' {
     if (!item.thresholdEnabled) return 'NORMAL';

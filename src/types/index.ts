@@ -333,6 +333,7 @@ export interface ApprovalRequestRecord {
   departmentName: string;
   requestedRole?: UserRole;
   emailVerified?: boolean;
+  employeeId?: string;
   companyAdminApproval: ApprovalStatus;
   companyAdminApprovedBy?: string;
   companyAdminApprovedAt?: string;
@@ -350,7 +351,6 @@ export interface ApprovalRequestRecord {
   // Lifecycle extension
   type?: 'ONBOARDING' | 'LIFECYCLE';
   context?: 'PROMOTION' | 'TRANSFER' | 'EXIT';
-  employeeId?: string;
   details?: any;
 }
 

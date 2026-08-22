@@ -8,7 +8,10 @@ import {
   signInWithPopup,
   signInWithCustomToken,
   signOut,
-  User as FirebaseUser
+  User as FirebaseUser,
+  getMultiFactorResolver,
+  TotpMultiFactorGenerator,
+  MultiFactorResolver
 } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
 import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
@@ -26,12 +29,7 @@ import { SecurityAuditService } from './securityAuditService';
 import { SessionManager } from './sessionManager';
 import { AccountProtectionService } from './accountProtectionService';
 
-export const RESERVED_SUPER_ADMIN_EMAILS = [
-  'admin@logsheetmuster.com',
-  'superadmin@logsheetmuster.com',
-  'ghadgea15@gmail.com',
-  'sysadmin@logsheetmuster.com'
-];
+export const RESERVED_SUPER_ADMIN_EMAILS: string[] = [];
 
 export class FirebaseAuthService {
   /**
@@ -166,7 +164,7 @@ export class FirebaseAuthService {
       return cachedCompany;
     }
     
-    // Fallback for Demo/Testing & Standard Enterprise codes if offline or demo
+    // Fallback for Global Admin bootstrap
     const predefinedTenants: Record<string, CompanyTenant> = {
       'GLOBAL_ADMIN': {
         companyId: 'GLOBAL_ADMIN',
@@ -227,68 +225,9 @@ export class FirebaseAuthService {
         primaryColorHex: '#4f46e5',
         secondaryColorHex: '#06b6d4',
         status: 'ACTIVE'
-      },
-      'APEX-SEC-101': {
-        companyId: 'APEX-SEC-101',
-        companyLegalName: 'Apex Security Services Ltd',
-        brandName: 'Apex Security',
-        licenseTier: 'ENTERPRISE',
-        allowedBranches: ['MAIN', 'NORTH', 'SOUTH'],
-        maxEmployeesAllowed: 1000,
-        maxSitesAllowed: 50,
-        primaryColorHex: '#4f46e5',
-        secondaryColorHex: '#06b6d4',
-        status: 'ACTIVE'
-      },
-      'LOG-MUSTER-001': {
-        companyId: 'LOG-MUSTER-001',
-        companyLegalName: 'Log Sheet Muster Corp',
-        brandName: 'Demo Corp',
-        licenseTier: 'ENTERPRISE',
-        allowedBranches: ['MAIN', 'PUNE', 'MUMBAI'],
-        maxEmployeesAllowed: 500,
-        maxSitesAllowed: 25,
-        primaryColorHex: '#0ea5e9',
-        secondaryColorHex: '#10b981',
-        status: 'ACTIVE'
-      },
-      'GLOBAL-GUARD-01': {
-        companyId: 'GLOBAL-GUARD-01',
-        companyLegalName: 'Global Guard Solutions',
-        brandName: 'Global Guard',
-        licenseTier: 'ENTERPRISE',
-        allowedBranches: ['MAIN'],
-        maxEmployeesAllowed: 300,
-        maxSitesAllowed: 15,
-        primaryColorHex: '#8b5cf6',
-        secondaryColorHex: '#f59e0b',
-        status: 'ACTIVE'
-      },
-      'TATA': {
-        companyId: 'TATA',
-        companyLegalName: 'Tata Motors',
-        brandName: 'Tata Motors',
-        licenseTier: 'ENTERPRISE',
-        allowedBranches: ['MAIN'],
-        maxEmployeesAllowed: 1000,
-        maxSitesAllowed: 50,
-        primaryColorHex: '#0d3b66',
-        secondaryColorHex: '#faf0ca',
-        status: 'ACTIVE'
-      },
-      'TEST-COMP': {
-        companyId: 'TEST-COMP',
-        companyLegalName: 'Test Company Ltd',
-        brandName: 'Test Co',
-        licenseTier: 'ENTERPRISE',
-        allowedBranches: ['MAIN'],
-        maxEmployeesAllowed: 1000,
-        maxSitesAllowed: 50,
-        primaryColorHex: '#4f46e5',
-        secondaryColorHex: '#06b6d4',
-        status: 'ACTIVE'
       }
     };
+
 
     if (predefinedTenants[cleanCode]) {
       return predefinedTenants[cleanCode];
@@ -356,54 +295,40 @@ export class FirebaseAuthService {
 
     const timestamp = new Date().toISOString();
 
-    // 3. Super Admin Reserved Initialization
-    const isReservedSuperAdmin = RESERVED_SUPER_ADMIN_EMAILS.includes(cleanEmail);
-    if (isReservedSuperAdmin) {
-      await FirestoreService.initializeSuperAdminConfig(fbUser.uid, cleanEmail);
-
-      const superUserDoc = {
-        uid: fbUser.uid,
-        email: cleanEmail,
-        fullName: cleanName || 'Super Administrator',
-        companyId: 'GLOBAL_ADMIN',
-        departmentId: 'DEPT-SUPER-ADMIN',
-        departmentName: 'Super Admin',
-        mobileNumber: mobileNumber || '',
-        role: 'SUPER_ADMIN' as UserRole,
-        accountStatus: 'ACTIVE' as AccountStatus,
-        emailVerified: fbUser.emailVerified,
-        companyAdminApproval: 'APPROVED' as ApprovalStatus,
-        hrApproval: 'APPROVED' as ApprovalStatus,
-        createdAt: timestamp,
-        updatedAt: timestamp
-      };
-
-      await setDoc(doc(db, 'users', fbUser.uid), superUserDoc, { merge: true });
-
-      const session: UserSession = {
-        userId: fbUser.uid,
-        employeeId: 'SA-001',
-        fullName: superUserDoc.fullName,
-        email: cleanEmail,
-        role: 'SUPER_ADMIN',
-        companyId: 'GLOBAL_ADMIN',
-        branchId: 'HQ',
-        token: await fbUser.getIdToken(),
-        tokenExpiresAt: Date.now() + (12 * 60 * 60 * 1000),
-        isBiometricEnabled: false,
-        lastActiveAt: Date.now(),
-        loginMode: 'PASSWORD',
-        accountStatus: 'ACTIVE',
-        emailVerified: fbUser.emailVerified
-      };
-
-      await FirestoreService.logAuditEvent('GLOBAL', fbUser.uid, cleanName, 'SUPER_ADMIN_INITIALIZED', `Initial Super Admin account registered for ${cleanEmail}`);
-
-      return { fbUser, userSession: session, accountStatus: 'ACTIVE' };
+    // 4. Check if this is the provisioned Company Admin
+    const isCompanyAdmin = companyTenant!.adminEmail && companyTenant!.adminEmail.toLowerCase() === cleanEmail;
+    
+    // 5. Normal Company User Registration
+    const companyId = companyTenant!.companyId || companyCode;
+    
+    // Check if employee record already exists by email
+    let existingEmpId: string | null = null;
+    let autoApprove = false;
+    let employeeRole = isCompanyAdmin ? 'COMPANY_ADMIN' : 'EMPLOYEE';
+    
+    try {
+      const empQuery = query(collection(db, 'companies', companyId, 'employees'), where('email', '==', cleanEmail));
+      const empSnap = await getDocs(empQuery);
+      if (!empSnap.empty) {
+        const emp = empSnap.docs[0].data();
+        existingEmpId = emp.id;
+        autoApprove = true;
+        if (emp.role) employeeRole = emp.role;
+        
+        // Link the authUid
+        await setDoc(doc(db, 'companies', companyId, 'employees', emp.id), {
+          authUid: fbUser.uid,
+          hasSystemAccess: true,
+          updatedAt: timestamp
+        }, { merge: true });
+      }
+    } catch (e) {
+      console.warn('Error looking up existing employee by email:', e);
     }
+    
+    const assignedRole = isCompanyAdmin ? 'COMPANY_ADMIN' : (autoApprove ? employeeRole : 'EMPLOYEE');
+    const assignedStatus = (isCompanyAdmin || autoApprove) ? 'ACTIVE' : 'PENDING_APPROVAL';
 
-    // 4. Normal Company User Registration
-    const companyId = companyTenant!.companyId;
     const userDocData = {
       uid: fbUser.uid,
       email: cleanEmail,
@@ -413,11 +338,11 @@ export class FirebaseAuthService {
       departmentId,
       departmentName,
       mobileNumber: mobileNumber || '',
-      role: 'EMPLOYEE' as UserRole, // Safe default role
-      accountStatus: 'PENDING_APPROVAL' as AccountStatus,
+      role: assignedRole as UserRole,
+      accountStatus: assignedStatus as AccountStatus,
       emailVerified: fbUser.emailVerified,
-      companyAdminApproval: 'PENDING' as ApprovalStatus,
-      hrApproval: 'PENDING' as ApprovalStatus,
+      companyAdminApproval: (isCompanyAdmin || autoApprove) ? 'APPROVED' : 'PENDING' as ApprovalStatus,
+      hrApproval: (isCompanyAdmin || autoApprove) ? 'APPROVED' : 'PENDING' as ApprovalStatus,
       createdAt: timestamp,
       updatedAt: timestamp
     };
@@ -430,49 +355,73 @@ export class FirebaseAuthService {
       userId: fbUser.uid,
       email: cleanEmail,
       fullName: cleanName,
-      role: 'EMPLOYEE',
+      role: assignedRole,
       companyId,
-      status: 'PENDING',
+      status: (isCompanyAdmin || autoApprove) ? 'ACTIVE' : 'PENDING',
+      employeeId: existingEmpId || undefined,
       updatedAt: timestamp
     }, { merge: true });
 
-    // 5. Create Approval Request Record
-    const approvalReq: ApprovalRequestRecord = {
-      id: `REQ-${fbUser.uid}`,
-      uid: fbUser.uid,
-      fullName: cleanName,
-      email: cleanEmail,
-      mobileNumber: mobileNumber || '',
-      companyId,
-      companyName: companyTenant!.brandName,
-      departmentId,
-      departmentName,
-      requestedRole: 'GUARD',
-      emailVerified: fbUser.emailVerified,
-      companyAdminApproval: 'PENDING',
-      hrApproval: 'PENDING',
-      accountStatus: 'PENDING_APPROVAL',
-      createdAt: timestamp,
-      updatedAt: timestamp
-    };
+    const finalEmployeeId = existingEmpId || `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`;
 
-    await FirestoreService.saveApprovalRequest(approvalReq);
+    if (!autoApprove && !isCompanyAdmin) {
+      // 6. Create Approval Request Record
+      const approvalReq: ApprovalRequestRecord = {
+        id: `REQ-${fbUser.uid}`,
+        uid: fbUser.uid,
+        employeeId: finalEmployeeId,
+        fullName: cleanName,
+        email: cleanEmail,
+        mobileNumber: mobileNumber || '',
+        companyId,
+        companyName: companyTenant!.brandName,
+        departmentId,
+        departmentName,
+        requestedRole: 'GUARD',
+        emailVerified: fbUser.emailVerified,
+        companyAdminApproval: 'PENDING',
+        hrApproval: 'PENDING',
+        accountStatus: 'PENDING_APPROVAL',
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+      await FirestoreService.saveApprovalRequest(approvalReq);
 
-    // 6. Create Notification for Company Admin & HR
-    try {
-      const notifRef = doc(db, 'companies', companyId, 'notifications', `NOTIF-APP-${Date.now()}`);
-      await setDoc(notifRef, {
-        id: notifRef.id,
-        title: 'New Account Approval Request',
-        message: `${cleanName} (${cleanEmail}) registered for ${departmentName} and requires approval.`,
-        type: 'ALERT',
-        timestamp,
-        isRead: false,
-        roleScope: ['COMPANY_ADMIN', 'HR_ADMIN'],
-        siteId: 'HQ'
-      });
-    } catch (nErr) {
-      console.warn('[FirebaseAuthService] Notification creation warning:', nErr);
+      // Create Notification for Company Admin & HR
+      try {
+        const notifRef = doc(db, 'companies', companyId, 'notifications', `NOTIF-APP-${Date.now()}`);
+        await setDoc(notifRef, {
+          id: notifRef.id,
+          title: 'New Account Approval Request',
+          message: `${cleanName} (${cleanEmail}) registered for ${departmentName} and requires approval.`,
+          type: 'ALERT',
+          timestamp,
+          isRead: false,
+          roleScope: ['COMPANY_ADMIN', 'HR_ADMIN'],
+          siteId: 'HQ'
+        });
+      } catch (nErr) {
+        console.warn('[FirebaseAuthService] Notification creation warning:', nErr);
+      }
+    } else if (isCompanyAdmin && !existingEmpId) {
+      // Provisioned Company Admin without an Employee record yet
+      const newEmp = {
+        id: finalEmployeeId,
+        employeeId: finalEmployeeId,
+        companyId,
+        firstName: cleanName.split(' ')[0] || cleanName,
+        lastName: cleanName.split(' ').slice(1).join(' ') || ' ',
+        email: cleanEmail,
+        contactNumber: mobileNumber || '',
+        role: assignedRole,
+        status: 'ACTIVE',
+        lifecycleStatus: 'ACTIVE',
+        authUid: fbUser.uid,
+        hasSystemAccess: true,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+      await setDoc(doc(db, 'companies', companyId, 'employees', finalEmployeeId), newEmp, { merge: true });
     }
 
     // 7. Log Audit Event
@@ -486,10 +435,10 @@ export class FirebaseAuthService {
 
     const session: UserSession = {
       userId: fbUser.uid,
-      employeeId: `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`,
+      employeeId: finalEmployeeId,
       fullName: cleanName,
       email: cleanEmail,
-      role: 'GUARD' as UserRole, // explicit signup default
+      role: assignedRole as UserRole,
       companyId,
       branchId: 'MAIN',
       token: await fbUser.getIdToken(),
@@ -577,53 +526,6 @@ export class FirebaseAuthService {
       };
 
       return { fbUser, userSession: session, isNewUser: false, accountStatus };
-    }
-
-    // Check if user is reserved Super Admin email
-    const isReservedSuperAdmin = RESERVED_SUPER_ADMIN_EMAILS.includes(cleanEmail);
-    if (isReservedSuperAdmin) {
-      await FirestoreService.initializeSuperAdminConfig(fbUser.uid, cleanEmail);
-
-      const timestamp = new Date().toISOString();
-      const superUserDoc = {
-        uid: fbUser.uid,
-        email: cleanEmail,
-        fullName: fbUser.displayName || 'Super Administrator',
-        companyId: 'GLOBAL_ADMIN',
-        departmentId: 'DEPT-SUPER-ADMIN',
-        departmentName: 'Super Admin',
-        role: 'SUPER_ADMIN' as UserRole,
-        accountStatus: 'ACTIVE' as AccountStatus,
-        emailVerified: true,
-        companyAdminApproval: 'APPROVED' as ApprovalStatus,
-        hrApproval: 'APPROVED' as ApprovalStatus,
-        createdAt: timestamp,
-        updatedAt: timestamp
-      };
-
-      await setDoc(userDocRef, superUserDoc, { merge: true });
-
-      const session: UserSession = {
-        userId: fbUser.uid,
-        employeeId: 'SA-001',
-        fullName: superUserDoc.fullName,
-        email: cleanEmail,
-        role: 'SUPER_ADMIN',
-        companyId: 'GLOBAL_ADMIN',
-        branchId: 'HQ',
-        avatarUrl: fbUser.photoURL || undefined,
-        token: await fbUser.getIdToken(),
-        tokenExpiresAt: Date.now() + (12 * 60 * 60 * 1000),
-        isBiometricEnabled: false,
-        lastActiveAt: Date.now(),
-        loginMode: 'GOOGLE',
-        accountStatus: 'ACTIVE',
-        emailVerified: true
-      };
-
-      await FirestoreService.logAuditEvent('GLOBAL', fbUser.uid, superUserDoc.fullName, 'GOOGLE_SIGNUP', `Super Admin signed up with Google (${cleanEmail})`);
-
-      return { fbUser, userSession: session, isNewUser: false, accountStatus: 'ACTIVE' };
     }
 
     // If new normal user, UI must prompt for Company Code & Department
@@ -804,7 +706,7 @@ export class FirebaseAuthService {
    * Performs real authentication using Firebase Auth (Email/Password) or Firestore lookup (Employee ID / PIN)
    */
   static async authenticateUser(params: {
-    companyId: string;
+    companyId?: string;
     emailOrId: string;
     passwordOrPin: string;
     isPinMode: boolean;
@@ -814,9 +716,11 @@ export class FirebaseAuthService {
     const cleanInputLower = cleanInput.toLowerCase();
 
     // Check Account Lockout first
-    const lockCheck = await AccountProtectionService.isAccountLocked(companyId, cleanInput);
-    if (lockCheck.locked) {
-      throw new Error(lockCheck.reason || 'Account is temporarily locked due to multiple failed attempts. Please try again later.');
+    if (companyId) {
+      const lockCheck = await AccountProtectionService.isAccountLocked(companyId, cleanInput);
+      if (lockCheck.locked) {
+        throw new Error(lockCheck.reason || 'Account is temporarily locked due to multiple failed attempts. Please try again later.');
+      }
     }
 
     // 1. Firebase Auth mode (Email / Password)
@@ -826,94 +730,51 @@ export class FirebaseAuthService {
         try {
           userCredential = await signInWithEmailAndPassword(auth, cleanInputLower, passwordOrPin);
         } catch (authErr: any) {
-          if (authErr.code === 'auth/user-not-found' || authErr.code === 'auth/invalid-credential') {
-             // If it's a reserved super admin, auto-create the account
-             if (RESERVED_SUPER_ADMIN_EMAILS.includes(cleanInputLower)) {
-                try {
-                  userCredential = await createUserWithEmailAndPassword(auth, cleanInputLower, passwordOrPin);
-                } catch (createErr: any) {
-                  throw authErr;
-                }
-             } else {
-               throw authErr;
-             }
-          } else {
-            throw authErr;
-          }
+          throw authErr;
         }
         const fbUser = userCredential.user;
         const userEmail = (fbUser.email || cleanInputLower).toLowerCase();
 
-        const isReservedSuperAdmin = RESERVED_SUPER_ADMIN_EMAILS.includes(userEmail);
-
-        // Default session values
-        let role: UserRole = isReservedSuperAdmin ? 'SUPER_ADMIN' : 'COMPANY_ADMIN';
-        let employeeId = isReservedSuperAdmin ? 'SA-001' : `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`;
-        let fullName = fbUser.displayName || userEmail.split('@')[0] || (isReservedSuperAdmin ? 'Super Administrator' : 'Authenticated User');
-        let branchId = isReservedSuperAdmin ? 'HQ' : 'MAIN_BRANCH';
-        let assignedSiteId: string | undefined = undefined;
-        let accountStatus: AccountStatus = 'ACTIVE';
-        let departmentId: string | undefined = isReservedSuperAdmin ? 'DEPT-SUPER-ADMIN' : undefined;
-        let departmentName: string | undefined = isReservedSuperAdmin ? 'Super Admin' : undefined;
-        let companyAdminApproval: ApprovalStatus = 'APPROVED';
-        let hrApproval: ApprovalStatus = 'APPROVED';
-        let userCompanyId = isReservedSuperAdmin ? 'GLOBAL_ADMIN' : companyId;
-
         // Safely fetch user profile from Firestore root 'users' collection with offline resilience
+        let uData: any = null;
         try {
           const userDocRef = doc(db, 'users', fbUser.uid);
           const userSnap = await getDoc(userDocRef);
 
           if (userSnap.exists()) {
-            const uData = userSnap.data();
-            const isUserSuperAdmin = isReservedSuperAdmin || uData.role === 'SUPER_ADMIN';
-            
-            if (uData.companyId && uData.companyId !== companyId && !isUserSuperAdmin) {
-              throw new Error(`User is not authorized for company: ${companyId}`);
-            }
-            
-            role = isUserSuperAdmin ? 'SUPER_ADMIN' : (uData.role || role);
-            employeeId = uData.employeeId || employeeId;
-            fullName = uData.fullName || fullName;
-            branchId = uData.branchId || branchId;
-            assignedSiteId = uData.assignedSiteId;
-            accountStatus = ((uData.accountStatus as AccountStatus) || accountStatus);
-            departmentId = uData.departmentId || departmentId;
-            departmentName = uData.departmentName || departmentName;
-            companyAdminApproval = uData.companyAdminApproval || companyAdminApproval;
-            hrApproval = uData.hrApproval || hrApproval;
-            if (isUserSuperAdmin) {
-              userCompanyId = 'GLOBAL_ADMIN';
-            } else if (uData.companyId && uData.companyId !== 'PENDING') {
-              userCompanyId = uData.companyId;
-            }
-          } else if (isReservedSuperAdmin) {
-            // Ensure super admin doc exists in Firestore root collection
-            const timestamp = new Date().toISOString();
-            const superUserDoc = {
-              uid: fbUser.uid,
-              email: userEmail,
-              fullName,
-              companyId: 'GLOBAL_ADMIN',
-              departmentId: 'DEPT-SUPER-ADMIN',
-              departmentName: 'Super Admin',
-              role: 'SUPER_ADMIN' as UserRole,
-              accountStatus: 'ACTIVE' as AccountStatus,
-              emailVerified: true,
-              companyAdminApproval: 'APPROVED' as ApprovalStatus,
-              hrApproval: 'APPROVED' as ApprovalStatus,
-              createdAt: timestamp,
-              updatedAt: timestamp
-            };
-            setDoc(userDocRef, superUserDoc, { merge: true }).catch(err =>
-              console.warn('[FirebaseAuthService] Non-critical super admin user doc sync warning:', err)
-            );
+            uData = userSnap.data();
           }
         } catch (firestoreErr: any) {
           console.warn('[FirebaseAuthService] Firestore profile check skipped/handled (offline or missing):', firestoreErr);
-          if (firestoreErr.message && firestoreErr.message.includes('not authorized')) {
-            throw firestoreErr;
+        }
+
+        const isUserSuperAdmin = uData?.role === 'SUPER_ADMIN';
+
+        // Default session values
+        let role: UserRole = isUserSuperAdmin ? 'SUPER_ADMIN' : (uData?.role || 'COMPANY_ADMIN');
+        let employeeId = uData?.employeeId || (isUserSuperAdmin ? 'SA-001' : `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`);
+        let fullName = uData?.fullName || fbUser.displayName || userEmail.split('@')[0] || 'Authenticated User';
+        let branchId = uData?.branchId || (isUserSuperAdmin ? 'HQ' : 'MAIN_BRANCH');
+        let assignedSiteId: string | undefined = uData?.assignedSiteId;
+        let accountStatus: AccountStatus = ((uData?.accountStatus as AccountStatus) || 'ACTIVE');
+        let departmentId: string | undefined = uData?.departmentId || (isUserSuperAdmin ? 'DEPT-SUPER-ADMIN' : undefined);
+        let departmentName: string | undefined = uData?.departmentName || (isUserSuperAdmin ? 'Super Admin' : undefined);
+        let companyAdminApproval: ApprovalStatus = uData?.companyAdminApproval || 'APPROVED';
+        let hrApproval: ApprovalStatus = uData?.hrApproval || 'APPROVED';
+        
+        let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (companyId || '');
+
+        if (uData) {
+          if (companyId && uData.companyId && uData.companyId !== companyId && !isUserSuperAdmin) {
+            throw new Error(`User is not authorized for company: ${companyId}`);
           }
+          if (!isUserSuperAdmin && uData.companyId && uData.companyId !== 'PENDING') {
+            userCompanyId = uData.companyId;
+          }
+        }
+        
+        if (!userCompanyId) {
+          throw new Error('User is not associated with any company.');
         }
 
         const session: UserSession = {
@@ -939,8 +800,10 @@ export class FirebaseAuthService {
         };
         
         // Reset failed logins
-        await AccountProtectionService.recordSuccessfulLogin(companyId, cleanInput);
-
+        if (session.companyId && session.companyId !== 'GLOBAL_ADMIN') {
+          await AccountProtectionService.recordSuccessfulLogin(session.companyId, cleanInput);
+        }
+        
         SecurityAuditService.logEvent(
           session.companyId,
           session.userId,
@@ -953,17 +816,28 @@ export class FirebaseAuthService {
           'LOW',
           'User authenticated successfully'
         ).catch((e: any) => console.error(e));
+        
         return session;
       } catch (err: unknown) {
         const firebaseErr = err as { code?: string; message?: string };
+        if (firebaseErr.code === 'auth/multi-factor-auth-required') {
+          throw Object.assign(new Error('MFA_REQUIRED'), { 
+            resolver: getMultiFactorResolver(auth, err as any),
+            emailOrId: cleanInput,
+            companyId: companyId
+          });
+        }
+        
         if (
           firebaseErr.code === 'auth/wrong-password' ||
           firebaseErr.code === 'auth/user-not-found' ||
           firebaseErr.code === 'auth/invalid-credential'
         ) {
-          const failRec = await AccountProtectionService.recordFailedLogin(companyId, cleanInput);
-          if (failRec.locked) {
-            throw new Error(failRec.message);
+          if (companyId) {
+            const failRec = await AccountProtectionService.recordFailedLogin(companyId, cleanInput);
+            if (failRec.locked) {
+              throw new Error(failRec.message);
+            }
           }
           throw new Error('Invalid email or password. Please verify your login details.');
         }
@@ -972,50 +846,54 @@ export class FirebaseAuthService {
         }
       }
     }
-
     
     // 2. PIN / Employee ID Mode - Strict Custom Token Flow via generatePinToken Cloud Function
     try {
+      if (!companyId) {
+        throw new Error('Company Code is required for PIN authentication.');
+      }
+      
       const generatePinTokenFn = httpsCallable(functions, 'generatePinToken');
       const res: any = await generatePinTokenFn({
         companyId,
         employeeId: cleanInput,
         pin: passwordOrPin
       });
-
+      
       const data = res.data || {};
       const customToken = data.token;
       if (!customToken) {
         throw new Error('Secure PIN authentication is currently unavailable. Please try again.');
       }
-
+      
       // Sign in with Firebase Custom Token
       const userCred = await signInWithCustomToken(auth, customToken);
       const fbUser = userCred.user;
-
+      
       // Obtain ID token result with claims
       const idTokenResult = await fbUser.getIdTokenResult(true);
       const claims = idTokenResult.claims || {};
-
+      
       if (claims.status === 'TERMINATED' || claims.status === 'SUSPENDED') {
         await signOut(auth);
         throw new Error(`Account is ${claims.status}. Login denied.`);
       }
-
+      
       // Fetch employee record for profile details
       const empColRef = collection(db, 'companies', companyId, 'employees');
       const empQuery = query(empColRef, where('employeeId', '==', cleanInput));
       const querySnap = await getDocs(empQuery);
-
+      
       let empData: any = {};
       let empDocId = fbUser.uid;
+      
       if (!querySnap.empty) {
         empDocId = querySnap.docs[0].id;
         empData = querySnap.docs[0].data();
       }
-
+      
       console.log('[Auth] Login mode: CUSTOM_TOKEN successful for employee:', cleanInput);
-
+      
       const session: UserSession = {
         userId: empDocId,
         firebaseUid: fbUser.uid,
@@ -1042,7 +920,6 @@ export class FirebaseAuthService {
       };
       
       await AccountProtectionService.recordSuccessfulLogin(companyId, cleanInput);
-
       SecurityAuditService.logEvent(
         session.companyId,
         session.userId,
@@ -1055,26 +932,135 @@ export class FirebaseAuthService {
         'LOW',
         'User authenticated successfully'
       ).catch((e: any) => console.error(e));
+      
       return session;
-
     } catch (err: any) {
       console.error('[FirebaseAuthService] PIN auth error:', err);
-      const failRec = await AccountProtectionService.recordFailedLogin(companyId, cleanInput);
-      if (failRec.locked) {
-        throw new Error(failRec.message);
+      if (companyId) {
+        const failRec = await AccountProtectionService.recordFailedLogin(companyId, cleanInput);
+        if (failRec.locked) {
+          throw new Error(failRec.message);
+        }
       }
       if (err instanceof Error) {
         throw err;
       }
       throw new Error('Invalid credentials or PIN entered. Please check your details and try again.');
     }
-
-    throw new Error('Invalid credentials or PIN entered. Please check your details and try again.');
   }
 
   /**
-   * Safely logs out user from Firebase Auth and clears session
+   * Completes TOTP MFA Sign in
    */
+  static async authenticateWithMfa(
+    resolver: MultiFactorResolver,
+    verificationCode: string,
+    companyId?: string,
+    emailOrId?: string
+  ): Promise<UserSession> {
+    try {
+      const assertion = TotpMultiFactorGenerator.assertionForSignIn(
+        resolver.hints[0].uid,
+        verificationCode
+      );
+      const userCredential = await resolver.resolveSignIn(assertion);
+      const fbUser = userCredential.user;
+      const cleanInputLower = (emailOrId || fbUser.email || '').toLowerCase();
+
+      // Safely fetch user profile from Firestore root 'users' collection with offline resilience
+      let uData: any = null;
+      try {
+        const userDocRef = doc(db, 'users', fbUser.uid);
+        const userSnap = await getDoc(userDocRef);
+
+        if (userSnap.exists()) {
+          uData = userSnap.data();
+        }
+      } catch (firestoreErr: any) {
+        console.warn('[FirebaseAuthService] Firestore profile check skipped/handled (offline or missing):', firestoreErr);
+      }
+
+      const isUserSuperAdmin = uData?.role === 'SUPER_ADMIN';
+
+      // Default session values
+      let role: UserRole = isUserSuperAdmin ? 'SUPER_ADMIN' : (uData?.role || 'COMPANY_ADMIN');
+      let employeeId = uData?.employeeId || (isUserSuperAdmin ? 'SA-001' : `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`);
+      let fullName = uData?.fullName || fbUser.displayName || cleanInputLower.split('@')[0] || 'Authenticated User';
+      let branchId = uData?.branchId || (isUserSuperAdmin ? 'HQ' : 'MAIN_BRANCH');
+      let assignedSiteId: string | undefined = uData?.assignedSiteId;
+      let accountStatus: AccountStatus = ((uData?.accountStatus as AccountStatus) || 'ACTIVE');
+      let departmentId: string | undefined = uData?.departmentId || (isUserSuperAdmin ? 'DEPT-SUPER-ADMIN' : undefined);
+      let departmentName: string | undefined = uData?.departmentName || (isUserSuperAdmin ? 'Super Admin' : undefined);
+      let companyAdminApproval: ApprovalStatus = uData?.companyAdminApproval || 'APPROVED';
+      let hrApproval: ApprovalStatus = uData?.hrApproval || 'APPROVED';
+      
+      let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (companyId || '');
+
+      if (uData) {
+        if (companyId && uData.companyId && uData.companyId !== companyId && !isUserSuperAdmin) {
+          throw new Error(`User is not authorized for company: ${companyId}`);
+        }
+        if (!isUserSuperAdmin && uData.companyId && uData.companyId !== 'PENDING') {
+          userCompanyId = uData.companyId;
+        }
+      }
+      
+      if (!userCompanyId) {
+        throw new Error('User is not associated with any company.');
+      }
+
+      const session: UserSession = {
+        userId: fbUser.uid,
+        employeeId,
+        fullName,
+        email: cleanInputLower,
+        role,
+        companyId: userCompanyId,
+        branchId,
+        assignedSiteId,
+        token: await fbUser.getIdToken(),
+        tokenExpiresAt: Date.now() + (12 * 60 * 60 * 1000),
+        isBiometricEnabled: false,
+        lastActiveAt: Date.now(),
+        loginMode: 'PASSWORD',
+        accountStatus,
+        emailVerified: fbUser.emailVerified ,
+        departmentId,
+        departmentName,
+        companyAdminApproval,
+        hrApproval
+      };
+      
+      // Reset failed logins
+      if (session.companyId && session.companyId !== 'GLOBAL_ADMIN') {
+        await AccountProtectionService.recordSuccessfulLogin(session.companyId, cleanInputLower);
+      }
+      
+      SecurityAuditService.logEvent(
+        session.companyId,
+        session.userId,
+        session.role,
+        session.employeeId,
+        'LOGIN_SUCCESS',
+        'authentication',
+        session.userId,
+        true,
+        'LOW',
+        'User authenticated successfully via MFA'
+      ).catch((e: any) => console.error(e));
+      
+      return session;
+    } catch (err: unknown) {
+      console.error('[FirebaseAuthService] MFA auth error:', err);
+      const firebaseErr = err as { code?: string };
+      if (firebaseErr.code === 'auth/invalid-verification-code') {
+        throw new Error('Invalid verification code.');
+      }
+      throw new Error('Failed to verify MFA code. Please try again.');
+    }
+  }
+
+
   static async logoutUser(): Promise<void> {
     try {
       const session = SessionManager.getUserSession();

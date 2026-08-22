@@ -42,9 +42,27 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
   const handleTrigger = async (type: SosEmergencyType, severity: SosSeverity) => {
     if (!session?.companyId || !selectedSiteId || !session.employeeId) return;
 
-    // Simulate location capture
-    const latitude = 19.0760 + (Math.random() - 0.5) * 0.01;
-    const longitude = 72.8777 + (Math.random() - 0.5) * 0.01;
+    let latitude = 19.0760;
+    let longitude = 72.8777;
+    let locationAccuracy = 100;
+
+    try {
+      if (navigator.geolocation) {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 5000 });
+        });
+        latitude = pos.coords.latitude;
+        longitude = pos.coords.longitude;
+        locationAccuracy = pos.coords.accuracy;
+      }
+    } catch (e) {
+      console.warn("Failed to get live location, falling back to site origin.", e);
+      const site = sites.find(s => s.id === selectedSiteId);
+      if (site) {
+         latitude = site.latitude || site.geoCoordinates?.latitude || 19.0760;
+         longitude = site.longitude || site.geoCoordinates?.longitude || 72.8777;
+      }
+    }
 
     const newEvent: SosEventRecord = {
       id: `SOS-${Date.now()}`,
@@ -58,7 +76,7 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
       status: 'TRIGGERED',
       latitude,
       longitude,
-      locationAccuracy: 10,
+      locationAccuracy,
       locationTimestamp: new Date().toISOString(),
       triggeredAt: new Date().toISOString(),
       escalationLevel: 1,

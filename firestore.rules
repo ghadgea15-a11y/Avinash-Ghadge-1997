@@ -60,9 +60,8 @@ service cloud.firestore {
 
     function isSuperAdmin() {
       return signedIn() && (
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         userData().role == "SUPER_ADMIN")
-        || hasCompanyRole("GLOBAL_ADMIN", ["SUPER_ADMIN"])
+        request.auth.token.role == 'SUPER_ADMIN' ||
+        exists(/databases/$(database)/documents/super_admins/$(request.auth.uid))
       );
     }
 
@@ -180,6 +179,25 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // PLATFORM LAYER (Super Admin Only)
+    // ============================================================
+    match /super_admins/{adminId} {
+      allow read: if isSuperAdmin();
+      allow create: if signedIn() && adminId == request.auth.uid && (request.auth.token.email == "admin@logsheetmuster.com" || request.auth.token.email == "superadmin@logsheetmuster.com" || request.auth.token.email == "ghadgea15@gmail.com" || request.auth.token.email == "sysadmin@logsheetmuster.com");
+      allow delete, update: if false;
+    }
+
+    match /platform_audit/{logId} {
+      allow read: if isSuperAdmin();
+      allow create: if isSuperAdmin(); // Immutable once written
+      allow update, delete: if false;
+    }
+
+    match /platform_settings/{settingId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    // ============================================================
     // LEADS (Root Level Collection)
     // ============================================================
     match /leads/{leadId} {
@@ -256,7 +274,7 @@ service cloud.firestore {
       allow list: if isSuperAdmin() || sameCompany(companyId);
 
       allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin() || isCompanyAdmin(companyId);
+      allow update: if isSuperAdmin(); // Company Admins cannot edit their own plan/entitlements directly
       allow delete: if isSuperAdmin();
 
       // ==========================================
@@ -1219,12 +1237,12 @@ service cloud.firestore {
     match /{collectionId}/{attendanceId} {
       
       function isAttendanceCollection() {
-        return collectionId.startsWith("attendance_");
+        return collectionId.matches("^attendance_.*");
       }
 
       // Extracts company code securely using splits
       function getCompanyCodeFromCollection() {
-        return collectionId.split("attendance_")[1];
+        return collectionId.replace("^attendance_", "");
       }
 
       allow read: if isAttendanceCollection() && (

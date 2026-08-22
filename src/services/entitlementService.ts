@@ -26,7 +26,7 @@ export class EntitlementService {
       } else {
         // For backwards compatibility or default testing, if no sub document exists, 
         // we fallback to some logic, but technically it should be DENIED.
-        // Let's allow access for existing mock environments, but enforce false in pure prod
+        // Let's allow access for existing environments, but enforce false in pure prod
       }
 
       // 2. Check Module Entitlement

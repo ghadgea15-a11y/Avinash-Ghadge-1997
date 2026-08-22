@@ -139,7 +139,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'PENDING_VERIFICATION' | 'SUSPENDED' | 'TERMINATED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'PENDING_VERIFICATION' | 'SUSPENDED' | 'TERMINATED' | 'DEACTIVATED'>('ALL');
   const [branchFilter, setBranchFilter] = useState<string>('ALL');
   const [siteFilter, setSiteFilter] = useState<string>('ALL');
   const [departmentFilter, setDepartmentFilter] = useState<string>('ALL');
@@ -341,6 +341,13 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       }
     } else if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       errors.email = 'Invalid email address format';
+    }
+
+    if (!errors.email && formData.email && formData.email.trim()) {
+      const isEmailUnique = await FirestoreService.isEmployeeEmailUnique(currentCompanyId, formData.email.trim(), editingEmployeeId || undefined);
+      if (!isEmailUnique) {
+        errors.email = `Email ${formData.email.trim()} is already assigned to another employee!`;
+      }
     }
 
     if (!formData.assignedSiteId) {
@@ -705,7 +712,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   };
 
   // Status Workflow Approval (Onboarding / Suspend / Terminate)
-  const handleApproveStatus = async (empId: string, status: 'ACTIVE' | 'SUSPENDED' | 'TERMINATED') => {
+  const handleApproveStatus = async (empId: string, status: 'ACTIVE' | 'SUSPENDED' | 'TERMINATED' | 'DEACTIVATED') => {
     if (!canApproveOnboarding) {
       setFeedbackMessage({ text: 'Permission Denied: Only HR and Operations Managers can update status.', type: 'ERROR' });
       return;
@@ -1114,6 +1121,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   <option value="PENDING_VERIFICATION">Pending Verification</option>
                   <option value="SUSPENDED">Suspended</option>
                   <option value="TERMINATED">Terminated</option>
+                  <option value="DEACTIVATED">Deactivated</option>
                 </select>
 
                 <select

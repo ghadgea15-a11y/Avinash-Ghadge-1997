@@ -9,7 +9,7 @@ export class QueryScopeEngine {
    */
   static buildScope(
     session: UserSession,
-    collectionType: 'EMPLOYEES' | 'ATTENDANCE' | 'LEAVES' | 'ASSETS' | 'INCIDENTS' | 'VISITORS' | 'MATERIALS' | 'PAYROLL' | 'APPROVALS' | 'TASKS' | 'ANNOUNCEMENTS' | 'DOCUMENTS' | 'LOGS' | 'CLIENTS' | 'DEPLOYMENTS' | 'SHIFT_ROSTERS' | 'SITE_OPERATIONS'
+    collectionType: 'EMPLOYEES' | 'ATTENDANCE' | 'LEAVES' | 'ASSETS' | 'INCIDENTS' | 'VISITORS' | 'MATERIALS' | 'PAYROLL' | 'APPROVALS' | 'TASKS' | 'ANNOUNCEMENTS' | 'DOCUMENTS' | 'LOGS' | 'CLIENTS' | 'DEPLOYMENTS' | 'SHIFT_ROSTERS' | 'SITE_OPERATIONS' | 'RFQS' | 'RFQ_BIDS' | 'VENDORS' | 'REFRESHER_CONFIGS' | 'REFRESHER_STATUSES'
   ): QueryConstraint[] {
     const authority = RbacService.getAuthorityLevel(session);
     const constraints: QueryConstraint[] = [];
@@ -60,7 +60,7 @@ export class QueryScopeEngine {
 
     // Ground Workforce (A7, A8, A9)
     if (['A7_SKILLED', 'A8_SEMI_SKILLED', 'A9_SUPPORT'].includes(authority) && session.employeeId) {
-      if (['EMPLOYEES', 'ATTENDANCE', 'LEAVES', 'PAYROLL'].includes(collectionType)) {
+      if (['EMPLOYEES', 'ATTENDANCE', 'LEAVES', 'PAYROLL', 'REFRESHER_STATUSES'].includes(collectionType)) {
         constraints.push(where('employeeId', '==', session.employeeId));
       } else if (collectionType === 'ASSETS') {
         constraints.push(where('assignedEmployeeId', '==', session.employeeId));

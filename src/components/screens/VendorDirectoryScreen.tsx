@@ -3,6 +3,7 @@ import { CompanyTenant, UserSession, SrmVendorRecord, VendorTier, VendorStatus }
 import { Search, Plus, Filter, FileText, CheckCircle, XCircle, ShieldAlert, Star, Building2, Ban } from 'lucide-react';
 import { getFirestore, collection, query, getDocs } from 'firebase/firestore';
 import { format } from 'date-fns';
+import { ScmService } from '../../services/scmService';
 
 interface Props {
   userSession: UserSession;
@@ -18,78 +19,18 @@ export function VendorDirectoryScreen({ userSession, activeCompany, onNavigate }
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
-        const db = getFirestore();
-        // Mock data since we don't have seeds for this feature yet
-        setTimeout(() => {
-          setVendors([
-            {
-              id: 'VND-1001',
-              companyId: activeCompany.companyId,
-              businessName: 'Apex Security Gear',
-              legalEntityName: 'Apex Equipments Ltd',
-              category: 'Security Gear',
-              subCategories: ['Uniforms', 'Batons', 'Boots'],
-              tier: 'TIER_1_PREFERRED',
-              status: 'ACTIVE',
-              contactPerson: { name: 'Rajesh Verma', phone: '9876543210', email: 'rajesh@apexgear.com' },
-              billingAddress: 'Sector 4, Noida',
-              bankDetails: { accountName: 'Apex Equipments Ltd', accountNumber: '1234567890', ifscCode: 'HDFC0001', bankName: 'HDFC Bank' },
-              taxDetails: { gstin: '07AAPCA1234Z1Z1', panNumber: 'AAPCA1234Z', msmeRegistrationNumber: 'UDYAM-UP-001' },
-              complianceScore: 100,
-              ratingAverage: 4.8,
-              creditPeriodDays: 30,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            },
-            {
-              id: 'VND-1002',
-              companyId: activeCompany.companyId,
-              businessName: 'CleanPro Services',
-              legalEntityName: 'CleanPro Solutions Pvt Ltd',
-              category: 'Housekeeping Consumables',
-              subCategories: ['Chemicals', 'Mops', 'Tissues'],
-              tier: 'TIER_2_APPROVED',
-              status: 'ACTIVE',
-              contactPerson: { name: 'Sunita Sharma', phone: '9876543211', email: 'sunita@cleanpro.in' },
-              billingAddress: 'Andheri East, Mumbai',
-              bankDetails: { accountName: 'CleanPro Solutions', accountNumber: '0987654321', ifscCode: 'SBIN0001', bankName: 'SBI' },
-              taxDetails: { gstin: '27AABCC1234Z1Z1', panNumber: 'AABCC1234Z', msmeRegistrationNumber: 'UDYAM-MH-002' },
-              complianceScore: 85,
-              ratingAverage: 4.2,
-              creditPeriodDays: 45,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            },
-            {
-              id: 'VND-1003',
-              companyId: activeCompany.companyId,
-              businessName: 'TechFix IT',
-              legalEntityName: 'TechFix Systems Ltd',
-              category: 'IT Hardware',
-              subCategories: ['Laptops', 'Servers'],
-              tier: 'BLACKLISTED',
-              status: 'SUSPENDED',
-              contactPerson: { name: 'Vikram Singh', phone: '9876543212', email: 'vikram@techfix.com' },
-              billingAddress: 'Koramangala, Bangalore',
-              bankDetails: { accountName: 'TechFix Systems', accountNumber: '1122334455', ifscCode: 'ICIC0001', bankName: 'ICICI Bank' },
-              taxDetails: { gstin: '29AABCD1234Z1Z1', panNumber: 'AABCD1234Z', msmeRegistrationNumber: 'UDYAM-KA-003' },
-              complianceScore: 40,
-              ratingAverage: 2.1,
-              creditPeriodDays: 15,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          ]);
-          setLoading(false);
-        }, 800);
+        const fetchedVendors = await ScmService.getSrmVendors(userSession, activeCompany.companyId);
+        setVendors(fetchedVendors);
       } catch (err) {
-        console.error(err);
+        console.error('Failed to fetch vendors:', err);
+      } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [activeCompany.companyId]);
+  }, [userSession, activeCompany.companyId]);
 
   const getTierBadge = (tier: VendorTier) => {
     switch (tier) {

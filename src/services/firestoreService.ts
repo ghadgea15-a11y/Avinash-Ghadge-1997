@@ -234,7 +234,9 @@ export class FirestoreService {
     const path = `companies/${companyId}/employees`;
     try {
       const colRef = collection(db, 'companies', companyId, 'employees');
-      const unsubscribe = onSnapshot(colRef, (snapshot) => {
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'EMPLOYEES'));
+      
+      const unsubscribe = onSnapshot(q, (snapshot) => {
         if (!snapshot.empty) {
           const list: EmployeeRecord[] = snapshot.docs.map(docSnap => {
             const data = docSnap.data();
@@ -292,10 +294,11 @@ export class FirestoreService {
     }
   }
 
-  static async getEmployees(companyId: string): Promise<EmployeeRecord[]> {
+  static async getEmployees(session: UserSession, companyId: string): Promise<EmployeeRecord[]> {
     try {
       const colRef = collection(db, 'companies', companyId, 'employees');
-      const snap = await getDocs(colRef);
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'EMPLOYEES'));
+      const snap = await getDocs(q);
       if (!snap.empty) {
         return snap.docs.map(docSnap => ({
           id: docSnap.id,
@@ -374,6 +377,25 @@ export class FirestoreService {
       return false;
     } catch (err) {
       console.error('[FirestoreService] isEmployeeCodeUnique error:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Check if an Employee Email is unique within the company
+   */
+  static async isEmployeeEmailUnique(companyId: string, email: string, excludeInternalId?: string): Promise<boolean> {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'employees');
+      const q = query(colRef, where('email', '==', email.toLowerCase()));
+      const snap = await getDocs(q);
+      
+      if (snap.empty) return true;
+      if (excludeInternalId && snap.docs.length === 1 && snap.docs[0].id === excludeInternalId) return true;
+      
+      return false;
+    } catch (err) {
+      console.error('[FirestoreService] isEmployeeEmailUnique error:', err);
       return false;
     }
   }
@@ -3393,9 +3415,19 @@ export class FirestoreService {
 
       // Update employee record if active
       if (newAccountStatus === 'ACTIVE') {
-        const empRef = doc(db, 'companies', companyId, 'employees', reqData.uid);
+        const empId = reqData.employeeId || reqData.uid;
+        const empRef = doc(db, 'companies', companyId, 'employees', empId);
         await setDoc(empRef, {
           status: 'ACTIVE',
+          role: reqData.requestedRole || 'EMPLOYEE',
+          updatedAt: timestamp
+        }, { merge: true });
+        
+        // Also update membership
+        const memRef = doc(db, 'users', reqData.uid, 'memberships', companyId);
+        await setDoc(memRef, {
+          status: 'ACTIVE',
+          employeeId: empId,
           role: reqData.requestedRole || 'EMPLOYEE',
           updatedAt: timestamp
         }, { merge: true });
@@ -3458,9 +3490,19 @@ export class FirestoreService {
       }, { merge: true });
 
       if (newAccountStatus === 'ACTIVE') {
-        const empRef = doc(db, 'companies', companyId, 'employees', reqData.uid);
+        const empId = reqData.employeeId || reqData.uid;
+        const empRef = doc(db, 'companies', companyId, 'employees', empId);
         await setDoc(empRef, {
           status: 'ACTIVE',
+          role: reqData.requestedRole || 'EMPLOYEE',
+          updatedAt: timestamp
+        }, { merge: true });
+
+        // Also update membership
+        const memRef = doc(db, 'users', reqData.uid, 'memberships', companyId);
+        await setDoc(memRef, {
+          status: 'ACTIVE',
+          employeeId: empId,
           role: reqData.requestedRole || 'EMPLOYEE',
           updatedAt: timestamp
         }, { merge: true });
@@ -5151,7 +5193,7 @@ export class FirestoreService {
       const daysInMonth = new Date(year, month, 0).getDate();
 
       // 1. Fetch Employees, Profiles, Structures, Advances, Leaves
-      const employees = await this.getEmployees(companyId);
+      const employees = await this.getEmployees({ role: 'COMPANY_ADMIN' } as UserSession, companyId);
       const profiles = await this.getSalaryProfiles(companyId);
       const structures = await this.getSalaryStructures(companyId);
       const leaves = await this.getLeaveRequests(companyId);
