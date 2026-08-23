@@ -19,7 +19,8 @@ import {
   TrendingUp,
   Globe,
   FileText,
-  Activity
+  Activity,
+  User
 } from 'lucide-react';
 import { CompanyTenant, UserSession, PhaseAScreen, MASTER_APP_MODULES, ApprovalRequestRecord } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
@@ -68,7 +69,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       const [allComp, sysStats, reqs, allLeads] = await Promise.all([
         FirestoreService.getAllCompanies(),
         FirestoreService.getSuperAdminStats(),
-        FirestoreService.getAllApprovalRequests(),
+        FirestoreService.getAllApprovalRequests('PENDING_APPROVAL'),
         FirestoreService.getLeads()
       ]);
       setCompanies(allComp);
@@ -264,142 +265,61 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
         </button>
       </div>
 
-      {/* Companies List Section */}
+      {/* Platform Alerts & Pending Requests Section */}
       <div className={`p-5 rounded-2xl border transition-colors duration-300 ${isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-4`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-bold flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-amber-500" />
-              <span>Registered Companies & Tenant Organizations</span>
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              <span>Platform Alerts & Pending Approvals</span>
             </h2>
-            <p className="text-xs text-slate-400">Live directory of all companies registered on the LSM platform.</p>
+            <p className="text-xs text-slate-400">Action required: global tenant onboarding requests and platform alerts.</p>
           </div>
-
-          <div className="relative min-w-[240px]">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search code, name..."
-              className={`w-full pl-9 pr-3 py-1.5 rounded-xl text-xs border ${
-                isDark 
-                  ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:border-amber-500' 
-                  : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-amber-600'
-              } focus:outline-none`}
-            />
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-          </div>
+          <button
+            onClick={() => onNavigate('SUPER_ADMIN_PENDING_APPROVALS')}
+            className="text-xs font-semibold text-amber-500 hover:text-amber-400 transition flex items-center gap-1"
+          >
+            View All Approvals <ChevronRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         {loading ? (
           <div className="py-12 flex flex-col items-center justify-center text-slate-400 space-y-2">
             <RefreshCw className="w-6 h-6 animate-spin text-amber-500" />
-            <p className="text-xs">Loading company records from Firestore...</p>
+            <p className="text-xs">Loading platform alerts...</p>
           </div>
-        ) : filteredCompanies.length === 0 ? (
+        ) : pendingRequests.length === 0 ? (
           <div className="py-12 text-center text-slate-400 space-y-3">
-            <Building2 className="w-10 h-10 mx-auto text-slate-600" />
-            <p className="text-xs font-medium">No registered companies found.</p>
-            <button
-              onClick={() => onNavigate('SUPER_ADMIN_CREATE_COMPANY')}
-              className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-xl"
-            >
-              Register First Company
-            </button>
+            <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-600/50" />
+            <p className="text-xs font-medium">No pending tenant approvals or critical platform alerts.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className={`border-b ${isDark ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'}`}>
-                  <th className="py-3 px-3 font-semibold">Company Code</th>
-                  <th className="py-3 px-3 font-semibold">Brand / Legal Name</th>
-                  <th className="py-3 px-3 font-semibold">License Tier</th>
-                  <th className="py-3 px-3 font-semibold">Enabled Modules</th>
-                  <th className="py-3 px-3 font-semibold">Company Admin</th>
-                  <th className="py-3 px-3 font-semibold">Status</th>
-                  <th className="py-3 px-3 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className={`divide-y ${isDark ? 'divide-slate-800/60' : 'divide-slate-100'}`}>
-                {paginatedCompanies.map((company) => {
-                  const enabledCount = company.enabledModules?.length || 0;
-                  return (
-                    <tr key={company.companyId} className={`hover:${isDark ? 'bg-slate-800/40' : 'bg-slate-50'} transition`}>
-                      <td className="py-3 px-3 font-mono font-bold text-amber-400">
-                        {company.companyId}
-                      </td>
-                      <td className="py-3 px-3 font-semibold">
-                        <div>{company.brandName}</div>
-                        {company.companyLegalName && (
-                          <div className="text-[10px] text-slate-400 truncate max-w-[200px]">{company.companyLegalName}</div>
-                        )}
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          company.licenseTier === 'ENTERPRISE' ? 'bg-indigo-950 text-indigo-300 border border-indigo-800' :
-                          company.licenseTier === 'PROFESSIONAL' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' :
-                          'bg-slate-800 text-slate-300 border border-slate-700'
-                        }`}>
-                          {company.licenseTier}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-800">
-                          {enabledCount} / {MASTER_APP_MODULES.length} Modules
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
-                        {company.adminEmail ? (
-                          <div>
-                            <div className="font-medium text-slate-200">{company.adminName || 'Admin'}</div>
-                            <div className="text-[10px] text-slate-400 font-mono">{company.adminEmail}</div>
-                          </div>
-                        ) : (
-                          <span className="text-[10px] text-slate-500 italic">Unassigned</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 w-fit ${
-                          company.status === 'ACTIVE' 
-                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' 
-                            : 'bg-rose-950 text-rose-400 border border-rose-800'
-                        }`}>
-                          {company.status === 'ACTIVE' ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                          <span>{company.status}</span>
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-right space-x-1">
-                        <button
-                          onClick={() => onNavigate('SUPER_ADMIN_MODULES')}
-                          className="px-2 py-1 rounded text-[10px] font-semibold bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 transition"
-                          title="Manage Modules"
-                        >
-                          Modules
-                        </button>
-                        <button
-                          onClick={() => onSelectCompanyForDetails ? onSelectCompanyForDetails(company) : onNavigate('SUPER_ADMIN_COMPANIES')}
-                          className="px-2 py-1 rounded text-[10px] font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-                        >
-                          Details
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="space-y-3">
+            {pendingRequests.slice(0, 5).map((req) => (
+              <div key={req.id} className={`flex items-center justify-between p-3 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-100">{req.fullName}</p>
+                    <p className="text-[10px] text-slate-400">Requested to join <span className="font-mono text-amber-400">{req.companyId}</span> as {req.requestedRole}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onNavigate('SUPER_ADMIN_PENDING_APPROVALS')}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white transition"
+                >
+                  Review
+                </button>
+              </div>
+            ))}
+            {pendingRequests.length > 5 && (
+              <p className="text-center text-xs text-slate-400 pt-2">
+                + {pendingRequests.length - 5} more pending requests
+              </p>
+            )}
           </div>
-        )}
-
-        {filteredCompanies.length > 0 && (
-          <Pagination
-            currentPage={currentPage}
-            totalItems={filteredCompanies.length}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={setItemsPerPage}
-          />
         )}
       </div>
 

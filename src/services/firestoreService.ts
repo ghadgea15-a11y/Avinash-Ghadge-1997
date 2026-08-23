@@ -12,7 +12,8 @@ import {
   where, 
   orderBy, 
   limit,
-  runTransaction 
+  runTransaction,
+  writeBatch
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { QueryScopeEngine } from './queryScopeEngine';
@@ -3778,10 +3779,11 @@ export class FirestoreService {
   /**
    * Fetch all pending registration requests globally
    */
-  static async getAllApprovalRequests(): Promise<ApprovalRequestRecord[]> {
+  static async getAllApprovalRequests(status?: string): Promise<ApprovalRequestRecord[]> {
     try {
       const reqRef = collection(db, 'approval_requests');
-      const snap = await getDocs(reqRef);
+      const q = status ? query(reqRef, where('accountStatus', '==', status)) : reqRef;
+      const snap = await getDocs(q);
       if (snap.empty) return [];
       return snap.docs.map(d => ({ id: d.id, ...d.data() } as ApprovalRequestRecord));
     } catch (err) {
@@ -3852,23 +3854,200 @@ export class FirestoreService {
     createdByName: string;
   }): Promise<{ success: boolean; message: string; companyId: string }> {
     try {
-      /* imported at top if possible */
-      const functions = getFunctions();
-      const provisionTenant = httpsCallable(functions, 'provisionTenant');
-      
-      const result = await provisionTenant(params) as any;
-      if (result.data && result.data.success) {
-        return { 
-          success: true, 
-          message: `Company "${params.company.brandName}" (${result.data.companyId}) created successfully.`,
-          companyId: result.data.companyId 
-        };
-      } else {
-        return { success: false, message: 'Failed to create company.', companyId: '' };
+      const companyCode = (params.company.companyId || '').trim().toUpperCase();
+      if (!companyCode) {
+        return { success: false, message: 'Company Code / Tenant ID is required.', companyId: '' };
       }
+
+      const brandName = (params.company.brandName || '').trim();
+      if (!brandName) {
+        return { success: false, message: 'Company Brand Name is required.', companyId: '' };
+      }
+
+      const adminEmail = (params.adminInfo.email || '').trim().toLowerCase();
+      const adminFullName = (params.adminInfo.fullName || '').trim();
+      if (!adminEmail || !adminFullName) {
+        return { success: false, message: 'Administrator full name and email are required.', companyId: '' };
+      }
+
+      const timestamp = new Date().toISOString();
+
+      // 1. Verify Company uniqueness
+      const compDocRef = doc(db, 'companies', companyCode);
+      const existingComp = await getDoc(compDocRef);
+      if (existingComp.exists()) {
+        return { 
+          success: false, 
+          message: `Company code "${companyCode}" is already in use by "${existingComp.data().brandName || companyCode}".`, 
+          companyId: '' 
+        };
+      }
+
+      // 2. Prepare Atomic Provisioning Batch
+      const batch = writeBatch(db);
+
+      // (a) Company Tenant Document
+      const companyData: CompanyTenant = {
+        ...params.company,
+        companyId: companyCode,
+        companyLegalName: params.company.companyLegalName || brandName,
+        brandName,
+        licenseTier: params.company.licenseTier || 'ENTERPRISE',
+        status: 'ACTIVE',
+        adminName: adminFullName,
+        adminEmail,
+        email: params.company.email || adminEmail,
+        phone: params.company.phone || params.adminInfo.mobileNumber || '',
+        address: params.company.address || '',
+        city: params.company.city || '',
+        state: params.company.state || '',
+        country: params.company.country || 'India',
+        primaryColorHex: params.company.primaryColorHex || '#4f46e5',
+        secondaryColorHex: params.company.secondaryColorHex || '#06b6d4',
+        allowedBranches: ['MAIN'],
+        maxEmployeesAllowed: params.company.maxEmployeesAllowed || 1000,
+        maxSitesAllowed: params.company.maxSitesAllowed || 50,
+        enabledModules: params.enabledModules && params.enabledModules.length > 0 
+          ? params.enabledModules 
+          : MASTER_APP_MODULES.map(m => m.key),
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+      batch.set(compDocRef, companyData);
+
+      // (b) Default Main Branch
+      const mainBranchRef = doc(db, 'companies', companyCode, 'branches', 'MAIN');
+      batch.set(mainBranchRef, {
+        id: 'MAIN',
+        branchCode: 'MAIN',
+        branchName: 'Main Branch / Head Office',
+        isMainBranch: true,
+        status: 'ACTIVE',
+        companyId: companyCode,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      });
+
+      // (c) Pre-provisioned Company Administrator Employee Record
+      const adminEmpId = 'EMP-ADM001';
+      const adminEmpRef = doc(db, 'companies', companyCode, 'employees', adminEmpId);
+      batch.set(adminEmpRef, {
+        id: adminEmpId,
+        employeeId: 'ADM-001',
+        companyId: companyCode,
+        fullName: adminFullName,
+        email: adminEmail,
+        mobileNumber: params.adminInfo.mobileNumber || '',
+        role: 'COMPANY_ADMIN' as UserRole,
+        designation: 'Company Administrator',
+        departmentId: 'ADMINISTRATION',
+        branchId: 'MAIN',
+        status: 'ACTIVE',
+        hasSystemAccess: true,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      });
+
+      // (d) Pre-approved Provisioning Record (Company subcollection)
+      const approvalReqId = `REQ-ADMIN-${companyCode}`;
+      const compApprovalRef = doc(db, 'companies', companyCode, 'approval_requests', approvalReqId);
+      const approvalData = {
+        id: approvalReqId,
+        fullName: adminFullName,
+        email: adminEmail,
+        companyId: companyCode,
+        companyName: brandName,
+        role: 'COMPANY_ADMIN',
+        accountStatus: 'APPROVED',
+        companyAdminApproval: 'APPROVED',
+        hrApproval: 'APPROVED',
+        mobileNumber: params.adminInfo.mobileNumber || '',
+        requestedAt: timestamp,
+        reviewedAt: timestamp,
+        reviewedBy: params.createdByName || 'System Super Admin',
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+      batch.set(compApprovalRef, approvalData);
+
+      // (e) Root approval request mirror
+      const rootApprovalRef = doc(db, 'approval_requests', approvalReqId);
+      batch.set(rootApprovalRef, approvalData);
+
+      // (f) Platform Audit Log
+      const auditLogId = `AUDIT-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+      const auditLogRef = doc(db, 'platform_audit', auditLogId);
+      batch.set(auditLogRef, {
+        id: auditLogId,
+        action: 'CREATE_TENANT',
+        actorUid: params.createdByUid,
+        actorName: params.createdByName,
+        targetTenantId: companyCode,
+        metadata: {
+          companyCode,
+          brandName,
+          adminEmail,
+          adminFullName,
+          licenseTier: companyData.licenseTier,
+          enabledModulesCount: companyData.enabledModules?.length || 0
+        },
+        timestamp
+      });
+
+      // 3. Execute the atomic transaction
+      await batch.commit();
+
+      // 4. Link existing User Account if an account with this email is already registered
+      try {
+        const usersQuery = query(collection(db, 'users'), where('email', '==', adminEmail));
+        const usersSnap = await getDocs(usersQuery);
+        if (!usersSnap.empty) {
+          const userDoc = usersSnap.docs[0];
+          const uid = userDoc.id;
+
+          // Add tenant membership
+          await setDoc(doc(db, 'users', uid, 'memberships', companyCode), {
+            companyId: companyCode,
+            companyName: brandName,
+            role: 'COMPANY_ADMIN',
+            status: 'ACTIVE',
+            joinedAt: timestamp,
+            updatedAt: timestamp
+          }, { merge: true });
+
+          // Update primary user document
+          await setDoc(doc(db, 'users', uid), {
+            companyId: companyCode,
+            companyName: brandName,
+            role: 'COMPANY_ADMIN',
+            accountStatus: 'ACTIVE',
+            companyAdminApproval: 'APPROVED',
+            hrApproval: 'APPROVED',
+            updatedAt: timestamp
+          }, { merge: true });
+
+          // Link authUid on employee record
+          await setDoc(doc(db, 'companies', companyCode, 'employees', adminEmpId), {
+            authUid: uid,
+            updatedAt: timestamp
+          }, { merge: true });
+        }
+      } catch (linkErr) {
+        console.warn('[FirestoreService] Existing user account link warning:', linkErr);
+      }
+
+      return {
+        success: true,
+        message: `Company "${brandName}" (${companyCode}) provisioned and Company Admin (${adminEmail}) assigned successfully.`,
+        companyId: companyCode
+      };
     } catch (err: any) {
       console.error('[FirestoreService] createCompanyWithAdmin error:', err);
-      return { success: false, message: err.message || 'Failed to create company.', companyId: '' };
+      return { 
+        success: false, 
+        message: err.message || 'Failed to provision tenant and assign admin.', 
+        companyId: '' 
+      };
     }
   }
 

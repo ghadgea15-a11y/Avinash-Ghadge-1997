@@ -61,7 +61,8 @@ service cloud.firestore {
     function isSuperAdmin() {
       return signedIn() && (
         request.auth.token.role == 'SUPER_ADMIN' ||
-        exists(/databases/$(database)/documents/super_admins/$(request.auth.uid))
+        exists(/databases/$(database)/documents/super_admins/$(request.auth.uid)) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['SUPER_ADMIN', 'super_admin'])
       );
     }
 
@@ -209,6 +210,10 @@ service cloud.firestore {
     // USERS (Root Level Collection)
     // ============================================================
 
+    match /users/{uid}/private/{docId} {
+      allow read, write: if isSelf(uid) || isSuperAdmin();
+    }
+    
     match /users/{uid} {
       // Users can access their own document, super admins can access any, and company members can read profiles in the same tenant
       allow read: if isSelf(uid) 
@@ -242,6 +247,24 @@ service cloud.firestore {
         allow read: if isSuperAdmin() || isSelf(uid) || isCompanyAdmin(companyId);
         allow create, update, delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
+    }
+
+    // ============================================================
+    // APPROVAL REQUESTS (Root Level Dual-Write Support)
+    // ============================================================
+    match /approval_requests/{requestId} {
+      allow read: if signedIn() && (
+        isSuperAdmin() ||
+        (resource != null && hasMembership(resource.data.companyId)) ||
+        (resource != null && resource.data.uid == request.auth.uid)
+      );
+      allow create: if signedIn();
+      allow update: if signedIn() && (
+        isSuperAdmin() || 
+        (resource != null && isCompanyAdmin(resource.data.companyId)) ||
+        (resource != null && resource.data.uid == request.auth.uid)
+      );
+      allow delete: if isSuperAdmin();
     }
 
 

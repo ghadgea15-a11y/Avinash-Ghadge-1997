@@ -234,6 +234,7 @@ export interface CompanyTenant {
   adminName?: string;
   adminEmail?: string;
   createdAt?: string;
+  updatedAt?: string;
   cinNumber?: string;
   gstNumber?: string;
   name?: string;
@@ -2108,8 +2109,6 @@ export type PhaseAScreen =
   | 'SUPER_ADMIN_DASHBOARD'
   | 'SUPER_ADMIN_COMPANIES' | 'SUPER_ADMIN_SUBSCRIPTIONS' | 'COMPANY_BILLING'
   | 'SUPER_ADMIN_CREATE_COMPANY'
-  | 'SUPER_ADMIN_COMPANY_DETAILS'
-  | 'SUPER_ADMIN_USERS'
   | 'SUPER_ADMIN_PENDING_APPROVALS'
   | 'SUPER_ADMIN_MODULES'
   | 'SUPER_ADMIN_LEADS'

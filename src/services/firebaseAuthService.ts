@@ -28,6 +28,7 @@ import { FirestoreService } from './firestoreService';
 import { SecurityAuditService } from './securityAuditService';
 import { SessionManager } from './sessionManager';
 import { AccountProtectionService } from './accountProtectionService';
+import { TotpService } from './totpService';
 
 export const RESERVED_SUPER_ADMIN_EMAILS: string[] = [];
 
@@ -500,16 +501,85 @@ export class FirebaseAuthService {
 
     if (userSnap.exists()) {
       const uData = userSnap.data();
-      const accountStatus = (uData.accountStatus as AccountStatus) || 'PENDING_APPROVAL';
+      
+      let isUserSuperAdmin = uData?.role === 'SUPER_ADMIN';
+      if (!isUserSuperAdmin) {
+        try {
+          const saSnap = await getDoc(doc(db, 'super_admins', fbUser.uid));
+          if (saSnap.exists()) {
+            isUserSuperAdmin = true;
+          }
+        } catch (saErr) {
+          // Document existence check handled
+        }
+      }
+
+      if (isUserSuperAdmin) {
+        try {
+          await setDoc(doc(db, 'super_admins', fbUser.uid), {
+            id: fbUser.uid,
+            email: cleanEmail,
+            role: 'SUPER_ADMIN',
+            status: 'ACTIVE',
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+
+          await setDoc(doc(db, 'users', fbUser.uid), {
+            uid: fbUser.uid,
+            email: cleanEmail,
+            fullName: uData?.fullName || fbUser.displayName || 'System Super Admin',
+            role: 'SUPER_ADMIN',
+            companyId: 'GLOBAL_ADMIN',
+            accountStatus: 'ACTIVE',
+            companyAdminApproval: 'APPROVED',
+            hrApproval: 'APPROVED',
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        } catch (saSyncErr) {
+          console.warn('[FirebaseAuthService] Super Admin profile sync warning:', saSyncErr);
+        }
+      }
+
+      let role: UserRole | undefined = isUserSuperAdmin ? 'SUPER_ADMIN' : uData?.role;
+      let employeeId = uData?.employeeId || (isUserSuperAdmin ? 'SA-001' : `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`);
+      let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (uData.companyId || '');
+      let branchId = uData?.branchId || (isUserSuperAdmin ? 'HQ' : 'MAIN_BRANCH');
+      let departmentId = uData?.departmentId || (isUserSuperAdmin ? 'DEPT-SUPER-ADMIN' : undefined);
+      let departmentName = uData?.departmentName || (isUserSuperAdmin ? 'Super Admin' : undefined);
+      
+      if (!isUserSuperAdmin) {
+         try {
+           const memsSnap = await getDocs(collection(db, 'users', fbUser.uid, 'memberships'));
+           if (!memsSnap.empty) {
+             const firstActive = memsSnap.docs.find(d => d.data().status === 'ACTIVE') || memsSnap.docs[0];
+             const memData = firstActive.data();
+             userCompanyId = memData.companyId || firstActive.id;
+             if (memData.role) role = memData.role;
+             if (memData.employeeId) employeeId = memData.employeeId;
+             if (memData.branchId) branchId = memData.branchId;
+           }
+         } catch (memErr) {
+           console.warn('[FirebaseAuthService] Membership lookup handled:', memErr);
+         }
+      }
+      
+      if (!role) {
+         role = 'SUPPORT';
+      }
+      if (!userCompanyId) {
+         userCompanyId = 'PENDING';
+      }
+      
+      const accountStatus = isUserSuperAdmin ? 'ACTIVE' : ((uData.accountStatus as AccountStatus) || 'PENDING_APPROVAL');
 
       const session: UserSession = {
         userId: fbUser.uid,
-        employeeId: uData.employeeId || `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`,
+        employeeId: employeeId,
         fullName: uData.fullName || fbUser.displayName || 'Google User',
         email: cleanEmail,
-        role: (uData.role as UserRole),
-        companyId: uData.companyId || 'PENDING',
-        branchId: uData.branchId || 'MAIN',
+        role: role as UserRole,
+        companyId: userCompanyId,
+        branchId: branchId,
         assignedSiteId: uData.assignedSiteId,
         avatarUrl: fbUser.photoURL || undefined,
         token: await fbUser.getIdToken(),
@@ -519,12 +589,12 @@ export class FirebaseAuthService {
         loginMode: 'GOOGLE',
         accountStatus,
         emailVerified: true,
-        departmentId: uData.departmentId,
-        departmentName: uData.departmentName,
-        companyAdminApproval: uData.companyAdminApproval || 'PENDING',
-        hrApproval: uData.hrApproval || 'PENDING'
+        departmentId: departmentId,
+        departmentName: departmentName,
+        companyAdminApproval: isUserSuperAdmin ? 'APPROVED' : (uData.companyAdminApproval || 'PENDING'),
+        hrApproval: isUserSuperAdmin ? 'APPROVED' : (uData.hrApproval || 'PENDING')
       };
-
+      
       return { fbUser, userSession: session, isNewUser: false, accountStatus };
     }
 
@@ -748,7 +818,43 @@ export class FirebaseAuthService {
           console.warn('[FirebaseAuthService] Firestore profile check skipped/handled (offline or missing):', firestoreErr);
         }
 
-        const isUserSuperAdmin = uData?.role === 'SUPER_ADMIN';
+        let isUserSuperAdmin = uData?.role === 'SUPER_ADMIN';
+        if (!isUserSuperAdmin) {
+          try {
+            const saSnap = await getDoc(doc(db, 'super_admins', fbUser.uid));
+            if (saSnap.exists()) {
+              isUserSuperAdmin = true;
+            }
+          } catch (saErr) {
+            // Document existence check handled
+          }
+        }
+
+        if (isUserSuperAdmin) {
+          try {
+            await setDoc(doc(db, 'super_admins', fbUser.uid), {
+              id: fbUser.uid,
+              email: userEmail,
+              role: 'SUPER_ADMIN',
+              status: 'ACTIVE',
+              updatedAt: new Date().toISOString()
+            }, { merge: true });
+
+            await setDoc(doc(db, 'users', fbUser.uid), {
+              uid: fbUser.uid,
+              email: userEmail,
+              fullName: uData?.fullName || fbUser.displayName || 'System Super Admin',
+              role: 'SUPER_ADMIN',
+              companyId: 'GLOBAL_ADMIN',
+              accountStatus: 'ACTIVE',
+              companyAdminApproval: 'APPROVED',
+              hrApproval: 'APPROVED',
+              updatedAt: new Date().toISOString()
+            }, { merge: true });
+          } catch (saSyncErr) {
+            console.warn('[FirebaseAuthService] Super Admin profile sync warning:', saSyncErr);
+          }
+        }
 
         // Default session values
         let role: UserRole = isUserSuperAdmin ? 'SUPER_ADMIN' : (uData?.role || 'COMPANY_ADMIN');
@@ -772,9 +878,26 @@ export class FirebaseAuthService {
             userCompanyId = uData.companyId;
           }
         }
+
+        // If companyId is not determined, check user's memberships subcollection
+        if (!userCompanyId && !isUserSuperAdmin) {
+          try {
+            const memsSnap = await getDocs(collection(db, 'users', fbUser.uid, 'memberships'));
+            if (!memsSnap.empty) {
+              const firstActive = memsSnap.docs.find(d => d.data().status === 'ACTIVE') || memsSnap.docs[0];
+              const memData = firstActive.data();
+              userCompanyId = memData.companyId || firstActive.id;
+              if (memData.role) role = memData.role;
+              if (memData.employeeId) employeeId = memData.employeeId;
+              if (memData.branchId) branchId = memData.branchId;
+            }
+          } catch (memErr) {
+            console.warn('[FirebaseAuthService] Membership lookup handled:', memErr);
+          }
+        }
         
         if (!userCompanyId) {
-          throw new Error('User is not associated with any company.');
+          throw new Error('User is not associated with any company. Please enter your Company Code.');
         }
 
         const session: UserSession = {
@@ -798,6 +921,33 @@ export class FirebaseAuthService {
           companyAdminApproval,
           hrApproval
         };
+
+        // Check if user has TOTP MFA enabled
+        if (uData?.mfaEnabled) {
+          let secretToUse = uData.totpSecret; // Fallback for backwards compatibility if any
+          if (!secretToUse) {
+            try {
+              const privateMfaSnap = await getDoc(doc(db, 'users', fbUser.uid, 'private', 'mfa'));
+              if (privateMfaSnap.exists()) {
+                secretToUse = privateMfaSnap.data().totpSecret;
+              }
+            } catch (e) {
+              console.warn('Failed to load private MFA document:', e);
+            }
+          }
+          if (secretToUse) {
+            throw Object.assign(new Error('MFA_REQUIRED'), { 
+              resolver: {
+                isCustomTotp: true,
+                secret: secretToUse,
+                tempSession: session,
+                hints: [{ uid: fbUser.uid }]
+              },
+              emailOrId: cleanInput,
+              companyId: userCompanyId
+            });
+          }
+        }
         
         // Reset failed logins
         if (session.companyId && session.companyId !== 'GLOBAL_ADMIN') {
@@ -953,12 +1103,44 @@ export class FirebaseAuthService {
    * Completes TOTP MFA Sign in
    */
   static async authenticateWithMfa(
-    resolver: MultiFactorResolver,
+    resolver: MultiFactorResolver | any,
     verificationCode: string,
     companyId?: string,
     emailOrId?: string
   ): Promise<UserSession> {
     try {
+      // Check if custom RFC 6238 TOTP resolver was used
+      if (resolver?.isCustomTotp && resolver?.secret) {
+        const verifyResult = await TotpService.verifyCode(verificationCode, resolver.secret);
+        if (!verifyResult.isValid) {
+          throw new Error(verifyResult.error || 'Invalid 6-digit MFA code. Please check your authenticator app.');
+        }
+
+        const session = resolver.tempSession as UserSession;
+        if (!session) {
+          throw new Error('Session state expired. Please log in again.');
+        }
+
+        if (session.companyId && session.companyId !== 'GLOBAL_ADMIN') {
+          await AccountProtectionService.recordSuccessfulLogin(session.companyId, session.email);
+        }
+
+        SecurityAuditService.logEvent(
+          session.companyId,
+          session.userId,
+          session.role,
+          session.employeeId,
+          'LOGIN_SUCCESS',
+          'authentication',
+          session.userId,
+          true,
+          'LOW',
+          'User authenticated successfully via RFC 6238 TOTP MFA'
+        ).catch((e: any) => console.error(e));
+
+        return session;
+      }
+
       const assertion = TotpMultiFactorGenerator.assertionForSignIn(
         resolver.hints[0].uid,
         verificationCode
@@ -980,7 +1162,43 @@ export class FirebaseAuthService {
         console.warn('[FirebaseAuthService] Firestore profile check skipped/handled (offline or missing):', firestoreErr);
       }
 
-      const isUserSuperAdmin = uData?.role === 'SUPER_ADMIN';
+      let isUserSuperAdmin = uData?.role === 'SUPER_ADMIN';
+      if (!isUserSuperAdmin) {
+        try {
+          const saSnap = await getDoc(doc(db, 'super_admins', fbUser.uid));
+          if (saSnap.exists()) {
+            isUserSuperAdmin = true;
+          }
+        } catch (saErr) {
+          // Document existence check handled
+        }
+      }
+
+      if (isUserSuperAdmin) {
+        try {
+          await setDoc(doc(db, 'super_admins', fbUser.uid), {
+            id: fbUser.uid,
+            email: cleanInputLower,
+            role: 'SUPER_ADMIN',
+            status: 'ACTIVE',
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+
+          await setDoc(doc(db, 'users', fbUser.uid), {
+            uid: fbUser.uid,
+            email: cleanInputLower,
+            fullName: uData?.fullName || fbUser.displayName || 'System Super Admin',
+            role: 'SUPER_ADMIN',
+            companyId: 'GLOBAL_ADMIN',
+            accountStatus: 'ACTIVE',
+            companyAdminApproval: 'APPROVED',
+            hrApproval: 'APPROVED',
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        } catch (saSyncErr) {
+          console.warn('[FirebaseAuthService] Super Admin profile sync warning:', saSyncErr);
+        }
+      }
 
       // Default session values
       let role: UserRole = isUserSuperAdmin ? 'SUPER_ADMIN' : (uData?.role || 'COMPANY_ADMIN');
@@ -1002,6 +1220,22 @@ export class FirebaseAuthService {
         }
         if (!isUserSuperAdmin && uData.companyId && uData.companyId !== 'PENDING') {
           userCompanyId = uData.companyId;
+        }
+      }
+
+      if (!userCompanyId && !isUserSuperAdmin) {
+        try {
+          const memsSnap = await getDocs(collection(db, 'users', fbUser.uid, 'memberships'));
+          if (!memsSnap.empty) {
+            const firstActive = memsSnap.docs.find(d => d.data().status === 'ACTIVE') || memsSnap.docs[0];
+            const memData = firstActive.data();
+            userCompanyId = memData.companyId || firstActive.id;
+            if (memData.role) role = memData.role;
+            if (memData.employeeId) employeeId = memData.employeeId;
+            if (memData.branchId) branchId = memData.branchId;
+          }
+        } catch (memErr) {
+          console.warn('[FirebaseAuthService] Membership lookup handled:', memErr);
         }
       }
       

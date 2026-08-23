@@ -124,7 +124,7 @@ export class SessionManager {
     }
   }
 
-  static getSavedCredentials(): { emailOrId: string; passwordOrPin?: string; companyCode?: string; remember: boolean } {
+  static getSavedCredentials(): { emailOrId: string; companyCode?: string; remember: boolean } {
     try {
       const data = getItem(STORAGE_KEYS.REMEMBER_ME);
       if (!data) return { emailOrId: '', remember: false };
@@ -136,12 +136,11 @@ export class SessionManager {
       // If expired (older than 5 minutes), clear storage immediately
       if (!savedAt || (Date.now() - savedAt > MAX_REMEMBER_DURATION_MS)) {
         removeItem(STORAGE_KEYS.REMEMBER_ME);
-        return { emailOrId: '', passwordOrPin: '', companyCode: parsed.companyCode || '', remember: false };
+        return { emailOrId: '', companyCode: parsed.companyCode || '', remember: false };
       }
 
       return {
         emailOrId: parsed.emailOrId || '',
-        passwordOrPin: parsed.passwordOrPin || '',
         companyCode: parsed.companyCode || '',
         remember: true
       };
@@ -150,13 +149,12 @@ export class SessionManager {
     }
   }
 
-  static setSavedCredentials(emailOrId: string, passwordOrPin: string, companyCode: string, remember: boolean): void {
+  static setSavedCredentials(emailOrId: string, companyCode: string, remember: boolean): void {
     if (remember) {
       setItem(
         STORAGE_KEYS.REMEMBER_ME,
         JSON.stringify({
           emailOrId,
-          passwordOrPin,
           companyCode,
           remember: true,
           savedAt: Date.now()

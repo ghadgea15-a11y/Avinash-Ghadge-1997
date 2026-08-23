@@ -82,18 +82,8 @@ export function App() {
     return 'LANDING';
   };
 
-  const [currentScreen, _setRawCurrentScreen] = useState<PhaseAScreen>(getInitialScreen);
+  const [currentScreen, setCurrentScreen] = useState<PhaseAScreen>(getInitialScreen);
   const [activeCompany, setActiveCompany] = useState<CompanyTenant | null>(null);
-
-  const setCurrentScreen = (screenOrUpdater: React.SetStateAction<PhaseAScreen>) => {
-    _setRawCurrentScreen((prev) => {
-      const nextScreen = typeof screenOrUpdater === 'function' ? screenOrUpdater(prev) : screenOrUpdater;
-      if (nextScreen === 'LOGIN' && !activeCompany && !SessionManager.getActiveCompany()) {
-        return 'COMPANY_CODE';
-      }
-      return nextScreen;
-    });
-  };
   const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(OfflineSyncService.isOnline());
   const [viewportMode, setViewportMode] = useState<'PHONE' | 'TABLET' | 'FULLSCREEN'>('PHONE');
@@ -119,9 +109,25 @@ export function App() {
       setActiveCompany(savedCompany);
     }
 
-    // Never auto-login on public app start - always protect application
-    SessionManager.clearUserSession();
-    setUserSession(null);
+    // Check if we have an active session to restore
+    const initialSession = SessionManager.getUserSession();
+    if (initialSession && initialSession.tokenExpiresAt > Date.now()) {
+      setUserSession(initialSession);
+      if (['LANDING', 'LOGIN', 'SIGN_UP'].includes(currentScreen)) {
+         if (initialSession.accountStatus === 'ACTIVE') {
+            if (initialSession.role === 'SUPER_ADMIN') {
+              setCurrentScreen('SUPER_ADMIN_DASHBOARD');
+            } else {
+              setCurrentScreen('ENTERPRISE_DASHBOARD');
+            }
+         } else {
+            setCurrentScreen('APPROVAL_PENDING');
+         }
+      }
+    } else {
+      SessionManager.clearUserSession();
+      setUserSession(null);
+    }
 
     const unsubAuth = onAuthStateChanged(auth, (fbUser) => {
       const currentSession = SessionManager.getUserSession();
@@ -261,8 +267,6 @@ export function App() {
     'NOTIFICATIONS',
     'SUPER_ADMIN_DASHBOARD',
     'SUPER_ADMIN_COMPANIES',
-    'SUPER_ADMIN_COMPANY_DETAILS',
-    'SUPER_ADMIN_USERS',
     'SUPER_ADMIN_CREATE_COMPANY',
     'SUPER_ADMIN_MODULES',
     'SUPER_ADMIN_PENDING_APPROVALS',
@@ -325,7 +329,11 @@ export function App() {
                 onSignUpSuccess={(session) => {
                   setUserSession(session);
                   if (session.accountStatus === 'ACTIVE') {
-                    setCurrentScreen('ENTERPRISE_DASHBOARD');
+                    if (session.role === 'SUPER_ADMIN') {
+                      setCurrentScreen('SUPER_ADMIN_DASHBOARD');
+                    } else {
+                      setCurrentScreen('ENTERPRISE_DASHBOARD');
+                    }
                   } else {
                     setCurrentScreen('APPROVAL_PENDING');
                   }
@@ -443,18 +451,6 @@ export function App() {
         onNavigate={setCurrentScreen}
       />
     )}
-    {currentScreen === 'SUPER_ADMIN_COMPANY_DETAILS' && (
-      <SuperAdminCompaniesScreen
-        currentSession={userSession}
-        onNavigate={setCurrentScreen}
-      />
-    )}
-    {currentScreen === 'SUPER_ADMIN_USERS' && (
-      <ApprovalManagementScreen
-        session={userSession}
-        onNavigateBack={() => setCurrentScreen('SUPER_ADMIN_DASHBOARD')}
-      />
-    )}
     {currentScreen === 'SUPER_ADMIN_SUBSCRIPTIONS' && (
       <SuperAdminSubscriptionsScreen 
         userSession={userSession!} 
@@ -480,7 +476,11 @@ export function App() {
                         session={userSession}
                         onApprovalComplete={(updatedSession) => {
                           setUserSession(updatedSession);
-                          setCurrentScreen('ENTERPRISE_DASHBOARD');
+                          if (updatedSession.role === 'SUPER_ADMIN') {
+                            setCurrentScreen('SUPER_ADMIN_DASHBOARD');
+                          } else {
+                            setCurrentScreen('ENTERPRISE_DASHBOARD');
+                          }
                         }}
                         onSignOut={handleLogout}
                       />
