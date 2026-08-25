@@ -1,13 +1,60 @@
 import { db } from '../firebase';
 import { collection, doc, setDoc, query, where, getDocs, orderBy, limit, startAfter } from 'firebase/firestore';
 import { AuditTrailRecord, UserSession } from '../types';
+import { QueryScopeEngine } from './queryScopeEngine';
 
 export let _auditSetDoc = setDoc;
 export function _setAuditSetDocMock(mock: any) { _auditSetDoc = mock; }
 
 export class AuditTrailService {
+  static buildAuditRecord(
+    actor: { userId: string, employeeId?: string, role?: string, companyId: string, assignedSiteId?: string, assignedBranchId?: string, assignedRegionId?: string } | null,
+    companyId: string,
+    module: string,
+    action: string,
+    operation: string,
+    entityType: string,
+    entityId: string,
+    success: boolean,
+    severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW',
+    correlationId?: string,
+    changeSummary?: string,
+    failureReason?: string,
+    metadata?: any
+  ): any {
+    if (!actor) return null;
+    const targetCompanyId = companyId || actor.companyId;
+    if (!targetCompanyId) return null;
+
+    const id = `AUDIT-${Date.now()}-${Math.random().toString(36).substring(2,8).toUpperCase()}`;
+    const record: any = {
+      id,
+      companyId: targetCompanyId,
+      actorId: actor.userId,
+      actorEmployeeId: actor.employeeId,
+      actorRole: actor.role,
+      regionId: actor.assignedRegionId || metadata?.regionId,
+      branchId: actor.assignedBranchId || metadata?.branchId,
+      siteId: actor.assignedSiteId || metadata?.siteId,
+      module,
+      action,
+      operation,
+      entityType,
+      entityId,
+      timestamp: new Date().toISOString(),
+      severity,
+      success,
+      failureReason,
+      correlationId,
+      source: 'WEB_APP',
+      changeSummary,
+      metadata
+    };
+    return record;
+  }
+
   static async recordEvent(
-    actor: { userId: string, employeeId?: string, role?: string, companyId: string } | null,
+    actor: { userId: string, employeeId?: string, role?: string, companyId: string, assignedSiteId?: string, assignedBranchId?: string, assignedRegionId?: string } | null,
     companyId: string,
     module: string,
     action: string,
@@ -22,33 +69,12 @@ export class AuditTrailService {
     metadata?: any
   ): Promise<void> {
     try {
-      if (!actor) return; 
+      const record = this.buildAuditRecord(
+        actor, companyId, module, action, operation, entityType, entityId, 
+        success, severity, correlationId, changeSummary, failureReason, metadata
+      );
       
-      const targetCompanyId = companyId || actor.companyId;
-      if (!targetCompanyId) return;
-
-      const id = `AUDIT-${Date.now()}-${Math.random().toString(36).substring(2,8).toUpperCase()}`;
-      
-      const record: any = {
-        id,
-        companyId: targetCompanyId,
-        actorId: actor.userId,
-        actorEmployeeId: actor.employeeId,
-        actorRole: actor.role,
-        module,
-        action,
-        operation,
-        entityType,
-        entityId,
-        timestamp: new Date().toISOString(),
-        severity,
-        success,
-        failureReason,
-        correlationId,
-        source: 'WEB_APP',
-        changeSummary,
-        metadata
-      };
+      if (!record) return;
 
       Object.keys(record).forEach(key => {
         if (record[key] === undefined) {
@@ -56,7 +82,7 @@ export class AuditTrailService {
         }
       });
 
-      const auditRef = doc(db, 'companies', targetCompanyId, 'audit_logs', id);
+      const auditRef = doc(db, 'companies', record.companyId, 'audit_logs', record.id);
       await _auditSetDoc(auditRef, record as AuditTrailRecord);
     } catch (error) {
       console.error('[AuditTrailService] Error recording audit event:', error);
@@ -122,7 +148,8 @@ export class AuditTrailService {
     limitCount?: number;
   }): Promise<AuditTrailRecord[]> {
     try {
-      let q = query(collection(db, 'companies', session.companyId, 'audit_logs'));
+      const baseRef = collection(db, 'companies', session.companyId, 'audit_logs');
+      let q = query(baseRef, ...QueryScopeEngine.buildScope(session, 'AUDIT_LOGS'));
       
       // We do manual filtering in memory for simplicity to avoid compound index requirements dynamically, 
       // but in production, we should add composite indexes or just basic orderBy

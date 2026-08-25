@@ -72,6 +72,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
 
   // Form State
   const [selectedDelegateId, setSelectedDelegateId] = useState('');
+  const [selectedDelegatorId, setSelectedDelegatorId] = useState('');
   const [startAtDate, setStartAtDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [startAtTime, setStartAtTime] = useState(format(new Date(), 'HH:mm'));
   const [endAtDate, setEndAtDate] = useState(format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'));
@@ -106,6 +107,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
   const loadDelegations = async () => {
     setLoading(true);
     try {
+      await BpmDelegationService.refreshCompanyDelegationStatuses(session.companyId);
       if (activeSubTab === 'MY_DELEGATIONS') {
         const list = await BpmDelegationService.getMyCreatedDelegations(session);
         setDelegations(list);
@@ -161,12 +163,14 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
     e.preventDefault();
     setFormError(null);
 
+    const actualDelegatorId = selectedDelegatorId || session.userId;
+
     if (!selectedDelegateId) {
       setFormError('Please select a colleague to assign as your approval proxy.');
       return;
     }
 
-    if (selectedDelegateId === session.userId) {
+    if (selectedDelegateId === actualDelegatorId) {
       setFormError('Self-delegation is not allowed.');
       return;
     }
@@ -189,24 +193,25 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
       return;
     }
 
-    // Lookup delegate details
+    // Lookup delegate and delegator details
     const delegateEmp = employees.find(e => e.id === selectedDelegateId);
+    const delegatorEmp = employees.find(e => e.id === actualDelegatorId);
 
     setCreating(true);
     try {
       await BpmDelegationService.createDelegation(session, {
-        delegatorUserId: session.userId,
-        delegatorName: session.fullName,
-        delegatorEmail: session.email,
-        delegatorRole: session.role,
-        delegatorDepartment: session.departmentName || session.departmentId,
+        delegatorUserId: actualDelegatorId,
+        delegatorName: delegatorEmp ? `${delegatorEmp.firstName || ''} ${delegatorEmp.lastName || ''}`.trim() || delegatorEmp.employeeCode : session.fullName,
+        delegatorEmail: delegatorEmp?.email || session.email,
+        delegatorRole: delegatorEmp?.designation || delegatorEmp?.role || session.role,
+        delegatorDepartment: delegatorEmp?.departmentId || session.departmentName || session.departmentId,
         
         delegateUserId: selectedDelegateId,
         delegateName: delegateEmp ? `${delegateEmp.firstName || ''} ${delegateEmp.lastName || ''}`.trim() || delegateEmp.employeeCode : 'Colleague',
         delegateEmail: delegateEmp?.email,
         delegateRole: delegateEmp?.designation || delegateEmp?.role,
         delegateDepartment: delegateEmp?.departmentId,
-
+        
         scope: {
           modules: selectedModules,
           transactionTypes: selectedTransactionTypes,
@@ -519,6 +524,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
             onSubmit={handleCreateDelegation}
             className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 space-y-5 shadow-2xl"
           >
+            
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div>
@@ -538,6 +544,33 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                 Cancel
               </button>
             </div>
+
+            {/* EMERGENCY DELEGATION: SELECT DELEGATOR */}
+            {canViewOrgAudit && (
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Assign On Behalf Of (Original Approver)
+                </label>
+                <p className="text-[10px] text-amber-600 dark:text-amber-500 mb-2 font-medium">
+                  Administrator bypass enabled. You may configure a proxy for a missing or unavailable employee.
+                </p>
+                <select
+                  value={selectedDelegatorId}
+                  onChange={(e) => setSelectedDelegatorId(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                >
+                  <option value="">{session.fullName} (Myself)</option>
+                  {employees
+                    .filter(e => e.id !== session.userId)
+                    .map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.firstName} {emp.lastName} ({emp.employeeCode} - {emp.designation})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
 
             {formError && (
               <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 rounded-2xl text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2">

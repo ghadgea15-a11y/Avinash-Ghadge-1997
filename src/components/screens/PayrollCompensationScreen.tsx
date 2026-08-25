@@ -48,6 +48,7 @@ import {
   BankExportFormat
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { PayrollWorkflowService } from '../../services/payrollWorkflowService';
 import { BulkExportGovernanceService } from '../../services/bulkExportGovernanceService';
 import { PayslipService } from '../../services/payslipService';
 import { PayslipModal } from '../payroll/PayslipModal';
@@ -413,13 +414,14 @@ export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps>
     setProcessing(true);
     setCalcFeedback(null);
     try {
-      const res = await FirestoreService.executeMonthlyPayrollCalculation(
+      const cycleId = await PayrollWorkflowService.calculatePayrollCycle(
         companyId,
         calcMonth,
         calcYear,
-        { uid: userSession.userId, name: userSession.fullName || userSession.email }
+        { id: userSession.userId, name: userSession.fullName || userSession.email }
       );
-      if (res.success) {
+      if (cycleId) {
+        const res = { cycleId, totalSlips: 'multiple' };
         setSelectedCycleId(res.cycleId);
         setCalcFeedback({ success: true, message: `Successfully computed payroll for ${res.totalSlips} employees.` });
         setShowCalcModal(false);
@@ -441,10 +443,7 @@ export const PayrollCompensationScreen: React.FC<PayrollCompensationScreenProps>
     if (!companyId) return;
     setProcessing(true);
     try {
-      await FirestoreService.updatePayrollCycleStatus(companyId, cycleId, 'APPROVED', {
-        uid: userSession.userId,
-        name: userSession.fullName || userSession.email
-      });
+      await PayrollWorkflowService.approvePayrollCycle(companyId, cycleId, { id: userSession.userId, name: userSession.fullName || userSession.email });
       const updated = await FirestoreService.getSalarySlips(companyId, cycleId);
       setCycleSlips(updated);
     } finally {

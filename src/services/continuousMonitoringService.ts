@@ -257,4 +257,67 @@ export class ContinuousMonitoringService {
 
     return rule;
   }
+
+  static async seedDefaultRules(companyId: string) {
+    const rules: SecurityDetectionRule[] = [
+      {
+        id: `RULE-MULTI-SENSITIVE`,
+        name: 'Multiple Sensitive Changes',
+        description: 'Detects if a user attempts multiple sensitive changes within a short window',
+        eventType: 'CHANGE_REQUESTED',
+        condition: 'COUNT_GREATER_THAN_EQUAL',
+        threshold: 3,
+        windowMinutes: 15,
+        timeWindowMinutes: 15,
+        severity: 'HIGH',
+        enabled: true,
+        
+      },
+      {
+        id: `RULE-FAILED-ACCESS`,
+        name: 'Repeated Failed Access',
+        description: 'Detects repeated unauthorized or failed access attempts',
+        eventType: 'UNAUTHORIZED_ACCESS',
+        condition: 'COUNT_GREATER_THAN_EQUAL',
+        threshold: 5,
+        windowMinutes: 5,
+        timeWindowMinutes: 5,
+        severity: 'HIGH',
+        enabled: true,
+        
+      },
+      {
+        id: `RULE-CROSS-SCOPE`,
+        name: 'Cross-Scope Attempts',
+        description: 'Detects attempts to access data outside of the assigned scope',
+        eventType: 'CROSS_SCOPE_ACCESS_DENIED',
+        condition: 'COUNT_GREATER_THAN_EQUAL',
+        threshold: 2,
+        windowMinutes: 10,
+        timeWindowMinutes: 10,
+        severity: 'CRITICAL',
+        enabled: true,
+        
+      },
+      {
+        id: `RULE-RAPID-PERMISSIONS`,
+        name: 'Rapid Permission Changes',
+        description: 'Detects rapid changes to user permissions',
+        eventType: 'PERMISSION_CHANGE',
+        condition: 'COUNT_GREATER_THAN_EQUAL',
+        threshold: 3,
+        windowMinutes: 30,
+        timeWindowMinutes: 30,
+        severity: 'CRITICAL',
+        enabled: true,
+        
+      }
+    ];
+
+    for (const rule of rules) {
+      const ref = doc(db, 'companies', companyId, 'security_detection_rules', rule.id);
+      await setDoc(ref, rule, { merge: true });
+    }
+  }
+
 }

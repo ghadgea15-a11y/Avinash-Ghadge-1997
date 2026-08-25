@@ -1,5 +1,5 @@
 import { db } from '../firebase';
-import { collection, doc, getDoc, getDocs, query, where, setDoc, updateDoc, runTransaction, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, setDoc, updateDoc, runTransaction, serverTimestamp, writeBatch, orderBy, limit } from 'firebase/firestore';
 import { 
   BpmApprovalWorkflow, 
   BpmApprovalStep,
@@ -300,15 +300,38 @@ export class BpmService {
       }
 
       transaction.set(instanceRef, instance);
+      
+      // Authoritative Integration Execution (Inside Transaction)
+      if (instance.status === 'APPROVED') {
+        await BpmIntegrationService.onWorkflowApproved(instance, session.userId, session.fullName, transaction);
+      } else if (instance.status === 'REJECTED') {
+        await BpmIntegrationService.onWorkflowRejected(instance, session.userId, session.fullName, reason || 'Rejected by approver', transaction);
+      }
+      
+      const auditRec = AuditTrailService.buildAuditRecord(
+        { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId: session.companyId },
+        session.companyId,
+        'BPM',
+        `BPM_ACTION_${actionType}`,
+        'EXECUTE',
+        'BpmApprovalInstance',
+        instanceId,
+        true,
+        'MEDIUM',
+        instanceId,
+        `Action ${actionType} performed on BPM Instance ${instanceId}${proxyDetails.asProxy ? ` as proxy for ${proxyDetails.delegatorId}` : ''}`,
+        undefined,
+        { actionType, reason, proxyDetails }
+      );
+      if (auditRec) {
+        const auditRef = doc(db, 'companies', session.companyId, 'audit_logs', auditRec.id);
+        transaction.set(auditRef, auditRec);
+      }
+      
       return instance;
     });
-
-    // Post-Action Integrations & Auditing
-    if (result.status === 'APPROVED') {
-      await BpmIntegrationService.onWorkflowApproved(result, session.userId, session.fullName);
-    } else if (result.status === 'REJECTED') {
-      await BpmIntegrationService.onWorkflowRejected(result, session.userId, session.fullName, reason || 'Rejected by approver');
-    }
+    
+    // Proxy Audit & Delegator Notification
 
     // Proxy Audit & Delegator Notification
     if (proxyDetails.asProxy && proxyDetails.delegatorId) {
@@ -326,7 +349,7 @@ export class BpmService {
       ).catch(() => {});
       
       // Module 10.2: Immutable Audit Trail for Workflow Proxy Action
-      AuditTrailService.logUpdate(session, 'BPM', 'BpmApprovalInstance', instanceId, `Proxy action ${actionType} performed on behalf of ${proxyDetails.delegatorId}`, { proxyUserId: session.userId, delegatorId: proxyDetails.delegatorId }, instanceId).catch(() => {});
+      // Replaced by internal transaction audit log
 
 
       try {
@@ -462,6 +485,17 @@ export class BpmService {
    * 1. Approvals directly assigned to user
    * 2. Approvals delegated to user via active Proxy Delegation
    */
+  
+  static async getCompanyApprovals(companyId: string, limitCount = 200): Promise<BpmApprovalInstance[]> {
+    const q = query(
+      collection(db, 'companies', companyId, 'bpm_instances'),
+      orderBy('submittedAt', 'desc'),
+      limit(limitCount)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.data() as BpmApprovalInstance);
+  }
+
   static async getMyApprovals(session: UserSession): Promise<BpmApprovalInstance[]> {
     // 1. Direct assignments
     const directQuery = query(

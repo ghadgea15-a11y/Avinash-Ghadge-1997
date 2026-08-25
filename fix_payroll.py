@@ -1,62 +1,105 @@
-import re
+import sys
 
-with open('src/services/payrollEngine.ts', 'r') as f:
-    content = f.read()
+with open('src/services/firestoreService.ts', 'r') as f:
+    code = f.read()
 
-new_logic = """
-    // 1. Calculate LOP (Loss of Pay) / Leaves
-    const approvedLeaves = leaves.filter(l => 
-      l.employeeId === employee.id && 
-      (l.status === 'APPROVED' || (l as any).status === 'ACCEPTED')
-    );
-    
-    let unpaidLeaveDays = 0;
-    let paidLeaveDays = 0;
-    
-    approvedLeaves.forEach(l => {
-      if (l.leaveType === 'UNPAID') {
-        unpaidLeaveDays += l.daysCount || 0;
-      } else {
-        paidLeaveDays += l.daysCount || 0;
-      }
-    });
+target_str = """  static async updatePayrollCycleStatus(
+    companyId: string,
+    cycleId: string,
+    status: 'PENDING_APPROVAL' | 'APPROVED' | 'LOCKED' | 'CANCELLED' | 'DISBURSED',
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {"""
 
-    // 2. Attendance aggregation (worked days, OT hours)
-    let workedDays = 0;
-    let explicitAbsentDays = 0;
-    let explicitPaidRestDays = 0;
-    let otHours = 0;
+start_idx = code.find(target_str)
+if start_idx == -1:
+    print("Not found target_str")
+    sys.exit(1)
 
-    attendances.forEach(att => {
-      if (att.status === 'PRESENT' || att.status === 'LATE' || att.status === 'EARLY_DEPARTURE') {
-        workedDays += 1;
-      } else if (att.status === 'HALF_DAY') {
-        workedDays += 0.5;
-        explicitAbsentDays += 0.5;
-      } else if (att.status === 'ABSENT' || att.status === 'MISSED_PUNCH') {
-        explicitAbsentDays += 1;
-      } else if (att.status === 'HOLIDAY' || att.status === 'WEEKLY_OFF') {
-        explicitPaidRestDays += 1;
-      }
+end_marker = "handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/payroll/${cycleId}`);"
+end_idx_raw = code.find(end_marker, start_idx)
+if end_idx_raw == -1:
+    print("Not found end_marker")
+    sys.exit(1)
+
+end_idx = code.find('}', end_idx_raw) + 1
+next_end_idx = code.find('}', end_idx) + 1
+
+replacement = """  static async updatePayrollCycleStatus(
+    companyId: string,
+    cycleId: string,
+    status: 'PENDING_APPROVAL' | 'APPROVED' | 'LOCKED' | 'CANCELLED' | 'DISBURSED',
+    actor: { uid: string; name: string }
+  ): Promise<boolean> {
+    try {
+      const now = new Date().toISOString();
+      const cycleRef = doc(db, 'companies', companyId, 'payroll', cycleId);
       
-      if (att.approvedOvertimeMinutes && att.approvedOvertimeMinutes > 0) {
-        otHours += att.approvedOvertimeMinutes / 60;
+      const updateData: Partial<PayrollCycleRecord> = {
+        status
+      };
+
+      if (status === 'APPROVED') {
+        updateData.approvedAt = now;
+      } else if (status === 'LOCKED') {
+        updateData.lockedAt = now;
+      } else if (status === 'DISBURSED') {
+        updateData.disbursedAt = now;
       }
-    });
 
-    // LOP Days Calculation
-    // Total LOP is explicitly unpaid leaves plus explicit unregularized absences.
-    let lopDays = unpaidLeaveDays + explicitAbsentDays;
-    
-    // Cap LOP to max days in month
-    lopDays = Math.min(daysInMonth, Math.max(0, lopDays));
-    
-    let payableDays = daysInMonth - lopDays;
-"""
+      const slips = await this.getSalarySlips(companyId, cycleId);
+      
+      // Use batch for atomic update
+      let batch = writeBatch(db);
+      let opCount = 0;
 
-# Replace the old logic
-pattern = re.compile(r"// 1\. Calculate LOP \(Loss of Pay\) / Unpaid Leaves.*?const lopDays = Math\.max\(0, daysInMonth - payableDays\);", re.DOTALL)
-content = pattern.sub(new_logic.strip(), content)
+      batch.update(cycleRef, updateData);
+      opCount++;
 
-with open('src/services/payrollEngine.ts', 'w') as f:
-    f.write(content)
+      for (const slip of slips) {
+        const slipRef = doc(db, 'companies', companyId, 'salary_slips', slip.id);
+        batch.update(slipRef, {
+          status: status === 'DISBURSED' ? 'PAID' : 'APPROVED'
+        });
+        opCount++;
+        
+        if (opCount >= 495) {
+          await batch.commit();
+          batch = writeBatch(db);
+          opCount = 0;
+        }
+      }
+
+      const auditRec = AuditTrailService.buildAuditRecord(
+        { userId: actor.uid, companyId },
+        companyId,
+        'HCM',
+        `PAYROLL_${status}` as any,
+        'UPDATE',
+        'PayrollCycleRecord',
+        cycleId,
+        true,
+        'HIGH',
+        undefined,
+        `Payroll cycle ${cycleId} was marked as ${status} by ${actor.name}`,
+        undefined,
+        { status }
+      );
+
+      if (auditRec) {
+        const auditRef = doc(db, 'companies', companyId, 'audit_logs', auditRec.id);
+        batch.set(auditRef, auditRec);
+      }
+
+      await batch.commit();
+      return true;
+    } catch (err: any) {
+      console.error('[FirestoreService] updatePayrollCycleStatus error:', err);
+      handleFirestoreError(err, OperationType.UPDATE, `companies/${companyId}/payroll/${cycleId}`);
+      return false;
+    }
+  }"""
+
+new_code = code[:start_idx] + replacement + code[next_end_idx:]
+with open('src/services/firestoreService.ts', 'w') as f:
+    f.write(new_code)
+print("Success")

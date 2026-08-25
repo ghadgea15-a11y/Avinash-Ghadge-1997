@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CompanyTenant, UserSession, PhaseAScreen, EmployeeRecord, IncidentReportRecord, TaskRecord, SiteRecord } from '../../../types';
 import { FirestoreService } from '../../../services/firestoreService';
 import { ExecutiveBiDashboard } from "../../bi/ExecutiveBiDashboard";
+import { EnterpriseIntelligenceDashboard } from "../../bi/EnterpriseIntelligenceDashboard";
 import { PredictiveAnalyticsDashboard } from "../../bi/PredictiveAnalyticsDashboard";
 import { Users, AlertTriangle, CheckCircle, TrendingUp, ShieldCheck } from 'lucide-react';
 
@@ -109,6 +110,11 @@ export const DirectorDashboard: React.FC<DashboardProps> = ({ userSession, compa
           Security Audit & Anomalies
         </button>
       </div>
+      <EnterpriseIntelligenceDashboard 
+        session={userSession} 
+        company={company} 
+        onDrillDown={(mod, data) => console.log('DrillDown', mod, data)} 
+      />
       <ExecutiveBiDashboard session={userSession} company={company} />
       <PredictiveAnalyticsDashboard session={userSession} company={company} />
     </div>

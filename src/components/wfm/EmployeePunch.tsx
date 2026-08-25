@@ -41,7 +41,11 @@ export const EmployeePunch: React.FC<Props> = ({ userSession, activeCompany }) =
       });
 
       const unsubAttendance = FirestoreService.subscribeToAttendance(userSession, activeCompany.companyId, (data) => {
-        const found = data.find(a => a.attendanceDate === date && a.employeeId === userSession.employeeId);
+        // Find attendance matching today's roster, OR any open attendance session
+        const found = data.find(a => 
+          (todayRoster && a.rosterId === todayRoster.id) || 
+          (!a.checkOut && a.employeeId === userSession.employeeId)
+        );
         setAttendance(found || null);
       });
 

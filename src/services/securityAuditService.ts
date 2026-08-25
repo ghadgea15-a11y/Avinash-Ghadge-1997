@@ -67,7 +67,17 @@ export class SecurityAuditService {
       });
 
       const eventRef = doc(db, 'companies', companyId, 'security_events', eventId);
-      await _setDoc(eventRef, eventRecord as SecurityEventRecord);
+      
+      // Fire-and-forget or timeout protected write to avoid blocking UI during login
+      const writePromise = _setDoc(eventRef, eventRecord as SecurityEventRecord);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('TIMEOUT')), 5000)
+      );
+
+      // We wait but with a timeout to ensure login proceeds even if logging is slow
+      await Promise.race([writePromise, timeoutPromise]).catch(err => {
+        console.warn('[SecurityAuditService] Security event write timed out or failed:', err);
+      });
 
       // Asynchronously trigger anomaly detection so we don't block
       this.runAnomalyDetection(companyId, eventRecord).catch(e => console.error('Anomaly detection failed', e));

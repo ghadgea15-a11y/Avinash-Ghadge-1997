@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ExecutiveBiDashboard } from "../../bi/ExecutiveBiDashboard";
+import { EnterpriseIntelligenceDashboard } from "../../bi/EnterpriseIntelligenceDashboard";
 import { PredictiveAnalyticsDashboard } from "../../bi/PredictiveAnalyticsDashboard";
 import { Users, Building, Activity, ShieldCheck, DollarSign, Clock } from 'lucide-react';
 import { CompanyTenant, UserSession, PhaseAScreen, EmployeeRecord, ApprovalRequestRecord } from '../../../types';
@@ -87,6 +88,11 @@ export const OwnerDashboard: React.FC<DashboardProps> = ({ userSession, company,
           Security Audit & Anomalies
         </button>
       </div>
+      <EnterpriseIntelligenceDashboard 
+        session={userSession} 
+        company={company} 
+        onDrillDown={(mod, data) => console.log('DrillDown', mod, data)} 
+      />
       <ExecutiveBiDashboard session={userSession} company={company} />
       <PredictiveAnalyticsDashboard session={userSession} company={company} />
     </div>

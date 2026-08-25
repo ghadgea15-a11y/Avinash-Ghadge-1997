@@ -137,7 +137,7 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
   const handleSaveBranch = async () => {
     if (!editingBranch?.name || !editingBranch?.code) return;
     const bRecord: BranchRecord = {
-      id: editingBranch.id || `BR-${Date.now().toString(36)}`,
+      companyId: companyId, id: editingBranch.id || `BR-${Date.now().toString(36)}`,
       name: editingBranch.name,
       code: editingBranch.code.toUpperCase(),
       city: editingBranch.city || 'Mumbai',
@@ -198,7 +198,7 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
   const handleSaveDept = async () => {
     if (!editingDept?.name || !editingDept?.code) return;
     const dRecord: DepartmentRecord = {
-      id: editingDept.id || `DEPT-${Date.now().toString(36)}`,
+      companyId: companyId, id: editingDept.id || `DEPT-${Date.now().toString(36)}`,
       name: editingDept.name,
       code: editingDept.code.toUpperCase(),
       description: editingDept.description || ''
@@ -225,7 +225,7 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
   const handleSaveDesig = async () => {
     if (!editingDesig?.title) return;
     const desRecord: DesignationRecord = {
-      id: editingDesig.id || `DESIG-${Date.now().toString(36)}`,
+      companyId: companyId, id: editingDesig.id || `DESIG-${Date.now().toString(36)}`,
       title: editingDesig.title,
       level: editingDesig.level || 'L1'
     };
@@ -287,7 +287,7 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
   // Membership Role Update
   const handleUpdateRole = async (member: UserMembershipRecord, newRole: UserRole) => {
     const updated = { ...member, role: newRole };
-    const success = await FirestoreService.updateUserMembership(companyId, updated);
+    const success = await FirestoreService.updateUserMembership(userSession, companyId, updated);
     if (success) {
       setMemberships(prev => prev.map(m => m.userId === member.userId ? updated : m));
       setSaveSuccess(`Role for ${member.fullName} updated to ${newRole}.`);

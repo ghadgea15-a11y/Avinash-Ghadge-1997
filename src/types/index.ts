@@ -382,6 +382,9 @@ export interface AuditTrailRecord {
   actorId: string;
   actorEmployeeId?: string;
   actorRole?: string;
+  regionId?: string;
+  branchId?: string;
+  siteId?: string;
   module: string;
   action: string;
   operation: string;
@@ -649,6 +652,12 @@ export interface EmployeeRecord {
   updatedAt: string;
   createdBy: string;
   updatedBy: string;
+
+  // Final Settlement
+  finalSettlementStatus?: 'PENDING' | 'SETTLED';
+  finalSettlementAmount?: number;
+  finalSettlementDate?: string;
+
 }
 
 export interface RegionRecord {
@@ -674,6 +683,7 @@ export interface AreaRecord {
 
 export interface BranchRecord {
   id: string;
+  companyId: string;
   name: string;
   code: string;
   city: string;
@@ -728,6 +738,7 @@ export interface SiteRecord {
 
 export interface DepartmentRecord {
   id: string;
+  companyId: string;
   name: string;
   code: string;
   description?: string;
@@ -736,6 +747,7 @@ export interface DepartmentRecord {
 
 export interface DesignationRecord {
   id: string;
+  companyId: string;
   title: string;
   level: string;
   createdAt?: string;
@@ -2094,6 +2106,7 @@ export type PhaseAScreen =
   | 'DEPLOYMENT_MANAGEMENT'
   | 'SHIFT_ROSTER'
   | 'EMPLOYEES'
+  | 'ORG_CONTROL'
   | 'ATTENDANCE_SHIFTS'
   | 'LEAVE_MANAGEMENT'
   | 'PAYROLL_COMPENSATION'
@@ -2129,7 +2142,18 @@ export type PhaseAScreen =
   | 'PURCHASE_ORDERS'
   | 'THREE_WAY_MATCH'
   | 'SAFETY_MANAGEMENT'
-  | 'COMPLIANCE';
+  | 'COMPLIANCE'
+  | 'DOCUMENT_LIFECYCLE'
+  | 'OPERATIONAL_INTELLIGENCE'
+  | 'WORKFORCE_CAPACITY'
+  | 'CONFLICT_DETECTION'
+  | 'HISTORICAL_TRACEABILITY'
+  | 'SCALABILITY_ASSESSMENT'
+  | 'BIOMETRIC_DEVICES'
+  | 'DEVICE_INTEGRATION_HUB';
+
+export * from './scalability';
+export * from './biometric';
 
 export type AppThemeMode = 'DARK' | 'LIGHT' | 'SYSTEM';
 
@@ -5084,4 +5108,7 @@ export interface RfqBid {
 export type KpiCategory = 'WORKFORCE' | 'OPERATIONS' | 'FINANCE' | 'ASSETS' | 'INVENTORY' | 'CRM' | string;
 
 export * from './compliance';
+export * from './workforceCapacity';
+export * from './enterpriseConflict';
+export * from './historicalTraceability';
 

@@ -140,6 +140,7 @@ export class AttendanceCalculationEngine {
     employeeRole?: UserRole;
     departmentId?: string;
     siteId?: string;
+    rosterId?: string;
   }): AttendanceCalculationResult {
     const {
       workDate,
@@ -152,7 +153,8 @@ export class AttendanceCalculationEngine {
       employeeCategory,
       employeeRole,
       departmentId,
-      siteId
+      siteId,
+      rosterId
     } = params;
 
     const policy = params.policy || this.getDefaultPolicy(shift?.companyId || 'DEFAULT');
@@ -178,7 +180,7 @@ export class AttendanceCalculationEngine {
       if (approvedLeave.leaveType === 'CASUAL' || approvedLeave.leaveType === 'SICK' || approvedLeave.leaveType === 'EARNED' || approvedLeave.leaveType === 'UNPAID') {
         breakdownSteps.push(`[Leave Policy] Approved ${approvedLeave.leaveType} leave active on ${workDate}.`);
         return {
-          attendanceId: `ATT-${workDate}`,
+          attendanceId: rosterId ? `ATT-${rosterId}` : `ATT-${workDate}`,
           workDate,
           scheduledMinutes: 0,
           workedMinutes: 0,
@@ -223,7 +225,7 @@ export class AttendanceCalculationEngine {
       }
 
       return {
-        attendanceId: `ATT-${workDate}`,
+        attendanceId: rosterId ? `ATT-${rosterId}` : `ATT-${workDate}`,
         workDate,
         scheduledMinutes: 0,
         workedMinutes,
@@ -271,7 +273,7 @@ export class AttendanceCalculationEngine {
         shortfallMinutes = scheduledMinutes;
         breakdownSteps.push(`[Attendance] No punches recorded. Marked as ABSENT.`);
         return {
-          attendanceId: `ATT-${workDate}`,
+          attendanceId: rosterId ? `ATT-${rosterId}` : `ATT-${workDate}`,
           workDate,
           scheduledMinutes,
           workedMinutes: 0,
@@ -455,7 +457,7 @@ export class AttendanceCalculationEngine {
     }
 
     return {
-      attendanceId: `ATT-${workDate}`,
+      attendanceId: params.rosterId ? `ATT-${params.rosterId}` : `ATT-${workDate}`,
       workDate,
       scheduledMinutes,
       workedMinutes,

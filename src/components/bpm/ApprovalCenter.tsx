@@ -62,6 +62,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
   const loadApprovals = async () => {
     setLoading(true);
     try {
+      await BpmDelegationService.refreshCompanyDelegationStatuses(session.companyId);
       const list = await BpmService.getMyApprovals(session);
       setApprovals(list);
     } catch (err) {

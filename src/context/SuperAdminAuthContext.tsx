@@ -23,18 +23,25 @@ export const SuperAdminProvider = ({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Verify Super Admin status in Firestore
-        const adminDocRef = doc(db, 'super_admins', currentUser.uid);
-        const adminDoc = await getDoc(adminDocRef);
-        
-        if (adminDoc.exists() && adminDoc.data().status === 'ACTIVE') {
-          setUser(currentUser);
-          setIsSuperAdmin(true);
-        } else {
-          // Normal user or inactive admin trying to access Super Admin panel
+        try {
+          const adminDocRef = doc(db, 'super_admins', currentUser.uid);
+          const snapPromise = getDoc(adminDocRef);
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('TIMEOUT')), 5000)
+          );
+
+          const adminDoc = await Promise.race([snapPromise, timeoutPromise]) as any;
+          
+          if (adminDoc && adminDoc.exists() && adminDoc.data().status === 'ACTIVE') {
+            setUser(currentUser);
+            setIsSuperAdmin(true);
+          } else {
+            setUser(null);
+            setIsSuperAdmin(false);
+          }
+        } catch (e) {
           setUser(null);
           setIsSuperAdmin(false);
-          await auth.signOut(); // Kick them out of this session
         }
       } else {
         setUser(null);

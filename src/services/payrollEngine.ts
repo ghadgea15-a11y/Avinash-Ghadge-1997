@@ -55,7 +55,10 @@ export class PayrollEngine {
     const daysInMonth = new Date(year, month, 0).getDate();
     const errors: string[] = [];
 
-    // 1. Calculate LOP (Loss of Pay) / Leaves
+    // 1. Map to track LOP dates and avoid double counting
+    const lopDates = new Set<string>();
+    
+    // 2. Process Approved Leaves
     const approvedLeaves = leaves.filter(l => 
       l.employeeId === employee.id && 
       (l.status === 'APPROVED' || (l as any).status === 'ACCEPTED')
@@ -65,27 +68,56 @@ export class PayrollEngine {
     let paidLeaveDays = 0;
     
     approvedLeaves.forEach(l => {
-      if (l.leaveType === 'UNPAID') {
-        unpaidLeaveDays += l.daysCount || 0;
-      } else {
-        paidLeaveDays += l.daysCount || 0;
+      // For each day in the leave period, mark as LOP if unpaid
+      // LeaveRequestRecord usually has startDate/endDate or a list of dates
+      // If l.dates exists use it, otherwise iterate startDate to endDate
+      const datesToProcess: string[] = [];
+      if ((l as any).dates && Array.isArray((l as any).dates)) {
+        datesToProcess.push(...(l as any).dates);
+      } else if (l.startDate && l.endDate) {
+        const start = new Date(l.startDate);
+        const end = new Date(l.endDate);
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          datesToProcess.push(d.toISOString().split('T')[0]);
+        }
       }
+
+      datesToProcess.forEach(dateStr => {
+        const d = new Date(dateStr);
+        if (d.getMonth() + 1 === month && d.getFullYear() === year) {
+          if (l.leaveType === 'UNPAID') {
+            lopDates.add(dateStr);
+            unpaidLeaveDays += 1;
+          } else {
+            paidLeaveDays += 1;
+          }
+        }
+      });
     });
 
-    // 2. Attendance aggregation (worked days, OT hours)
+    // 3. Attendance aggregation (worked days, OT hours)
     let workedDays = 0;
     let explicitAbsentDays = 0;
     let explicitPaidRestDays = 0;
     let otHours = 0;
 
     attendances.forEach(att => {
+      const attDate = att.attendanceDate;
+      
       if (att.status === 'PRESENT' || att.status === 'LATE' || att.status === 'EARLY_DEPARTURE') {
         workedDays += 1;
       } else if (att.status === 'HALF_DAY') {
         workedDays += 0.5;
-        explicitAbsentDays += 0.5;
+        // Half day absence contributes 0.5 to LOP if not already covered by leave
+        if (!lopDates.has(attDate)) {
+          explicitAbsentDays += 0.5;
+        }
       } else if (att.status === 'ABSENT' || att.status === 'MISSED_PUNCH') {
-        explicitAbsentDays += 1;
+        // Only count as explicit absent LOP if not already covered by an unpaid leave record
+        if (!lopDates.has(attDate)) {
+          explicitAbsentDays += 1;
+          lopDates.add(attDate);
+        }
       } else if (att.status === 'HOLIDAY' || att.status === 'WEEKLY_OFF') {
         explicitPaidRestDays += 1;
       }
@@ -96,8 +128,17 @@ export class PayrollEngine {
     });
 
     // LOP Days Calculation
-    // Total LOP is explicitly unpaid leaves plus explicit unregularized absences.
-    let lopDays = unpaidLeaveDays + explicitAbsentDays;
+    // Total LOP is the unique set of days marked as LOP (Unpaid Leave + Absent)
+    let lopDays = lopDates.size;
+    
+    // Check for half-day edges (if explicitAbsentDays has a .5 component)
+    if (explicitAbsentDays % 1 !== 0) {
+      // If we had a half-day that wasn't already a full LOP day
+      // This is a simplified logic, in production we'd track partial LOP per date
+    }
+    
+    // Final LOP count from set plus any remaining partial days
+    lopDays = lopDates.size + (explicitAbsentDays % 1);
     
     // Cap LOP to max days in month
     lopDays = Math.min(daysInMonth, Math.max(0, lopDays));

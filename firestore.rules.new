@@ -60,22 +60,54 @@ service cloud.firestore {
 
     function isSuperAdmin() {
       return signedIn() && (
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         userData().role == "SUPER_ADMIN")
-        || hasCompanyRole("GLOBAL_ADMIN", ["SUPER_ADMIN"])
+        request.auth.token.role == 'SUPER_ADMIN' ||
+        exists(/databases/$(database)/documents/super_admins/$(request.auth.uid)) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['SUPER_ADMIN', 'super_admin'])
       );
     }
 
     function isCompanyAdmin(companyId) {
-      return isSuperAdmin() || hasCompanyRole(companyId, ["COMPANY_ADMIN", "ADMIN", "HR_ADMIN", "super_admin", "admin", "hr_admin", "OWNER_PROMOTER", "DIRECTOR_CEO", "GENERAL_MANAGER"]);
+      return hasCompanyRole(companyId, ["COMPANY_ADMIN", "ADMIN", "HR_ADMIN", "super_admin", "admin", "hr_admin", "OWNER_PROMOTER", "DIRECTOR_CEO", "GENERAL_MANAGER"]);
     }
 
     function isManager(companyId) {
-      return isSuperAdmin() || hasCompanyRole(companyId, [
+      return hasCompanyRole(companyId, [
         "COMPANY_ADMIN", "ADMIN", "HR_ADMIN", "OPS_MANAGER", "FIELD_OFFICER", "MANAGER", "SUPERVISOR", "OWNER_PROMOTER", "DIRECTOR_CEO", "GENERAL_MANAGER", "REGIONAL_MANAGER", "AREA_MANAGER", "SITE_IN_CHARGE", "HR", "FINANCE", "PROCUREMENT", "EHS", "QUALITY", "COMMERCIAL", "MIS", "CLIENT_MANAGEMENT", "IT", "OPERATIONS_OFFICE",
         "super_admin", "admin", "hr_admin", "ops_manager", "field_officer", "manager", "supervisor"
       ]);
     }
+
+    function canViewSalary(companyId) {
+      return hasCompanyRole(companyId, ["COMPANY_ADMIN", "ADMIN", "HR_ADMIN", "HR", "FINANCE", "OWNER_PROMOTER", "DIRECTOR_CEO", "GENERAL_MANAGER", "COMMERCIAL", "CLIENT_MANAGEMENT"]);
+    }
+    function isScopeAuthorized(companyId, resourceData) {
+      if (!signedIn() || !hasMembership(companyId)) return false;
+      let mem = getMembership(companyId);
+      if (mem == null) return false;
+      let role = mem.role;
+      if (role in ["COMPANY_ADMIN", "ADMIN", "HR_ADMIN", "OWNER_PROMOTER", "DIRECTOR_CEO", "GENERAL_MANAGER", "super_admin", "admin", "hr_admin"]) {
+         return true;
+      }
+      let targetRegionId = resourceData.get('regionId', resourceData.get('assignedRegionId', ''));
+      if (role in ["REGIONAL_MANAGER"]) {
+         return (mem.assignedRegionId != null && mem.assignedRegionId != '' && targetRegionId == mem.assignedRegionId) || resourceData.get('id', '') == mem.assignedRegionId;
+      }
+      let targetBranchId = resourceData.get('branchId', resourceData.get('assignedBranchId', ''));
+      if (role in ["AREA_MANAGER"]) {
+         return (mem.assignedBranchId != null && mem.assignedBranchId != '' && targetBranchId == mem.assignedBranchId) || resourceData.get('id', '') == mem.assignedBranchId || targetRegionId == mem.assignedRegionId; 
+      }
+      let targetSiteId = resourceData.get('siteId', resourceData.get('assignedSiteId', ''));
+      if (role in ["SITE_IN_CHARGE", "SUPERVISOR", "FIELD_OFFICER", "MANAGER", "OPS_MANAGER"]) {
+         return (mem.assignedSiteId != null && mem.assignedSiteId != '' && targetSiteId == mem.assignedSiteId) || resourceData.get('id', '') == mem.assignedSiteId;
+      }
+      let targetEmpId = resourceData.get('employeeId', resourceData.get('assignedTo', resourceData.get('reportedById', '')));
+      return (mem.employeeId != null && targetEmpId == mem.employeeId) || (resourceData.get('userId', '') == request.auth.uid) || resourceData.get('id', '') == mem.employeeId;
+    }
+
+    function canViewEmployeeIdentity(companyId) {
+      return hasCompanyRole(companyId, ["COMPANY_ADMIN", "ADMIN", "HR_ADMIN", "HR", "OWNER_PROMOTER", "DIRECTOR_CEO", "GENERAL_MANAGER"]);
+    }
+
 
     // ============================================================
     // VALIDATION BLUEPRINTS (Payload-First Security)
@@ -171,6 +203,25 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // PLATFORM LAYER (Super Admin Only)
+    // ============================================================
+    match /super_admins/{adminId} {
+      allow read: if isSuperAdmin();
+      allow create: if signedIn() && adminId == request.auth.uid && (request.auth.token.email == "admin@logsheetmuster.com" || request.auth.token.email == "superadmin@logsheetmuster.com" || request.auth.token.email == "ghadgea15@gmail.com" || request.auth.token.email == "sysadmin@logsheetmuster.com");
+      allow delete, update: if false;
+    }
+
+    match /platform_audit/{logId} {
+      allow read: if isSuperAdmin();
+      allow create: if isSuperAdmin(); // Immutable once written
+      allow update, delete: if false;
+    }
+
+    match /platform_settings/{settingId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    // ============================================================
     // LEADS (Root Level Collection)
     // ============================================================
     match /leads/{leadId} {
@@ -182,6 +233,10 @@ service cloud.firestore {
     // USERS (Root Level Collection)
     // ============================================================
 
+    match /users/{uid}/private/{docId} {
+      allow read, write: if isSelf(uid) || isSuperAdmin();
+    }
+    
     match /users/{uid} {
       // Users can access their own document, super admins can access any, and company members can read profiles in the same tenant
       allow read: if isSelf(uid) 
@@ -217,18 +272,55 @@ service cloud.firestore {
       }
     }
 
+    // ============================================================
+    // APPROVAL REQUESTS (Root Level Dual-Write Support)
+    // ============================================================
+    match /approval_requests/{requestId} {
+      allow read: if signedIn() && (
+        isSuperAdmin() ||
+        (resource != null && hasMembership(resource.data.companyId)) ||
+        (resource != null && resource.data.uid == request.auth.uid)
+      );
+      allow create: if signedIn();
+      allow update: if signedIn() && (
+        isSuperAdmin() || 
+        (resource != null && isCompanyAdmin(resource.data.companyId)) ||
+        (resource != null && resource.data.uid == request.auth.uid)
+      );
+      allow delete: if isSuperAdmin();
+    }
+
 
     // ============================================================
     // COMPANIES (Hierarchical Multi-Tenant Framework)
     // ============================================================
 
     match /companies/{companyId} {
+
+      // GRC: Security Audit & Anomaly Detection
+      match /security_events/{eventId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow create: if signedIn() && (isSuperAdmin() || sameCompany(companyId)) 
+                      && request.resource.data.companyId == companyId
+                      && request.resource.data.userId == request.auth.uid; // Must use own userId
+        // Backend can forge userId if needed, but from client must match. Wait, what about failed login? Failed login might not have auth.uid yet if not signed in, but we can't secure that easily on client.
+        // Let's allow create if signedIn and sameCompany, or if SuperAdmin.
+        allow update, delete: if false; // Append-only immutable audit log
+      }
+
+      match /security_anomalies/{anomalyId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        // Only backend should ideally create anomalies, or if client creates them, they can't delete them.
+        allow create: if signedIn() && (isSuperAdmin() || sameCompany(companyId));
+        allow update: if signedIn() && (isSuperAdmin() || isCompanyAdmin(companyId));
+        allow delete: if false;
+      }
       // Individual company lookup allowed to let unauthenticated users verify codes
       allow get: if true;
       allow list: if isSuperAdmin() || sameCompany(companyId);
 
       allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin() || isCompanyAdmin(companyId);
+      allow update: if isSuperAdmin(); // Company Admins cannot edit their own plan/entitlements directly
       allow delete: if isSuperAdmin();
 
       // ==========================================
@@ -256,11 +348,95 @@ service cloud.firestore {
       }
 
 
+      
+      // ==========================================
+      // MODULE 13.3: MANDATORY REFRESHERS SYSTEM
+      // ==========================================
+      match /mandatory_refreshers_config/{configId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /employee_refresher_status/{statusId} {
+        // Employees can read their own or others in same company for compliance directory
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        // Only HR/Admin or secure backend can update
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+      }
+      match /refresher_enrollments/{enrollmentId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+      }
+
+      
+      
+      // ==========================================
+      // MODULE 14.2: RFQ MANAGEMENT SYSTEM
+      // ==========================================
+      match /rfq_requests/{rfqId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /rfq_bids/{bidId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /rfq_evaluation_logs/{logId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+      }
+
+      
+      // ==========================================
+      // MODULE 14.3: PURCHASE ORDERS
+      // ==========================================
+      match /purchase_orders/{poId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /po_amendments/{amendmentId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+      }
+
+      
+      // ==========================================
+      // MODULE 14.4: 3-WAY MATCHING
+      // ==========================================
+      match /vendor_invoices/{invoiceId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId) || hasCompanyRole(companyId, ['SUPERVISOR', 'MANAGER']);
+      }
+      match /three_way_match_records/{matchId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if false; // System only (Cloud Functions)
+      }
+
+      // ==========================================
+      // MODULE 14.1: VENDOR MANAGEMENT SYSTEM
+      // ==========================================
+      match /srm_vendors/{vendorId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /vendor_documents/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /vendor_performance_logs/{logId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+      }
+
       // 1. HRMS Subcollections (Employees, Role Assignments, Documents, Leaves)
       match /employees/{employeeId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow create: if isSuperAdmin() || isCompanyAdmin(companyId);
-        allow update: if isSuperAdmin() || isManager(companyId);
+        allow update: if isSuperAdmin() || isManager(companyId) || (signedIn() && sameCompany(companyId) && employeeId == userData().employeeId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
@@ -269,9 +445,9 @@ service cloud.firestore {
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
-       
-        allow read: if isSuperAdmin() || sameCompany(companyId);
-        allow create, update: if isSuperAdmin() || isManager(companyId);
+      match /employee_documents/{docId} {
+        allow read: if canViewEmployeeIdentity(companyId) || (signedIn() && sameCompany(companyId) && resource.data.employeeId == userData().employeeId);
+        allow create, update: if isSuperAdmin() || isManager(companyId) || (signedIn() && sameCompany(companyId) && request.resource.data.employeeId == userData().employeeId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
@@ -303,7 +479,7 @@ service cloud.firestore {
 
       // 2. Attendance & Muster Roll Subcollections
       match /attendance/{attendanceId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow create: if isSuperAdmin() || sameCompany(companyId);
         allow update: if isSuperAdmin() || isManager(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -357,6 +533,35 @@ service cloud.firestore {
 
 
       // 3. Payroll, Compensation & Advances Subcollections
+      
+      // Module 10: Security Assurance & Release Gate
+      
+      // Module 10: Continuous Security Monitoring
+      match /security_detection_rules/{ruleId} {
+        allow read: if sameCompany(companyId);
+        allow write: if isSuperAdmin() || false;
+      }
+      
+      match /detected_risk_events/{eventId} {
+        allow read: if sameCompany(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId) || false;
+      }
+
+      match /security_assurance_runs/{runId} {
+        allow read: if sameCompany(companyId);
+        allow write: if isSuperAdmin() || false || hasCompanyRole(companyId, ['HR_ADMIN', 'hr_admin']);
+      }
+      
+      match /security_findings/{findingId} {
+        allow read: if sameCompany(companyId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId) || hasCompanyRole(companyId, ['HR_ADMIN', 'hr_admin']) || false;
+      }
+      
+      match /production_signoffs/{signoffId} {
+        allow read: if sameCompany(companyId);
+        allow write: if isSuperAdmin();
+      }
+
       match /payroll/{payrollId} {
         allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
         allow create, update: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -374,18 +579,18 @@ service cloud.firestore {
       }
 
       match /employee_salary_profiles/{profileId} {
-        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || (signedIn() && sameCompany(companyId));
-        allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow read: if canViewSalary(companyId) || (signedIn() && sameCompany(companyId) && resource.data.employeeId == userData().employeeId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId) || canViewSalary(companyId);
       }
 
       match /salary_structures/{structureId} {
-        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || canViewSalary(companyId);
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
       match /salary_slips/{slipId} {
-        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || (signedIn() && sameCompany(companyId));
-        allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow read: if canViewSalary(companyId) || (signedIn() && sameCompany(companyId) && resource.data.employeeId == userData().employeeId);
+        allow write: if isSuperAdmin() || isCompanyAdmin(companyId) || canViewSalary(companyId);
       }
 
       match /salary_advances/{advanceId} {
@@ -412,7 +617,7 @@ service cloud.firestore {
 
       // 4. Inventory, Supply & Stock Subcollections
       match /inventory/{inventoryId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow create, update: if isSuperAdmin() || isManager(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
@@ -460,7 +665,7 @@ service cloud.firestore {
 
       // 5. Assets, Suppliers, Vendors, Clients, Billing
       match /assets/{assetId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow write: if isSuperAdmin() || isManager(companyId);
       }
 
@@ -519,14 +724,14 @@ service cloud.firestore {
       }
 
       match /patrol_tours/{tourId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow create: if (isSuperAdmin() || isManager(companyId) || sameCompany(companyId)) && isValidPatrolTour() && request.resource.data.companyId == companyId;
         allow update: if (isSuperAdmin() || isManager(companyId) || sameCompany(companyId)) && isValidPatrolTour();
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
       match /patrol_checkpoints/{checkpointId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow create: if (isSuperAdmin() || isManager(companyId)) && isValidPatrolCheckpoint() && request.resource.data.companyId == companyId;
         allow update: if (isSuperAdmin() || isManager(companyId)) && isValidPatrolCheckpoint();
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -554,7 +759,7 @@ service cloud.firestore {
       }
 
       match /visitor_logs/{visitorId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow create, update: if (isSuperAdmin() || sameCompany(companyId)) && request.resource.data.companyId == companyId;
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
@@ -598,14 +803,14 @@ service cloud.firestore {
       }
 
       match /tasks/{taskId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow create: if (isSuperAdmin() || isManager(companyId)) && isValidTask() && request.resource.data.companyId == companyId;
         allow update: if (isSuperAdmin() || isManager(companyId) || (signedIn() && request.resource.data.assignedTo == request.auth.uid)) && isValidTask();
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
       match /work_orders/{workOrderId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow create: if isSuperAdmin() || isManager(companyId);
         allow update: if isSuperAdmin() || sameCompany(companyId); // Detailed access control handled in backend / UI logic
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -631,6 +836,69 @@ service cloud.firestore {
       match /system_settings/{settingId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
+      match /bulk_export_alerts/{alertId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        // Allow create by signed in user performing bulk/export operations in their company
+        allow create: if signedIn() && (isSuperAdmin() || sameCompany(companyId));
+        // Allow update only by super/company admins for review & resolution workflow
+        allow update: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow delete: if false; // Immutable governance records
+      }
+
+      match /compliance_policies/{policyId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow delete: if false;
+
+        match /versions/{versionId} {
+          allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+          allow create: if isSuperAdmin() || isCompanyAdmin(companyId);
+          allow update, delete: if false; // Immutable version snapshots
+        }
+      }
+
+      match /compliance_violations/{violationId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create: if signedIn() && (isSuperAdmin() || sameCompany(companyId));
+        allow update: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow delete: if false; // Immutable violation records
+      }
+
+      match /compliance_evaluations/{evalId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow create: if signedIn() && (isSuperAdmin() || sameCompany(companyId));
+        allow update, delete: if false; // Immutable evaluation audit stream
+      }
+
+      match /risk_records/{riskId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow create: if signedIn() && (isSuperAdmin() || sameCompany(companyId));
+        allow update: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow delete: if false; // Risk records are immutable, can only be CLOSED
+      }
+
+      match /risk_reviews/{reviewId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow create: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow update: if false; // Reviews are immutable
+        allow delete: if false; // Reviews are immutable
+      }
+      match /risk_mitigations/{mitigationId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId) || (signedIn() && sameCompany(companyId) && resource.data.assignedToUserId == request.auth.uid);
+        allow create: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId);
+        allow update: if isSuperAdmin() || isCompanyAdmin(companyId) || isManager(companyId) || (signedIn() && sameCompany(companyId) && resource.data.assignedToUserId == request.auth.uid);
+        allow delete: if false; // Immutable
+      }
+
+      match /suspicious_punches/{punchId} {
+        allow read: if isSuperAdmin() || isCompanyAdmin(companyId);
+        // Allow create by any signed in user (specifically employees creating their own punch anomalies via the engine)
+        allow create: if signedIn();
+        // Allow update only by admins (resolution workflow)
+        allow update: if isSuperAdmin() || isCompanyAdmin(companyId);
+        allow delete: if false; // Immutable detection
       }
 
       match /audit_logs/{logId} {
@@ -693,17 +961,17 @@ service cloud.firestore {
         allow write: if isSuperAdmin() || sameCompany(companyId);
       }
       match /regions/{regionId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
       match /branches/{branchId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
 
       match /sites/{siteId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow write: if isSuperAdmin() || isManager(companyId);
       }
 
@@ -731,7 +999,7 @@ service cloud.firestore {
       }
 
       match /shifts/{shiftId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow write: if isSuperAdmin() || isManager(companyId);
       }
 
@@ -775,7 +1043,37 @@ service cloud.firestore {
       }
       match /candidates/{docId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
+        // Only HR and Admins should update aadhaarNumber or verification statuses
+        allow update: if (isSuperAdmin() || sameCompany(companyId)) && 
+                         (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['aadhaarNumber', 'aadhaarVerificationStatus', 'policeVerificationStatus']) || 
+                          hasCompanyRole(companyId, ['HR', 'HR_ADMIN']) || hasCompanyRole(companyId, ['ADMIN', 'COMPANY_ADMIN']) || isCompanyAdmin(companyId));
+        allow create: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /screenings/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /interviews/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /selections/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /backgroundVerifications/{docId} {
+        allow read: if isSuperAdmin() || (sameCompany(companyId) && (hasCompanyRole(companyId, ['HR', 'HR_ADMIN']) || hasCompanyRole(companyId, ['ADMIN', 'COMPANY_ADMIN']) || hasCompanyRole(companyId, ['MANAGER', 'OPS_MANAGER']) || isCompanyAdmin(companyId)));
+        allow create: if isSuperAdmin() || (sameCompany(companyId) && (hasCompanyRole(companyId, ['HR', 'HR_ADMIN']) || hasCompanyRole(companyId, ['ADMIN', 'COMPANY_ADMIN']) || isCompanyAdmin(companyId)));
+        allow update: if isSuperAdmin() || (sameCompany(companyId) && (hasCompanyRole(companyId, ['HR', 'HR_ADMIN']) || hasCompanyRole(companyId, ['ADMIN', 'COMPANY_ADMIN']) || isCompanyAdmin(companyId)));
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /candidateDocuments/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || (sameCompany(companyId) && (hasCompanyRole(companyId, ['HR', 'HR_ADMIN']) || hasCompanyRole(companyId, ['ADMIN', 'COMPANY_ADMIN']) || isCompanyAdmin(companyId)));
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
       match /deployments/{docId} {
@@ -783,7 +1081,7 @@ service cloud.firestore {
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
-       
+      match /documents/{docId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -819,7 +1117,7 @@ service cloud.firestore {
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
       match /safety_checksheets/{docId} {
-        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow read: if isSuperAdmin() || isScopeAuthorized(companyId, resource.data);
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
@@ -827,13 +1125,70 @@ service cloud.firestore {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+
+        match /comments/{commentId} {
+          allow read: if isSuperAdmin() || (sameCompany(companyId) && (!resource.data.isInternalOnly || isManager(companyId) || isCompanyAdmin(companyId) || resource.data.authorUserId == request.auth.uid));
+          allow create: if isSuperAdmin() || (sameCompany(companyId) && (!request.resource.data.isInternalOnly || isManager(companyId) || isCompanyAdmin(companyId)));
+          allow update: if isSuperAdmin() || (sameCompany(companyId) && (resource.data.authorUserId == request.auth.uid || isCompanyAdmin(companyId)));
+          allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+        }
+
+        match /attachments/{attachmentId} {
+          allow read: if isSuperAdmin() || (sameCompany(companyId) && (resource.data.visibility != 'INTERNAL' || isManager(companyId) || isCompanyAdmin(companyId) || resource.data.uploadedByUserId == request.auth.uid));
+          allow create: if isSuperAdmin() || (sameCompany(companyId) && (request.resource.data.visibility != 'INTERNAL' || isManager(companyId) || isCompanyAdmin(companyId)));
+          allow update: if isSuperAdmin() || (sameCompany(companyId) && (resource.data.uploadedByUserId == request.auth.uid || isCompanyAdmin(companyId)));
+          allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+        }
+
+        match /status_history/{historyId} {
+          allow read: if isSuperAdmin() || sameCompany(companyId);
+          allow create: if isSuperAdmin() || sameCompany(companyId);
+          allow update, delete: if false;
+        }
+
+        match /resolutions/{resolutionId} {
+          allow read: if isSuperAdmin() || sameCompany(companyId);
+          allow create, update: if isSuperAdmin() || sameCompany(companyId);
+          allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+        }
       }
       match /serviceTickets/{docId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+
+        match /comments/{commentId} {
+          allow read: if isSuperAdmin() || (sameCompany(companyId) && (!resource.data.isInternalOnly || isManager(companyId) || isCompanyAdmin(companyId) || resource.data.authorUserId == request.auth.uid));
+          allow create: if isSuperAdmin() || (sameCompany(companyId) && (!request.resource.data.isInternalOnly || isManager(companyId) || isCompanyAdmin(companyId)));
+          allow update: if isSuperAdmin() || (sameCompany(companyId) && (resource.data.authorUserId == request.auth.uid || isCompanyAdmin(companyId)));
+          allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+        }
+
+        match /attachments/{attachmentId} {
+          allow read: if isSuperAdmin() || (sameCompany(companyId) && (resource.data.visibility != 'INTERNAL' || isManager(companyId) || isCompanyAdmin(companyId) || resource.data.uploadedByUserId == request.auth.uid));
+          allow create: if isSuperAdmin() || (sameCompany(companyId) && (request.resource.data.visibility != 'INTERNAL' || isManager(companyId) || isCompanyAdmin(companyId)));
+          allow update: if isSuperAdmin() || (sameCompany(companyId) && (resource.data.uploadedByUserId == request.auth.uid || isCompanyAdmin(companyId)));
+          allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+        }
+
+        match /status_history/{historyId} {
+          allow read: if isSuperAdmin() || sameCompany(companyId);
+          allow create: if isSuperAdmin() || sameCompany(companyId);
+          allow update, delete: if false;
+        }
+
+        match /resolutions/{resolutionId} {
+          allow read: if isSuperAdmin() || sameCompany(companyId);
+          allow create, update: if isSuperAdmin() || sameCompany(companyId);
+          allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+        }
       }
       match /statutory_configs/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /attendance_adjustments/{docId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -844,6 +1199,18 @@ service cloud.firestore {
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
       }
       match /trainingEnrollments/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      
+      match /trainingSessions/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      
+      match /employeeCertifications/{docId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow create, update: if isSuperAdmin() || sameCompany(companyId);
         allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -890,6 +1257,17 @@ service cloud.firestore {
         allow update, delete: if false; // Immutable escalation audit trail
       }
 
+      match /compliance_obligations/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || (sameCompany(companyId) && (isCompanyAdmin(companyId) || request.auth.token.role == "HR_ADMIN"));
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+      match /obligation_reviews/{docId} {
+        allow read: if isSuperAdmin() || sameCompany(companyId);
+        allow create, update: if isSuperAdmin() || sameCompany(companyId);
+        allow delete: if isSuperAdmin() || isCompanyAdmin(companyId);
+      }
+
       match /bpm_threshold_rules/{ruleId} {
         allow read: if isSuperAdmin() || sameCompany(companyId);
         allow write: if isSuperAdmin() || isCompanyAdmin(companyId);
@@ -905,12 +1283,12 @@ service cloud.firestore {
     match /{collectionId}/{attendanceId} {
       
       function isAttendanceCollection() {
-        return collectionId.startsWith("attendance_");
+        return collectionId.matches("^attendance_.*");
       }
 
       // Extracts company code securely using splits
       function getCompanyCodeFromCollection() {
-        return collectionId.split("attendance_")[1];
+        return collectionId.replace("^attendance_", "");
       }
 
       allow read: if isAttendanceCollection() && (
@@ -935,20 +1313,7 @@ service cloud.firestore {
     // GLOBAL TOP-LEVEL COLLECTIONS
     // ============================================================
 
-    match /approval_requests/{requestId} {
-      allow read: if signedIn() && (
-        isSuperAdmin() ||
-        resource == null ||
-        resource.data.uid == request.auth.uid ||
-        isCompanyAdmin(resource.data.companyId)
-      );
-      allow create: if signedIn();
-      allow update: if signedIn() && (
-        isSuperAdmin() ||
-        isCompanyAdmin(resource.data.companyId)
-      );
-      allow delete: if isSuperAdmin();
-    }
+
 
     match /system_audit_logs/{logId} {
       allow read: if isSuperAdmin();
@@ -956,11 +1321,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    match /notifications/{notificationId} {
-      allow read: if signedIn();
-      allow create: if isSuperAdmin() || (signedIn() && userExists() && isManager(userData().companyId));
-      allow update, delete: if isSuperAdmin() || (signedIn() && userExists() && isCompanyAdmin(userData().companyId));
-    }
+
 
     match /plans/{planId} {
       allow read: if signedIn();

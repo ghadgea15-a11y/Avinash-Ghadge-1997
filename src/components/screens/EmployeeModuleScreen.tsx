@@ -35,7 +35,7 @@ import {
   User,
   Plus,
   KeyRound
-} from 'lucide-react';
+, Banknote } from 'lucide-react';
 import { 
   EmployeeRecord, 
   EmployeeLifecycleStatus,
@@ -107,6 +107,15 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   const [showPromotionModal, setShowPromotionModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showSuspensionModal, setShowSuspensionModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [showSettlementModal, setShowSettlementModal] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+
+  const [suspendForm, setSuspendForm] = useState({ reason: '', effectiveDate: new Date().toISOString().split('T')[0] });
+  const [confirmationForm, setConfirmationForm] = useState({ effectiveDate: new Date().toISOString().split('T')[0], reason: '' });
+  const [settlementForm, setSettlementForm] = useState({ amount: 0, remarks: '' });
+
 
   const [promoForm, setPromoForm] = useState({
     newDesignation: '',
@@ -468,6 +477,69 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     if (success) {
       setFeedbackMessage({ text: 'Transfer request initiated and pending approval.', type: 'SUCCESS' });
       setShowTransferModal(false);
+    }
+  };
+
+
+  const handleInitiateSuspension = async () => {
+    if (!activeCompany || !selectedEmployee) return;
+    const actor = { id: userSession.userId, name: userSession.fullName };
+    const success = await FirestoreService.suspendEmployee(
+      activeCompany.companyId,
+      selectedEmployee.id,
+      suspendForm.reason,
+      suspendForm.effectiveDate,
+      actor
+    );
+    if (success) {
+      setFeedbackMessage({ text: 'Employee has been suspended.', type: 'SUCCESS' });
+      setShowSuspensionModal(false);
+    }
+  };
+
+  const handleRevokeSuspension = async () => {
+    if (!activeCompany || !selectedEmployee) return;
+    const actor = { id: userSession.userId, name: userSession.fullName };
+    const success = await FirestoreService.revokeSuspension(
+      activeCompany.companyId,
+      selectedEmployee.id,
+      'Suspension Revoked Manually',
+      new Date().toISOString().split('T')[0],
+      actor
+    );
+    if (success) {
+      setFeedbackMessage({ text: 'Employee suspension revoked.', type: 'SUCCESS' });
+    }
+  };
+
+  const handleConfirmProbation = async () => {
+    if (!activeCompany || !selectedEmployee) return;
+    const actor = { id: userSession.userId, name: userSession.fullName };
+    const success = await FirestoreService.confirmProbation(
+      activeCompany.companyId,
+      selectedEmployee.id,
+      confirmationForm.effectiveDate,
+      actor
+    );
+    if (success) {
+      setFeedbackMessage({ text: 'Employee probation confirmed.', type: 'SUCCESS' });
+      setShowConfirmationModal(false);
+    }
+  };
+
+  const handleProcessSettlement = async () => {
+    if (!activeCompany || !selectedEmployee) return;
+    const actor = { id: userSession.userId, name: userSession.fullName };
+    const success = await FirestoreService.processFinalSettlement(
+      activeCompany.companyId,
+      selectedEmployee.id,
+      settlementForm.amount,
+      settlementForm.remarks,
+      actor
+    );
+    if (success) {
+      setFeedbackMessage({ text: 'Final settlement processed.', type: 'SUCCESS' });
+      setShowSettlementModal(false);
     }
   };
 
@@ -2170,6 +2242,47 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                         <XCircle className="w-3 h-3" />
                         Initiate Separation / Exit
                       </button>
+
+                      {selectedEmployee.employmentType === 'PROBATION' && selectedEmployee.lifecycleStatus !== 'SUSPENDED' && (
+                        <button
+                          onClick={() => setShowConfirmationModal(true)}
+                          className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                        >
+                          <CheckCircle2 className="w-3 h-3" />
+                          Confirm Probation
+                        </button>
+                      )}
+
+                      {selectedEmployee.lifecycleStatus !== 'SUSPENDED' && !['EXITED', 'TERMINATED'].includes(selectedEmployee.status) && (
+                         <button
+                           onClick={() => setShowSuspensionModal(true)}
+                           className="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                         >
+                           <AlertTriangle className="w-3 h-3" />
+                           Suspend
+                         </button>
+                      )}
+
+                      {selectedEmployee.lifecycleStatus === 'SUSPENDED' && (
+                         <button
+                           onClick={handleRevokeSuspension}
+                           className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                         >
+                           <RefreshCw className="w-3 h-3" />
+                           Revoke Suspension
+                         </button>
+                      )}
+                      
+                      {selectedEmployee.lifecycleStatus === 'EXITED' && selectedEmployee.finalSettlementStatus !== 'SETTLED' && (
+                         <button
+                           onClick={() => setShowSettlementModal(true)}
+                           className="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                         >
+                           <Banknote className="w-3 h-3" />
+                           Process Final Settlement
+                         </button>
+                      )}
+
                     </div>
                   </div>
                 )}
@@ -2480,6 +2593,154 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       )}
 
       {/* EXIT MODAL */}
+
+      {showSuspensionModal && selectedEmployee && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <h3 className="text-sm font-bold flex items-center gap-2 text-amber-500">
+              <AlertTriangle className="w-4 h-4" />
+              <span>Suspend Employee</span>
+            </h3>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Effective Date *</label>
+                <input
+                  type="date"
+                  value={suspendForm.effectiveDate}
+                  onChange={(e) => setSuspendForm(prev => ({ ...prev, effectiveDate: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Reason for Suspension *</label>
+                <textarea
+                  value={suspendForm.reason}
+                  onChange={(e) => setSuspendForm(prev => ({ ...prev, reason: e.target.value }))}
+                  placeholder="Explain why this employee is being suspended..."
+                  className={`w-full px-3 py-2 rounded-xl text-xs border focus:outline-none min-h-[80px] ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+            </div>
+            <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+              <button
+                onClick={() => setShowSuspensionModal(false)}
+                className="px-4 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleInitiateSuspension}
+                disabled={!suspendForm.reason}
+                className="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold disabled:opacity-50"
+              >
+                Confirm Suspension
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showConfirmationModal && selectedEmployee && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <h3 className="text-sm font-bold flex items-center gap-2 text-emerald-500">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Confirm Probation</span>
+            </h3>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Effective Date *</label>
+                <input
+                  type="date"
+                  value={confirmationForm.effectiveDate}
+                  onChange={(e) => setConfirmationForm(prev => ({ ...prev, effectiveDate: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                Confirming probation will change the employee's employment type to PERMANENT and update their lifecycle status.
+              </p>
+            </div>
+            <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+              <button
+                onClick={() => setShowConfirmationModal(false)}
+                className="px-4 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmProbation}
+                className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+              >
+                Confirm Probation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSettlementModal && selectedEmployee && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <h3 className="text-sm font-bold flex items-center gap-2 text-purple-500">
+              <Banknote className="w-4 h-4" />
+              <span>Process Final Settlement</span>
+            </h3>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Settlement Amount *</label>
+                <input
+                  type="number"
+                  value={settlementForm.amount}
+                  onChange={(e) => setSettlementForm(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Remarks</label>
+                <textarea
+                  value={settlementForm.remarks}
+                  onChange={(e) => setSettlementForm(prev => ({ ...prev, remarks: e.target.value }))}
+                  placeholder="Enter remarks (leave encashment, recovery, etc.)..."
+                  className={`w-full px-3 py-2 rounded-xl text-xs border focus:outline-none min-h-[80px] ${
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}
+                />
+              </div>
+            </div>
+            <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+              <button
+                onClick={() => setShowSettlementModal(false)}
+                className="px-4 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleProcessSettlement}
+                disabled={settlementForm.amount < 0}
+                className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold disabled:opacity-50"
+              >
+                Process Settlement
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showExitModal && selectedEmployee && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${

@@ -30,7 +30,12 @@ import { SessionManager } from './sessionManager';
 import { AccountProtectionService } from './accountProtectionService';
 import { TotpService } from './totpService';
 
-export const RESERVED_SUPER_ADMIN_EMAILS: string[] = [];
+export const RESERVED_SUPER_ADMIN_EMAILS: string[] = [
+  "admin@logsheetmuster.com",
+  "superadmin@logsheetmuster.com",
+  "ghadgea15@gmail.com",
+  "sysadmin@logsheetmuster.com"
+];
 
 export class FirebaseAuthService {
   /**
@@ -38,21 +43,6 @@ export class FirebaseAuthService {
    */
   static async verifyCompanyCode(companyCode: string): Promise<CompanyTenant> {
     const cleanCode = companyCode.trim().toUpperCase();
-    
-    if (cleanCode === 'GLOBAL_ADMIN') {
-      return {
-        companyId: 'GLOBAL_ADMIN',
-        companyLegalName: 'Global Administrator',
-        brandName: 'Global Administrator',
-        licenseTier: 'ENTERPRISE',
-        allowedBranches: ['HQ'],
-        maxEmployeesAllowed: 9999,
-        maxSitesAllowed: 9999,
-        primaryColorHex: '#4f46e5',
-        secondaryColorHex: '#06b6d4',
-        status: 'ACTIVE'
-      };
-    }
     
     if (cleanCode === 'GLOBAL_ADMIN') {
       return {
@@ -502,7 +492,7 @@ export class FirebaseAuthService {
     if (userSnap.exists()) {
       const uData = userSnap.data();
       
-      let isUserSuperAdmin = uData?.role === 'SUPER_ADMIN';
+      let isUserSuperAdmin = uData?.role === 'SUPER_ADMIN' || RESERVED_SUPER_ADMIN_EMAILS.includes(cleanEmail);
       if (!isUserSuperAdmin) {
         try {
           const saSnap = await getDoc(doc(db, 'super_admins', fbUser.uid));
@@ -516,6 +506,7 @@ export class FirebaseAuthService {
 
       if (isUserSuperAdmin) {
         try {
+          // Sync super admin status
           await setDoc(doc(db, 'super_admins', fbUser.uid), {
             id: fbUser.uid,
             email: cleanEmail,
@@ -542,7 +533,7 @@ export class FirebaseAuthService {
 
       let role: UserRole | undefined = isUserSuperAdmin ? 'SUPER_ADMIN' : uData?.role;
       let employeeId = uData?.employeeId || (isUserSuperAdmin ? 'SA-001' : `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`);
-      let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (uData.companyId || '');
+      let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (uData?.companyId || '');
       let branchId = uData?.branchId || (isUserSuperAdmin ? 'HQ' : 'MAIN_BRANCH');
       let departmentId = uData?.departmentId || (isUserSuperAdmin ? 'DEPT-SUPER-ADMIN' : undefined);
       let departmentName = uData?.departmentName || (isUserSuperAdmin ? 'Super Admin' : undefined);
@@ -569,6 +560,9 @@ export class FirebaseAuthService {
       if (!userCompanyId) {
          userCompanyId = 'PENDING';
       }
+      if (!isUserSuperAdmin && userCompanyId === 'GLOBAL_ADMIN') {
+         throw new Error('Unauthorized: You are not a Global Administrator.');
+      }
       
       const accountStatus = isUserSuperAdmin ? 'ACTIVE' : ((uData.accountStatus as AccountStatus) || 'PENDING_APPROVAL');
 
@@ -582,7 +576,7 @@ export class FirebaseAuthService {
         branchId: branchId,
         assignedSiteId: uData.assignedSiteId,
         avatarUrl: fbUser.photoURL || undefined,
-        token: await fbUser.getIdToken(),
+        token: await fbUser.getIdToken(isUserSuperAdmin),
         tokenExpiresAt: Date.now() + (12 * 60 * 60 * 1000),
         isBiometricEnabled: false,
         lastActiveAt: Date.now(),
@@ -818,7 +812,7 @@ export class FirebaseAuthService {
           console.warn('[FirebaseAuthService] Firestore profile check skipped/handled (offline or missing):', firestoreErr);
         }
 
-        let isUserSuperAdmin = uData?.role === 'SUPER_ADMIN';
+        let isUserSuperAdmin = uData?.role === 'SUPER_ADMIN' || RESERVED_SUPER_ADMIN_EMAILS.includes(userEmail);
         if (!isUserSuperAdmin) {
           try {
             const saSnap = await getDoc(doc(db, 'super_admins', fbUser.uid));
@@ -831,44 +825,45 @@ export class FirebaseAuthService {
         }
 
         if (isUserSuperAdmin) {
-          try {
-            await setDoc(doc(db, 'super_admins', fbUser.uid), {
-              id: fbUser.uid,
-              email: userEmail,
-              role: 'SUPER_ADMIN',
-              status: 'ACTIVE',
-              updatedAt: new Date().toISOString()
-            }, { merge: true });
+          // Sync super admin status (Non-blocking fire-and-forget to prevent login hangs)
+          setDoc(doc(db, 'super_admins', fbUser.uid), {
+            id: fbUser.uid,
+            email: userEmail,
+            role: 'SUPER_ADMIN',
+            status: 'ACTIVE',
+            updatedAt: new Date().toISOString()
+          }, { merge: true }).catch(e => console.warn('Super Admin doc sync failed:', e));
 
-            await setDoc(doc(db, 'users', fbUser.uid), {
-              uid: fbUser.uid,
-              email: userEmail,
-              fullName: uData?.fullName || fbUser.displayName || 'System Super Admin',
-              role: 'SUPER_ADMIN',
-              companyId: 'GLOBAL_ADMIN',
-              accountStatus: 'ACTIVE',
-              companyAdminApproval: 'APPROVED',
-              hrApproval: 'APPROVED',
-              updatedAt: new Date().toISOString()
-            }, { merge: true });
-          } catch (saSyncErr) {
-            console.warn('[FirebaseAuthService] Super Admin profile sync warning:', saSyncErr);
-          }
+          setDoc(doc(db, 'users', fbUser.uid), {
+            uid: fbUser.uid,
+            email: userEmail,
+            fullName: uData?.fullName || fbUser.displayName || 'System Super Admin',
+            role: 'SUPER_ADMIN',
+            companyId: 'GLOBAL_ADMIN',
+            accountStatus: 'ACTIVE',
+            companyAdminApproval: 'APPROVED',
+            hrApproval: 'APPROVED',
+            updatedAt: new Date().toISOString()
+          }, { merge: true }).catch(e => console.warn('User doc sync failed:', e));
         }
 
         // Default session values
-        let role: UserRole = isUserSuperAdmin ? 'SUPER_ADMIN' : (uData?.role || 'COMPANY_ADMIN');
+        let role: UserRole = isUserSuperAdmin ? 'SUPER_ADMIN' : (uData?.role || 'SUPPORT');
         let employeeId = uData?.employeeId || (isUserSuperAdmin ? 'SA-001' : `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`);
         let fullName = uData?.fullName || fbUser.displayName || userEmail.split('@')[0] || 'Authenticated User';
         let branchId = uData?.branchId || (isUserSuperAdmin ? 'HQ' : 'MAIN_BRANCH');
         let assignedSiteId: string | undefined = uData?.assignedSiteId;
-        let accountStatus: AccountStatus = ((uData?.accountStatus as AccountStatus) || 'ACTIVE');
+        let accountStatus: AccountStatus = ((uData?.accountStatus as AccountStatus) || 'PENDING_APPROVAL');
         let departmentId: string | undefined = uData?.departmentId || (isUserSuperAdmin ? 'DEPT-SUPER-ADMIN' : undefined);
         let departmentName: string | undefined = uData?.departmentName || (isUserSuperAdmin ? 'Super Admin' : undefined);
-        let companyAdminApproval: ApprovalStatus = uData?.companyAdminApproval || 'APPROVED';
-        let hrApproval: ApprovalStatus = uData?.hrApproval || 'APPROVED';
+        let companyAdminApproval: ApprovalStatus = uData?.companyAdminApproval || 'PENDING';
+        let hrApproval: ApprovalStatus = uData?.hrApproval || 'PENDING';
         
         let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (companyId || '');
+
+        if (!isUserSuperAdmin && companyId === 'GLOBAL_ADMIN') {
+          throw new Error('Unauthorized: You are not a Global Administrator.');
+        }
 
         if (uData) {
           if (companyId && uData.companyId && uData.companyId !== companyId && !isUserSuperAdmin) {
@@ -909,7 +904,7 @@ export class FirebaseAuthService {
           companyId: userCompanyId,
           branchId,
           assignedSiteId,
-          token: await fbUser.getIdToken(),
+          token: await fbUser.getIdToken(isUserSuperAdmin),
           tokenExpiresAt: Date.now() + (12 * 60 * 60 * 1000),
           isBiometricEnabled: false,
           lastActiveAt: Date.now(),
@@ -1201,18 +1196,22 @@ export class FirebaseAuthService {
       }
 
       // Default session values
-      let role: UserRole = isUserSuperAdmin ? 'SUPER_ADMIN' : (uData?.role || 'COMPANY_ADMIN');
+      let role: UserRole = isUserSuperAdmin ? 'SUPER_ADMIN' : (uData?.role || 'SUPPORT');
       let employeeId = uData?.employeeId || (isUserSuperAdmin ? 'SA-001' : `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`);
       let fullName = uData?.fullName || fbUser.displayName || cleanInputLower.split('@')[0] || 'Authenticated User';
       let branchId = uData?.branchId || (isUserSuperAdmin ? 'HQ' : 'MAIN_BRANCH');
       let assignedSiteId: string | undefined = uData?.assignedSiteId;
-      let accountStatus: AccountStatus = ((uData?.accountStatus as AccountStatus) || 'ACTIVE');
+      let accountStatus: AccountStatus = ((uData?.accountStatus as AccountStatus) || 'PENDING_APPROVAL');
       let departmentId: string | undefined = uData?.departmentId || (isUserSuperAdmin ? 'DEPT-SUPER-ADMIN' : undefined);
       let departmentName: string | undefined = uData?.departmentName || (isUserSuperAdmin ? 'Super Admin' : undefined);
-      let companyAdminApproval: ApprovalStatus = uData?.companyAdminApproval || 'APPROVED';
-      let hrApproval: ApprovalStatus = uData?.hrApproval || 'APPROVED';
+      let companyAdminApproval: ApprovalStatus = uData?.companyAdminApproval || 'PENDING';
+      let hrApproval: ApprovalStatus = uData?.hrApproval || 'PENDING';
       
       let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (companyId || '');
+
+      if (!isUserSuperAdmin && companyId === 'GLOBAL_ADMIN') {
+        throw new Error('Unauthorized: You are not a Global Administrator.');
+      }
 
       if (uData) {
         if (companyId && uData.companyId && uData.companyId !== companyId && !isUserSuperAdmin) {

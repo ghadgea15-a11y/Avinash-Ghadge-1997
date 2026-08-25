@@ -57,7 +57,11 @@ export const ROUTE_PATH_MAP: Record<string, { screen: PhaseAScreen; publicRoute?
   '/login': { screen: 'LOGIN' },
   '/signup': { screen: 'SIGN_UP' },
   '/forgot-password': { screen: 'FORGOT_PASSWORD' },
-  '/company-code': { screen: 'COMPANY_CODE' }
+  '/company-code': { screen: 'COMPANY_CODE' },
+  '/traceability': { screen: 'HISTORICAL_TRACEABILITY' },
+  '/audit-trail': { screen: 'HISTORICAL_TRACEABILITY' },
+  '/scalability': { screen: 'SCALABILITY_ASSESSMENT' },
+  '/scalability-assessment': { screen: 'SCALABILITY_ASSESSMENT' }
 };
 
 /**

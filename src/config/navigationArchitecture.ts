@@ -1,4 +1,4 @@
-import { 
+import { Network, 
   LayoutDashboard, 
   Building2, 
   MapPin, 
@@ -33,7 +33,10 @@ import {
   Lock,
   Compass,
   FolderKanban,
-  FileSpreadsheet
+  FileSpreadsheet,
+  History,
+  Server,
+  Fingerprint
 } from 'lucide-react';
 import { PhaseAScreen, UserRole } from '../types';
 
@@ -278,7 +281,16 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Building2,
     category: 'ORGANIZATION_MASTER',
     dataType: 'MASTER_DATA',
-    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO', 'GENERAL_MANAGER', 'ADMIN'],
+  },
+  {
+    screen: 'ORG_CONTROL',
+    label: 'Org Control & Assignments',
+    shortLabel: 'Org Control',
+    description: 'Manage hierarchy assignments, transfers, and integrity',
+    icon: Network,
+    category: 'ORGANIZATION_MASTER',
+    dataType: 'MASTER_DATA',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO', 'GENERAL_MANAGER', 'ADMIN', 'HR_ADMIN'],
   },
   {
     screen: 'DEPLOYMENT_MANAGEMENT',
@@ -369,6 +381,26 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     category: 'OPERATIONS',
     dataType: 'MASTER_DATA',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'OPS_MANAGER', 'HR_ADMIN', 'SUPERVISOR', 'SITE_IN_CHARGE'],
+  },
+  {
+    screen: 'WORKFORCE_CAPACITY',
+    label: 'Workforce Capacity & Shortages',
+    shortLabel: 'Capacity Planning',
+    description: 'Predictive shortage detection, skill floors, supervisor alerts & replacement approval workflow',
+    icon: Network,
+    category: 'OPERATIONS',
+    dataType: 'ANALYTICS',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'OPS_MANAGER', 'HR_ADMIN', 'SUPERVISOR', 'SITE_IN_CHARGE', 'GENERAL_MANAGER', 'REGIONAL_MANAGER', 'AREA_MANAGER'],
+  },
+  {
+    screen: 'CONFLICT_DETECTION',
+    label: 'Enterprise Conflict Detection',
+    shortLabel: 'Conflict Engine',
+    description: 'Deterministic prevention of overlapping shifts, multi-site collisions, SoD violations & controlled overrides',
+    icon: ShieldAlert,
+    category: 'OPERATIONS',
+    dataType: 'TRANSACTION',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'OPS_MANAGER', 'HR_ADMIN', 'SUPERVISOR', 'SITE_IN_CHARGE', 'GENERAL_MANAGER', 'REGIONAL_MANAGER', 'AREA_MANAGER'],
   },
   {
     screen: 'LEAVE_MANAGEMENT',
@@ -543,6 +575,16 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'EHS', 'QUALITY', 'ADMIN'],
   },
   {
+    screen: 'DOCUMENT_LIFECYCLE',
+    label: 'Document Lifecycle & Expiry Control',
+    shortLabel: 'Document Lifecycle',
+    description: 'Statutory licenses, contracts, compliance certificates & renewal workflows',
+    icon: FileSpreadsheet,
+    category: 'COMPLIANCE_RISK',
+    dataType: 'TRANSACTION',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'FINANCE_MANAGER', 'QUALITY', 'ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO'],
+  },
+  {
     screen: 'LEGAL_POLICIES',
     label: 'Legal & Privacy Policies',
     shortLabel: 'Legal & Privacy',
@@ -586,6 +628,16 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
 
   // 12. REPORTS & ANALYTICS
   {
+    screen: 'OPERATIONAL_INTELLIGENCE',
+    label: 'CFO/COO Operational Intelligence',
+    shortLabel: 'Ops Intelligence',
+    description: 'Hierarchical cost, overtime, maintenance, procurement & risk anomaly detection',
+    icon: BarChart3,
+    category: 'REPORTS_ANALYTICS',
+    dataType: 'ANALYTICS',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'FINANCE_MANAGER', 'OPS_MANAGER', 'OWNER_PROMOTER', 'DIRECTOR_CEO', 'GENERAL_MANAGER', 'REGIONAL_MANAGER', 'AREA_MANAGER'],
+  },
+  {
     screen: 'REPORTS_ANALYTICS',
     label: 'BI Reports & Statutory Exports',
     shortLabel: 'BI Reports',
@@ -618,6 +670,26 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
 
   // 14. SECURITY & AUDIT
   {
+    screen: 'HISTORICAL_TRACEABILITY',
+    label: 'Enterprise Historical Traceability',
+    shortLabel: 'Traceability',
+    description: 'Reconstruct complete immutable timelines for Employees, Sites, Contracts, Assets and Transactions',
+    icon: History,
+    category: 'SECURITY_AUDIT',
+    dataType: 'SYSTEM',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'FINANCE_MANAGER', 'OPS_MANAGER', 'QUALITY', 'ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO'],
+  },
+  {
+    screen: 'SCALABILITY_ASSESSMENT',
+    label: 'Scalability Architecture Assessment',
+    shortLabel: '500-Site Scale',
+    description: 'Real 500-site and 50k-workforce scalability assessment, load benchmarking, and bottleneck fixes',
+    icon: Server,
+    category: 'SECURITY_AUDIT',
+    dataType: 'SYSTEM',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 'ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO'],
+  },
+  {
     screen: 'PROFILE',
     label: 'User Security & TOTP MFA',
     shortLabel: 'Security & Profile',
@@ -637,6 +709,16 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
 
   // 15. SETTINGS
+  {
+    screen: 'BIOMETRIC_DEVICES',
+    label: 'Universal Biometric Hub',
+    shortLabel: 'Biometrics',
+    description: '1-Minute zero-config IT auto-connect for ZKTeco, eSSL, Hikvision and RFID machines',
+    icon: Fingerprint,
+    category: 'SETTINGS',
+    dataType: 'SYSTEM',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 'ADMIN', 'IT', 'OWNER_PROMOTER', 'DIRECTOR_CEO'],
+  },
   {
     screen: 'SETTINGS',
     label: 'Settings & Diagnostics',

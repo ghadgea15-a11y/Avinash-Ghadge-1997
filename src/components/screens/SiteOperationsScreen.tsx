@@ -1,4 +1,6 @@
 import { Pagination } from '../common/Pagination';
+import { IncidentResolutionModal } from './IncidentResolutionModal';
+import { IncidentWorkflowEngine } from '../../services/incidentWorkflowEngine';
 import { VisitorManagement } from '../operations/VisitorManagement';
 import { ShiftHandover } from '../operations/ShiftHandover';
 import { EmergencySos } from '../operations/EmergencySos';
@@ -160,6 +162,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
   // 2. Incident Modal
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState<boolean>(false);
+  const [resolvingIncident, setResolvingIncident] = useState<IncidentReportRecord | null>(null);
   const [incidentForm, setIncidentForm] = useState<{
     siteId: string;
     title: string;
@@ -268,6 +271,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     if (!companyId) return;
     setIsLoading(true);
 
+    IncidentWorkflowEngine.evaluateSlaAndEscalations(companyId);
     FirestoreService.getSites(companyId).then(siteList => {
       setSites(siteList);
       if (siteList.length > 0) {
@@ -711,7 +715,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
       type: incidentForm.type,
       title: incidentForm.title.trim(),
       behaviorCategory: incidentForm.behaviorCategory,
-      slaDeadline: incidentForm.slaDeadline,
+      slaDeadline: incidentForm.slaDeadline || (incidentForm.severity === 'CRITICAL' ? new Date(Date.now() + 24 * 3600 * 1000).toISOString() : incidentForm.severity === 'HIGH' ? new Date(Date.now() + 72 * 3600 * 1000).toISOString() : undefined),
       category: incidentForm.category,
       severity: incidentForm.severity,
       description: incidentForm.description.trim(),
@@ -2179,54 +2183,16 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
                   {/* Status updates based on TYPE & Escalation Routing */}
                   <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {inc.type === 'BBS_OBSERVATION' ? (
-                      <>
-                        {inc.status === 'RECORDED' && (
-                          <button onClick={() => handleUpdateIncidentStatus(inc.id, 'ACTION_REQUIRED')} className="flex-1 py-1.5 rounded-xl bg-amber-500 text-white text-xs font-semibold shadow hover:bg-amber-600 transition">Action Required</button>
-                        )}
-                        {(inc.status === 'RECORDED' || inc.status === 'ACTION_REQUIRED') && (
-                          <button onClick={() => handleUpdateIncidentStatus(inc.id, 'CLOSED')} className="flex-1 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow hover:bg-emerald-700 transition">Close Observation</button>
-                        )}
-                      </>
-                    ) : inc.type === 'COMPLAINT' ? (
-                      <>
-                        {inc.status === 'OPEN' && (
-                          <button onClick={() => handleUpdateIncidentStatus(inc.id, 'IN_PROGRESS')} className="flex-1 py-1.5 rounded-xl bg-blue-500 text-white text-xs font-semibold shadow hover:bg-blue-600 transition">In Progress</button>
-                        )}
-                        {(inc.status === 'OPEN' || inc.status === 'IN_PROGRESS') && (
-                          <>
-                            <button onClick={() => handleUpdateIncidentStatus(inc.id, 'ESCALATED')} className="flex-1 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-semibold shadow hover:bg-rose-700 transition flex items-center justify-center gap-1">
-                              <AlertTriangle className="w-3.5 h-3.5" />
-                              <span>Escalate to A3/A4</span>
-                            </button>
-                            <button onClick={() => handleUpdateIncidentStatus(inc.id, 'RESOLVED')} className="flex-1 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow hover:bg-emerald-700 transition">Resolve</button>
-                          </>
-                        )}
-                        {inc.status === 'ESCALATED' && (
-                          <button onClick={() => handleUpdateIncidentStatus(inc.id, 'RESOLVED')} className="w-full py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow hover:bg-emerald-700 transition">Resolve Escalated Issue</button>
-                        )}
-                      </>
-                    ) : (
-                      /* Standard INCIDENT */
-                      <>
-                        {['OPEN', 'UNDER_INVESTIGATION', 'IN_PROGRESS'].includes(inc.status) && (
-                          <div className="flex w-full items-center gap-2">
-                            {inc.severity === 'CRITICAL' && (
-                              <button onClick={() => handleUpdateIncidentStatus(inc.id, 'ESCALATED')} className="flex-1 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-semibold shadow hover:bg-rose-700 transition flex items-center justify-center gap-1">
-                                <AlertTriangle className="w-3.5 h-3.5" />
-                                <span>Escalate to A3/A4</span>
-                              </button>
-                            )}
-                            <button onClick={() => handleUpdateIncidentStatus(inc.id, 'RESOLVED')} className="flex-1 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow hover:bg-emerald-700 transition">Mark Resolved</button>
-                          </div>
-                        )}
-                        {inc.status === 'ESCALATED' && (
-                          <button onClick={() => handleUpdateIncidentStatus(inc.id, 'RESOLVED')} className="w-full py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow hover:bg-emerald-700 transition">Mark Escalation Resolved</button>
-                        )}
-                      </>
+                    {['OPEN', 'UNDER_INVESTIGATION', 'IN_PROGRESS', 'REPORTED', 'RECORDED', 'ESCALATED', 'ACTION_REQUIRED'].includes(inc.status) && (
+                      <button 
+                        onClick={() => setResolvingIncident(inc)}
+                        className="flex-1 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5" />
+                        Manage Incident Lifecycle
+                      </button>
                     )}
                   </div>
-
                 </div>
               ))}
                 <div className="col-span-full">
@@ -2634,6 +2600,17 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
         </div>
       )}
 
+      {/* MODAL 2: REPORT INCIDENT */}
+      {resolvingIncident && (
+        <IncidentResolutionModal
+          companyId={companyId!}
+          incident={resolvingIncident}
+          userSession={userSession}
+          onClose={() => setResolvingIncident(null)}
+          onRefresh={() => { /* Realtime updates handle this */ }}
+        />
+      )}
+      
       {/* MODAL 2: REPORT INCIDENT */}
       {isIncidentModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">

@@ -6,6 +6,7 @@ import { CompanyTenant, UserSession, PhaseAScreen, UserRole } from './types';
 import { SessionManager } from './services/sessionManager';
 import { OfflineSyncService } from './services/offlineSyncService';
 import { FirestoreService } from './services/firestoreService';
+import { EnterpriseRiskScheduler } from './services/enterpriseRiskScheduler';
 import { ThemeProvider } from './context/ThemeContext';
 import { getCurrentPathname, ROUTE_PATH_MAP, navigateToUrl } from './utils/publicRouter';
 import { updatePageSEO } from './utils/seo';
@@ -28,6 +29,8 @@ import { DeploymentManagementScreen } from './components/screens/DeploymentManag
 import { ShiftRosterScreen } from './components/screens/ShiftRosterScreen';
 
 import { CompanyManagementScreen } from './components/screens/CompanyManagementScreen';
+import { OrgControlScreen } from './components/screens/OrgControlScreen';
+import { ChangeControlScreen } from './components/screens/ChangeControlScreen';
 import { AttendanceShiftsScreen } from './components/screens/AttendanceShiftsScreen';
 import { SiteOperationsScreen } from './components/screens/SiteOperationsScreen';
 import { WorkOrdersScreen } from './components/screens/WorkOrdersScreen';
@@ -35,6 +38,15 @@ import { KotlinCodeViewer } from './components/screens/KotlinCodeViewer';
 import { SignUpScreen } from './components/screens/SignUpScreen';
 import { ApprovalPendingScreen } from './components/screens/ApprovalPendingScreen';
 import { ApprovalManagementScreen } from './components/screens/ApprovalManagementScreen';
+import { ApprovalIntelligenceScreen } from './components/screens/ApprovalIntelligenceScreen';
+import { ThirdPartyRiskScreen } from './components/screens/ThirdPartyRiskScreen';
+import { DocumentLifecycleScreen } from './components/screens/DocumentLifecycleScreen';
+import { ExecutiveOperationalIntelligenceScreen } from './components/screens/ExecutiveOperationalIntelligenceScreen';
+import { WorkforceCapacityPlanningScreen } from './components/screens/WorkforceCapacityPlanningScreen';
+import { EnterpriseConflictManagementScreen } from './components/screens/EnterpriseConflictManagementScreen';
+import { HistoricalTraceabilityScreen } from './components/screens/HistoricalTraceabilityScreen';
+import { EnterpriseScalabilityAssessmentScreen } from './components/screens/EnterpriseScalabilityAssessmentScreen';
+import { BiometricHubScreen } from './components/screens/BiometricHubScreen';
 import { SuperAdminGate } from './components/guards/SuperAdminGate';
 import { PlatformDashboard } from './pages/super-admin/Dashboard';
 import { EnterpriseDashboardScreen } from './components/screens/EnterpriseDashboardScreen';
@@ -227,6 +239,18 @@ export function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Automated background scheduler for enterprise risk and document expirations
+  useEffect(() => {
+    if (userSession && userSession.companyId) {
+      EnterpriseRiskScheduler.startScheduler(userSession);
+    } else {
+      EnterpriseRiskScheduler.stopScheduler();
+    }
+    return () => {
+      EnterpriseRiskScheduler.stopScheduler();
+    };
+  }, [userSession?.companyId, userSession?.role]);
+
   const handleLogout = () => {
     SessionManager.clearUserSession();
     setUserSession(null);
@@ -271,7 +295,9 @@ export function App() {
     'SUPER_ADMIN_MODULES',
     'SUPER_ADMIN_PENDING_APPROVALS',
     'SUPER_ADMIN_SUBSCRIPTIONS',
-    'APPROVAL_MANAGEMENT'
+    'APPROVAL_MANAGEMENT',
+    'BIOMETRIC_DEVICES',
+    'DEVICE_INTEGRATION_HUB'
   ].includes(currentScreen);
 
   // Security guard: If unauthenticated and attempting to access protected screens, redirect to LANDING
@@ -528,6 +554,7 @@ export function App() {
                         userSession={userSession}
                         activeCompany={activeCompany}
                         isOnline={isOnline}
+                        onNavigate={setCurrentScreen}
                       />
                     )}
 
@@ -598,6 +625,53 @@ export function App() {
                     {currentScreen === 'COMPLIANCE' && activeCompany && (
                       <ComplianceDashboardScreen
                         userSession={userSession}
+                      />
+                    )}
+
+                    {currentScreen === 'DOCUMENT_LIFECYCLE' && activeCompany && (
+                      <DocumentLifecycleScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'OPERATIONAL_INTELLIGENCE' && activeCompany && (
+                      <ExecutiveOperationalIntelligenceScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                        onNavigate={setCurrentScreen}
+                      />
+                    )}
+
+                    {currentScreen === 'WORKFORCE_CAPACITY' && activeCompany && (
+                      <WorkforceCapacityPlanningScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                      />
+                    )}
+
+                    {currentScreen === 'CONFLICT_DETECTION' && activeCompany && (
+                      <EnterpriseConflictManagementScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        isOnline={isOnline}
+                      />
+                    )}
+
+                    {currentScreen === 'HISTORICAL_TRACEABILITY' && (
+                      <HistoricalTraceabilityScreen
+                        session={userSession}
+                        onNavigateToScreen={(scr) => setCurrentScreen(scr as PhaseAScreen)}
+                      />
+                    )}
+
+                    {currentScreen === 'SCALABILITY_ASSESSMENT' && (
+                      <EnterpriseScalabilityAssessmentScreen
+                        session={userSession}
+                        companyId={userSession.companyId || (activeCompany ? activeCompany.companyId : 'MUSTER_SYSTEM')}
                       />
                     )}
 
@@ -758,6 +832,14 @@ export function App() {
                       <ProfileScreen
                         userSession={userSession}
                         activeCompany={activeCompany}
+                      />
+                    )}
+
+                    {(currentScreen === 'BIOMETRIC_DEVICES' || currentScreen === 'DEVICE_INTEGRATION_HUB') && (
+                      <BiometricHubScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                        onNavigate={setCurrentScreen}
                       />
                     )}
 

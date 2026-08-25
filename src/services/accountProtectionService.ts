@@ -61,8 +61,15 @@ export class AccountProtectionService {
     // 2. Check Firestore lock document if online
     try {
       const lockDocRef = doc(db, 'companies', companyId || 'GLOBAL', 'account_locks', key);
-      const snap = await getDoc(lockDocRef);
-      if (snap.exists()) {
+      
+      // Add a safety timeout for the getDoc call to prevent hangs
+      const snapPromise = getDoc(lockDocRef);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('TIMEOUT')), 5000)
+      );
+
+      const snap = await Promise.race([snapPromise, timeoutPromise]) as any;
+      if (snap && snap.exists()) {
         const data = snap.data() as AccountLockRecord;
         if (data.isLocked && data.lockedUntil) {
           const lockedUntilTs = new Date(data.lockedUntil).getTime();

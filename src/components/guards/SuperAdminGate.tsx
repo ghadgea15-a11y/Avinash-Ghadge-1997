@@ -21,9 +21,15 @@ export const SuperAdminGate: React.FC<SuperAdminGateProps> = ({ userSession, onN
         return;
       }
       try {
-        const adminDoc = await getDoc(doc(db, 'super_admins', userSession.userId));
+        const docRef = doc(db, 'super_admins', userSession.userId);
+        const snapPromise = getDoc(docRef);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('TIMEOUT')), 5000)
+        );
+
+        const adminDoc = await Promise.race([snapPromise, timeoutPromise]) as any;
         if (isMounted) {
-          if (adminDoc.exists() && adminDoc.data().status === 'ACTIVE') {
+          if (adminDoc && adminDoc.exists() && adminDoc.data().status === 'ACTIVE') {
             setVerified(true);
           } else {
             setVerified(false);

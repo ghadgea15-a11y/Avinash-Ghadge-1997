@@ -158,7 +158,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     if (userSession) {
       FirestoreService.getAppSettings(userSession.userId).then((s) => {
         if (s) {
-          setSettings(s);
+          setSettings(prev => ({ ...prev, ...s }));
         }
       });
     }
@@ -479,7 +479,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={settings.gpsTrackingHighAccuracy}
+                checked={!!settings.gpsTrackingHighAccuracy}
                 onChange={(e) => updateSetting('gpsTrackingHighAccuracy', e.target.checked)}
                 className="sr-only peer"
               />
@@ -505,7 +505,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={settings.offlineAutoSync}
+                checked={!!settings.offlineAutoSync}
                 onChange={(e) => updateSetting('offlineAutoSync', e.target.checked)}
                 className="sr-only peer"
               />

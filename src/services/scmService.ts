@@ -379,35 +379,37 @@ export class ScmService {
 
   static async verifyGatePass(session: UserSession, passId: string, companyId: string): Promise<void> {
     const passRef = doc(db, 'companies', companyId, 'gate_passes', passId);
-    const pDoc = await getDoc(passRef);
-    if (!pDoc.exists()) throw new Error('Not found');
-    const pass = pDoc.data() as GatePassRecord;
     
-    if (pass.status !== 'DISPATCHED' && pass.passType !== 'INWARD') {
-        throw new Error('Gate pass cannot be verified at this stage.');
-    }
+    await runTransaction(db, async (t) => {
+      const pDoc = await t.get(passRef);
+      if (!pDoc.exists()) throw new Error('Gate pass not found');
+      const pass = pDoc.data() as GatePassRecord;
+      
+      if (pass.status !== 'DISPATCHED' && pass.passType !== 'INWARD') {
+          throw new Error('Gate pass cannot be verified at this stage.');
+      }
 
-    const updates: Partial<GatePassRecord> = {
-      verifiedAt: new Date().toISOString(),
-      verifiedByUid: session.userId,
-      verifiedByName: session.fullName,
-      status: 'GATE_VERIFIED'
-    };
+      const updates: Partial<GatePassRecord> = {
+        verifiedAt: new Date().toISOString(),
+        verifiedByUid: session.userId,
+        verifiedByName: session.fullName,
+        status: 'GATE_VERIFIED'
+      };
 
-    if (pass.transferOrderId) {
-      // It remains GATE_VERIFIED or we can just say the pass is verified and transfer is IN_TRANSIT
-      const trRef = doc(db, 'companies', companyId, 'transfer_orders', pass.transferOrderId);
-      await updateDoc(trRef, { status: 'IN_TRANSIT', updatedAt: new Date().toISOString() });
-      updates.status = 'CLOSED'; // Gate pass job is done since it left the gate
-      updates.closedAt = new Date().toISOString();
-    } else if (pass.passType === 'NON_RETURNABLE' || pass.passType === 'OUTWARD') {
-      updates.status = 'CLOSED';
-      updates.closedAt = new Date().toISOString();
-    } else if (pass.passType === 'RETURNABLE') {
-      updates.status = 'RETURN_PENDING';
-    }
+      if (pass.transferOrderId) {
+        const trRef = doc(db, 'companies', companyId, 'transfer_orders', pass.transferOrderId);
+        t.update(trRef, { status: 'IN_TRANSIT', updatedAt: new Date().toISOString() });
+        updates.status = 'CLOSED'; 
+        updates.closedAt = new Date().toISOString();
+      } else if (pass.passType === 'NON_RETURNABLE' || pass.passType === 'OUTWARD') {
+        updates.status = 'CLOSED';
+        updates.closedAt = new Date().toISOString();
+      } else if (pass.passType === 'RETURNABLE') {
+        updates.status = 'RETURN_PENDING';
+      }
 
-    await updateDoc(passRef, updates);
+      t.update(passRef, updates);
+    });
   }
   
   static async receiveGatePass(session: UserSession, passId: string, companyId: string): Promise<void> {

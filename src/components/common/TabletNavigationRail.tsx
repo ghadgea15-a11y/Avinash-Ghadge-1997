@@ -53,6 +53,7 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
         'ID_BADGES',
         'ATTENDANCE_SHIFTS',
         'SHIFT_ROSTER',
+        'WORKFORCE_CAPACITY',
         'PAYROLL_COMPENSATION',
         'SITE_OPERATIONS',
         'WORK_ORDERS',
@@ -61,8 +62,10 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
         'CLIENT_MANAGEMENT',
         'PROCUREMENT_SRM',
         'COMPLIANCE',
+        'DOCUMENT_LIFECYCLE',
         'APPROVAL_MANAGEMENT',
         'REPORTS_ANALYTICS',
+        'OPERATIONAL_INTELLIGENCE',
         'NOTIFICATIONS',
         'SETTINGS',
       ];
