@@ -113,7 +113,7 @@ export const DirectorDashboard: React.FC<DashboardProps> = ({ userSession, compa
       <EnterpriseIntelligenceDashboard 
         session={userSession} 
         company={company} 
-        onDrillDown={(mod, data) => console.log('DrillDown', mod, data)} 
+        onDrillDown={(mod, data) => {}} 
       />
       <ExecutiveBiDashboard session={userSession} company={company} />
       <PredictiveAnalyticsDashboard session={userSession} company={company} />

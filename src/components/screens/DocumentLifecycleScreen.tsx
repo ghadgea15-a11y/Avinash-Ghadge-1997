@@ -42,47 +42,6 @@ export const DocumentLifecycleScreen: React.FC<Props> = ({ session, userSession,
     }
   };
 
-  const runE2ETest = async () => {
-    try {
-      alert("Starting Document Lifecycle E2E Test...");
-      
-      // 1. Register Document
-      const docId = await DocumentLifecycleService.registerDocument(currentSession, {
-        title: 'Enterprise Software License ' + Date.now(),
-        docType: 'LICENSE',
-        entityRefType: 'VENDOR',
-        entityRefId: 'VEND_TEST',
-        ownerId: currentSession.userId,
-        issueDate: new Date().toISOString(),
-        expiryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Expires in 2 days
-        reminderScheduleDays: [90, 60, 30, 7, 0, -7] // Standard enterprise schedule
-      }, 'https://example.com/doc_v1.pdf');
-      
-      console.log('1. Document Registered:', docId);
-
-      // 2. Evaluate Expiries (Should trigger 7-day reminder and EXPIRING_SOON)
-      console.log('2. Running Expiry Evaluator...');
-      await DocumentLifecycleService.evaluateExpiries(activeCompany.companyId);
-      console.log('Evaluator finished.');
-
-      // 3. Initiate Renewal
-      const newIssue = new Date().toISOString();
-      const newExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // +1 year
-      const reqId = await DocumentLifecycleService.initiateRenewal(currentSession, docId, newIssue, newExpiry, 'https://example.com/doc_v2.pdf');
-      console.log('3. Renewal Initiated:', reqId);
-
-      // 4. Approve Renewal
-      await DocumentLifecycleService.approveRenewal(currentSession, reqId);
-      console.log('4. Renewal Approved (Historical version created)');
-      
-      alert(`E2E Passed! Document created, reminded, and renewed securely. Check console and dashboard.`);
-      loadData();
-    } catch (err: any) {
-      alert("E2E Failed: " + err.message);
-      console.error(err);
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'VALID': return <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg flex items-center gap-1"><CheckCircle className="w-3 h-3" /> VALID</span>;
@@ -109,13 +68,6 @@ export const DocumentLifecycleScreen: React.FC<Props> = ({ session, userSession,
           </p>
         </div>
         <div className="flex gap-2">
-          <button 
-            onClick={runE2ETest}
-            className="px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl text-sm font-medium hover:bg-indigo-100 transition-colors flex items-center gap-2"
-          >
-            <PlayCircle className="w-4 h-4" />
-            Run E2E Test
-          </button>
           <button 
             onClick={handleEvaluateExpiries}
             className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"

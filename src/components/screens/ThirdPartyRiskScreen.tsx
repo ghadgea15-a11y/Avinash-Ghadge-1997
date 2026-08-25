@@ -49,78 +49,6 @@ export const ThirdPartyRiskScreen: React.FC<Props> = ({ session, activeCompany }
     }
   };
 
-  const runE2ETest = async () => {
-    try {
-      alert("Starting Third-Party Risk Lifecycle E2E Test...");
-      const vendorId = await VendorRiskService.registerVendor(session, {
-        businessName: 'Acme Corp (Test)',
-        legalEntityName: 'Acme Corp Ltd',
-        tier: 'TIER_2_APPROVED'
-      });
-      
-      console.log('1. Vendor Registered:', vendorId);
-      
-      const contractId = await VendorRiskService.submitContract(session, vendorId, {
-        title: 'Security Services 2026',
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // EXPIRED 1 day ago
-        assignedServices: ['SECURITY'],
-        authorizedSites: ['SITE_HQ']
-      });
-      
-      console.log('2. Contract Added (Expired):', contractId);
-      
-      const docId = await VendorRiskService.addComplianceDoc(session, vendorId, {
-        docType: 'ISO_27001',
-        issueDate: new Date().toISOString(),
-        expiryDate: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString() // EXPIRED 2 days ago
-      });
-      
-      console.log('3. Compliance Doc Added (Expired):', docId);
-      
-      let bypassPrevented = false;
-      try {
-        await VendorRiskService.addExternalPersonnel(session, vendorId, {
-          name: 'John Doe (Contractor)',
-          role: 'GUARD',
-          authorizedSites: ['SITE_HQ'],
-          accessExpiryDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          internalPermissionsGranted: true // INVALID
-        });
-      } catch (err: any) {
-        if (err.message.includes('SECURITY EXCEPTION')) {
-          bypassPrevented = true;
-          console.log('4. Boundary Enforced. Internal permissions blocked.');
-        } else {
-          throw err;
-        }
-      }
-      
-      if (!bypassPrevented) {
-        throw new Error("Boundary test failed! External personnel granted internal permissions.");
-      }
-
-      // Add valid personnel but with expired access
-      const pId = await VendorRiskService.addExternalPersonnel(session, vendorId, {
-        name: 'Jane Smith (Contractor)',
-        role: 'GUARD',
-        authorizedSites: ['SITE_HQ'],
-        accessExpiryDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // EXPIRED
-        internalPermissionsGranted: false
-      });
-      console.log('5. Expired Personnel Added:', pId);
-      
-      console.log('6. Running Automated Risk Evaluator...');
-      const violations = await VendorRiskService.evaluateVendorRisks(activeCompany.companyId);
-      
-      alert(`E2E Passed! Prevented bypass. Evaluator found ${violations} violations. Check console and dashboard.`);
-      loadData();
-    } catch (err: any) {
-      alert("E2E Failed: " + err.message);
-      console.error(err);
-    }
-  };
-
   if (loading) return <div className="p-8 text-center">Loading Third-Party Risks...</div>;
   if (!data) return <div className="p-8 text-center text-red-500">Failed to load data</div>;
 
@@ -137,12 +65,6 @@ export const ThirdPartyRiskScreen: React.FC<Props> = ({ session, activeCompany }
           </p>
         </div>
         <div className="flex gap-2">
-          <button 
-            onClick={runE2ETest}
-            className="px-4 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-sm font-medium hover:bg-rose-100 transition-colors"
-          >
-            Run E2E Test
-          </button>
           <button 
             onClick={handleEvaluateRisks}
             className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"

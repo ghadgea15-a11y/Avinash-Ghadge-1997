@@ -20,85 +20,6 @@ export const ApprovalIntelligenceScreen: React.FC<Props> = ({ session }) => {
   }, [session.companyId]);
 
   
-  const runE2ETest = async () => {
-    try {
-      alert("Starting Enterprise Approval Intelligence E2E...");
-      const testWfId = 'WF_TEST_' + Date.now();
-      
-      // We assume user is SUPER_ADMIN and can write to bpm_workflows
-      const { doc, setDoc } = await import('firebase/firestore');
-      const { db } = await import('../../firebase');
-      
-      await setDoc(doc(db, 'companies', session.companyId, 'bpm_workflows', testWfId), {
-        id: testWfId,
-        workflowId: testWfId,
-        companyId: session.companyId,
-        module: 'SCM',
-        transactionType: 'PURCHASE_ORDER',
-        workflowName: 'E2E Test Workflow',
-        active: true,
-        version: 1,
-        effectiveFrom: new Date().toISOString(),
-        steps: [
-          {
-            stepId: 'STEP_1',
-            sequence: 1,
-            approverType: 'USER',
-            approverUserId: session.userId,
-            minimumApprovals: 1,
-            required: true
-          },
-          {
-            stepId: 'STEP_2',
-            sequence: 2,
-            approverType: 'USER',
-            approverUserId: session.userId,
-            minimumApprovals: 1,
-            required: true
-          }
-        ],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-
-      console.log("1. Submitting...");
-      const instance = await BpmService.submitForApproval(
-        session.companyId,
-        session.userId,
-        'SCM',
-        'PO_TEST_' + Date.now(),
-        'PURCHASE_ORDER',
-        { amount: 5000 }
-      );
-
-      console.log("2. Tier 1 Approve");
-      await BpmService.performAction(session, instance!.id, 'APPROVE', 'E2E Tier 1');
-      
-      console.log("3. Tier 2 Approve");
-      await BpmService.performAction(session, instance!.id, 'APPROVE', 'E2E Tier 2');
-      
-      console.log("4. Testing Double Approval");
-      let doubleApprovalPrevented = false;
-      try {
-        await BpmService.performAction(session, instance!.id, 'APPROVE', 'E2E Double');
-      } catch (err: any) {
-        if (err.message.includes('Status is APPROVED') || err.message.includes('Cannot perform action')) {
-          doubleApprovalPrevented = true;
-        }
-      }
-      
-      if (!doubleApprovalPrevented) {
-        throw new Error("Double approval was NOT prevented!");
-      }
-      
-      alert("E2E Test Passed! Bypass and Double Approval prevented successfully. Check the console and list for the new transaction.");
-      loadApprovals();
-    } catch (err: any) {
-      alert("E2E Test Failed: " + err.message);
-      console.error(err);
-    }
-  };
-
   const loadApprovals = async () => {
     setLoading(true);
     try {
@@ -145,7 +66,6 @@ export const ApprovalIntelligenceScreen: React.FC<Props> = ({ session }) => {
             Enterprise command center for all business process workflows and bottlenecks.
           </p>
         </div>
-        <button onClick={runE2ETest} className="px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl text-sm font-medium hover:bg-indigo-100 transition-colors mr-2">Run E2E Test</button>
         <button 
           onClick={loadApprovals}
           className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"

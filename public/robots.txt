@@ -1,42 +1,10 @@
-# robots.txt for Log Sheet Muster (https://logsheetmuster.online)
-# Published by Shourya Enterprises Pvt. Ltd.
-
 User-agent: *
 Allow: /
-Allow: /hrms
-Allow: /hrms-software
-Allow: /employee-management
-Allow: /attendance-management
-Allow: /leave-management
-Allow: /payroll
-Allow: /shift-management
-Allow: /workforce-management
-Allow: /facility-management
-Allow: /security-management
-Allow: /employee-self-service
-Allow: /reports-analytics
-Allow: /compliance
-Allow: /features
-Allow: /pricing
-Allow: /about
-Allow: /contact
-Allow: /security
-Allow: /privacy
-Allow: /privacy-policy
-Allow: /terms
-Allow: /terms-of-service
-
-# Disallow private, administrative, session, and authenticated user paths
 Disallow: /login
 Disallow: /signup
 Disallow: /forgot-password
-Disallow: /dashboard
-Disallow: /admin
-Disallow: /superadmin
-Disallow: /app/
-Disallow: /api/
-Disallow: /session/
+Disallow: /company-code
+Disallow: /app/*
+Disallow: /dashboard/*
 
-# Host and Sitemap
-Host: https://logsheetmuster.online
 Sitemap: https://logsheetmuster.online/sitemap.xml

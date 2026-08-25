@@ -49,6 +49,7 @@ export const ROUTE_PATH_MAP: Record<string, { screen: PhaseAScreen; publicRoute?
   '/pricing': { screen: 'LANDING', publicRoute: '/pricing' },
   '/about': { screen: 'LANDING', publicRoute: '/about' },
   '/contact': { screen: 'LANDING', publicRoute: '/contact' },
+  '/company': { screen: 'LANDING', publicRoute: '/about' },
   '/security': { screen: 'LANDING', publicRoute: '/security' },
   '/privacy': { screen: 'LEGAL_POLICIES', publicRoute: '/privacy' },
   '/privacy-policy': { screen: 'LEGAL_POLICIES', publicRoute: '/privacy' },

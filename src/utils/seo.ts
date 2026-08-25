@@ -392,6 +392,20 @@ export const SEO_REGISTRY: Record<string, SeoMetadata> = {
       { name: 'About Us', item: `${BASE_URL}/about` }
     ]
   },
+  
+  '/company': {
+    path: '/company',
+    title: 'Shourya Enterprises Pvt. Ltd. | Corporate Profile & Contact Info',
+    description: 'Corporate details for Shourya Enterprises Private Limited, based in Pune. Legal entity information, headquarters address, and contact coordinates.',
+    keywords: 'Shourya Enterprises Pvt Ltd, corporate profile, Pune software company, Avinash Ghadge',
+    canonicalUrl: `${BASE_URL}/about`,
+    ogType: 'website',
+    primaryH1: 'Shourya Enterprises Private Limited - Corporate Profile',
+    breadcrumbs: [
+      { name: 'Home', item: `${BASE_URL}/` },
+      { name: 'Company', item: `${BASE_URL}/company` }
+    ]
+  },
 
   '/contact': {
     path: '/contact',

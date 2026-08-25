@@ -113,6 +113,7 @@ export const LandingPageScreen: React.FC<LandingPageScreenProps> = ({ onNavigate
         return <PricingPage onNavigate={onNavigate} />;
 
       case '/about':
+      case '/company':
         return <AboutPage onNavigate={onNavigate} />;
 
       case '/contact':
