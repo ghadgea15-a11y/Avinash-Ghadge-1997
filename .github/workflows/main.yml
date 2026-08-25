@@ -21,11 +21,8 @@ jobs:
     - name: Install Dependencies
       run: npm ci
       
-    - name: Typecheck
+    - name: Typecheck & Lint
       run: npm run lint
-      
-    - name: Lint
-      run: npm run lint || echo "Linting passed/not configured"
       
     - name: Security Regression & E2E Tests
       run: npx vitest run tests/
@@ -51,7 +48,7 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
       with:
-        gradle-version: '8.4'
+        gradle-version: '9.3.1'
         
     - name: Build Android APK
-      run: cd android && gradle assembleDebug
+      run: cd android && chmod +x gradlew && ./gradlew assembleDebug
