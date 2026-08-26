@@ -664,7 +664,7 @@ export function App() {
                     {currentScreen === 'HISTORICAL_TRACEABILITY' && (
                       <HistoricalTraceabilityScreen
                         session={userSession}
-                        onNavigateToScreen={(scr) => setCurrentScreen(scr as PhaseAScreen)}
+                        onNavigateToScreen={(scr: any) => setCurrentScreen(scr as PhaseAScreen)}
                       />
                     )}
 

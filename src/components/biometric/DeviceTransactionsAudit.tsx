@@ -49,9 +49,9 @@ export const DeviceTransactionsAudit: React.FC<DeviceTransactionsAuditProps> = (
     const q = searchQuery.toLowerCase();
     return (
       log.deviceId.toLowerCase().includes(q) ||
-      log.action.toLowerCase().includes(q) ||
-      log.performedBy.toLowerCase().includes(q) ||
-      log.details.toLowerCase().includes(q)
+      (log.action || '').toLowerCase().includes(q) ||
+      (log.performedBy || '').toLowerCase().includes(q) ||
+      (log.details || '').toLowerCase().includes(q)
     );
   });
 

@@ -139,7 +139,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
       targetCpLat,
       targetCpLng
     );
-    isWithinGeofence = distanceToTarget <= targetCpRadius;
+    isWithinGeofence = (distanceToTarget || 0) <= targetCpRadius;
   } else if (currentGps && siteLat !== undefined && siteLng !== undefined) {
     distanceToTarget = GeoUtils.calculateDistanceInMeters(
       currentGps.latitude,
@@ -147,7 +147,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
       siteLat,
       siteLng
     );
-    isWithinGeofence = distanceToTarget <= siteRadius;
+    isWithinGeofence = (distanceToTarget || 0) <= siteRadius;
   }
 
   // Execute Checkpoint Verification Scan
@@ -170,7 +170,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
         cpLat,
         cpLng
       );
-      geofenceStatus = distanceInMeters <= cpRadius ? 'WITHIN_GEOFENCE' : 'OUTSIDE_GEOFENCE';
+      geofenceStatus =  (distanceInMeters || 0) <= cpRadius ? 'WITHIN_GEOFENCE' : 'OUTSIDE_GEOFENCE';
     } else if (currentGps && siteLat !== undefined && siteLng !== undefined) {
       distanceInMeters = GeoUtils.calculateDistanceInMeters(
         currentGps.latitude,
@@ -178,7 +178,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
         siteLat,
         siteLng
       );
-      geofenceStatus = distanceInMeters <= siteRadius ? 'WITHIN_GEOFENCE' : 'OUTSIDE_GEOFENCE';
+      geofenceStatus =  (distanceInMeters || 0) <= siteRadius ? 'WITHIN_GEOFENCE' : 'OUTSIDE_GEOFENCE';
     }
 
     const scanRecord: PatrolTourCheckpointScan = {

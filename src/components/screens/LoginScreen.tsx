@@ -13,8 +13,12 @@ import {
   ShieldCheck,
   RefreshCw,
   Menu,
-  X
+  X,
+  QrCode
 } from 'lucide-react';
+import { setDoc, doc } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { TotpService } from '../../services/totpService';
 import { CompanyTenant, UserSession, UserRole, PhaseAScreen } from '../../types';
 import { FirebaseAuthService } from '../../services/firebaseAuthService';
 import { SessionManager } from '../../services/sessionManager';
@@ -382,7 +386,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <div className="text-center w-full">
                 <p className="text-xs font-semibold text-slate-700 mb-2">Backup Recovery Codes</p>
                 <div className="grid grid-cols-2 gap-2 text-xs font-mono text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                   {mfaSetupData.backupCodes.map((c, i) => (
+                   {mfaSetupData.backupCodes.map((c: any, i: number) => (
                       <span key={i}>{c}</span>
                    ))}
                 </div>

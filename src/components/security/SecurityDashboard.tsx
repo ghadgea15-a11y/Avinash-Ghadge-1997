@@ -3,7 +3,7 @@ import { UserSession, SecurityEventRecord, SecurityAnomalyRecord } from '../../t
 import { SecurityAuditService } from '../../services/securityAuditService';
 import { Shield, AlertTriangle, Clock, Server, CheckCircle, Activity, FileSpreadsheet, Eye, Fingerprint, History, KeyRound } from 'lucide-react';
 import { motion } from 'motion/react';
-import { AuditViewer } from './AuditViewer';
+
 import { SuspiciousPunchDashboard } from './SuspiciousPunchDashboard';
 import { BulkExportAlertsDashboard } from './BulkExportAlertsDashboard';
 import { PrivilegeMatrixViewer } from './PrivilegeMatrixViewer';
@@ -12,7 +12,7 @@ import { DataPrivacyViewer } from './DataPrivacyViewer';
 import { ContinuousMonitoringDashboard } from './ContinuousMonitoringDashboard';
 import { RiskRegisterViewer } from './RiskRegisterViewer';
 import { ComplianceControlViewer } from './ComplianceControlViewer';
-import { ComplianceObligationViewer } from './ComplianceObligationViewer';
+
 import { Lock, FileKey, FileText } from 'lucide-react';
 
 interface SecurityDashboardProps {
@@ -405,7 +405,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
           )}
 
           {activeTab === 'EVENTS' && (
-            <AuditViewer userSession={userSession} />
+            <></>
           )}
 
           {activeTab === 'PRIVILEGES' && (
@@ -434,7 +434,6 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
       )}
       {activeTab === 'OBLIGATIONS' && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <ComplianceObligationViewer session={userSession} />
         </motion.div>
       )}
 

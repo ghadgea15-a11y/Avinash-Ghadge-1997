@@ -551,6 +551,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       companyId: activeCompany.companyId,
       employeeId: selectedEmployee.id,
       initiatedBy: actor.id,
+      exitChecklist: []
     }, actor);
     if (success) {
       setFeedbackMessage({ text: 'Exit/Separation process initiated.', type: 'SUCCESS' });

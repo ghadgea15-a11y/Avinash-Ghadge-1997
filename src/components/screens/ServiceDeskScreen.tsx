@@ -1462,7 +1462,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   companyId={activeCompany!.companyId}
                   userSession={userSession!}
                   onOpenFeedbackModal={() => setIsFeedbackModalOpen(true)}
-                  onTicketUpdated={(updatedTicket) => {
+                  onTicketUpdated={(updatedTicket: any) => {
                     setSelectedTicket(updatedTicket);
                     fetchTickets();
                   }}

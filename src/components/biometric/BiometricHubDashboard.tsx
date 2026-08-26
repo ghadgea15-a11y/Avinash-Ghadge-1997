@@ -71,7 +71,7 @@ export const BiometricHubDashboard: React.FC<BiometricHubDashboardProps> = ({
     const siteFilter = selectedSiteId === 'ALL' ? undefined : selectedSiteId;
     const unsubscribe = BiometricDeviceService.subscribeCompanyDevices(
       companyId,
-      (liveDevices) => {
+      (liveDevices: any) => {
         setDevices(liveDevices);
         setLoading(false);
       },

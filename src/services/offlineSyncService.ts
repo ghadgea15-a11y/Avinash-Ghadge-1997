@@ -36,6 +36,10 @@ export class OfflineSyncService {
     }
   }
 
+  static queueAction(action: string, payload: any, metadata?: any): void {
+    this.enqueue({ action, payload, metadata, timestamp: Date.now() });
+  }
+
   private static setOnline(status: boolean) {
     this.online = status;
     this.subscribers.forEach((cb) => cb(status));

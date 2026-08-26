@@ -29,14 +29,14 @@ export class DeviceRetryGovernor {
    * Determine if a failed transaction can be retried
    */
   public static canRetry(failure: DeviceSyncFailure, policy: RetryPolicy = this.defaultPolicy): boolean {
-    return !failure.isResolved && failure.retryCount < policy.maxRetries;
+    return !failure.isResolved && (failure.retryCount || 0) < policy.maxRetries;
   }
 
   /**
    * Evaluate dead-letter queue escalation
    */
   public static isDeadLetter(failure: DeviceSyncFailure, policy: RetryPolicy = this.defaultPolicy): boolean {
-    return !failure.isResolved && failure.retryCount >= policy.maxRetries;
+    return !failure.isResolved && (failure.retryCount || 0) >= policy.maxRetries;
   }
 
   /**
