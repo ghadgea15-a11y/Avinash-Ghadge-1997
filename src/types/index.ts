@@ -73,6 +73,7 @@ export type AccountStatus =
   | 'DISABLED';
 
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type ProvisioningSource = 'SUPER_ADMIN' | 'COMPANY_ADMIN' | 'SELF_SIGNUP';
 
 
 // --- SaaS Subscription Models ---
@@ -288,6 +289,7 @@ export interface AppUpdateInfo {
 }
 
 export interface UserSession {
+  provisioningSource?: ProvisioningSource;
   userId: string;
   firebaseUid?: string;
   employeeId: string;
@@ -323,6 +325,7 @@ export interface UserSession {
 }
 
 export interface ApprovalRequestRecord {
+  provisioningSource?: ProvisioningSource;
   id: string;
   uid: string;
   fullName: string;

@@ -319,12 +319,14 @@ export class FirebaseAuthService {
     
     const assignedRole = isCompanyAdmin ? 'COMPANY_ADMIN' : (autoApprove ? employeeRole : 'EMPLOYEE');
     const assignedStatus = (isCompanyAdmin || autoApprove) ? 'ACTIVE' : 'PENDING_APPROVAL';
+    const finalEmployeeId = existingEmpId || `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`;
 
     const userDocData = {
       uid: fbUser.uid,
       email: cleanEmail,
       fullName: cleanName,
       companyId,
+      employeeId: finalEmployeeId,
       companyName: companyTenant!.brandName,
       departmentId,
       departmentName,
@@ -334,6 +336,7 @@ export class FirebaseAuthService {
       emailVerified: fbUser.emailVerified,
       companyAdminApproval: (isCompanyAdmin || autoApprove) ? 'APPROVED' : 'PENDING' as ApprovalStatus,
       hrApproval: (isCompanyAdmin || autoApprove) ? 'APPROVED' : 'PENDING' as ApprovalStatus,
+      provisioningSource: (isCompanyAdmin || autoApprove) ? 'COMPANY_ADMIN' : 'SELF_SIGNUP',
       createdAt: timestamp,
       updatedAt: timestamp
     };
@@ -353,8 +356,6 @@ export class FirebaseAuthService {
       updatedAt: timestamp
     }, { merge: true });
 
-    const finalEmployeeId = existingEmpId || `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`;
-
     if (!autoApprove && !isCompanyAdmin) {
       // 6. Create Approval Request Record
       const approvalReq: ApprovalRequestRecord = {
@@ -373,6 +374,7 @@ export class FirebaseAuthService {
         companyAdminApproval: 'PENDING',
         hrApproval: 'PENDING',
         accountStatus: 'PENDING_APPROVAL',
+        provisioningSource: 'SELF_SIGNUP',
         createdAt: timestamp,
         updatedAt: timestamp
       };
@@ -384,7 +386,7 @@ export class FirebaseAuthService {
         await setDoc(notifRef, {
           id: notifRef.id,
           title: 'New Account Approval Request',
-          message: `${cleanName} (${cleanEmail}) registered for ${departmentName} and requires approval.`,
+          message: ` as any${cleanName} (${cleanEmail}) registered for ${departmentName} and requires approval.`,
           type: 'ALERT',
           timestamp,
           isRead: false,
@@ -437,15 +439,16 @@ export class FirebaseAuthService {
       isBiometricEnabled: false,
       lastActiveAt: Date.now(),
       loginMode: 'PASSWORD',
-      accountStatus: 'PENDING_APPROVAL',
+      accountStatus: assignedStatus as AccountStatus,
       emailVerified: fbUser.emailVerified,
       departmentId,
       departmentName,
-      companyAdminApproval: 'PENDING',
-      hrApproval: 'PENDING'
+      companyAdminApproval: (isCompanyAdmin || autoApprove) ? 'APPROVED' : 'PENDING',
+      hrApproval: (isCompanyAdmin || autoApprove) ? 'APPROVED' : 'PENDING',
+      provisioningSource: (isCompanyAdmin || autoApprove) ? 'COMPANY_ADMIN' : 'SELF_SIGNUP'
     };
 
-    return { fbUser, userSession: session, accountStatus: 'PENDING_APPROVAL' };
+    return { fbUser, userSession: session, accountStatus: assignedStatus as AccountStatus };
   }
 
   /**
@@ -616,6 +619,33 @@ export class FirebaseAuthService {
     const cleanName = fbUser.displayName || cleanEmail.split('@')[0] || 'Google User';
     const companyId = companyTenant.companyId;
 
+    const isCompanyAdmin = companyTenant.adminEmail && companyTenant.adminEmail.toLowerCase() === cleanEmail;
+    let existingEmpId: string | null = null;
+    let autoApprove = false;
+    let employeeRole = isCompanyAdmin ? 'COMPANY_ADMIN' : 'EMPLOYEE';
+
+    try {
+      const empQuery = query(collection(db, 'companies', companyId, 'employees'), where('email', '==', cleanEmail));
+      const empSnap = await getDocs(empQuery);
+      if (!empSnap.empty) {
+        const emp = empSnap.docs[0].data();
+        existingEmpId = emp.id;
+        autoApprove = true;
+        if (emp.role) employeeRole = emp.role;
+        
+        await setDoc(doc(db, 'companies', companyId, 'employees', emp.id), {
+          authUid: fbUser.uid,
+          hasSystemAccess: true,
+          updatedAt: timestamp
+        }, { merge: true });
+      }
+    } catch (e) {
+      console.warn('Error looking up existing employee by email:', e);
+    }
+
+    const assignedRole = isCompanyAdmin ? 'COMPANY_ADMIN' : (autoApprove ? employeeRole : 'EMPLOYEE');
+    const assignedStatus = (isCompanyAdmin || autoApprove) ? 'ACTIVE' : 'PENDING_APPROVAL';
+
     const userDocData = {
       uid: fbUser.uid,
       email: cleanEmail,
@@ -625,11 +655,12 @@ export class FirebaseAuthService {
       departmentId,
       departmentName,
       mobileNumber: mobileNumber || '',
-      role: 'EMPLOYEE' as UserRole,
-      accountStatus: 'PENDING_APPROVAL' as AccountStatus,
-      emailVerified: true, // Google accounts are email verified
-      companyAdminApproval: 'PENDING' as ApprovalStatus,
-      hrApproval: 'PENDING' as ApprovalStatus,
+      role: assignedRole as UserRole,
+      accountStatus: assignedStatus as AccountStatus,
+      emailVerified: true,
+      companyAdminApproval: (isCompanyAdmin || autoApprove) ? 'APPROVED' : 'PENDING' as ApprovalStatus,
+      hrApproval: (isCompanyAdmin || autoApprove) ? 'APPROVED' : 'PENDING' as ApprovalStatus,
+      provisioningSource: (isCompanyAdmin || autoApprove) ? 'COMPANY_ADMIN' : 'SELF_SIGNUP',
       createdAt: timestamp,
       updatedAt: timestamp
     };
@@ -642,33 +673,41 @@ export class FirebaseAuthService {
       userId: fbUser.uid,
       email: cleanEmail,
       fullName: cleanName,
-      role: 'EMPLOYEE',
+      role: assignedRole,
       companyId,
-      status: 'PENDING',
+      status: (isCompanyAdmin || autoApprove) ? 'ACTIVE' : 'PENDING',
+      employeeId: existingEmpId || undefined,
       updatedAt: timestamp
     }, { merge: true });
 
-    // Create approval request
-    const approvalReq: ApprovalRequestRecord = {
-      id: `REQ-${fbUser.uid}`,
-      uid: fbUser.uid,
-      fullName: cleanName,
-      email: cleanEmail,
-      mobileNumber: mobileNumber || '',
-      companyId,
-      companyName: companyTenant.brandName,
-      departmentId,
-      departmentName,
-      requestedRole: 'GUARD',
-      emailVerified: true,
-      companyAdminApproval: 'PENDING',
-      hrApproval: 'PENDING',
-      accountStatus: 'PENDING_APPROVAL',
-      createdAt: timestamp,
-      updatedAt: timestamp
-    };
 
-    await FirestoreService.saveApprovalRequest(approvalReq);
+    const finalEmployeeId = existingEmpId || `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`;
+
+    if (!autoApprove && !isCompanyAdmin) {
+      // Create approval request
+      const approvalReq: ApprovalRequestRecord = {
+        id: `REQ-${fbUser.uid}`,
+        uid: fbUser.uid,
+        employeeId: finalEmployeeId,
+        fullName: cleanName,
+        email: cleanEmail,
+        mobileNumber: mobileNumber || '',
+        companyId,
+        companyName: companyTenant.brandName,
+        departmentId,
+        departmentName,
+        requestedRole: 'GUARD',
+        emailVerified: true,
+        companyAdminApproval: 'PENDING',
+        hrApproval: 'PENDING',
+        accountStatus: 'PENDING_APPROVAL',
+        provisioningSource: 'SELF_SIGNUP',
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+
+      await FirestoreService.saveApprovalRequest(approvalReq);
+    }
 
     // Audit log
     await FirestoreService.logAuditEvent(
@@ -681,10 +720,10 @@ export class FirebaseAuthService {
 
     const session: UserSession = {
       userId: fbUser.uid,
-      employeeId: `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`,
+      employeeId: finalEmployeeId,
       fullName: cleanName,
       email: cleanEmail,
-      role: 'GUARD' as UserRole, // explicit signup default
+      role: assignedRole as UserRole,
       companyId,
       branchId: 'MAIN',
       avatarUrl: fbUser.photoURL || undefined,
@@ -693,15 +732,16 @@ export class FirebaseAuthService {
       isBiometricEnabled: false,
       lastActiveAt: Date.now(),
       loginMode: 'GOOGLE',
-      accountStatus: 'PENDING_APPROVAL',
+      accountStatus: assignedStatus as AccountStatus,
       emailVerified: true,
       departmentId,
       departmentName,
-      companyAdminApproval: 'PENDING',
-      hrApproval: 'PENDING'
+      companyAdminApproval: (isCompanyAdmin || autoApprove) ? 'APPROVED' : 'PENDING',
+      hrApproval: (isCompanyAdmin || autoApprove) ? 'APPROVED' : 'PENDING',
+      provisioningSource: (isCompanyAdmin || autoApprove) ? 'COMPANY_ADMIN' : 'SELF_SIGNUP'
     };
 
-    return { userSession: session, accountStatus: 'PENDING_APPROVAL' };
+    return { userSession: session, accountStatus: assignedStatus as AccountStatus };
   }
 
   /**
@@ -917,14 +957,28 @@ export class FirebaseAuthService {
           hrApproval
         };
 
+        // Enforce TOTP MFA Enrollment for all users if not already enrolled
+        if (!uData?.mfaEnabled) {
+          throw Object.assign(new Error('MFA_ENROLLMENT_REQUIRED'), { 
+            resolver: {
+              tempSession: session
+            },
+            emailOrId: cleanInput,
+            companyId: userCompanyId
+          });
+        }
+
+
         // Check if user has TOTP MFA enabled
         if (uData?.mfaEnabled) {
           let secretToUse = uData.totpSecret; // Fallback for backwards compatibility if any
+          let backupCodes = [];
           if (!secretToUse) {
             try {
               const privateMfaSnap = await getDoc(doc(db, 'users', fbUser.uid, 'private', 'mfa'));
               if (privateMfaSnap.exists()) {
                 secretToUse = privateMfaSnap.data().totpSecret;
+                backupCodes = privateMfaSnap.data().backupCodes || [];
               }
             } catch (e) {
               console.warn('Failed to load private MFA document:', e);
@@ -935,7 +989,9 @@ export class FirebaseAuthService {
               resolver: {
                 isCustomTotp: true,
                 secret: secretToUse,
+                backupCodes: backupCodes,
                 tempSession: session,
+
                 hints: [{ uid: fbUser.uid }]
               },
               emailOrId: cleanInput,
@@ -1104,17 +1160,53 @@ export class FirebaseAuthService {
     emailOrId?: string
   ): Promise<UserSession> {
     try {
+
       // Check if custom RFC 6238 TOTP resolver was used
       if (resolver?.isCustomTotp && resolver?.secret) {
+
+        let isValidCode = false;
+        let isBackupCode = false;
         const verifyResult = await TotpService.verifyCode(verificationCode, resolver.secret);
-        if (!verifyResult.isValid) {
-          throw new Error(verifyResult.error || 'Invalid 6-digit MFA code. Please check your authenticator app.');
+        if (verifyResult.isValid) {
+           isValidCode = true;
+        } else if (resolver.backupCodes && resolver.backupCodes.includes(verificationCode)) {
+           isValidCode = true;
+           isBackupCode = true;
+        }
+
+        if (!isValidCode) {
+          throw new Error(verifyResult.error || 'Invalid MFA or Backup code.');
         }
 
         const session = resolver.tempSession as UserSession;
         if (!session) {
           throw new Error('Session state expired. Please log in again.');
         }
+
+        // Anti-Replay Protection & Backup Code consumption
+        try {
+          const privateMfaRef = doc(db, 'users', session.userId, 'private', 'mfa');
+          const privateMfaSnap = await getDoc(privateMfaRef);
+          if (privateMfaSnap.exists()) {
+            const data = privateMfaSnap.data();
+            if (!isBackupCode && data.lastUsedToken === verificationCode) {
+              throw new Error('This TOTP code was just used. Please wait for a new code.');
+            }
+            
+            const updatePayload: any = { lastUsedToken: verificationCode, lastUsedAt: Date.now() };
+            if (isBackupCode) {
+               updatePayload.backupCodes = (data.backupCodes || []).filter((c: string) => c !== verificationCode);
+            }
+            
+            await setDoc(privateMfaRef, updatePayload, { merge: true });
+          }
+        } catch (replayErr: any) {
+           if (replayErr.message.includes('just used')) throw replayErr;
+           console.warn('Replay protection check failed:', replayErr);
+        }
+
+
+
 
         if (session.companyId && session.companyId !== 'GLOBAL_ADMIN') {
           await AccountProtectionService.recordSuccessfulLogin(session.companyId, session.email);

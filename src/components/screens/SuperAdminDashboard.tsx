@@ -138,7 +138,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             className="px-4 py-2 rounded-xl text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-1.5 shadow-lg shadow-amber-600/30 transition"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>Register New Company</span>
+            <span>Provision New Tenant</span>
           </button>
         </div>
       </div>
@@ -233,7 +233,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
         >
           <div className="flex items-center gap-2.5">
             <PlusCircle className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-semibold">New Tenant Signup</span>
+            <span className="text-xs font-semibold">Provision New Tenant</span>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-500" />
         </button>

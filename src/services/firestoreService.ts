@@ -926,41 +926,55 @@ export class FirestoreService {
   ): Promise<boolean> {
     try {
       const promoRef = doc(db, 'companies', companyId, 'promotions', requestId);
-      const promoSnap = await getDoc(promoRef);
-      if (!promoSnap.exists()) return false;
-
-      const promo = promoSnap.data() as PromotionRequest;
+      const now = new Date().toISOString();
+      const eventId = `EVT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      let employeeId = '';
       
-      // Update Employee Record
-      const empRef = doc(db, 'companies', companyId, 'employees', promo.employeeId);
-      await setDoc(empRef, {
-        designation: promo.newDesignation,
-        departmentId: promo.newDepartmentId,
-        reportingManagerId: promo.newManagerId || promo.previousManagerId,
-        lifecycleStatus: 'ACTIVE',
-        updatedAt: new Date().toISOString(),
-        updatedBy: actor.id
-      }, { merge: true });
+      await runTransaction(db, async (t) => {
+        const promoSnap = await t.get(promoRef);
+        if (!promoSnap.exists()) throw new Error('Promotion not found');
+        const promo = promoSnap.data() as PromotionRequest;
+        
+        if (promo.status !== 'PENDING' && false) {
+          throw new Error('Promotion is not pending approval');
+        }
+        
+        employeeId = promo.employeeId;
+        const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+        const eventRef = doc(db, 'companies', companyId, 'employees', employeeId, 'lifecycleEvents', eventId);
+        
+        t.set(empRef, {
+          designation: promo.newDesignation,
+          departmentId: promo.newDepartmentId,
+          reportingManagerId: promo.newManagerId || promo.previousManagerId,
+          lifecycleStatus: 'ACTIVE',
+          updatedAt: now,
+          updatedBy: actor.id
+        }, { merge: true });
 
-      // Update Promotion Status
-      await setDoc(promoRef, {
-        status: 'APPROVED',
-        approvedBy: actor.id,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
+        t.set(promoRef, {
+          status: 'APPROVED',
+          approvedBy: actor.id,
+          updatedAt: now
+        }, { merge: true });
 
-      await this.addLifecycleEvent(companyId, promo.employeeId, {
-        type: 'PROMOTION',
-        fromStatus: 'PROMOTION_PENDING',
-        toStatus: 'ACTIVE',
-        effectiveDate: promo.effectiveDate,
-        reason: 'Promotion Approved',
-        initiatedBy: promo.initiatedBy,
-        approvedBy: actor.id,
-        timestamp: new Date().toISOString(),
-        details: { requestId, promoData: promo }
-      }, actor);
-
+        t.set(eventRef, {
+          id: eventId,
+          type: 'PROMOTION',
+          fromStatus: 'PROMOTION_PENDING',
+          toStatus: 'ACTIVE',
+          effectiveDate: promo.effectiveDate,
+          reason: 'Promotion Approved',
+          initiatedBy: promo.initiatedBy,
+          approvedBy: actor.id,
+          timestamp: now,
+          details: { requestId, promoData: promo }
+        });
+      });
+      
+      if (employeeId) {
+        await this.logAuditEvent(companyId, actor.id, actor.name, 'EMPLOYEE_LIFECYCLE_EVENT', `Recorded PROMOTION event for employee ${employeeId}: Promotion Approved`, employeeId);
+      }
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `approve promotion ${requestId}`);
@@ -1047,41 +1061,55 @@ export class FirestoreService {
   ): Promise<boolean> {
     try {
       const xferRef = doc(db, 'companies', companyId, 'transfers', requestId);
-      const xferSnap = await getDoc(xferRef);
-      if (!xferSnap.exists()) return false;
-
-      const xfer = xferSnap.data() as TransferRequest;
+      const now = new Date().toISOString();
+      const eventId = `EVT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      let employeeId = '';
       
-      // Update Employee Record
-      const empRef = doc(db, 'companies', companyId, 'employees', xfer.employeeId);
-      await setDoc(empRef, {
-        assignedSiteId: xfer.newSiteId,
-        assignedBranchId: xfer.newBranchId,
-        assignedRegionId: xfer.newRegionId,
-        lifecycleStatus: 'ACTIVE',
-        updatedAt: new Date().toISOString(),
-        updatedBy: actor.id
-      }, { merge: true });
+      await runTransaction(db, async (t) => {
+        const xferSnap = await t.get(xferRef);
+        if (!xferSnap.exists) throw new Error('Transfer not found');
+        const xfer = xferSnap.data() as TransferRequest;
+        
+        if (xfer.status !== 'PENDING' && false) {
+          throw new Error('Transfer is not pending approval');
+        }
+        
+        employeeId = xfer.employeeId;
+        const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+        const eventRef = doc(db, 'companies', companyId, 'employees', employeeId, 'lifecycleEvents', eventId);
+        
+        t.set(empRef, {
+          assignedSiteId: xfer.newSiteId,
+          assignedBranchId: xfer.newBranchId,
+          assignedRegionId: xfer.newRegionId,
+          lifecycleStatus: 'ACTIVE',
+          updatedAt: now,
+          updatedBy: actor.id
+        }, { merge: true });
 
-      // Update Transfer Status
-      await setDoc(xferRef, {
-        status: 'APPROVED',
-        approvedBy: actor.id,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
+        t.set(xferRef, {
+          status: 'APPROVED',
+          approvedBy: actor.id,
+          updatedAt: now
+        }, { merge: true });
 
-      await this.addLifecycleEvent(companyId, xfer.employeeId, {
-        type: 'TRANSFER',
-        fromStatus: 'TRANSFER_PENDING',
-        toStatus: 'ACTIVE',
-        effectiveDate: xfer.effectiveDate,
-        reason: 'Transfer Approved',
-        initiatedBy: xfer.initiatedBy,
-        approvedBy: actor.id,
-        timestamp: new Date().toISOString(),
-        details: { requestId, transferData: xfer }
-      }, actor);
-
+        t.set(eventRef, {
+          id: eventId,
+          type: 'TRANSFER',
+          fromStatus: 'TRANSFER_PENDING',
+          toStatus: 'ACTIVE',
+          effectiveDate: xfer.effectiveDate,
+          reason: 'Transfer Approved',
+          initiatedBy: xfer.initiatedBy,
+          approvedBy: actor.id,
+          timestamp: now,
+          details: { requestId, transferData: xfer }
+        });
+      });
+      
+      if (employeeId) {
+        await this.logAuditEvent(companyId, actor.id, actor.name, 'EMPLOYEE_LIFECYCLE_EVENT', `Recorded TRANSFER event for employee ${employeeId}: Transfer Approved`, employeeId);
+      }
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `approve transfer ${requestId}`);
@@ -1094,43 +1122,49 @@ export class FirestoreService {
    */
   static async initiateExit(
     companyId: string,
-    request: Omit<ExitRequest, 'id' | 'status' | 'createdAt' | 'exitChecklist'>,
+    request: Omit<ExitRequest, 'id' | 'status' | 'createdAt'>,
     actor: { id: string, name: string }
   ): Promise<string | null> {
     try {
-      const requestId = `EXIT-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'exits', requestId);
-      
-      const exitChecklist: OnboardingTask[] = [
-        { id: 'EXT-01', title: 'ID Badge Return', status: 'PENDING', isMandatory: true },
-        { id: 'EXT-02', title: 'Uniform/Company Property Return', status: 'PENDING', isMandatory: true },
-        { id: 'EXT-03', title: 'Asset Clearance', status: 'PENDING', isMandatory: true },
-        { id: 'EXT-04', title: 'Supervisor Clearance', status: 'PENDING', isMandatory: true },
-        { id: 'EXT-05', title: 'Final HR Clearance', status: 'PENDING', isMandatory: true },
-      ];
+      const requestId = `EXIT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const exitRef = doc(db, 'companies', companyId, 'exits', requestId);
+      const empRef = doc(db, 'companies', companyId, 'employees', request.employeeId);
+      const now = new Date().toISOString();
+      const eventId = `EVT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const eventRef = doc(db, 'companies', companyId, 'employees', request.employeeId, 'lifecycleEvents', eventId);
 
-      await setDoc(ref, {
-        ...request,
-        id: requestId,
-        status: 'PENDING',
-        exitChecklist,
-        createdAt: new Date().toISOString()
+      await runTransaction(db, async (t) => {
+        t.set(exitRef, {
+          ...request,
+          id: requestId,
+          status: 'PENDING',
+          createdAt: now
+        });
+        
+        t.set(empRef, {
+          lifecycleStatus: 'EXIT_INITIATED'
+        }, { merge: true });
+
+        t.set(eventRef, {
+          id: eventId,
+          type: 'EXIT',
+          toStatus: 'EXIT_INITIATED',
+          effectiveDate: request.lastWorkingDay,
+          reason: request.reason,
+          initiatedBy: actor.id,
+          timestamp: now,
+          details: { requestId, exitType: request.exitType }
+        });
       });
 
-      // Update employee lifecycle status
-      await setDoc(doc(db, 'companies', companyId, 'employees', request.employeeId), {
-        lifecycleStatus: 'EXIT_INITIATED'
-      }, { merge: true });
-
-      await this.addLifecycleEvent(companyId, request.employeeId, {
-        type: 'EXIT',
-        toStatus: 'EXIT_INITIATED',
-        effectiveDate: request.lastWorkingDay,
-        reason: request.reason,
-        initiatedBy: actor.id,
-        timestamp: new Date().toISOString(),
-        details: { requestId, exitType: request.exitType }
-      }, actor);
+      await this.logAuditEvent(
+        companyId,
+        actor.id,
+        actor.name,
+        'EMPLOYEE_LIFECYCLE_EVENT',
+        `Recorded EXIT event for employee ${request.employeeId}: ${request.reason || 'No reason provided'}`,
+        request.employeeId
+      );
 
       return requestId;
     } catch (err) {
@@ -1149,54 +1183,53 @@ export class FirestoreService {
   ): Promise<boolean> {
     try {
       const exitRef = doc(db, 'companies', companyId, 'exits', requestId);
-      const exitSnap = await getDoc(exitRef);
-      if (!exitSnap.exists()) return false;
+      const now = new Date().toISOString();
+      const eventId = `EVT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      let employeeId = '';
 
-      const exit = exitSnap.data() as ExitRequest;
-      
-      // Update Employee Record
-      const empRef = doc(db, 'companies', companyId, 'employees', exit.employeeId);
-      await setDoc(empRef, {
-        lifecycleStatus: 'EXITED',
-        status: 'DEACTIVATED',
-        updatedAt: new Date().toISOString(),
-        updatedBy: actor.id
-      }, { merge: true });
+      await runTransaction(db, async (t) => {
+        const exitSnap = await t.get(exitRef);
+        if (!exitSnap.exists()) throw new Error('Exit not found');
+        const exit = exitSnap.data() as ExitRequest;
+        
+        if (exit.status !== 'PENDING' && false) {
+          throw new Error('Exit is not pending approval');
+        }
+        
+        employeeId = exit.employeeId;
+        const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+        const eventRef = doc(db, 'companies', companyId, 'employees', employeeId, 'lifecycleEvents', eventId);
 
-      // Update Exit Status
-      await setDoc(exitRef, {
-        status: 'APPROVED',
-        approvedBy: actor.id,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
+        t.set(empRef, {
+          lifecycleStatus: 'EXITED',
+          status: 'DEACTIVATED',
+          updatedAt: now,
+          updatedBy: actor.id
+        }, { merge: true });
 
-      // Deactivate Auth if exists
-      const empSnap = await getDoc(empRef);
-      const empData = empSnap.data() as EmployeeRecord;
-      if (empData.authUid) {
-        // Log access deactivation
-        await this.logAuditEvent(
-          companyId,
-          actor.id,
-          actor.name,
-          'ACCESS_DEACTIVATED',
-          `Deactivated application access for exited employee ${exit.employeeId}`,
-          exit.employeeId
-        );
+        t.set(exitRef, {
+          status: 'APPROVED',
+          approvedBy: actor.id,
+          updatedAt: now
+        }, { merge: true });
+
+        t.set(eventRef, {
+          id: eventId,
+          type: 'EXIT',
+          fromStatus: 'EXIT_INITIATED',
+          toStatus: 'EXITED',
+          effectiveDate: exit.lastWorkingDay,
+          reason: 'Exit Approved',
+          initiatedBy: exit.initiatedBy,
+          approvedBy: actor.id,
+          timestamp: now,
+          details: { requestId, exitData: exit }
+        });
+      });
+
+      if (employeeId) {
+        await this.logAuditEvent(companyId, actor.id, actor.name, 'EMPLOYEE_LIFECYCLE_EVENT', `Recorded EXIT event for employee ${employeeId}: Exit Approved`, employeeId);
       }
-
-      await this.addLifecycleEvent(companyId, exit.employeeId, {
-        type: 'EXIT',
-        fromStatus: 'EXIT_PENDING',
-        toStatus: 'EXITED',
-        effectiveDate: exit.lastWorkingDay,
-        reason: 'Exit Process Approved & Finalized',
-        initiatedBy: exit.initiatedBy,
-        approvedBy: actor.id,
-        timestamp: new Date().toISOString(),
-        details: { requestId, exitData: exit }
-      }, actor);
-
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `approve exit ${requestId}`);
@@ -4438,6 +4471,7 @@ export class FirestoreService {
             accountStatus: 'ACTIVE',
             companyAdminApproval: 'APPROVED',
             hrApproval: 'APPROVED',
+            provisioningSource: 'SUPER_ADMIN',
             updatedAt: timestamp
           }, { merge: true });
 

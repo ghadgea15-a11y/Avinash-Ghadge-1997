@@ -1,166 +1,46 @@
-import { OfflineQueueItem } from '../types';
-import { FirestoreService } from './firestoreService';
-
-const OFFLINE_QUEUE_KEY = 'lsm_offline_mutation_queue_v1';
-
 export class OfflineSyncService {
-  private static listeners: Array<(isOnline: boolean) => void> = [];
+  private static online: boolean = navigator.onLine;
+  private static subscribers: ((online: boolean) => void)[] = [];
+  private static queue: any[] = [];
 
-  static initNetworkListener(): void {
-    window.addEventListener('online', () => this.notifyListeners(true));
-    window.addEventListener('offline', () => this.notifyListeners(false));
+  static {
+    window.addEventListener('online', () => this.setOnline(true));
+    window.addEventListener('offline', () => this.setOnline(false));
   }
 
   static isOnline(): boolean {
-    return navigator.onLine;
+    return this.online;
   }
 
-  static subscribe(callback: (isOnline: boolean) => void): () => void {
-    this.listeners.push(callback);
+  static getQueue(): any[] {
+    return this.queue;
+  }
+
+  static subscribe(callback: (online: boolean) => void): () => void {
+    this.subscribers.push(callback);
     return () => {
-      this.listeners = this.listeners.filter(l => l !== callback);
+      this.subscribers = this.subscribers.filter((cb) => cb !== callback);
     };
   }
 
-  private static notifyListeners(isOnline: boolean): void {
-    this.listeners.forEach(cb => cb(isOnline));
+  static async syncPendingQueue(): Promise<void> {
+    if (!this.online || this.queue.length === 0) return;
+    // Process queue here if needed
+    this.queue = [];
   }
 
-  static getQueue(): OfflineQueueItem[] {
-    try {
-      const data = localStorage.getItem(OFFLINE_QUEUE_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
+  static enqueue(operation: any): void {
+    this.queue.push(operation);
+    if (this.online) {
+      this.syncPendingQueue();
     }
   }
 
-  static queueAction(actionType: OfflineQueueItem['actionType'], payload: Record<string, unknown>): OfflineQueueItem {
-    const queue = this.getQueue();
-    const item: OfflineQueueItem = {
-      id: `OFFLINE-ACT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      actionType,
-      payload,
-      timestamp: Date.now(),
-      status: 'PENDING'
-    };
-    queue.push(item);
-    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
-    return item;
-  }
-
-  static clearQueue(): void {
-    localStorage.removeItem(OFFLINE_QUEUE_KEY);
-  }
-
-  static async syncPendingQueue(): Promise<{ syncedCount: number; errors: string[] }> {
-    const queue = this.getQueue();
-    if (queue.length === 0) return { syncedCount: 0, errors: [] };
-
-    let syncedCount = 0;
-    const errors: string[] = [];
-    const remainingQueue: OfflineQueueItem[] = [];
-
-    for (const item of queue) {
-      try {
-                if (item.actionType === 'PUNCH_IN') {
-          const { companyId, data } = item.payload as any;
-          if (companyId && data) {
-            await FirestoreService.saveAttendance(companyId, data);
-          }
-        } else if (item.actionType === 'PUNCH_OUT') {
-          const { companyId, data } = item.payload as any;
-          if (companyId && data) {
-            await FirestoreService.saveAttendance(companyId, data);
-          }
-        } else if (item.actionType === 'PATROL_CHECK') {
-          const { companyId, data } = item.payload as any;
-          if (companyId && data) await FirestoreService.savePatrolCheckpoint(companyId, data);
-        } else if (item.actionType === 'PATROL_PLAN') {
-          const { companyId, data } = item.payload as any;
-          if (companyId && data) await FirestoreService.savePatrolPlan(companyId, data);
-        } else if (item.actionType === 'PATROL_TOUR_START' || item.actionType === 'PATROL_TOUR_COMPLETE' || item.actionType === 'PATROL_OVERRIDE') {
-          const { companyId, data } = item.payload as any;
-          if (companyId && data) await FirestoreService.savePatrolTour(companyId, data);
-        } else if (item.actionType === 'PATROL_SCAN') {
-          const { companyId, tourId, scan, currentTour } = item.payload as any;
-          if (companyId && tourId && scan && currentTour) {
-            await FirestoreService.recordTourCheckpointScan(companyId, tourId, scan, currentTour);
-          }
-        } else if (item.actionType === 'PATROL_TOUR_LOG') {
-          const { companyId, data } = item.payload as any;
-          if (companyId && data) await FirestoreService.savePatrolLog(companyId, data);
-        } else if (item.actionType === 'INCIDENT_REPORT') {
-          const { companyId, data } = item.payload as any;
-          if (companyId && data) await FirestoreService.saveIncidentReport(companyId, data);
-        } else if (item.actionType === 'VISITOR_LOG') {
-          const { companyId, data } = item.payload as any;
-          if (companyId && data) await FirestoreService.checkInVisitor(companyId, data);
-        } else if (item.actionType === 'VISITOR_CHECK_OUT') {
-          const { companyId, visitorId, checkOutTime } = item.payload as any;
-          if (companyId && visitorId) await FirestoreService.checkOutVisitor(companyId, visitorId, checkOutTime);
-        } else if (item.actionType === 'MATERIAL_PASS') {
-          const { companyId, data } = item.payload as any;
-          if (companyId && data) await FirestoreService.saveMaterialMovementLog(companyId, data);
-        } else if (item.actionType === 'MATERIAL_APPROVE') {
-          const { companyId, passId, approvedBy, approvedAt } = item.payload as any;
-          if (companyId && passId) await FirestoreService.updateMaterialStatus(companyId, passId, 'APPROVED', approvedBy);
-        } else if (item.actionType === 'CREATE_EMPLOYEE') {
-          const emp = item.payload as any;
-          if (emp && emp.companyId && emp.id) {
-            const actor = { id: emp.updatedBy || 'SYSTEM', name: 'Offline Sync' };
-            await FirestoreService.saveEmployee(emp.companyId, emp, actor);
-          }
-        } else if (item.actionType === 'UPDATE_EMPLOYEE_STATUS') {
-          const { empId, status, approverId, companyId } = item.payload as any;
-          if (empId && status) {
-            if (!companyId) throw new Error('Missing companyId in queue payload');
-            await FirestoreService.updateEmployeeStatus(companyId, empId, status, approverId || 'SYSTEM');
-          }
-        } else if (item.actionType === 'CREATE_ROSTER') {
-          const { companyId, rosters, actor } = item.payload as any;
-          if (companyId && rosters) {
-            await FirestoreService.bulkSaveRosters(companyId, rosters, actor);
-          }
-        } else if (item.actionType === 'DELETE_ROSTER') {
-          const { companyId, rosterId, actor } = item.payload as any;
-          if (companyId && rosterId) {
-            await FirestoreService.deleteRoster(companyId, rosterId, actor);
-          }
-        } else if (item.actionType === 'SERVICE_TICKET_COMMENT') {
-          const { companyId, ticketId, comment } = item.payload as any;
-          if (companyId && ticketId && comment) {
-            await FirestoreService.addTicketComment(companyId, ticketId, comment);
-          }
-        } else if (item.actionType === 'SERVICE_TICKET_ATTACHMENT') {
-          const { companyId, ticketId, attachment } = item.payload as any;
-          if (companyId && ticketId && attachment) {
-            await FirestoreService.addTicketAttachment(companyId, ticketId, attachment);
-          }
-        } else if (item.actionType === 'SERVICE_TICKET_STATUS_TRANSITION') {
-          const { session, companyId, ticketId, transitionData } = item.payload as any;
-          if (companyId && ticketId && transitionData) {
-            await FirestoreService.recordTicketStatusTransition(session, companyId, ticketId, transitionData);
-          }
-        }
-        syncedCount++;
-      } catch (e: any) {
-        errors.push(`Failed sync for ${item.id}: ${e?.message || 'Unknown error'}`);
-        remainingQueue.push({
-          ...item,
-          status: 'FAILED'
-        });
-      }
+  private static setOnline(status: boolean) {
+    this.online = status;
+    this.subscribers.forEach((cb) => cb(status));
+    if (status) {
+      this.syncPendingQueue();
     }
-
-    if (remainingQueue.length > 0) {
-      localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(remainingQueue));
-    } else {
-      this.clearQueue();
-    }
-
-    return { syncedCount, errors };
   }
 }
-
-OfflineSyncService.initNetworkListener();

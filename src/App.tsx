@@ -331,7 +331,7 @@ export function App() {
         <div className="min-h-screen w-full flex flex-col justify-center items-center font-sans bg-slate-50 dark:bg-slate-950 transition-colors duration-200 p-4">
           <div className="w-full max-w-xl">
             {currentScreen === 'LOGIN' && (
-              <LoginScreen
+              <LoginScreen activeCompany={activeCompany}
                 onLoginSuccess={(session, company) => {
                   setActiveCompany(company);
                   setUserSession(session);

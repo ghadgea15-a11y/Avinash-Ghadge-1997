@@ -89,6 +89,7 @@ export const inviteEmployee = functions.https.onCall(async (data, context) => {
     emailVerified: false,
     companyAdminApproval: 'APPROVED',
     hrApproval: 'APPROVED',
+    provisioningSource: 'COMPANY_ADMIN',
     createdAt: timestamp,
     updatedAt: timestamp
   };

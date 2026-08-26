@@ -34,7 +34,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 }) => {
   const { isDark } = useTheme();
   
-  const [step, setStep] = useState<'COMPANY_CODE' | 'CREDENTIALS' | 'MFA'>('COMPANY_CODE');
+  const [step, setStep] = useState<'COMPANY_CODE' | 'CREDENTIALS' | 'MFA' | 'MFA_ENROLL'>('COMPANY_CODE');
+  const [mfaSetupData, setMfaSetupData] = useState<any | null>(null);
+  const [enrollSession, setEnrollSession] = useState<any | null>(null);
   const [companyCode, setCompanyCode] = useState('');
   const [validatedCompany, setValidatedCompany] = useState<CompanyTenant | null>(null);
   const [validatingCompany, setValidatingCompany] = useState(false);
@@ -179,6 +181,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
       onLoginSuccess(session, resolvedCompany as CompanyTenant);
     } catch (err: any) {
+      if (err.message === 'MFA_ENROLLMENT_REQUIRED') {
+        const setup = await TotpService.createMfaSetup({
+          accountName: emailOrId.trim(),
+          issuer: 'Log Sheet Muster'
+        });
+        setMfaSetupData(setup);
+        setEnrollSession(err.resolver.tempSession);
+        setStep('MFA_ENROLL');
+        setMfaError(null);
+        setMfaCode('');
+        return;
+      }
       if (err.message === 'MFA_REQUIRED') {
         setMfaResolver(err.resolver);
         setStep('MFA');
@@ -296,6 +310,127 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }
   };
 
+
+  const handleMfaEnrollSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mfaCode || mfaCode.length < 6) {
+      setMfaError('Please enter a valid 6-digit code.');
+      return;
+    }
+    setLoading(true);
+    setMfaError(null);
+    try {
+      const verifyResult = await TotpService.verifyCode(mfaCode, mfaSetupData.secret);
+      if (!verifyResult.isValid) {
+        throw new Error(verifyResult.error || 'Invalid code. Please try again.');
+      }
+      
+      const uid = enrollSession.userId;
+      await setDoc(doc(db, 'users', uid, 'private', 'mfa'), {
+        totpSecret: mfaSetupData.secret,
+        backupCodes: mfaSetupData.backupCodes,
+        lastUsedToken: mfaCode,
+        lastUsedAt: Date.now(),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      
+      await setDoc(doc(db, 'users', uid), {
+        mfaEnabled: true,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      let resolvedCompany = validatedCompany;
+      if (!resolvedCompany || resolvedCompany.companyId !== enrollSession.companyId) {
+        if (enrollSession.companyId === 'GLOBAL_ADMIN') {
+          resolvedCompany = {
+            companyId: 'GLOBAL_ADMIN',
+            companyLegalName: 'Super Administration',
+            brandName: 'System Core'
+          } as any;
+        }
+      }
+      
+      SessionManager.setActiveCompany(resolvedCompany as any);
+      SessionManager.setUserSession(enrollSession);
+      SessionManager.setSavedCredentials(emailOrId.trim(), enrollSession.companyId, rememberMe);
+      onLoginSuccess(enrollSession, resolvedCompany as any);
+
+    } catch (err: any) {
+      setMfaError(err.message || 'Verification failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (step === 'MFA_ENROLL') {
+    return (
+      <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} flex flex-col justify-center px-6`}>
+        <div className="w-full max-w-sm mx-auto space-y-6">
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 mb-2">
+              <QrCode className="w-6 h-6" />
+            </div>
+            <h2 className="text-xl font-bold">Setup Two-Factor Authentication</h2>
+            <p className="text-sm text-slate-500">
+              Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.).
+            </p>
+          </div>
+
+          {mfaSetupData && (
+            <div className="flex flex-col items-center justify-center p-4 bg-white rounded-xl space-y-4">
+              <img src={mfaSetupData.qrCodeDataUrl} alt="QR Code" className="w-48 h-48" />
+              <div className="text-center w-full">
+                <p className="text-xs font-semibold text-slate-700 mb-2">Backup Recovery Codes</p>
+                <div className="grid grid-cols-2 gap-2 text-xs font-mono text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                   {mfaSetupData.backupCodes.map((c, i) => (
+                      <span key={i}>{c}</span>
+                   ))}
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2">Save these in a secure place. They will not be shown again.</p>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleMfaEnrollSubmit} className="space-y-4">
+            <div>
+              <label className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'} block mb-1`}>
+                Enter 6-digit Code
+              </label>
+              <input
+                type="text"
+                value={mfaCode}
+                onChange={(e) => {
+                  setMfaCode(e.target.value.replace(/[^0-9A-Z]/gi, '').toUpperCase());
+                  setMfaError(null);
+                }}
+                maxLength={8}
+                placeholder="000000"
+                className={`w-full transition-colors duration-300 ${isDark ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'} rounded-xl px-4 py-2.5 text-center text-2xl tracking-[0.5em] focus:outline-none font-mono`}
+              />
+            </div>
+            {mfaError && (
+              <div className="p-3 bg-rose-950/80 border border-rose-800 rounded-xl text-xs text-rose-300 flex items-start gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />
+                <span>{mfaError}</span>
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={loading || mfaCode.length < 6}
+              className={`w-full font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition text-sm mt-4 bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30 disabled:opacity-50`}
+            >
+              {loading ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /><span>Verifying...</span></>
+              ) : (
+                <><ShieldCheck className="w-4 h-4" /><span>Enable MFA</span></>
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   if (step === 'MFA') {
     return (
       <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} flex flex-col justify-center px-6`}>
@@ -317,10 +452,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </label>
               <input
                 type="text"
-                maxLength={6}
+                maxLength={8}
                 value={mfaCode}
                 onChange={(e) => {
-                  setMfaCode(e.target.value.replace(/[^0-9]/g, ''));
+                  setMfaCode(e.target.value.replace(/[^0-9A-Z]/gi, '').toUpperCase());
                   setMfaError(null);
                 }}
                 placeholder="123456"

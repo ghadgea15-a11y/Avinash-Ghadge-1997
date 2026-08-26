@@ -1,52 +1,66 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AppThemeMode } from '../types';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+
+type ThemeMode = 'LIGHT' | 'DARK' | 'SYSTEM';
 
 interface ThemeContextType {
-  themeMode: AppThemeMode;
-  setThemeMode: (mode: AppThemeMode) => void;
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => void;
   isDark: boolean;
 }
 
-const ThemeContext = createContext<ThemeContextType>({
-  themeMode: 'LIGHT',
-  setThemeMode: () => {},
-  isDark: false
-});
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [themeMode, setThemeModeState] = useState<AppThemeMode>(() => {
-    const saved = localStorage.getItem('lsm_app_theme');
-    if (saved === 'DARK' && !localStorage.getItem('user_chose_theme')) {
-      localStorage.setItem('lsm_app_theme', 'LIGHT');
-      return 'LIGHT';
-    }
-    return (saved as AppThemeMode) || 'LIGHT';
+export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem('themeMode');
+    return (saved as ThemeMode) || 'SYSTEM';
   });
 
   const [isDark, setIsDark] = useState<boolean>(false);
 
   useEffect(() => {
-    localStorage.setItem('lsm_app_theme', themeMode);
-    localStorage.setItem('user_chose_theme', 'true');
+    localStorage.setItem('themeMode', themeMode);
+
+    const applyTheme = () => {
+      let activeIsDark = false;
+      if (themeMode === 'DARK') {
+        activeIsDark = true;
+      } else if (themeMode === 'LIGHT') {
+        activeIsDark = false;
+      } else {
+        // SYSTEM
+        activeIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+
+      setIsDark(activeIsDark);
+      if (activeIsDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+
+    applyTheme();
+
     if (themeMode === 'SYSTEM') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDark(prefersDark);
-    } else {
-      setIsDark(themeMode === 'DARK');
+      const mql = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = () => applyTheme();
+      mql.addEventListener('change', listener);
+      return () => mql.removeEventListener('change', listener);
     }
   }, [themeMode]);
 
-  const setThemeMode = (mode: AppThemeMode) => {
-    setThemeModeState(mode);
-  };
-
   return (
     <ThemeContext.Provider value={{ themeMode, setThemeMode, isDark }}>
-      <div className={isDark ? 'dark bg-slate-950 text-slate-100' : 'light bg-slate-50 text-slate-900'}>
-        {children}
-      </div>
+      {children}
     </ThemeContext.Provider>
   );
 };
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = (): ThemeContextType => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};
