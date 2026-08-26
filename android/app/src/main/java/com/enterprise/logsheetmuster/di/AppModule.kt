@@ -22,3 +22,13 @@ object AppModule {
     @Singleton
     fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
 }
+
+@Module
+@InstallIn(dagger.hilt.components.SingletonComponent::class)
+abstract class RepositoryModule {
+    @dagger.Binds
+    @javax.inject.Singleton
+    abstract fun bindAuthRepository(
+        authRepositoryImpl: com.enterprise.logsheetmuster.data.repository.AuthRepositoryImpl
+    ): com.enterprise.logsheetmuster.domain.repository.AuthRepository
+}

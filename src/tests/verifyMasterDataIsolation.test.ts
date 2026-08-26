@@ -1,9 +1,8 @@
+import { describe, it, expect } from 'vitest';
 import { RbacService } from '../services/rbacService';
 import { UserSession } from '../types';
 
-async function runTests() {
-  console.log('Running Master Data Isolation Tests...');
-
+describe('Master Data Isolation', () => {
   const companyAId = 'COMP-A';
   const companyBId = 'COMP-B';
   const regionAId = 'REG-A';
@@ -39,45 +38,33 @@ async function runTests() {
     assignedSiteId: siteAId
   };
 
-  // Test 1: Company Isolation
-  const canViewCompA = RbacService.can(userA, 'HCM:EMPLOYEE:READ', { targetCompanyId: companyAId });
-  const canViewCompB = RbacService.can(userA, 'HCM:EMPLOYEE:READ', { targetCompanyId: companyBId });
-  
-  if (canViewCompA && !canViewCompB) {
-    console.log('✅ Company Isolation PASSED');
-  } else {
-    console.error('❌ Company Isolation FAILED', { canViewCompA, canViewCompB });
-  }
+  it('should isolate data by company', () => {
+    const canViewCompA = RbacService.can(userA, 'HCM:EMPLOYEE:READ', { targetCompanyId: companyAId });
+    const canViewCompB = RbacService.can(userA, 'HCM:EMPLOYEE:READ', { targetCompanyId: companyBId });
+    
+    expect(canViewCompA).toBe(true);
+    expect(canViewCompB).toBe(false);
+  });
 
-  // Test 2: Site Isolation
-  const canViewSiteA = RbacService.can(userASite, 'HCM:EMPLOYEE:READ', { targetCompanyId: companyAId, targetSiteId: siteAId });
-  const canViewSiteB = RbacService.can(userASite, 'HCM:EMPLOYEE:READ', { targetCompanyId: companyAId, targetSiteId: siteBId });
+  it('should isolate data by site', () => {
+    const canViewSiteA = RbacService.can(userASite, 'HCM:EMPLOYEE:READ', { targetCompanyId: companyAId, targetSiteId: siteAId });
+    const canViewSiteB = RbacService.can(userASite, 'HCM:EMPLOYEE:READ', { targetCompanyId: companyAId, targetSiteId: siteBId });
+    
+    expect(canViewSiteA).toBe(true);
+    expect(canViewSiteB).toBe(false);
+  });
 
-  if (canViewSiteA && !canViewSiteB) {
-    console.log('✅ Site Isolation PASSED');
-  } else {
-    console.error('❌ Site Isolation FAILED', { canViewSiteA, canViewSiteB });
-  }
-
-  // Verify Roles
-  const roles = [
-    'OWNER_PROMOTER', 'DIRECTOR_CEO', 'GENERAL_MANAGER', 
-    'REGIONAL_MANAGER', 'AREA_MANAGER', 'SITE_IN_CHARGE', 
-    'SUPERVISOR', 'SKILLED', 'SEMI_SKILLED', 'SUPPORT'
-  ];
-  
-  let rolesPassed = true;
-  for (const role of roles) {
-    const session = { ...userA, role: role as any, authorityLevel: RbacService.getAuthorityLevel({ role } as any) };
-    if (!session.authorityLevel) {
-      console.error(`❌ Role mapping failed for ${role}`);
-      rolesPassed = false;
+  it('should map roles to authority levels correctly', () => {
+    const roles = [
+      'OWNER_PROMOTER', 'DIRECTOR_CEO', 'GENERAL_MANAGER', 
+      'REGIONAL_MANAGER', 'AREA_MANAGER', 'SITE_IN_CHARGE', 
+      'SUPERVISOR', 'SKILLED', 'SEMI_SKILLED', 'SUPPORT'
+    ];
+    
+    for (const role of roles) {
+      const session = { ...userA, role: role as any, authorityLevel: RbacService.getAuthorityLevel({ role } as any) };
+      expect(session.authorityLevel).toBeDefined();
     }
-  }
-  
-  if (rolesPassed) {
-    console.log('✅ Role Mapping PASSED');
-  }
-}
+  });
+});
 
-runTests().catch(console.error);
