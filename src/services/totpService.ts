@@ -193,7 +193,7 @@ export class TotpService {
   ): string {
     const period = options?.period || this.DEFAULT_PERIOD;
     const digits = options?.digits || this.DEFAULT_DIGITS;
-    const algorithm = (options?.algorithm || this.DEFAULT_ALGORITHM).toUpperCase();
+    const algorithm = (options?.algorithm || this.DEFAULT_ALGORITHM).toUpperCase().replace('-', '');
 
     const cleanSecret = secret.replace(/[\s-]/g, '').toUpperCase();
     const encodedIssuer = encodeURIComponent(issuer.trim());

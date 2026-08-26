@@ -101,6 +101,14 @@ service cloud.firestore {
     // ============================================================
 
     // A. User Profiles & Tenant Memberships
+    match /totp_secrets/{docId} {
+      allow read, write: if false; // Only backend can access
+    }
+
+    match /users/{uid}/private/mfa {
+      allow read, write: if false; // Deny access to legacy MFA records
+    }
+
     match /users/{uid}/private/{docId} {
       allow read, write: if isSelfUser(uid) || isSuperAdmin();
     }

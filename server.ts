@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { initializeFirebaseAdmin, hasAdminCredentials } from './src/server/firebaseAdmin';
+import { authRoutes } from './src/server/authRoutes';
 import { BpmEscalationAdminService } from './src/server/bpmEscalationAdminService';
 
 async function startServer() {
@@ -13,6 +14,8 @@ async function startServer() {
 
   // Initialize Firebase Admin SDK for privileged background operations
   initializeFirebaseAdmin();
+
+  app.use('/api', authRoutes);
 
   // ============================================================
   // HEALTH & STATUS ENDPOINTS

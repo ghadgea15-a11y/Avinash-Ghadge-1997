@@ -28,7 +28,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { FirestoreService } from '../../services/firestoreService';
 import { TotpService, TotpSetupResult } from '../../services/totpService';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db, auth } from '../../firebase';
 
 interface ProfileScreenProps {
   userSession: UserSession;
@@ -97,16 +97,33 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setMfaVerifyError(null);
     setMfaVerifyCode('');
     try {
-      const issuer = activeCompany?.brandName || 'Log Sheet Muster';
-      const setup = await TotpService.createMfaSetup({
-        accountName: userSession.email,
-        issuer: issuer,
-        options: {
-          digits: 6,
-          period: 30
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) throw new Error('Not authenticated');
+      
+      const res = await fetch('/api/totp/setup', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json'
         }
       });
-      setMfaSetupData(setup);
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to initialize MFA generator.');
+      
+      // Store returned data temporarily for the modal
+      setMfaSetupData({
+        secret: data.formattedSecret,
+        formattedSecret: data.formattedSecret,
+        otpAuthUri: data.otpAuthUri,
+        qrCodeDataUrl: data.qrCodeDataUrl,
+        qrCodeSvg: '',
+        backupCodes: [], // retrieved later
+        period: 30,
+        digits: 6,
+        algorithm: 'SHA-1'
+      });
+      
       setShowMfaModal(true);
     } catch (err: any) {
       setMfaVerifyError(err.message || 'Failed to initialize MFA generator.');
@@ -123,31 +140,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setIsActivatingMfa(true);
     setMfaVerifyError(null);
 
-    try {
-      const verifyRes = await TotpService.verifyCode(mfaVerifyCode, mfaSetupData.secret);
-      if (!verifyRes.isValid) {
-        setMfaVerifyError(verifyRes.error || 'Code did not match. Please verify your system clock or try the next code.');
-        setIsActivatingMfa(false);
-        return;
+        try {
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) throw new Error('Not authenticated');
+
+      const res = await fetch('/api/totp/verify-setup', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + idToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ token: mfaVerifyCode })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Code did not match. Please try again.');
       }
 
-      // Persist to user document and private subcollection
-      const userDocRef = doc(db, 'users', userSession.userId);
-      await updateDoc(userDocRef, {
-        mfaEnabled: true,
-        mfaConfiguredAt: new Date().toISOString()
-      });
-      const privateMfaRef = doc(db, 'users', userSession.userId, 'private', 'mfa');
-      await setDoc(privateMfaRef, {
-        totpSecret: mfaSetupData.secret,
-        backupCodes: mfaSetupData.backupCodes,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
+      await auth.currentUser?.getIdToken(true);
 
       setMfaEnabled(true);
-      setExistingBackupCodes(mfaSetupData.backupCodes);
+      setExistingBackupCodes(data.backupCodes || []);
       setShowMfaModal(false);
       setMfaSetupData(null);
+
       setSavedSuccess('Two-Factor Authentication (TOTP) successfully activated!');
       setTimeout(() => setSavedSuccess(null), 4000);
     } catch (err: any) {
@@ -162,16 +179,24 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     if (!confirm) return;
 
     try {
-      const userDocRef = doc(db, 'users', userSession.userId);
-      await updateDoc(userDocRef, {
-        mfaEnabled: false
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) throw new Error('Not authenticated');
+
+      const res = await fetch('/api/totp/disable', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + idToken,
+          'Content-Type': 'application/json'
+        }
       });
-      const privateMfaRef = doc(db, 'users', userSession.userId, 'private', 'mfa');
-      await setDoc(privateMfaRef, {
-        totpSecret: null,
-        backupCodes: [],
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to disable Two-Factor Authentication.');
+      }
+
+      await auth.currentUser?.getIdToken(true);
+
       setMfaEnabled(false);
       setExistingBackupCodes([]);
       setSavedSuccess('Two-Factor Authentication has been disabled.');

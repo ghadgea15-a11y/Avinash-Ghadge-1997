@@ -957,47 +957,17 @@ export class FirebaseAuthService {
           hrApproval
         };
 
-        // Enforce TOTP MFA Enrollment for all users if not already enrolled
-        if (!uData?.mfaEnabled) {
-          throw Object.assign(new Error('MFA_ENROLLMENT_REQUIRED'), { 
+        // Enforce TOTP MFA for users with MFA enabled
+        if (uData?.mfaEnabled) {
+          throw Object.assign(new Error('MFA_REQUIRED'), { 
             resolver: {
-              tempSession: session
+              isCustomTotp: true,
+              tempSession: session,
+              hints: [{ uid: fbUser.uid }]
             },
             emailOrId: cleanInput,
             companyId: userCompanyId
           });
-        }
-
-
-        // Check if user has TOTP MFA enabled
-        if (uData?.mfaEnabled) {
-          let secretToUse = uData.totpSecret; // Fallback for backwards compatibility if any
-          let backupCodes = [];
-          if (!secretToUse) {
-            try {
-              const privateMfaSnap = await getDoc(doc(db, 'users', fbUser.uid, 'private', 'mfa'));
-              if (privateMfaSnap.exists()) {
-                secretToUse = privateMfaSnap.data().totpSecret;
-                backupCodes = privateMfaSnap.data().backupCodes || [];
-              }
-            } catch (e) {
-              console.warn('Failed to load private MFA document:', e);
-            }
-          }
-          if (secretToUse) {
-            throw Object.assign(new Error('MFA_REQUIRED'), { 
-              resolver: {
-                isCustomTotp: true,
-                secret: secretToUse,
-                backupCodes: backupCodes,
-                tempSession: session,
-
-                hints: [{ uid: fbUser.uid }]
-              },
-              emailOrId: cleanInput,
-              companyId: userCompanyId
-            });
-          }
         }
         
         // Reset failed logins
@@ -1162,47 +1132,68 @@ export class FirebaseAuthService {
     try {
 
       // Check if custom RFC 6238 TOTP resolver was used
-      if (resolver?.isCustomTotp && resolver?.secret) {
-
-        let isValidCode = false;
-        let isBackupCode = false;
-        const verifyResult = await TotpService.verifyCode(verificationCode, resolver.secret);
-        if (verifyResult.isValid) {
-           isValidCode = true;
-        } else if (resolver.backupCodes && resolver.backupCodes.includes(verificationCode)) {
-           isValidCode = true;
-           isBackupCode = true;
-        }
-
-        if (!isValidCode) {
-          throw new Error(verifyResult.error || 'Invalid MFA or Backup code.');
-        }
-
+      if (resolver?.isCustomTotp) {
         const session = resolver.tempSession as UserSession;
         if (!session) {
           throw new Error('Session state expired. Please log in again.');
         }
 
-        // Anti-Replay Protection & Backup Code consumption
+        let verifiedSuccessfully = false;
+
+        // Try backend verification first (secure server-side secret validation)
         try {
-          const privateMfaRef = doc(db, 'users', session.userId, 'private', 'mfa');
-          const privateMfaSnap = await getDoc(privateMfaRef);
-          if (privateMfaSnap.exists()) {
-            const data = privateMfaSnap.data();
-            if (!isBackupCode && data.lastUsedToken === verificationCode) {
-              throw new Error('This TOTP code was just used. Please wait for a new code.');
+          const idToken = await auth.currentUser?.getIdToken();
+          if (idToken) {
+            const res = await fetch('/api/totp/verify-login', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${idToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ token: verificationCode })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+              verifiedSuccessfully = true;
+              await auth.currentUser?.getIdToken(true);
+            } else if (!res.ok) {
+              throw new Error(data.error || 'Invalid 2FA code. Please try again.');
             }
-            
-            const updatePayload: any = { lastUsedToken: verificationCode, lastUsedAt: Date.now() };
-            if (isBackupCode) {
-               updatePayload.backupCodes = (data.backupCodes || []).filter((c: string) => c !== verificationCode);
-            }
-            
-            await setDoc(privateMfaRef, updatePayload, { merge: true });
           }
-        } catch (replayErr: any) {
-           if (replayErr.message.includes('just used')) throw replayErr;
-           console.warn('Replay protection check failed:', replayErr);
+        } catch (backendErr: any) {
+          // If the backend threw an explicit verification rejection, bubble it up
+          if (
+            backendErr.message?.includes('Invalid') ||
+            backendErr.message?.includes('Too many') ||
+            backendErr.message?.includes('wait') ||
+            backendErr.message?.includes('not enrolled')
+          ) {
+            throw backendErr;
+          }
+
+          // Fallback to client secret verification if provided in resolver
+          if (resolver.secret) {
+            let isValidCode = false;
+            let isBackupCode = false;
+            const verifyResult = await TotpService.verifyCode(verificationCode, resolver.secret);
+            if (verifyResult.isValid) {
+              isValidCode = true;
+            } else if (resolver.backupCodes && resolver.backupCodes.includes(verificationCode)) {
+              isValidCode = true;
+              isBackupCode = true;
+            }
+
+            if (!isValidCode) {
+              throw new Error(verifyResult.error || 'Invalid MFA or Backup code.');
+            }
+            verifiedSuccessfully = true;
+          } else {
+            throw backendErr;
+          }
+        }
+
+        if (!verifiedSuccessfully) {
+          throw new Error('MFA verification failed.');
         }
 
 
