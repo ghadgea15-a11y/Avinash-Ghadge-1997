@@ -213,6 +213,7 @@ export interface CompanyBillingProfile {
 
 export interface CompanyTenant {
   companyId: string; // e.g. "APEX-SEC-101"
+  companyCode?: string; // Tenant alias/code
   companyLegalName: string; // e.g. "Apex Security Services Pvt Ltd"
   brandName: string;
   licenseTier: 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
@@ -234,6 +235,11 @@ export interface CompanyTenant {
   country?: string;
   adminName?: string;
   adminEmail?: string;
+  adminUid?: string;
+  emailDeliveryStatus?: 'SENT' | 'FAILED' | 'PENDING';
+  emailDeliveryError?: string | null;
+  activationSentAt?: string;
+  directActivationLink?: string;
   createdAt?: string;
   updatedAt?: string;
   cinNumber?: string;

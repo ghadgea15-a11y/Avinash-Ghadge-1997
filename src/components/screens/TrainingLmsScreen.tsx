@@ -12,6 +12,7 @@ import { LearningManagementService } from '../../services/learningManagementServ
 import { Search, Plus, Filter, FileText, CheckCircle, XCircle, Clock, Calendar, Users, ShieldAlert, FileBadge2 } from 'lucide-react';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 export const TrainingLmsScreen: React.FC<{
   userSession: UserSession;
@@ -19,6 +20,7 @@ export const TrainingLmsScreen: React.FC<{
   onNavigate: React.Dispatch<React.SetStateAction<PhaseAScreen>>;
 }> = ({ userSession, activeCompany, onNavigate }) => {
   const { isDark } = useTheme();
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError } = useFeedback();
   const [activeTab, setActiveTab] = useState<'PROGRAMS' | 'SESSIONS' | 'ENROLLMENTS'>('PROGRAMS');
   
   const [programs, setPrograms] = useState<TrainingProgramRecord[]>([]);
@@ -78,26 +80,50 @@ export const TrainingLmsScreen: React.FC<{
   const handleCreateProgram = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeCompany || !userSession) return;
+    if (!progFormData.title?.trim()) {
+      showValidationFailed('Please enter a program title.');
+      return;
+    }
     
-    const res = await LearningManagementService.createProgram(userSession, progFormData);
-    if (res.success) {
-      setIsProgramModalOpen(false);
-      loadData();
-    } else {
-      alert(res.error);
+    const dismiss = showLoading('Creating training program...');
+    try {
+      const res = await LearningManagementService.createProgram(userSession, progFormData);
+      dismiss();
+      if (res.success) {
+        setIsProgramModalOpen(false);
+        showSuccess(`✓ Training Program "${progFormData.title}" created successfully!`);
+        loadData();
+      } else {
+        showError(res.error || 'Failed to create training program');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Program Creation Failed');
     }
   };
 
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeCompany || !userSession) return;
+    if (!sessionFormData.programId) {
+      showValidationFailed('Please select a training program.');
+      return;
+    }
     
-    const res = await LearningManagementService.createSession(userSession, sessionFormData);
-    if (res.success) {
-      setIsSessionModalOpen(false);
-      loadData();
-    } else {
-      alert(res.error);
+    const dismiss = showLoading('Scheduling training session...');
+    try {
+      const res = await LearningManagementService.createSession(userSession, sessionFormData);
+      dismiss();
+      if (res.success) {
+        setIsSessionModalOpen(false);
+        showSuccess('✓ Training session scheduled successfully!');
+        loadData();
+      } else {
+        showError(res.error || 'Failed to schedule session');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Session Scheduling Failed');
     }
   };
 
@@ -106,17 +132,24 @@ export const TrainingLmsScreen: React.FC<{
     if (!activeCompany || !userSession) return;
     
     if (bulkEnrollData.employeeIds.length === 0) {
-       alert("Select at least one employee.");
+       showValidationFailed("Select at least one employee.");
        return;
     }
 
-    const res = await LearningManagementService.bulkEnrollEmployees(userSession, bulkEnrollData.sessionId, bulkEnrollData.employeeIds);
-    if (res.success) {
-      setIsBulkEnrollModalOpen(false);
-      alert(`Successfully enrolled ${res.enrolled} employees.`);
-      loadData();
-    } else {
-      alert(res.error);
+    const dismiss = showLoading(`Enrolling ${bulkEnrollData.employeeIds.length} employees in session...`);
+    try {
+      const res = await LearningManagementService.bulkEnrollEmployees(userSession, bulkEnrollData.sessionId, bulkEnrollData.employeeIds);
+      dismiss();
+      if (res.success) {
+        setIsBulkEnrollModalOpen(false);
+        showSuccess(`✓ Successfully enrolled ${res.enrolled} employees.`);
+        loadData();
+      } else {
+        showError(res.error || 'Failed to enroll employees');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Enrollment Failed');
     }
   };
 
@@ -124,19 +157,27 @@ export const TrainingLmsScreen: React.FC<{
     e.preventDefault();
     if (!activeCompany || !userSession || !assessmentData.enrollment) return;
 
-    const res = await LearningManagementService.markAttendanceAndAssessment(
-      userSession, 
-      assessmentData.enrollment.id, 
-      assessmentData.attendance, 
-      assessmentData.score, 
-      assessmentData.certFile || undefined
-    );
+    const dismiss = showLoading('Submitting assessment & recording score...');
+    try {
+      const res = await LearningManagementService.markAttendanceAndAssessment(
+        userSession, 
+        assessmentData.enrollment.id, 
+        assessmentData.attendance, 
+        assessmentData.score, 
+        assessmentData.certFile || undefined
+      );
+      dismiss();
 
-    if (res.success) {
-      setIsAssessmentModalOpen(false);
-      loadData();
-    } else {
-      alert(res.error);
+      if (res.success) {
+        setIsAssessmentModalOpen(false);
+        showSuccess('✓ Assessment and attendance recorded successfully!');
+        loadData();
+      } else {
+        showError(res.error || 'Failed to record assessment');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Assessment Submission Failed');
     }
   };
 

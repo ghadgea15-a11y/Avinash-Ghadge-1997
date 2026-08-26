@@ -4105,41 +4105,106 @@ export class FirestoreService {
    */
 
   /**
-   * Fetch all registered companies from Firestore
+   * Fetch all registered companies from Firestore with dual-tier fallback
    */
   static async getAllCompanies(): Promise<CompanyTenant[]> {
     try {
       const colRef = collection(db, 'companies');
       const snap = await getDocs(colRef);
-      if (snap.empty) return [];
-      return snap.docs.map(docSnap => {
-        const data = docSnap.data();
-        return {
-          companyId: docSnap.id,
-          companyLegalName: data.companyLegalName || docSnap.id,
-          brandName: data.brandName || docSnap.id,
-          licenseTier: data.licenseTier || 'ENTERPRISE',
-          status: data.status || 'ACTIVE',
-          primaryColorHex: data.primaryColorHex || '#4f46e5',
-          secondaryColorHex: data.secondaryColorHex || '#06b6d4',
-          allowedBranches: data.allowedBranches || ['MAIN'],
-          maxEmployeesAllowed: data.maxEmployeesAllowed || 1000,
-          maxSitesAllowed: data.maxSitesAllowed || 50,
-          enabledModules: data.enabledModules || MASTER_APP_MODULES.map(m => m.key),
-          email: data.email || '',
-          phone: data.phone || '',
-          address: data.address || '',
-          city: data.city || '',
-          state: data.state || '',
-          country: data.country || 'India',
-          adminName: data.adminName || '',
-          adminEmail: data.adminEmail || '',
-          createdAt: data.createdAt || new Date().toISOString()
-        } as CompanyTenant;
+      if (!snap.empty) {
+        const list = snap.docs.map(docSnap => {
+          const data = docSnap.data();
+          return {
+            companyId: docSnap.id,
+            companyCode: data.companyCode || data.companyId || docSnap.id,
+            companyLegalName: data.companyLegalName || data.brandName || docSnap.id,
+            brandName: data.brandName || data.companyLegalName || docSnap.id,
+            licenseTier: data.licenseTier || 'ENTERPRISE',
+            status: data.status || 'ACTIVE',
+            primaryColorHex: data.primaryColorHex || '#4f46e5',
+            secondaryColorHex: data.secondaryColorHex || '#06b6d4',
+            allowedBranches: data.allowedBranches || ['MAIN'],
+            maxEmployeesAllowed: Number(data.maxEmployeesAllowed) || 1000,
+            maxSitesAllowed: Number(data.maxSitesAllowed) || 50,
+            enabledModules: data.enabledModules || MASTER_APP_MODULES.map(m => m.key),
+            logoUrl: data.logoUrl || '',
+            websiteUrl: data.websiteUrl || '',
+            portalSubdomain: data.portalSubdomain || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            address: data.address || '',
+            city: data.city || '',
+            state: data.state || '',
+            country: data.country || 'India',
+            adminName: data.adminName || '',
+            adminEmail: data.adminEmail || '',
+            adminUid: data.adminUid || '',
+            emailDeliveryStatus: data.emailDeliveryStatus || null,
+            emailDeliveryError: data.emailDeliveryError || null,
+            activationSentAt: data.activationSentAt || null,
+            createdAt: data.createdAt || new Date().toISOString(),
+            updatedAt: data.updatedAt || new Date().toISOString()
+          } as CompanyTenant;
+        });
+
+        return list.sort((a, b) => {
+          const dateA = typeof a.createdAt === 'string' ? a.createdAt : '';
+          const dateB = typeof b.createdAt === 'string' ? b.createdAt : '';
+          return dateB.localeCompare(dateA);
+        });
+      }
+    } catch (clientErr) {
+      console.warn('[FirestoreService] Direct client query for companies notice, trying server endpoint:', clientErr);
+    }
+
+    // Direct client query fallback: Query privileged Super Admin API endpoint
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const idToken = await currentUser.getIdToken(false);
+        const res = await fetch('/api/admin/companies', {
+          headers: {
+            'Authorization': `Bearer ${idToken}`
+          }
+        });
+        if (res.ok) {
+          const resData = await res.json();
+          if (resData.success && Array.isArray(resData.companies)) {
+            return resData.companies as CompanyTenant[];
+          }
+        }
+      }
+    } catch (serverErr) {
+      console.warn('[FirestoreService] Server fallback for getAllCompanies error:', serverErr);
+    }
+
+    return [];
+  }
+
+  /**
+   * Delete a company tenant securely via privileged Super Admin API endpoint
+   */
+  static async deleteCompany(companyId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        return { success: false, error: 'Authentication required.' };
+      }
+      const idToken = await currentUser.getIdToken(false);
+      const res = await fetch(`/api/admin/companies/${companyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${idToken}`
+        }
       });
-    } catch (err) {
-      console.warn('[FirestoreService] getAllCompanies error:', err);
-      return [];
+      const data = await res.json();
+      if (res.ok && data.success) {
+        return { success: true };
+      }
+      return { success: false, error: data.error || 'Failed to delete company.' };
+    } catch (err: any) {
+      console.error('[FirestoreService] deleteCompany error:', err);
+      return { success: false, error: err?.message || 'Network error while deleting company.' };
     }
   }
 
@@ -4155,16 +4220,19 @@ export class FirestoreService {
         const data = snap.data();
         return {
           companyId: snap.id,
-          companyLegalName: data.companyLegalName || snap.id,
-          brandName: data.brandName || snap.id,
+          companyLegalName: data.companyLegalName || data.brandName || snap.id,
+          brandName: data.brandName || data.companyLegalName || snap.id,
           licenseTier: data.licenseTier || 'ENTERPRISE',
           status: data.status || 'ACTIVE',
           primaryColorHex: data.primaryColorHex || '#4f46e5',
           secondaryColorHex: data.secondaryColorHex || '#06b6d4',
           allowedBranches: data.allowedBranches || ['MAIN'],
-          maxEmployeesAllowed: data.maxEmployeesAllowed || 1000,
-          maxSitesAllowed: data.maxSitesAllowed || 50,
+          maxEmployeesAllowed: Number(data.maxEmployeesAllowed) || 1000,
+          maxSitesAllowed: Number(data.maxSitesAllowed) || 50,
           enabledModules: data.enabledModules || MASTER_APP_MODULES.map(m => m.key),
+          logoUrl: data.logoUrl || '',
+          websiteUrl: data.websiteUrl || '',
+          portalSubdomain: data.portalSubdomain || '',
           email: data.email || '',
           phone: data.phone || '',
           address: data.address || '',
@@ -4173,7 +4241,8 @@ export class FirestoreService {
           country: data.country || 'India',
           adminName: data.adminName || '',
           adminEmail: data.adminEmail || '',
-          createdAt: data.createdAt || new Date().toISOString()
+          createdAt: data.createdAt || new Date().toISOString(),
+          updatedAt: data.updatedAt || new Date().toISOString()
         } as CompanyTenant;
       }
     } catch (err) {
@@ -4187,7 +4256,8 @@ export class FirestoreService {
    */
   static async updateCompanyModules(companyId: string, enabledModules: string[]): Promise<boolean> {
     try {
-      const compRef = doc(db, 'companies', companyId);
+      const cleanId = companyId.trim().toUpperCase();
+      const compRef = doc(db, 'companies', cleanId);
       await setDoc(compRef, { enabledModules, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) {
@@ -4201,8 +4271,23 @@ export class FirestoreService {
    */
   static async updateCompanyDetails(companyId: string, updates: Partial<CompanyTenant>): Promise<boolean> {
     try {
-      const compRef = doc(db, 'companies', companyId);
-      await setDoc(compRef, { ...updates, updatedAt: new Date().toISOString() }, { merge: true });
+      const cleanId = companyId.trim().toUpperCase();
+      const compRef = doc(db, 'companies', cleanId);
+      const timestamp = new Date().toISOString();
+      await setDoc(compRef, { ...updates, updatedAt: timestamp }, { merge: true });
+
+      // Keep fast code mappings in sync
+      if (updates.status || updates.brandName) {
+        const mappingUpdate: any = { updatedAt: timestamp };
+        if (updates.status) mappingUpdate.status = updates.status;
+        if (updates.brandName) mappingUpdate.brandName = updates.brandName;
+        try {
+          await setDoc(doc(db, 'company_codes', cleanId), mappingUpdate, { merge: true });
+          await setDoc(doc(db, 'companyCodes', cleanId), mappingUpdate, { merge: true });
+        } catch (e) {
+          // ignore mapping sync warnings
+        }
+      }
       return true;
     } catch (err) {
       console.error('[FirestoreService] updateCompanyDetails error:', err);
@@ -4301,11 +4386,20 @@ export class FirestoreService {
     enabledModules: string[];
     createdByUid: string;
     createdByName: string;
-  }): Promise<{ success: boolean; message: string; companyId: string }> {
+  }): Promise<{ success: boolean; message: string; companyId: string; emailDelivery?: { status: 'SENT' | 'FAILED'; error?: string } }> {
     try {
       const companyCode = (params.company.companyId || '').trim().toUpperCase();
       if (!companyCode) {
         return { success: false, message: 'Company Code / Tenant ID is required.', companyId: '' };
+      }
+
+      // Validate alphanumeric company code format
+      if (!/^[A-Z0-9_-]{2,20}$/.test(companyCode)) {
+        return { 
+          success: false, 
+          message: 'Company Code must be 2-20 uppercase alphanumeric characters (hyphens and underscores allowed).', 
+          companyId: '' 
+        };
       }
 
       const brandName = (params.company.brandName || '').trim();
@@ -4315,184 +4409,86 @@ export class FirestoreService {
 
       const adminEmail = (params.adminInfo.email || '').trim().toLowerCase();
       const adminFullName = (params.adminInfo.fullName || '').trim();
-      if (!adminEmail || !adminFullName) {
-        return { success: false, message: 'Administrator full name and email are required.', companyId: '' };
+      const adminPassword = (params.adminInfo.password || '').trim();
+
+      if (!adminFullName) {
+        return { success: false, message: 'Administrator full name is required.', companyId: '' };
       }
 
-      const timestamp = new Date().toISOString();
+      if (!adminEmail || !adminEmail.includes('@') || !adminEmail.includes('.')) {
+        return { success: false, message: 'A valid Company Administrator email address is required.', companyId: '' };
+      }
 
-      // 1. Verify Company uniqueness
-      const compDocRef = doc(db, 'companies', companyCode);
-      const existingComp = await getDoc(compDocRef);
-      if (existingComp.exists()) {
-        return { 
-          success: false, 
-          message: `Company code "${companyCode}" is already in use by "${existingComp.data().brandName || companyCode}".`, 
-          companyId: '' 
+      if (!adminPassword || adminPassword.length < 6) {
+        return { success: false, message: 'Company Administrator password must be at least 6 characters long.', companyId: '' };
+      }
+
+      // Privileged Server-Side Provisioning using Firebase Admin SDK
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        return { success: false, message: 'You must be signed in as Global Super Admin to provision a company.', companyId: '' };
+      }
+
+      const idToken = await currentUser.getIdToken(true);
+      const response = await fetch('/api/admin/create-company', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          company: {
+            ...params.company,
+            companyId: companyCode,
+            brandName,
+            companyLegalName: params.company.companyLegalName || brandName,
+            licenseTier: params.company.licenseTier || 'ENTERPRISE',
+            status: 'ACTIVE',
+            allowedBranches: params.company.allowedBranches || ['MAIN'],
+            maxEmployeesAllowed: Number(params.company.maxEmployeesAllowed) || 1000,
+            maxSitesAllowed: Number(params.company.maxSitesAllowed) || 50,
+            primaryColorHex: params.company.primaryColorHex || '#4f46e5',
+            secondaryColorHex: params.company.secondaryColorHex || '#06b6d4',
+            email: params.company.email || adminEmail,
+            phone: params.company.phone || params.adminInfo.mobileNumber || '',
+            address: params.company.address || '',
+            city: params.company.city || '',
+            state: params.company.state || '',
+            country: params.company.country || 'India',
+            logoUrl: params.company.logoUrl || '',
+            websiteUrl: params.company.websiteUrl || '',
+            portalSubdomain: params.company.portalSubdomain || ''
+          },
+          adminInfo: {
+            ...params.adminInfo,
+            email: adminEmail,
+            fullName: adminFullName,
+            password: adminPassword,
+            mobileNumber: params.adminInfo.mobileNumber || ''
+          },
+          enabledModules: params.enabledModules && params.enabledModules.length > 0 
+            ? params.enabledModules 
+            : MASTER_APP_MODULES.map(m => m.key),
+          createdByUid: params.createdByUid || currentUser.uid,
+          createdByName: params.createdByName || currentUser.displayName || 'System Super Admin'
+        })
+      });
+
+      const responseData = await response.json().catch(() => ({}));
+
+      if (response.ok && responseData.success) {
+        return {
+          success: true,
+          message: responseData.message || `Company "${brandName}" (${companyCode}) and Company Administrator (${adminEmail}) successfully provisioned.`,
+          companyId: companyCode,
+          emailDelivery: responseData.emailDelivery
         };
       }
 
-      // 2. Prepare Atomic Provisioning Batch
-      const batch = writeBatch(db);
-
-      // (a) Company Tenant Document
-      const companyData: CompanyTenant = {
-        ...params.company,
-        companyId: companyCode,
-        companyLegalName: params.company.companyLegalName || brandName,
-        brandName,
-        licenseTier: params.company.licenseTier || 'ENTERPRISE',
-        status: 'ACTIVE',
-        adminName: adminFullName,
-        adminEmail,
-        email: params.company.email || adminEmail,
-        phone: params.company.phone || params.adminInfo.mobileNumber || '',
-        address: params.company.address || '',
-        city: params.company.city || '',
-        state: params.company.state || '',
-        country: params.company.country || 'India',
-        primaryColorHex: params.company.primaryColorHex || '#4f46e5',
-        secondaryColorHex: params.company.secondaryColorHex || '#06b6d4',
-        allowedBranches: ['MAIN'],
-        maxEmployeesAllowed: params.company.maxEmployeesAllowed || 1000,
-        maxSitesAllowed: params.company.maxSitesAllowed || 50,
-        enabledModules: params.enabledModules && params.enabledModules.length > 0 
-          ? params.enabledModules 
-          : MASTER_APP_MODULES.map(m => m.key),
-        createdAt: timestamp,
-        updatedAt: timestamp
-      };
-      batch.set(compDocRef, companyData);
-
-      // (b) Default Main Branch
-      const mainBranchRef = doc(db, 'companies', companyCode, 'branches', 'MAIN');
-      batch.set(mainBranchRef, {
-        id: 'MAIN',
-        branchCode: 'MAIN',
-        branchName: 'Main Branch / Head Office',
-        isMainBranch: true,
-        status: 'ACTIVE',
-        companyId: companyCode,
-        createdAt: timestamp,
-        updatedAt: timestamp
-      });
-
-      // (c) Pre-provisioned Company Administrator Employee Record
-      const adminEmpId = 'EMP-ADM001';
-      const adminEmpRef = doc(db, 'companies', companyCode, 'employees', adminEmpId);
-      batch.set(adminEmpRef, {
-        id: adminEmpId,
-        employeeId: 'ADM-001',
-        companyId: companyCode,
-        fullName: adminFullName,
-        email: adminEmail,
-        mobileNumber: params.adminInfo.mobileNumber || '',
-        role: 'COMPANY_ADMIN' as UserRole,
-        designation: 'Company Administrator',
-        departmentId: 'ADMINISTRATION',
-        branchId: 'MAIN',
-        status: 'ACTIVE',
-        hasSystemAccess: true,
-        createdAt: timestamp,
-        updatedAt: timestamp
-      });
-
-      // (d) Pre-approved Provisioning Record (Company subcollection)
-      const approvalReqId = `REQ-ADMIN-${companyCode}`;
-      const compApprovalRef = doc(db, 'companies', companyCode, 'approval_requests', approvalReqId);
-      const approvalData = {
-        id: approvalReqId,
-        fullName: adminFullName,
-        email: adminEmail,
-        companyId: companyCode,
-        companyName: brandName,
-        role: 'COMPANY_ADMIN',
-        accountStatus: 'APPROVED',
-        companyAdminApproval: 'APPROVED',
-        hrApproval: 'APPROVED',
-        mobileNumber: params.adminInfo.mobileNumber || '',
-        requestedAt: timestamp,
-        reviewedAt: timestamp,
-        reviewedBy: params.createdByName || 'System Super Admin',
-        createdAt: timestamp,
-        updatedAt: timestamp
-      };
-      batch.set(compApprovalRef, approvalData);
-
-      // (e) Root approval request mirror
-      const rootApprovalRef = doc(db, 'approval_requests', approvalReqId);
-      batch.set(rootApprovalRef, approvalData);
-
-      // (f) Platform Audit Log
-      const auditLogId = `AUDIT-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-      const auditLogRef = doc(db, 'platform_audit', auditLogId);
-      batch.set(auditLogRef, {
-        id: auditLogId,
-        action: 'CREATE_TENANT',
-        actorUid: params.createdByUid,
-        actorName: params.createdByName,
-        targetTenantId: companyCode,
-        metadata: {
-          companyCode,
-          brandName,
-          adminEmail,
-          adminFullName,
-          licenseTier: companyData.licenseTier,
-          enabledModulesCount: companyData.enabledModules?.length || 0
-        },
-        timestamp
-      });
-
-      // 3. Link existing User Account (Look ahead before commit for total atomicity)
-      try {
-        const usersQuery = query(collection(db, 'users'), where('email', '==', adminEmail));
-        const usersSnap = await getDocs(usersQuery);
-        if (!usersSnap.empty) {
-          const userDoc = usersSnap.docs[0];
-          const uid = userDoc.id;
-
-          // Add tenant membership to batch
-          const memRef = doc(db, 'users', uid, 'memberships', companyCode);
-          batch.set(memRef, {
-            companyId: companyCode,
-            companyName: brandName,
-            role: 'COMPANY_ADMIN',
-            status: 'ACTIVE',
-            joinedAt: timestamp,
-            updatedAt: timestamp
-          }, { merge: true });
-
-          // Update primary user document in batch
-          const userRef = doc(db, 'users', uid);
-          batch.set(userRef, {
-            companyId: companyCode,
-            companyName: brandName,
-            role: 'COMPANY_ADMIN',
-            accountStatus: 'ACTIVE',
-            companyAdminApproval: 'APPROVED',
-            hrApproval: 'APPROVED',
-            provisioningSource: 'SUPER_ADMIN',
-            updatedAt: timestamp
-          }, { merge: true });
-
-          // Link authUid on employee record in batch
-          const empRef = doc(db, 'companies', companyCode, 'employees', adminEmpId);
-          batch.set(empRef, {
-            authUid: uid,
-            updatedAt: timestamp
-          }, { merge: true });
-        }
-      } catch (linkErr) {
-        console.warn('[FirestoreService] Look-ahead link warning:', linkErr);
-      }
-
-      // 4. Execute the atomic transaction
-      await batch.commit();
-
       return {
-        success: true,
-        message: `Company "${brandName}" (${companyCode}) provisioned and Company Admin (${adminEmail}) assigned successfully.`,
-        companyId: companyCode
+        success: false,
+        message: responseData.error || responseData.message || `Provisioning failed (HTTP ${response.status}). Please check details and try again.`,
+        companyId: ''
       };
     } catch (err: any) {
       console.error('[FirestoreService] createCompanyWithAdmin error:', err);
@@ -4500,6 +4496,49 @@ export class FirestoreService {
         success: false, 
         message: err.message || 'Failed to provision tenant and assign admin.', 
         companyId: '' 
+      };
+    }
+  }
+
+  /**
+   * Resends real activation / password reset email to a Company Administrator
+   */
+  static async resendAdminActivationEmail(companyId: string, adminEmail?: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        return { success: false, message: 'Authentication required. Please sign in as Super Admin.' };
+      }
+      const token = await currentUser.getIdToken(true);
+      const response = await fetch('/api/admin/resend-admin-activation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          companyId,
+          adminEmail
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (response.ok && data.success) {
+        return {
+          success: true,
+          message: data.message || `Activation email successfully sent to ${adminEmail || 'Company Admin'}.`
+        };
+      }
+
+      return {
+        success: false,
+        message: data.error || data.message || `Failed to resend email (HTTP ${response.status}).`
+      };
+    } catch (err: any) {
+      console.error('[FirestoreService] resendAdminActivationEmail error:', err);
+      return {
+        success: false,
+        message: err.message || 'Failed to resend activation email.'
       };
     }
   }

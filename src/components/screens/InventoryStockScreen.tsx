@@ -43,6 +43,7 @@ import {
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { BulkExportGovernanceService } from '../../services/bulkExportGovernanceService';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface InventoryStockScreenProps {
   userSession: UserSession;
@@ -68,6 +69,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
   userSession,
   activeCompany
 }) => {
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const companyId = activeCompany?.companyId || userSession.companyId || 'GLOBAL';
 
   // Permission Checks
@@ -98,7 +100,6 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
   const [showVendorModal, setShowVendorModal] = useState(false);
   const [editingVendor, setEditingVendor] = useState<InventoryVendorRecord | null>(null);
   const [actionProcessing, setActionProcessing] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Form States
   const [itemForm, setItemForm] = useState<{
@@ -301,11 +302,13 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
   const handleSaveItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!itemForm.itemName.trim() || !itemForm.itemCode.trim()) {
-      setStatusMessage({ type: 'error', text: 'Item Name and Code are required.' });
+      showValidationFailed('Item Name and Item Code are required fields.');
       return;
     }
 
     setActionProcessing(true);
+    const isNew = !editingItem;
+    const dismiss = showLoading(isNew ? 'Creating inventory item...' : 'Updating inventory item...');
     try {
       const itemId = editingItem ? editingItem.id : `ITEM-${Date.now()}`;
       const selectedSite = sites.find(s => s.id === itemForm.siteId);
@@ -339,38 +342,54 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
         name: userSession.fullName || userSession.email
       });
 
+      dismiss();
       if (success) {
         setShowItemModal(false);
-        setStatusMessage({ type: 'success', text: `Item "${payload.itemName}" saved successfully.` });
+        showSuccess(isNew ? `✓ Successfully Created item "${payload.itemName}"` : `✓ Successfully Updated item "${payload.itemName}"`);
       } else {
-        setStatusMessage({ type: 'error', text: 'Failed to save item. Check permissions.' });
+        showError('✕ Save Failed: Unable to persist inventory item to database.');
       }
     } catch (err: any) {
-      setStatusMessage({ type: 'error', text: err.message || 'Error occurred.' });
+      dismiss();
+      handleError(err, '✕ Save Failed');
     } finally {
       setActionProcessing(false);
-      setTimeout(() => setStatusMessage(null), 4000);
     }
   };
 
   // Delete Item
   const handleDeleteItem = async (itemId: string, itemName: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${itemName}"? This action cannot be undone.`)) return;
+    const isConfirmed = await confirm({
+      title: 'Delete Inventory Item',
+      message: `Are you sure you want to permanently delete "${itemName}"? This action will remove the item from the stock ledger.`,
+      confirmLabel: 'Delete Item',
+      cancelLabel: 'Cancel',
+      isDestructive: true
+    });
+
+    if (!isConfirmed) {
+      showCancelled('🚫 Cancelled');
+      return;
+    }
 
     setActionProcessing(true);
+    const dismiss = showLoading(`Deleting "${itemName}"...`);
     try {
       const ok = await FirestoreService.deleteInventoryItem(companyId, itemId, {
         uid: userSession.userId,
         name: userSession.fullName || userSession.email
       });
+      dismiss();
       if (ok) {
-        setStatusMessage({ type: 'success', text: `Item "${itemName}" removed.` });
+        showSuccess(`✓ Successfully Deleted: "${itemName}"`);
+      } else {
+        showError(`✕ Delete Failed: Could not remove "${itemName}".`);
       }
     } catch (err: any) {
-      setStatusMessage({ type: 'error', text: err.message || 'Error deleting item.' });
+      dismiss();
+      handleError(err, '✕ Delete Failed');
     } finally {
       setActionProcessing(false);
-      setTimeout(() => setStatusMessage(null), 4000);
     }
   };
 
@@ -396,15 +415,16 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
   const handleSaveTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!txTargetItem) {
-      setStatusMessage({ type: 'error', text: 'Please select a valid inventory item.' });
+      showValidationFailed('Please select a valid inventory item.');
       return;
     }
     if (txForm.quantity <= 0) {
-      setStatusMessage({ type: 'error', text: 'Quantity must be greater than 0.' });
+      showValidationFailed('Quantity must be greater than 0.');
       return;
     }
 
     setActionProcessing(true);
+    const dismiss = showLoading('Recording stock ledger transaction...');
     try {
       const selectedEmp = employees.find(e => e.id === txForm.employeeId);
       const totalVal = (txTargetItem.unitCost || 0) * txForm.quantity;
@@ -434,20 +454,18 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
         { uid: userSession.userId, name: userSession.fullName || userSession.email }
       );
 
+      dismiss();
       if (res.success) {
         setShowTxModal(false);
-        setStatusMessage({ 
-          type: 'success', 
-          text: `Transaction recorded! New stock for "${txTargetItem.itemName}": ${res.newStock} ${txTargetItem.unit}` 
-        });
+        showSuccess(`✓ Successfully Recorded: Transaction complete. New stock for "${txTargetItem.itemName}": ${res.newStock} ${txTargetItem.unit}`);
       } else {
-        setStatusMessage({ type: 'error', text: 'Failed to record transaction.' });
+        showError('✕ Transaction Failed: Unable to record stock ledger entry.');
       }
     } catch (err: any) {
-      setStatusMessage({ type: 'error', text: err.message || 'Error executing stock transaction.' });
+      dismiss();
+      handleError(err, '✕ Transaction Failed');
     } finally {
       setActionProcessing(false);
-      setTimeout(() => setStatusMessage(null), 5000);
     }
   };
 
@@ -455,11 +473,13 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
   const handleSaveVendor = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!vendorForm.vendorName.trim()) {
-      setStatusMessage({ type: 'error', text: 'Vendor Name is required.' });
+      showValidationFailed('Vendor Name is a required field.');
       return;
     }
 
     setActionProcessing(true);
+    const isNew = !editingVendor;
+    const dismiss = showLoading(isNew ? 'Creating vendor record...' : 'Updating vendor record...');
     try {
       const vId = editingVendor ? editingVendor.id : `VEND-${Date.now()}`;
       const payload: InventoryVendorRecord = {
@@ -483,16 +503,34 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
         name: userSession.fullName || userSession.email
       });
 
+      dismiss();
       if (success) {
         setShowVendorModal(false);
-        setStatusMessage({ type: 'success', text: `Vendor "${payload.vendorName}" saved successfully.` });
+        showSuccess(isNew ? `✓ Successfully Created: Vendor "${payload.vendorName}"` : `✓ Successfully Updated: Vendor "${payload.vendorName}"`);
+      } else {
+        showError('✕ Save Failed: Could not save vendor record.');
       }
     } catch (err: any) {
-      setStatusMessage({ type: 'error', text: err.message || 'Failed to save vendor.' });
+      dismiss();
+      handleError(err, '✕ Save Failed');
     } finally {
       setActionProcessing(false);
-      setTimeout(() => setStatusMessage(null), 4000);
     }
+  };
+
+  const handleCloseItemModal = () => {
+    setShowItemModal(false);
+    showCancelled('🚫 Cancelled');
+  };
+
+  const handleCloseTxModal = () => {
+    setShowTxModal(false);
+    showCancelled('🚫 Cancelled');
+  };
+
+  const handleCloseVendorModal = () => {
+    setShowVendorModal(false);
+    showCancelled('🚫 Cancelled');
   };
 
   // Export CSV
@@ -601,23 +639,6 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
           </button>
         </div>
       </div>
-
-      {/* Status Notifications */}
-      {statusMessage && (
-        <div className={`p-4 rounded-xl text-xs sm:text-sm font-medium flex items-center justify-between border ${
-          statusMessage.type === 'success' 
-            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800' 
-            : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800'
-        }`}>
-          <div className="flex items-center gap-2">
-            {statusMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-            <span>{statusMessage.text}</span>
-          </div>
-          <button onClick={() => setStatusMessage(null)} className="text-slate-400 hover:text-slate-600">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
@@ -1286,11 +1307,28 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                       </button>
                       <button
                         onClick={async () => {
-                          if (window.confirm(`Delete vendor ${v.vendorName}?`)) {
+                          const ok = await confirm({
+                            title: 'Delete Vendor',
+                            message: `Are you sure you want to delete vendor "${v.vendorName}"?`,
+                            confirmLabel: 'Delete Vendor',
+                            cancelLabel: 'Cancel',
+                            isDestructive: true
+                          });
+                          if (!ok) {
+                            showCancelled('🚫 Vendor deletion cancelled');
+                            return;
+                          }
+                          const dismiss = showLoading(`Deleting vendor "${v.vendorName}"...`);
+                          try {
                             await FirestoreService.deleteInventoryVendor(companyId, v.id, {
                               uid: userSession.userId,
                               name: userSession.fullName || userSession.email
                             });
+                            dismiss();
+                            showSuccess(`✓ Successfully Deleted: Vendor "${v.vendorName}"`);
+                          } catch (err: any) {
+                            dismiss();
+                            handleError(err, '✕ Delete Vendor Failed');
                           }
                         }}
                         className="px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg"
@@ -1471,8 +1509,8 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
               <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setShowItemModal(false)}
-                  className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                  onClick={handleCloseItemModal}
+                  className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
@@ -1503,7 +1541,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                   Record Stock Movement
                 </h3>
               </div>
-              <button onClick={() => setShowTxModal(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={handleCloseTxModal} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1629,8 +1667,8 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
               <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setShowTxModal(false)}
-                  className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                  onClick={handleCloseTxModal}
+                  className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
@@ -1661,7 +1699,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                   {editingVendor ? 'Edit Supplier' : 'Register New Vendor'}
                 </h3>
               </div>
-              <button onClick={() => setShowVendorModal(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={handleCloseVendorModal} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1760,8 +1798,8 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
               <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setShowVendorModal(false)}
-                  className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                  onClick={handleCloseVendorModal}
+                  className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>

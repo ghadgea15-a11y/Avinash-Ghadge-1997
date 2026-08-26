@@ -62,6 +62,7 @@ import { BulkExportGovernanceService } from '../../services/bulkExportGovernance
 import { SubscriptionService } from '../../services/subscriptionService';
 import { StorageService } from '../../services/storageService';
 import { OfflineSyncService } from '../../services/offlineSyncService';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface EmployeeModuleScreenProps {
   userSession: UserSession;
@@ -77,6 +78,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   onNavigate
 }) => {
   const { isDark } = useTheme();
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   
   // State
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
@@ -447,137 +449,234 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
   const handleInitiatePromotion = async () => {
     if (!activeCompany || !selectedEmployee) return;
+    if (!promoForm.newDesignation.trim()) {
+      showValidationFailed('Please enter the new designation for promotion.');
+      return;
+    }
     const actor = { id: userSession.userId, name: userSession.fullName };
-    const success = await FirestoreService.initiatePromotion(activeCompany.companyId, {
-      ...promoForm,
-      companyId: activeCompany.companyId,
-      employeeId: selectedEmployee.id,
-      previousDesignation: selectedEmployee.designation || '',
-      previousDepartmentId: selectedEmployee.departmentId || '',
-      initiatedBy: actor.id,
-    }, actor);
-    if (success) {
-      setFeedbackMessage({ text: 'Promotion request initiated and pending approval.', type: 'SUCCESS' });
-      setShowPromotionModal(false);
+    const dismiss = showLoading('Initiating promotion request...');
+    try {
+      const success = await FirestoreService.initiatePromotion(activeCompany.companyId, {
+        ...promoForm,
+        companyId: activeCompany.companyId,
+        employeeId: selectedEmployee.id,
+        previousDesignation: selectedEmployee.designation || '',
+        previousDepartmentId: selectedEmployee.departmentId || '',
+        initiatedBy: actor.id,
+      }, actor);
+      dismiss();
+      if (success) {
+        showSuccess(`✓ Successfully Initiated: Promotion request for "${selectedEmployee.firstName} ${selectedEmployee.lastName}"`);
+        setFeedbackMessage({ text: 'Promotion request initiated and pending approval.', type: 'SUCCESS' });
+        setShowPromotionModal(false);
+      } else {
+        showError('✕ Failed: Could not submit promotion request.');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Promotion Request Failed');
     }
   };
 
   const handleInitiateTransfer = async () => {
     if (!activeCompany || !selectedEmployee) return;
+    if (!transferForm.newSiteId && !transferForm.newBranchId) {
+      showValidationFailed('Please select a destination site or branch for transfer.');
+      return;
+    }
     const actor = { id: userSession.userId, name: userSession.fullName };
-    const success = await FirestoreService.initiateTransfer(activeCompany.companyId, {
-      ...transferForm,
-      companyId: activeCompany.companyId,
-      employeeId: selectedEmployee.id,
-      previousSiteId: selectedEmployee.assignedSiteId || '',
-      previousBranchId: selectedEmployee.assignedBranchId || '',
-      previousRegionId: selectedEmployee.assignedRegionId || 'REG-001',
-      initiatedBy: actor.id,
-    }, actor);
-    if (success) {
-      setFeedbackMessage({ text: 'Transfer request initiated and pending approval.', type: 'SUCCESS' });
-      setShowTransferModal(false);
+    const dismiss = showLoading('Initiating transfer request...');
+    try {
+      const success = await FirestoreService.initiateTransfer(activeCompany.companyId, {
+        ...transferForm,
+        companyId: activeCompany.companyId,
+        employeeId: selectedEmployee.id,
+        previousSiteId: selectedEmployee.assignedSiteId || '',
+        previousBranchId: selectedEmployee.assignedBranchId || '',
+        previousRegionId: selectedEmployee.assignedRegionId || 'REG-001',
+        initiatedBy: actor.id,
+      }, actor);
+      dismiss();
+      if (success) {
+        showSuccess(`✓ Successfully Initiated: Transfer request for "${selectedEmployee.firstName} ${selectedEmployee.lastName}"`);
+        setFeedbackMessage({ text: 'Transfer request initiated and pending approval.', type: 'SUCCESS' });
+        setShowTransferModal(false);
+      } else {
+        showError('✕ Failed: Could not submit transfer request.');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Transfer Request Failed');
     }
   };
 
-
   const handleInitiateSuspension = async () => {
     if (!activeCompany || !selectedEmployee) return;
+    if (!suspendForm.reason.trim()) {
+      showValidationFailed('Please provide a reason for suspension.');
+      return;
+    }
     const actor = { id: userSession.userId, name: userSession.fullName };
-    const success = await FirestoreService.suspendEmployee(
-      activeCompany.companyId,
-      selectedEmployee.id,
-      suspendForm.reason,
-      suspendForm.effectiveDate,
-      actor
-    );
-    if (success) {
-      setFeedbackMessage({ text: 'Employee has been suspended.', type: 'SUCCESS' });
-      setShowSuspensionModal(false);
+    const dismiss = showLoading('Suspending employee...');
+    try {
+      const success = await FirestoreService.suspendEmployee(
+        activeCompany.companyId,
+        selectedEmployee.id,
+        suspendForm.reason,
+        suspendForm.effectiveDate,
+        actor
+      );
+      dismiss();
+      if (success) {
+        showSuccess(`✓ Successfully Suspended: "${selectedEmployee.firstName} ${selectedEmployee.lastName}"`);
+        setFeedbackMessage({ text: 'Employee has been suspended.', type: 'SUCCESS' });
+        setShowSuspensionModal(false);
+      } else {
+        showError('✕ Failed: Could not process suspension.');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Suspension Failed');
     }
   };
 
   const handleRevokeSuspension = async () => {
     if (!activeCompany || !selectedEmployee) return;
     const actor = { id: userSession.userId, name: userSession.fullName };
-    const success = await FirestoreService.revokeSuspension(
-      activeCompany.companyId,
-      selectedEmployee.id,
-      'Suspension Revoked Manually',
-      new Date().toISOString().split('T')[0],
-      actor
-    );
-    if (success) {
-      setFeedbackMessage({ text: 'Employee suspension revoked.', type: 'SUCCESS' });
+    const dismiss = showLoading('Revoking suspension...');
+    try {
+      const success = await FirestoreService.revokeSuspension(
+        activeCompany.companyId,
+        selectedEmployee.id,
+        'Suspension Revoked Manually',
+        new Date().toISOString().split('T')[0],
+        actor
+      );
+      dismiss();
+      if (success) {
+        showSuccess(`✓ Successfully Revoked: Suspension for "${selectedEmployee.firstName} ${selectedEmployee.lastName}"`);
+        setFeedbackMessage({ text: 'Employee suspension revoked.', type: 'SUCCESS' });
+      } else {
+        showError('✕ Failed: Could not revoke suspension.');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Revoke Failed');
     }
   };
 
   const handleConfirmProbation = async () => {
     if (!activeCompany || !selectedEmployee) return;
     const actor = { id: userSession.userId, name: userSession.fullName };
-    const success = await FirestoreService.confirmProbation(
-      activeCompany.companyId,
-      selectedEmployee.id,
-      confirmationForm.effectiveDate,
-      actor
-    );
-    if (success) {
-      setFeedbackMessage({ text: 'Employee probation confirmed.', type: 'SUCCESS' });
-      setShowConfirmationModal(false);
+    const dismiss = showLoading('Confirming employee probation...');
+    try {
+      const success = await FirestoreService.confirmProbation(
+        activeCompany.companyId,
+        selectedEmployee.id,
+        confirmationForm.effectiveDate,
+        actor
+      );
+      dismiss();
+      if (success) {
+        showSuccess(`✓ Successfully Confirmed: Probation for "${selectedEmployee.firstName} ${selectedEmployee.lastName}"`);
+        setFeedbackMessage({ text: 'Employee probation confirmed.', type: 'SUCCESS' });
+        setShowConfirmationModal(false);
+      } else {
+        showError('✕ Failed: Could not confirm probation.');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Confirmation Failed');
     }
   };
 
   const handleProcessSettlement = async () => {
     if (!activeCompany || !selectedEmployee) return;
     const actor = { id: userSession.userId, name: userSession.fullName };
-    const success = await FirestoreService.processFinalSettlement(
-      activeCompany.companyId,
-      selectedEmployee.id,
-      settlementForm.amount,
-      settlementForm.remarks,
-      actor
-    );
-    if (success) {
-      setFeedbackMessage({ text: 'Final settlement processed.', type: 'SUCCESS' });
-      setShowSettlementModal(false);
+    const dismiss = showLoading('Processing final settlement...');
+    try {
+      const success = await FirestoreService.processFinalSettlement(
+        activeCompany.companyId,
+        selectedEmployee.id,
+        settlementForm.amount,
+        settlementForm.remarks,
+        actor
+      );
+      dismiss();
+      if (success) {
+        showSuccess(`✓ Successfully Processed: Final settlement of ₹${settlementForm.amount} for "${selectedEmployee.firstName} ${selectedEmployee.lastName}"`);
+        setFeedbackMessage({ text: 'Final settlement processed.', type: 'SUCCESS' });
+        setShowSettlementModal(false);
+      } else {
+        showError('✕ Failed: Could not process final settlement.');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Settlement Failed');
     }
   };
 
   const handleInitiateExit = async () => {
     if (!activeCompany || !selectedEmployee) return;
+    if (!exitForm.reason.trim()) {
+      showValidationFailed('Please specify the reason for exit / separation.');
+      return;
+    }
     const actor = { id: userSession.userId, name: userSession.fullName };
-    const success = await FirestoreService.initiateExit(activeCompany.companyId, {
-      ...exitForm,
-      companyId: activeCompany.companyId,
-      employeeId: selectedEmployee.id,
-      initiatedBy: actor.id,
-      exitChecklist: []
-    }, actor);
-    if (success) {
-      setFeedbackMessage({ text: 'Exit/Separation process initiated.', type: 'SUCCESS' });
-      setShowExitModal(false);
+    const dismiss = showLoading('Initiating exit process...');
+    try {
+      const success = await FirestoreService.initiateExit(activeCompany.companyId, {
+        ...exitForm,
+        companyId: activeCompany.companyId,
+        employeeId: selectedEmployee.id,
+        initiatedBy: actor.id,
+        exitChecklist: []
+      }, actor);
+      dismiss();
+      if (success) {
+        showSuccess(`✓ Successfully Initiated: Exit separation for "${selectedEmployee.firstName} ${selectedEmployee.lastName}"`);
+        setFeedbackMessage({ text: 'Exit/Separation process initiated.', type: 'SUCCESS' });
+        setShowExitModal(false);
+      } else {
+        showError('✕ Failed: Could not initiate exit process.');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Exit Initiation Failed');
     }
   };
 
   const handleSendInvitation = async (emp: EmployeeRecord) => {
     if (!canManageEmployees) {
+      showError('Permission Denied: Only Admins and HR can send invitations.');
       setFeedbackMessage({ text: 'Permission Denied: Only Admins and HR can send invitations.', type: 'ERROR' });
       return;
     }
     if (!emp.email) {
+      showValidationFailed('Employee must have a registered email address to receive system access.');
       setFeedbackMessage({ text: 'Employee must have a registered email address to receive system access.', type: 'ERROR' });
       return;
     }
     setSubmitting(true);
-    const result = await FirestoreService.inviteEmployeeUser(currentCompanyId, emp.id);
-    setSubmitting(false);
-    if (result.success) {
-      const msg = result.resetLink 
-        ? `System access invitation generated! Login setup link: ${result.resetLink}` 
-        : `System access invitation sent to ${emp.email}!`;
-      setFeedbackMessage({ text: msg, type: 'SUCCESS' });
-    } else {
-      setFeedbackMessage({ text: result.message || 'Failed to send invitation.', type: 'ERROR' });
+    const dismiss = showLoading(`Sending system invitation to ${emp.email}...`);
+    try {
+      const result = await FirestoreService.inviteEmployeeUser(currentCompanyId, emp.id);
+      dismiss();
+      if (result.success) {
+        const msg = result.resetLink 
+          ? `System access invitation generated! Setup link: ${result.resetLink}` 
+          : `System access invitation sent to ${emp.email}!`;
+        showSuccess(`✓ Successfully Sent: ${msg}`);
+        setFeedbackMessage({ text: msg, type: 'SUCCESS' });
+      } else {
+        showError(`✕ Invitation Failed: ${result.message || 'Failed to send invitation.'}`);
+        setFeedbackMessage({ text: result.message || 'Failed to send invitation.', type: 'ERROR' });
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Invitation Failed');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -585,6 +684,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   const handleRegisterOrUpdateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canManageEmployees) {
+      showError('Permission Denied: Unauthorized employee modification.');
       setFeedbackMessage({ text: 'Permission Denied: Unauthorized employee modification.', type: 'ERROR' });
       return;
     }
@@ -592,6 +692,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     setSubmitting(true);
     const isValid = await validateForm();
     if (!isValid) {
+      showValidationFailed('Please fix the form errors before submitting.');
       setSubmitting(false);
       return;
     }
@@ -601,6 +702,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       try {
         const isLimitReached = await SubscriptionService.checkEmployeeLimitReached(currentCompanyId, employees.length);
         if (isLimitReached) {
+          showError('Employee limit reached on your current plan. Please upgrade your subscription to add more.');
           setFeedbackMessage({ text: 'Employee limit reached on your current plan. Please upgrade your subscription to add more.', type: 'ERROR' });
           setSubmitting(false);
           return;
@@ -612,6 +714,8 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
 
     const empId = editingEmployeeId || `EMP-${Date.now().toString(36).toUpperCase()}`;
+    const actionLabel = editingEmployeeId ? 'Updating employee record...' : 'Registering new employee...';
+    const dismiss = showLoading(actionLabel);
 
     setUploadingFile(true);
     let finalProfileUrl = editingEmployeeId 
@@ -713,30 +817,40 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       updatedBy: userSession?.userId || 'SYSTEM'
     };
 
-    if (isOnline) {
-      const success = await FirestoreService.saveEmployee(currentCompanyId, recordPayload, actor);
-      if (success) {
-        let inviteInfo = '';
-        if (formData.hasSystemAccess) {
-          const inviteRes = await FirestoreService.inviteEmployeeUser(currentCompanyId, empId);
-          if (inviteRes.success) {
-            inviteInfo = inviteRes.resetLink 
-              ? ` System access provisioned! Login setup link: ${inviteRes.resetLink}` 
-              : ' System access invitation sent!';
-          } else {
-            inviteInfo = ` System access setup: ${inviteRes.message || 'Pending authorization'}`;
+    try {
+      if (isOnline) {
+        const success = await FirestoreService.saveEmployee(currentCompanyId, recordPayload, actor);
+        dismiss();
+        if (success) {
+          let inviteInfo = '';
+          if (formData.hasSystemAccess) {
+            const inviteRes = await FirestoreService.inviteEmployeeUser(currentCompanyId, empId);
+            if (inviteRes.success) {
+              inviteInfo = inviteRes.resetLink 
+                ? ` System access provisioned! Login setup link: ${inviteRes.resetLink}` 
+                : ' System access invitation sent!';
+            } else {
+              inviteInfo = ` System access setup: ${inviteRes.message || 'Pending authorization'}`;
+            }
           }
+          showSuccess(`✓ Successfully ${editingEmployeeId ? 'Updated' : 'Registered'}: "${recordPayload.firstName} ${recordPayload.lastName}" (${recordPayload.employeeId})${inviteInfo}`);
+          setFeedbackMessage({ 
+            text: `Employee ${formData.employeeId} (${recordPayload.firstName} ${recordPayload.lastName}) ${editingEmployeeId ? 'updated' : 'registered'} successfully!${inviteInfo}`, 
+            type: 'SUCCESS' 
+          });
+        } else {
+          showError('✕ Save Failed: Error saving employee to database.');
+          setFeedbackMessage({ text: 'Error saving to Firestore. Queued offline.', type: 'ERROR' });
         }
-        setFeedbackMessage({ 
-          text: `Employee ${formData.employeeId} (${recordPayload.firstName} ${recordPayload.lastName}) ${editingEmployeeId ? 'updated' : 'registered'} successfully!${inviteInfo}`, 
-          type: 'SUCCESS' 
-        });
       } else {
-        setFeedbackMessage({ text: 'Error saving to Firestore. Queued offline.', type: 'ERROR' });
+        dismiss();
+        OfflineSyncService.queueAction('CREATE_EMPLOYEE', recordPayload as unknown as Record<string, unknown>);
+        showSuccess(`✓ Offline Mode: Employee "${recordPayload.firstName} ${recordPayload.lastName}" saved locally for auto-sync.`);
+        setFeedbackMessage({ text: `Offline Mode: Employee ${empId} saved locally for auto-sync.`, type: 'INFO' });
       }
-    } else {
-      OfflineSyncService.queueAction('CREATE_EMPLOYEE', recordPayload as unknown as Record<string, unknown>);
-      setFeedbackMessage({ text: `Offline Mode: Employee ${empId} saved locally for auto-sync.`, type: 'INFO' });
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Save Employee Failed');
     }
 
     setSubmitting(false);
@@ -787,23 +901,34 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   // Status Workflow Approval (Onboarding / Suspend / Terminate)
   const handleApproveStatus = async (empId: string, status: 'ACTIVE' | 'SUSPENDED' | 'TERMINATED' | 'DEACTIVATED') => {
     if (!canApproveOnboarding) {
+      showError('Permission Denied: Only HR and Operations Managers can update status.');
       setFeedbackMessage({ text: 'Permission Denied: Only HR and Operations Managers can update status.', type: 'ERROR' });
       return;
     }
 
-    setEmployees(prev => prev.map(e => e.id === empId ? { ...e, status } : e));
+    const dismiss = showLoading(`Updating employee status to ${status}...`);
+    try {
+      if (isOnline) {
+        const actor = { id: userSession.userId, name: userSession.fullName };
+        await FirestoreService.updateEmployeeStatus(currentCompanyId, empId, status, actor);
+        dismiss();
+        setEmployees(prev => prev.map(e => e.id === empId ? { ...e, status } : e));
+        showSuccess(`✓ Successfully Updated: Employee ${empId} status changed to ${status}`);
+        setFeedbackMessage({ text: `Employee ${empId} status updated to ${status}.`, type: 'SUCCESS' });
+      } else {
+        dismiss();
+        setEmployees(prev => prev.map(e => e.id === empId ? { ...e, status } : e));
+        OfflineSyncService.queueAction('UPDATE_EMPLOYEE_STATUS', { empId, status, approverId: userSession.userId });
+        showSuccess(`✓ Queued Offline: Status update for ${empId}`);
+        setFeedbackMessage({ text: `Status update queued offline.`, type: 'INFO' });
+      }
 
-    if (isOnline) {
-      const actor = { id: userSession.userId, name: userSession.fullName };
-      await FirestoreService.updateEmployeeStatus(currentCompanyId, empId, status, actor);
-      setFeedbackMessage({ text: `Employee ${empId} status updated to ${status}.`, type: 'SUCCESS' });
-    } else {
-      OfflineSyncService.queueAction('UPDATE_EMPLOYEE_STATUS', { empId, status, approverId: userSession.userId });
-      setFeedbackMessage({ text: `Status update queued offline.`, type: 'INFO' });
-    }
-
-    if (selectedEmployee && selectedEmployee.id === empId) {
-      setSelectedEmployee(prev => prev ? { ...prev, status } : null);
+      if (selectedEmployee && selectedEmployee.id === empId) {
+        setSelectedEmployee(prev => prev ? { ...prev, status } : null);
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Status Update Failed');
     }
 
     setTimeout(() => setFeedbackMessage(null), 4000);
@@ -812,21 +937,46 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   // Delete Employee (Company Admin / Super Admin)
   const handleDeleteEmployee = async (empId: string) => {
     if (!isCompanyAdmin) {
+      showError('Permission Denied: Only Company Administrators can delete employee records.');
       setFeedbackMessage({ text: 'Permission Denied: Only Company Administrators can delete employee records.', type: 'ERROR' });
       return;
     }
 
-    if (isOnline) {
-      const actor = { id: userSession.userId, name: userSession.fullName };
-      const success = await FirestoreService.deleteEmployee(currentCompanyId, empId, actor);
-      if (success) {
-        setFeedbackMessage({ text: `Employee ${empId} permanently deleted from company records.`, type: 'SUCCESS' });
-        setEmployees(prev => prev.filter(e => e.id !== empId));
+    const confirmed = await confirm({
+      title: 'Permanently Delete Employee Record',
+      message: `Are you sure you want to permanently delete employee "${empId}"? All linked records, KYC files, and audit trails will be permanently removed.`,
+      confirmLabel: 'Delete Employee',
+      cancelLabel: 'Cancel',
+      isDestructive: true
+    });
+
+    if (!confirmed) {
+      showCancelled('🚫 Deletion cancelled');
+      return;
+    }
+
+    const dismiss = showLoading(`Deleting employee ${empId}...`);
+    try {
+      if (isOnline) {
+        const actor = { id: userSession.userId, name: userSession.fullName };
+        const success = await FirestoreService.deleteEmployee(currentCompanyId, empId, actor);
+        dismiss();
+        if (success) {
+          showSuccess(`✓ Successfully Deleted: Employee ${empId} removed from records`);
+          setFeedbackMessage({ text: `Employee ${empId} permanently deleted from company records.`, type: 'SUCCESS' });
+          setEmployees(prev => prev.filter(e => e.id !== empId));
+        } else {
+          showError('✕ Delete Failed: Error deleting record from database.');
+          setFeedbackMessage({ text: 'Error deleting record from Firestore.', type: 'ERROR' });
+        }
       } else {
-        setFeedbackMessage({ text: 'Error deleting record from Firestore.', type: 'ERROR' });
+        dismiss();
+        showError('✕ Network Required: Deletion requires an active network connection.');
+        setFeedbackMessage({ text: 'Deletion requires active network connection.', type: 'ERROR' });
       }
-    } else {
-      setFeedbackMessage({ text: 'Deletion requires active network connection.', type: 'ERROR' });
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Employee Deletion Failed');
     }
 
     setDeletingEmployeeId(null);
@@ -838,11 +988,11 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   const handleAddDocument = async () => {
     if (!selectedEmployee) return;
     if (!newDocData.documentNumber.trim()) {
-      alert('Please enter a document number.');
+      showValidationFailed('Please enter a valid document number.');
       return;
     }
 
-    
+    const dismiss = showLoading(`Uploading ${newDocData.type} document...`);
     setUploadingFile(true);
     let finalDocUrl = '';
     if (addDocFile) {
@@ -877,22 +1027,42 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     setEmployees(prev => prev.map(e => e.id === selectedEmployee.id ? updatedEmployee : e));
     setSelectedEmployee(updatedEmployee);
 
-    if (isOnline) {
-      await FirestoreService.verifyEmployeeDocument(currentCompanyId, selectedEmployee.id, updatedDocs, userSession.employeeId);
-      setFeedbackMessage({ text: `Added ${newDocData.type} document for ${selectedEmployee.id}.`, type: 'SUCCESS' });
+    try {
+      if (isOnline) {
+        await FirestoreService.verifyEmployeeDocument(currentCompanyId, selectedEmployee.id, updatedDocs, userSession.employeeId);
+        dismiss();
+        showSuccess(`✓ Successfully Uploaded: ${newDocData.type} document added for ${selectedEmployee.firstName} ${selectedEmployee.lastName}`);
+        setFeedbackMessage({ text: `Added ${newDocData.type} document for ${selectedEmployee.id}.`, type: 'SUCCESS' });
+      } else {
+        dismiss();
+        showSuccess(`✓ Queued Offline: ${newDocData.type} document attached.`);
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Document Upload Failed');
     }
 
     setShowAddDocModal(false);
     setNewDocData({ type: 'AADHAR', documentNumber: '' });
+    setAddDocFile(null);
     setTimeout(() => setFeedbackMessage(null), 4000);
   };
 
-
-
   const handleDeleteDocument = async (docId: string, fileUrl: string) => {
     if (!selectedEmployee || !canManageEmployees) return;
-    if (!window.confirm('Are you sure you want to delete this document?')) return;
+    const confirmed = await confirm({
+      title: 'Delete Document',
+      message: 'Are you sure you want to permanently delete this employee document?',
+      confirmLabel: 'Delete Document',
+      cancelLabel: 'Cancel',
+      isDestructive: true
+    });
+    if (!confirmed) {
+      showCancelled('🚫 Document deletion cancelled');
+      return;
+    }
 
+    const dismiss = showLoading('Deleting document...');
     setUploadingFile(true);
     if (fileUrl) {
       try {
@@ -907,9 +1077,19 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     setEmployees(prev => prev.map(e => e.id === selectedEmployee.id ? updatedEmployee : e));
     setSelectedEmployee(updatedEmployee);
 
-    if (isOnline) {
-      await FirestoreService.verifyEmployeeDocument(currentCompanyId, selectedEmployee.id, updatedDocs, userSession.employeeId);
-      setFeedbackMessage({ text: 'Document deleted successfully.', type: 'SUCCESS' });
+    try {
+      if (isOnline) {
+        await FirestoreService.verifyEmployeeDocument(currentCompanyId, selectedEmployee.id, updatedDocs, userSession.employeeId);
+        dismiss();
+        showSuccess('✓ Successfully Deleted: Document removed');
+        setFeedbackMessage({ text: 'Document deleted successfully.', type: 'SUCCESS' });
+      } else {
+        dismiss();
+        showSuccess('✓ Offline: Document removed locally.');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Document Deletion Failed');
     }
     setUploadingFile(false);
   };
@@ -917,6 +1097,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   // Verify Document Workflow
   const handleVerifyDoc = async (empId: string, docId: string, docStatus: 'VERIFIED' | 'REJECTED') => {
     if (!canManageEmployees) {
+      showError('Permission Denied: Cannot modify document compliance state.');
       setFeedbackMessage({ text: 'Permission Denied: Cannot modify document compliance state.', type: 'ERROR' });
       return;
     }
@@ -932,41 +1113,57 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       setSelectedEmployee({ ...selectedEmployee, documents: updatedDocs });
     }
 
-    if (isOnline) {
-      await FirestoreService.verifyEmployeeDocument(currentCompanyId, empId, updatedDocs, userSession.employeeId);
+    const dismiss = showLoading(`Updating document verification status to ${docStatus}...`);
+    try {
+      if (isOnline) {
+        await FirestoreService.verifyEmployeeDocument(currentCompanyId, empId, updatedDocs, userSession.employeeId);
+      }
+      dismiss();
+      showSuccess(`✓ Successfully ${docStatus === 'VERIFIED' ? 'Verified' : 'Rejected'}: Document status updated`);
+      setFeedbackMessage({ text: `Document ${docStatus.toLowerCase()} successfully.`, type: 'SUCCESS' });
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Verification Status Update Failed');
     }
 
-    setFeedbackMessage({ text: `Document ${docStatus.toLowerCase()} successfully.`, type: 'SUCCESS' });
     setTimeout(() => setFeedbackMessage(null), 4000);
   };
 
   // Export CSV Helper
   const handleExportCSV = async () => {
-    // Module 10.4: Export Governance Evaluation
-    await BulkExportGovernanceService.evaluateAndRecordExport({
-      session: userSession,
-      companyId: currentCompanyId,
-      module: 'HCM_EMPLOYEES',
-      entityType: 'EmployeeRecord',
-      exportFormat: 'CSV',
-      dataClassification: 'EMPLOYEE_PII',
-      recordCount: filteredEmployees.length,
-      exportName: `employee_roster_${currentCompanyId}_${new Date().toISOString().split('T')[0]}.csv`,
-      reason: 'Exported employee roster from Employee Master Directory'
-    });
+    const dismiss = showLoading('Preparing employee roster export...');
+    try {
+      // Module 10.4: Export Governance Evaluation
+      await BulkExportGovernanceService.evaluateAndRecordExport({
+        session: userSession,
+        companyId: currentCompanyId,
+        module: 'HCM_EMPLOYEES',
+        entityType: 'EmployeeRecord',
+        exportFormat: 'CSV',
+        dataClassification: 'EMPLOYEE_PII',
+        recordCount: filteredEmployees.length,
+        exportName: `employee_roster_${currentCompanyId}_${new Date().toISOString().split('T')[0]}.csv`,
+        reason: 'Exported employee roster from Employee Master Directory'
+      });
 
-    const headers = 'Employee ID,First Name,Last Name,Role,Department,Branch,Site,Status,Contact,Email,Employment Type,Joined Date\n';
-    const rows = filteredEmployees.map(e => 
-      `"${e.id}","${e.firstName}","${e.lastName}","${e.role}","${e.departmentId}","${e.assignedBranchId}","${e.assignedSiteId}","${e.status}","${e.contactNumber}","${e.email || undefined}","${e.employmentType || 'PERMANENT'}","${e.joinedDate}"`
-    ).join('\n');
-    
-    const blob = new Blob([headers + rows], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `employee_roster_${currentCompanyId}_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+      const headers = 'Employee ID,First Name,Last Name,Role,Department,Branch,Site,Status,Contact,Email,Employment Type,Joined Date\n';
+      const rows = filteredEmployees.map(e => 
+        `"${e.id}","${e.firstName}","${e.lastName}","${e.role}","${e.departmentId}","${e.assignedBranchId}","${e.assignedSiteId}","${e.status}","${e.contactNumber}","${e.email || undefined}","${e.employmentType || 'PERMANENT'}","${e.joinedDate}"`
+      ).join('\n');
+      
+      const blob = new Blob([headers + rows], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `employee_roster_${currentCompanyId}_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      dismiss();
+      showSuccess(`✓ Export Completed: ${filteredEmployees.length} employee records exported to CSV`);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Export Failed');
+    }
   };
 
   // Mask sensitive identity documents for non-admins

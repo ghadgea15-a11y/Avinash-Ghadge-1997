@@ -24,6 +24,7 @@ import {
 import { CompanyTenant, UserSession, PhaseAScreen, MASTER_APP_MODULES, AppModule } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { useTheme } from '../../context/ThemeContext';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface SuperAdminCreateCompanyProps {
   currentSession: UserSession;
@@ -37,6 +38,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
   onCompanyCreated
 }) => {
   const { isDark } = useTheme();
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError } = useFeedback();
 
   // Company Details
   const [companyCode, setCompanyCode] = useState('');
@@ -74,6 +76,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [emailDeliveryInfo, setEmailDeliveryInfo] = useState<{ status: 'SENT' | 'FAILED'; error?: string } | null>(null);
 
   // Toggle Module Selection
   const toggleModule = (moduleKey: string) => {
@@ -100,6 +103,11 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
     setCompanyCode(`${clean}-${randomNum}`);
   };
 
+  const handleCancel = () => {
+    showCancelled('🚫 Cancelled');
+    onNavigate('SUPER_ADMIN_DASHBOARD');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -107,23 +115,28 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
 
     const cleanCode = companyCode.trim().toUpperCase();
     if (!cleanCode) {
+      showValidationFailed('Company Code / Tenant ID is required (e.g. APEX-SEC-101).');
       setError('Company Code / Tenant ID is required (e.g. APEX-SEC-101).');
       return;
     }
     if (!brandName.trim()) {
+      showValidationFailed('Company Brand Name is required.');
       setError('Company Brand Name is required.');
       return;
     }
     if (!adminFullName.trim() || !adminEmail.trim() || !adminEmail.includes('@')) {
+      showValidationFailed('Please provide valid Company Administrator Full Name and Email address.');
       setError('Please provide valid Company Administrator Full Name and Email address.');
       return;
     }
     if (selectedModules.length === 0) {
+      showValidationFailed('Please enable at least one module entitlement for this company.');
       setError('Please enable at least one module entitlement for this company.');
       return;
     }
 
     setLoading(true);
+    const dismiss = showLoading('Creating company and provisioning administrator...');
 
     try {
       const companyPayload: CompanyTenant = {
@@ -164,16 +177,24 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
         createdByName: currentSession.fullName || 'System Super Admin'
       });
 
+      dismiss();
       if (!result.success) {
+        showError(result.message || '✕ Creation Failed');
         setError(result.message);
         return;
       }
 
+      showSuccess(`✓ Successfully Created: Company ${cleanCode}`);
       setSuccessMsg(result.message);
+      if (result.emailDelivery) {
+        setEmailDeliveryInfo(result.emailDelivery);
+      }
       if (onCompanyCreated) {
         onCompanyCreated(cleanCode);
       }
     } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Creation Failed');
       setError(err.message || 'Failed to register company.');
     } finally {
       setLoading(false);
@@ -206,11 +227,26 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
 
       {successMsg ? (
         <div className={`p-6 rounded-2xl border ${isDark ? 'bg-emerald-950/60 border-emerald-800' : 'bg-emerald-50 border-emerald-200'} space-y-4 animate-in fade-in`}>
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-            <div>
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="w-8 h-8 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="space-y-2">
               <h2 className="text-base font-bold text-emerald-300">Company Tenant Successfully Provisioned</h2>
-              <p className="text-xs text-emerald-200/80 mt-0.5">{successMsg}</p>
+              <p className="text-xs text-emerald-200/80 leading-relaxed">{successMsg}</p>
+              
+              {emailDeliveryInfo && (
+                <div className={`mt-2 p-3 rounded-xl text-xs flex items-center gap-2 border ${
+                  emailDeliveryInfo.status === 'SENT' 
+                    ? (isDark ? 'bg-emerald-900/40 border-emerald-700/50 text-emerald-200' : 'bg-emerald-100/70 border-emerald-300 text-emerald-900')
+                    : (isDark ? 'bg-amber-950/50 border-amber-800/50 text-amber-200' : 'bg-amber-100/70 border-amber-300 text-amber-900')
+                }`}>
+                  <span className="font-semibold">Email Delivery Status:</span>
+                  {emailDeliveryInfo.status === 'SENT' ? (
+                    <span>Real activation link has been dispatched to {adminEmail || 'Company Admin'}.</span>
+                  ) : (
+                    <span>Notice: {emailDeliveryInfo.error || 'Delivery pending or delayed'}. You can resend from the Companies dashboard.</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -224,6 +260,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
             <button
               onClick={() => {
                 setSuccessMsg(null);
+                setEmailDeliveryInfo(null);
                 setCompanyCode('');
                 setBrandName('');
                 setLegalName('');
@@ -563,8 +600,9 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={() => onNavigate('SUPER_ADMIN_DASHBOARD')}
-              className="px-4 py-2.5 rounded-xl border border-slate-700 text-xs font-semibold text-slate-300 hover:bg-slate-800"
+              disabled={loading}
+              onClick={handleCancel}
+              className="px-4 py-2.5 rounded-xl border border-slate-700 text-xs font-semibold text-slate-300 hover:bg-slate-800 disabled:opacity-50"
             >
               Cancel
             </button>

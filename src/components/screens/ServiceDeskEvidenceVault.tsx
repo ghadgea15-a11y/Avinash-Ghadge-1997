@@ -8,6 +8,7 @@ import {
 } from '../../types';
 import { ServiceDeskService } from '../../services/serviceDeskService';
 import { useTheme } from '../../context/ThemeContext';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 import { 
   Paperclip, 
   Plus, 
@@ -54,6 +55,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
   onAttachmentCountChange
 }) => {
   const { isDark } = useTheme();
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const [attachments, setAttachments] = useState<TicketAttachmentRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [filterType, setFilterType] = useState<string>('ALL');
@@ -214,6 +216,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
     if (!archivingAttachment || !activeCompany || !ticket) return;
 
     setIsArchiving(true);
+    const dismiss = showLoading('Archiving evidence attachment...');
     try {
       const res = await ServiceDeskService.archiveTicketAttachment(
         userSession,
@@ -222,15 +225,18 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
         archivingAttachment.id,
         archiveReason
       );
+      dismiss();
 
       if (!res.success) {
-        alert(res.error || 'Failed to archive evidence.');
+        showError(res.error || 'Failed to archive evidence.');
       } else {
         setArchivingAttachment(null);
         setArchiveReason('');
+        showSuccess('✓ Attachment archived successfully.');
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to archive evidence.');
+      dismiss();
+      handleError(err, '✕ Failed to archive evidence');
     } finally {
       setIsArchiving(false);
     }
@@ -242,6 +248,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
     if (!editingAttachment || !activeCompany || !ticket) return;
 
     setIsUpdating(true);
+    const dismiss = showLoading('Updating evidence metadata...');
     try {
       const res = await ServiceDeskService.updateAttachmentMetadata(
         userSession,
@@ -254,14 +261,17 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
           visibility: editVisibility
         }
       );
+      dismiss();
 
       if (!res.success) {
-        alert(res.error || 'Failed to update metadata.');
+        showError(res.error || 'Failed to update metadata.');
       } else {
         setEditingAttachment(null);
+        showSuccess('✓ Attachment metadata updated successfully.');
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to update metadata.');
+      dismiss();
+      handleError(err, '✕ Failed to update metadata');
     } finally {
       setIsUpdating(false);
     }

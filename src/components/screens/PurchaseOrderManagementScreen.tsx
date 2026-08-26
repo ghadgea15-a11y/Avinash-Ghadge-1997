@@ -7,6 +7,7 @@ import {
   Plus, Edit, Trash2, Search, FileText, CheckCircle, 
   XCircle, Truck, FileOutput, Printer, ChevronRight, X
 } from 'lucide-react';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface PurchaseOrderManagementScreenProps {
   userSession: any;
@@ -19,6 +20,7 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
   activeCompany,
   onNavigate
 }) => {
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,8 +61,8 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
 
   const handleApprovePO = async (po: PurchaseOrderRecord, status: 'APPROVED' | 'REJECTED') => {
     if (!activeCompany?.id) return;
+    const dismiss = showLoading(status === 'APPROVED' ? 'Approving Purchase Order...' : 'Rejecting Purchase Order...');
     try {
-      
       const poRef = doc(db, 'companies', activeCompany.id, 'purchase_orders', po.id);
       
       const newApprovalStep = {
@@ -100,23 +102,26 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
 
       setShowApprovalDrawer(false);
       setApprovalComment('');
-    } catch (err) {
-      console.error(err);
-      alert('Failed to update PO approval status.');
+      dismiss();
+      showSuccess(`✓ Purchase Order ${po.poNumber} marked as ${status}`);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Failed to update PO approval status');
     }
   };
 
   const handleGeneratePdf = async (poId: string) => {
     if (!activeCompany?.id) return;
     setGeneratingPdf(true);
+    const dismiss = showLoading('Generating Purchase Order PDF...');
     try {
-      
       const generatePOPdf = httpsCallable(functions, 'generatePOPdf');
       await generatePOPdf({ companyId: activeCompany.id, poId });
-      alert('PDF Generated successfully!');
-    } catch (err) {
-      console.error(err);
-      alert('Failed to generate PDF. Is the PO Approved?');
+      dismiss();
+      showSuccess('✓ PDF generated and downloaded successfully!');
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Failed to generate PDF');
     } finally {
       setGeneratingPdf(false);
     }
@@ -124,14 +129,15 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
 
   const handleDispatch = async (poId: string) => {
      if (!activeCompany?.id) return;
+     const dismiss = showLoading('Dispatching PO to vendor...');
      try {
-       
        const dispatchPO = httpsCallable(functions, 'dispatchPOToVendor');
        await dispatchPO({ companyId: activeCompany.id, poId });
-       alert('PO Dispatched to Vendor!');
-     } catch (err) {
-       console.error(err);
-       alert('Failed to dispatch PO.');
+       dismiss();
+       showSuccess('✓ PO Dispatched to Vendor successfully!');
+     } catch (err: any) {
+       dismiss();
+       handleError(err, '✕ Failed to dispatch PO');
      }
   };
 

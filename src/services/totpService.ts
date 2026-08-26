@@ -1,4 +1,12 @@
 import QRCode from 'qrcode';
+import {
+  generateSecret as otplibGenerateSecret,
+  generateURI as otplibGenerateURI,
+  generate as otplibGenerate,
+  generateSync as otplibGenerateSync,
+  verify as otplibVerify,
+  verifySync as otplibVerifySync,
+} from 'otplib';
 
 /**
  * TOTP Configuration Options based on RFC 6238 & RFC 4226
@@ -9,7 +17,18 @@ export interface TotpOptions {
   /** Number of digits in generated code (default: 6) */
   digits?: number;
   /** Cryptographic hash algorithm (default: 'SHA-1') */
-  algorithm?: 'SHA-1' | 'SHA-256' | 'SHA-512';
+  algorithm?: 'SHA-1' | 'SHA-256' | 'SHA-512' | 'sha1' | 'sha256' | 'sha512';
+}
+
+/**
+ * Normalizes algorithm strings to otplib supported lowercase format
+ */
+export function normalizeAlgorithm(algo?: string): 'sha1' | 'sha256' | 'sha512' {
+  if (!algo) return 'sha1';
+  const clean = algo.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (clean === 'sha256') return 'sha256';
+  if (clean === 'sha512') return 'sha512';
+  return 'sha1';
 }
 
 /**
@@ -129,7 +148,7 @@ export function formatSecretKey(secret: string): string {
 
 /**
  * Service providing RFC 6238 TOTP secrets generation, QR code rendering,
- * and cryptographic validation using the Web Crypto API.
+ * and cryptographic validation powered by otplib.
  */
 export class TotpService {
   private static readonly DEFAULT_ISSUER = 'Log Sheet Muster';
@@ -138,19 +157,11 @@ export class TotpService {
   private static readonly DEFAULT_ALGORITHM: 'SHA-1' | 'SHA-256' | 'SHA-512' = 'SHA-1';
 
   /**
-   * Generates a cryptographically secure random Base32 secret key.
+   * Generates a cryptographically secure random Base32 secret key using otplib.
    * @param byteLength Number of random bytes (default: 20 bytes = 160 bits, standard for SHA-1 TOTP)
    */
   public static generateSecret(byteLength: number = 20): string {
-    const randomBytes = new Uint8Array(byteLength);
-    if (typeof window !== 'undefined' && window.crypto) {
-      window.crypto.getRandomValues(randomBytes);
-    } else if (typeof globalThis !== 'undefined' && globalThis.crypto) {
-      globalThis.crypto.getRandomValues(randomBytes);
-    } else {
-      throw new Error('Cryptographically secure PRNG (Web Crypto) is not available.');
-    }
-    return encodeBase32(randomBytes);
+    return otplibGenerateSecret({ length: byteLength });
   }
 
   /**
@@ -166,8 +177,12 @@ export class TotpService {
     for (let i = 0; i < count; i++) {
       if (typeof window !== 'undefined' && window.crypto) {
         window.crypto.getRandomValues(randomBuffer);
-      } else {
+      } else if (typeof globalThis !== 'undefined' && globalThis.crypto) {
         globalThis.crypto.getRandomValues(randomBuffer);
+      } else {
+        for (let j = 0; j < length; j++) {
+          randomBuffer[j] = Math.floor(Math.random() * 256);
+        }
       }
 
       let code = '';
@@ -183,7 +198,8 @@ export class TotpService {
   }
 
   /**
-   * Constructs the standard otpauth:// URI for authenticator applications (Google Authenticator, etc.)
+   * Constructs the standard otpauth:// URI for authenticator applications (Google Authenticator, Authy, etc.)
+   * using otplib's generateURI helper to ensure standard RFC keyuri compliance.
    */
   public static generateOtpAuthUri(
     secret: string,
@@ -193,14 +209,17 @@ export class TotpService {
   ): string {
     const period = options?.period || this.DEFAULT_PERIOD;
     const digits = options?.digits || this.DEFAULT_DIGITS;
-    const algorithm = (options?.algorithm || this.DEFAULT_ALGORITHM).toUpperCase().replace('-', '');
-
+    const algorithm = normalizeAlgorithm(options?.algorithm);
     const cleanSecret = secret.replace(/[\s-]/g, '').toUpperCase();
-    const encodedIssuer = encodeURIComponent(issuer.trim());
-    const encodedAccount = encodeURIComponent(accountName.trim());
-    const label = `${encodedIssuer}:${encodedAccount}`;
 
-    return `otpauth://totp/${label}?secret=${cleanSecret}&issuer=${encodedIssuer}&algorithm=${algorithm}&digits=${digits}&period=${period}`;
+    return otplibGenerateURI({
+      secret: cleanSecret,
+      label: accountName.trim(),
+      issuer: issuer.trim(),
+      algorithm,
+      digits,
+      period,
+    });
   }
 
   /**
@@ -248,17 +267,18 @@ export class TotpService {
     const issuer = params.issuer || this.DEFAULT_ISSUER;
     const period = params.options?.period || this.DEFAULT_PERIOD;
     const digits = params.options?.digits || this.DEFAULT_DIGITS;
-    const algorithm = params.options?.algorithm || this.DEFAULT_ALGORITHM;
+    const rawAlgorithm = params.options?.algorithm || this.DEFAULT_ALGORITHM;
+    const normalizedAlgo = (rawAlgorithm.toUpperCase().includes('256') ? 'SHA-256' : rawAlgorithm.toUpperCase().includes('512') ? 'SHA-512' : 'SHA-1') as 'SHA-1' | 'SHA-256' | 'SHA-512';
 
-    // Generate secret
+    // Generate secret with otplib
     const secret = this.generateSecret(params.secretBytesLength || 20);
     const formattedSecret = formatSecretKey(secret);
 
-    // Build standard URI
+    // Build standard URI using otplib helper
     const otpAuthUri = this.generateOtpAuthUri(secret, params.accountName, issuer, {
       period,
       digits,
-      algorithm,
+      algorithm: normalizedAlgo,
     });
 
     // Generate QR Code formats
@@ -279,7 +299,7 @@ export class TotpService {
       backupCodes,
       period,
       digits,
-      algorithm,
+      algorithm: normalizedAlgo,
     };
   }
 
@@ -298,7 +318,7 @@ export class TotpService {
   }
 
   /**
-   * Generates the RFC 6238 TOTP code for a given timestamp using Web Crypto HMAC.
+   * Generates the RFC 6238 TOTP code for a given timestamp using otplib.
    */
   public static async generateCode(
     secret: string,
@@ -307,14 +327,44 @@ export class TotpService {
   ): Promise<string> {
     const period = options?.period || this.DEFAULT_PERIOD;
     const digits = options?.digits || this.DEFAULT_DIGITS;
-    const algorithmName = options?.algorithm || this.DEFAULT_ALGORITHM;
+    const algorithm = normalizeAlgorithm(options?.algorithm);
+    const cleanSecret = secret.replace(/[\s-]/g, '').toUpperCase();
+    const epoch = Math.floor(timestampMs / 1000);
 
-    const counter = Math.floor(timestampMs / 1000 / period);
-    return this.generateHOTP(secret, counter, digits, algorithmName);
+    return otplibGenerate({
+      secret: cleanSecret,
+      period,
+      digits,
+      algorithm,
+      epoch,
+    });
   }
 
   /**
-   * Verifies an input TOTP token against a secret with clock-drift window tolerance.
+   * Synchronous TOTP code generator using otplib.
+   */
+  public static generateCodeSync(
+    secret: string,
+    timestampMs: number = Date.now(),
+    options?: TotpOptions
+  ): string {
+    const period = options?.period || this.DEFAULT_PERIOD;
+    const digits = options?.digits || this.DEFAULT_DIGITS;
+    const algorithm = normalizeAlgorithm(options?.algorithm);
+    const cleanSecret = secret.replace(/[\s-]/g, '').toUpperCase();
+    const epoch = Math.floor(timestampMs / 1000);
+
+    return otplibGenerateSync({
+      secret: cleanSecret,
+      period,
+      digits,
+      algorithm,
+      epoch,
+    });
+  }
+
+  /**
+   * Verifies an input TOTP token against a secret with clock-drift window tolerance using otplib.
    * @param token The 6-digit code entered by user
    * @param secret The user's Base32 secret
    * @param windowSteps Allowed clock skew steps (default: 1 step = ±30s)
@@ -338,20 +388,26 @@ export class TotpService {
 
     try {
       const period = options?.period || this.DEFAULT_PERIOD;
-      const algorithm = options?.algorithm || this.DEFAULT_ALGORITHM;
-      const currentCounter = Math.floor(Date.now() / 1000 / period);
+      const algorithm = normalizeAlgorithm(options?.algorithm);
+      const cleanSecret = secret.replace(/[\s-]/g, '').toUpperCase();
+      const epoch = Math.floor(Date.now() / 1000);
+      const epochTolerance = windowSteps * period;
 
-      // Test counter across the allowed window: [-windowSteps, ..., +windowSteps]
-      for (let delta = -windowSteps; delta <= windowSteps; delta++) {
-        const candidateCounter = currentCounter + delta;
-        const candidateCode = await this.generateHOTP(secret, candidateCounter, expectedDigits, algorithm);
+      const result = await otplibVerify({
+        token: cleanToken,
+        secret: cleanSecret,
+        period,
+        digits: expectedDigits,
+        algorithm,
+        epoch,
+        epochTolerance,
+      });
 
-        if (this.timingSafeEqual(cleanToken, candidateCode)) {
-          return {
-            isValid: true,
-            delta,
-          };
-        }
+      if (result.valid) {
+        return {
+          isValid: true,
+          delta: result.delta,
+        };
       }
 
       return {
@@ -367,73 +423,58 @@ export class TotpService {
   }
 
   /**
-   * Low-level RFC 4226 HOTP generator using Web Crypto API
+   * Synchronous TOTP code verifier using otplib.
    */
-  private static async generateHOTP(
+  public static verifyCodeSync(
+    token: string,
     secret: string,
-    counter: number,
-    digits: number,
-    algorithm: 'SHA-1' | 'SHA-256' | 'SHA-512'
-  ): Promise<string> {
-    const keyBytes = decodeBase32(secret);
+    windowSteps: number = 1,
+    options?: TotpOptions
+  ): TotpVerificationResult {
+    const cleanToken = token.replace(/\s+/g, '');
+    const expectedDigits = options?.digits || this.DEFAULT_DIGITS;
 
-    // Convert 64-bit integer counter to 8-byte big-endian buffer
-    const counterBuffer = new ArrayBuffer(8);
-    const counterView = new DataView(counterBuffer);
-    // Since JS numbers are double precision floats up to 2^53 - 1, we write high 32 and low 32 bits
-    const high = Math.floor(counter / 0x100000000);
-    const low = counter >>> 0;
-    counterView.setUint32(0, high, false);
-    counterView.setUint32(4, low, false);
-
-    // Web Crypto subtle HMAC import
-    const cryptoSubtle = (typeof window !== 'undefined' ? window.crypto?.subtle : null) || globalThis.crypto?.subtle;
-    if (!cryptoSubtle) {
-      throw new Error('Web Crypto subtle API is required for TOTP calculation.');
+    if (!cleanToken || cleanToken.length !== expectedDigits || !/^\d+$/.test(cleanToken)) {
+      return {
+        isValid: false,
+        error: `Code must be exactly ${expectedDigits} numeric digits.`,
+      };
     }
 
-    const hashName = algorithm === 'SHA-1' ? 'SHA-1' : algorithm === 'SHA-256' ? 'SHA-256' : 'SHA-512';
+    try {
+      const period = options?.period || this.DEFAULT_PERIOD;
+      const algorithm = normalizeAlgorithm(options?.algorithm);
+      const cleanSecret = secret.replace(/[\s-]/g, '').toUpperCase();
+      const epoch = Math.floor(Date.now() / 1000);
+      const epochTolerance = windowSteps * period;
 
-    const cryptoKey = await cryptoSubtle.importKey(
-      'raw',
-      keyBytes.buffer.slice(keyBytes.byteOffset, keyBytes.byteOffset + keyBytes.byteLength) as ArrayBuffer,
-      { name: 'HMAC', hash: { name: hashName } },
-      false,
-      ['sign']
-    );
+      const result = otplibVerifySync({
+        token: cleanToken,
+        secret: cleanSecret,
+        period,
+        digits: expectedDigits,
+        algorithm,
+        epoch,
+        epochTolerance,
+      });
 
-    const hmacSignature = await cryptoSubtle.sign('HMAC', cryptoKey, counterBuffer);
-    const hmacBytes = new Uint8Array(hmacSignature);
+      if (result.valid) {
+        return {
+          isValid: true,
+          delta: result.delta,
+        };
+      }
 
-    // RFC 4226 Dynamic Truncation:
-    // Extract low 4 bits of the last byte to use as offset
-    const offset = hmacBytes[hmacBytes.length - 1] & 0x0f;
-
-    // Generate 4-byte dynamic binary code (masking MSB for 31-bit integer)
-    const binary =
-      ((hmacBytes[offset] & 0x7f) << 24) |
-      ((hmacBytes[offset + 1] & 0xff) << 16) |
-      ((hmacBytes[offset + 2] & 0xff) << 8) |
-      (hmacBytes[offset + 3] & 0xff);
-
-    // Modulo 10^digits
-    const otp = binary % Math.pow(10, digits);
-
-    // Left pad with zeros to specified digits length
-    return otp.toString().padStart(digits, '0');
-  }
-
-  /**
-   * Constant-time comparison helper to mitigate side-channel timing attacks
-   */
-  private static timingSafeEqual(a: string, b: string): boolean {
-    if (a.length !== b.length) {
-      return false;
+      return {
+        isValid: false,
+        error: 'Invalid verification code or code has expired.',
+      };
+    } catch (err: any) {
+      return {
+        isValid: false,
+        error: err?.message || 'Failed to verify token.',
+      };
     }
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    }
-    return result === 0;
   }
 }
+

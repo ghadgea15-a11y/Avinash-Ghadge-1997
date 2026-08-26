@@ -5,6 +5,7 @@ import { httpsCallable } from 'firebase/functions';
 import { 
   Search, CheckCircle, AlertTriangle, XCircle, ChevronRight, X, UserX, FileCheck, Receipt
 } from 'lucide-react';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface ThreeWayMatchScreenProps {
   userSession: any;
@@ -17,6 +18,7 @@ export const ThreeWayMatchScreen: React.FC<ThreeWayMatchScreenProps> = ({
   activeCompany,
   onNavigate
 }) => {
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const [matchRecords, setMatchRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,13 +42,14 @@ export const ThreeWayMatchScreen: React.FC<ThreeWayMatchScreenProps> = ({
   }, [activeCompany?.id]);
 
   const filteredRecords = matchRecords.filter(record => {
-    const matchesSearch = record.poId.includes(searchQuery) || record.invoiceId.includes(searchQuery);
+    const matchesSearch = (record.poId || '').includes(searchQuery) || (record.invoiceId || '').includes(searchQuery);
     const matchesStatus = statusFilter === 'ALL' || record.matchStatus === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const handleResolve = async (action: 'OVERRIDE' | 'REQUEST_CREDIT_NOTE' | 'REJECT') => {
      if (!activeCompany?.id || !selectedMatch) return;
+     const dismiss = showLoading(`Processing variance resolution (${action})...`);
      try {
        const resolveVariance = httpsCallable(functions, 'resolveMatchVariance');
        await resolveVariance({ 
@@ -55,12 +58,13 @@ export const ThreeWayMatchScreen: React.FC<ThreeWayMatchScreenProps> = ({
           action,
           resolutionComments: resolutionComment
        });
-       alert('Variance resolution processed successfully.');
+       dismiss();
+       showSuccess(`✓ Variance resolution (${action}) processed successfully.`);
        setSelectedMatch(null);
        setResolutionComment('');
-     } catch (err) {
-       console.error(err);
-       alert('Failed to process variance resolution.');
+     } catch (err: any) {
+       dismiss();
+       handleError(err, '✕ Failed to process variance resolution');
      }
   };
 

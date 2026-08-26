@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Archive, Save, X, AlertCircle } from 'lucide-react';
 import { ServiceDeskService } from '../../services/serviceDeskService';
 import { TicketCategoryRecord, UserSession, ServiceTicketPriority } from '../../types';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface ServiceDeskCategoryManagerProps {
   userSession: UserSession;
@@ -11,6 +12,7 @@ interface ServiceDeskCategoryManagerProps {
 }
 
 export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose, priorityConfigs }: ServiceDeskCategoryManagerProps) {
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const [categories, setCategories] = useState<TicketCategoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCategory, setEditingCategory] = useState<Partial<TicketCategoryRecord> | null>(null);
@@ -28,17 +30,20 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
   const handleSave = async () => {
     if (!editingCategory?.code || !editingCategory?.name) {
       setError('Code and Name are required');
+      showValidationFailed('Code and Name are required');
       return;
     }
     
     // Validate hierarchy (no self parent)
     if (editingCategory.id && editingCategory.parentId === editingCategory.id) {
       setError('Category cannot be its own parent');
+      showValidationFailed('Category cannot be its own parent');
       return;
     }
 
     setSaving(true);
     setError('');
+    const dismiss = showLoading('Saving ticket category...');
     
     const payload = {
       ...editingCategory,
@@ -48,23 +53,49 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
 
     const res = await ServiceDeskService.saveTicketCategory(userSession, activeCompany.companyId, payload);
     setSaving(false);
+    dismiss();
     
     if (res.success) {
       setEditingCategory(null);
+      showSuccess(`✓ Category "${payload.name}" saved successfully!`);
     } else {
       setError(res.error || 'Failed to save category');
+      showError(res.error || 'Failed to save category');
     }
   };
 
   const handleDeactivate = async (cat: TicketCategoryRecord) => {
-    if (!confirm(`Are you sure you want to deactivate ${cat.name}? It will no longer be selectable for new tickets.`)) return;
+    const ok = await confirm({
+      title: 'Deactivate Category',
+      message: `Are you sure you want to deactivate "${cat.name}"? It will no longer be selectable for new tickets.`,
+      confirmLabel: 'Deactivate',
+      cancelLabel: 'Cancel',
+      isDestructive: true
+    });
+    if (!ok) {
+      showCancelled('🚫 Category deactivation cancelled');
+      return;
+    }
+
+    const dismiss = showLoading('Deactivating category...');
     const res = await ServiceDeskService.saveTicketCategory(userSession, activeCompany.companyId, { ...cat, isActive: false });
-    if (!res.success) alert(res.error);
+    dismiss();
+    if (res.success) {
+      showSuccess(`✓ Category "${cat.name}" deactivated.`);
+    } else {
+      showError(res.error || '✕ Failed to deactivate category');
+    }
   };
 
   const handleActivate = async (cat: TicketCategoryRecord) => {
+    const dismiss = showLoading('Activating category...');
     const res = await ServiceDeskService.saveTicketCategory(userSession, activeCompany.companyId, { ...cat, isActive: true });
-    if (!res.success) alert(res.error);
+    dismiss();
+    if (res.success) {
+      showSuccess(`✓ Category "${cat.name}" activated.`);
+    } else {
+      showError(res.error || '✕ Failed to activate category');
+    }
   };
 
   const isDark = document.documentElement.classList.contains('dark');

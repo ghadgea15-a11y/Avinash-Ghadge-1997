@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CompanyTenant, UserSession, DeploymentRecord, ClientRecord, EmployeeRecord, SiteRecord } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { Layers, Plus, MapPin, Edit } from 'lucide-react';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface Props {
   userSession: UserSession;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export const DeploymentManagementScreen: React.FC<Props> = ({ userSession, activeCompany }) => {
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError } = useFeedback();
   const [deployments, setDeployments] = useState<DeploymentRecord[]>([]);
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
@@ -41,7 +43,7 @@ export const DeploymentManagementScreen: React.FC<Props> = ({ userSession, activ
 
   const handleSave = async () => {
     if (!formData.employeeId || !formData.siteId || !formData.clientId) {
-      alert("Employee, Site, and Client are required");
+      showValidationFailed("Employee, Site, and Client are required.");
       return;
     }
     
@@ -62,12 +64,20 @@ export const DeploymentManagementScreen: React.FC<Props> = ({ userSession, activ
       updatedAt: new Date().toISOString()
     } as DeploymentRecord;
 
-    await FirestoreService.saveDeployment(userSession, activeCompany.companyId, deployment, oldDeployment);
-    setShowCreate(false);
-    setFormData({
-      employeeId: '', siteId: '', clientId: '', startDate: new Date().toISOString().split('T')[0],
-      status: 'ACTIVE', deploymentType: 'PERMANENT_POSTING', billingRateType: 'PER_SHIFT', billingRate: 0, assignedShiftTypeId: ''
-    });
+    const dismiss = showLoading(formData.id ? 'Updating deployment...' : 'Creating new deployment...');
+    try {
+      await FirestoreService.saveDeployment(userSession, activeCompany.companyId, deployment, oldDeployment);
+      dismiss();
+      setShowCreate(false);
+      setFormData({
+        employeeId: '', siteId: '', clientId: '', startDate: new Date().toISOString().split('T')[0],
+        status: 'ACTIVE', deploymentType: 'PERMANENT_POSTING', billingRateType: 'PER_SHIFT', billingRate: 0, assignedShiftTypeId: ''
+      });
+      showSuccess(`✓ Deployment for ${deployment.employeeName} saved successfully!`);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Failed to save deployment');
+    }
   };
 
   if (loading) return <div className="p-8 text-center">Loading Deployments...</div>;

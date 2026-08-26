@@ -31,6 +31,7 @@ import {
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { RbacService } from '../../services/rbacService';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface IdentityBadgeScreenProps {
   userSession: UserSession;
@@ -45,6 +46,7 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
   isOnline,
   onNavigate
 }) => {
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const [badges, setBadges] = useState<IdentityBadgeRecord[]>([]);
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +59,7 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
   const [verificationResult, setVerificationResult] = useState<any>(null);
   const [verifyInput, setVerifyInput] = useState('');
   const [statusFilter, setStatusFilter] = useState<BadgeStatus | 'ALL'>('ALL');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const unsubBadges = FirestoreService.subscribeToBadges(activeCompany.companyId, (data) => {
@@ -73,11 +76,20 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
 
   const handleIssueBadge = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const formData = new FormData(e.currentTarget);
     
+    const employeeId = formData.get('employeeId') as string;
+    const badgeNumber = formData.get('badgeNumber') as string;
+
+    if (!employeeId || !badgeNumber) {
+      showValidationFailed('Please select an employee and enter a badge number.');
+      return;
+    }
+
     const badgeData: any = {
-      employeeId: formData.get('employeeId') as string,
-      badgeNumber: formData.get('badgeNumber') as string,
+      employeeId,
+      badgeNumber,
       badgeType: formData.get('badgeType') as BadgeType,
       status: 'ISSUED',
       issueDate: new Date().toISOString(),
@@ -87,35 +99,84 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
       issuedBy: userSession.userId
     };
 
-    const success = await FirestoreService.issueBadge(activeCompany.companyId, badgeData, {
-      id: userSession.userId,
-      name: userSession.fullName || userSession.email
-    });
-
-    if (success) {
-      setShowIssueModal(false);
-    } else {
-      alert('Failed to issue badge. Ensure badge number is unique and employee doesn\'t have an active badge.');
+    setIsSubmitting(true);
+    const dismiss = showLoading('Issuing digital identity badge...');
+    try {
+      const success = await FirestoreService.issueBadge(activeCompany.companyId, badgeData, {
+        id: userSession.userId,
+        name: userSession.fullName || userSession.email
+      });
+      dismiss();
+      if (success) {
+        setShowIssueModal(false);
+        showSuccess(`✓ Identity badge "${badgeNumber}" issued successfully!`);
+      } else {
+        showError('✕ Failed to issue badge. Ensure badge number is unique and employee doesn\'t have an active badge.');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Failed to issue badge');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleUpdateStatus = async (badgeId: string, newStatus: BadgeStatus, reason: string) => {
-    const success = await FirestoreService.updateBadgeStatus(
-      activeCompany.companyId,
-      badgeId,
-      newStatus,
-      reason,
-      { id: userSession.userId, name: userSession.fullName || userSession.email }
-    );
+    if (newStatus === 'DEACTIVATED' || newStatus === 'SUSPENDED') {
+      const ok = await confirm({
+        title: `${newStatus === 'DEACTIVATED' ? 'Deactivate' : 'Suspend'} Badge`,
+        message: `Are you sure you want to change badge status to ${newStatus}?`,
+        confirmLabel: `${newStatus === 'DEACTIVATED' ? 'Deactivate' : 'Suspend'} Badge`,
+        cancelLabel: 'Cancel',
+        isDestructive: true
+      });
+      if (!ok) {
+        showCancelled('🚫 Badge status change cancelled');
+        return;
+      }
+    }
 
-    if (success) {
-      setSelectedBadge(prev => prev ? { ...prev, status: newStatus } : null);
+    const dismiss = showLoading(`Updating badge status to ${newStatus}...`);
+    try {
+      const success = await FirestoreService.updateBadgeStatus(
+        activeCompany.companyId,
+        badgeId,
+        newStatus,
+        reason,
+        { id: userSession.userId, name: userSession.fullName || userSession.email }
+      );
+      dismiss();
+      if (success) {
+        setSelectedBadge(prev => prev ? { ...prev, status: newStatus } : null);
+        showSuccess(`✓ Badge status updated to ${newStatus}`);
+      } else {
+        showError('✕ Failed to update badge status');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Failed to update badge status');
     }
   };
 
   const handleVerify = async () => {
-    const result = await FirestoreService.verifyBadge(activeCompany.companyId, verifyInput, verifyInput.startsWith('IDB-') ? 'QR' : 'NUMBER');
-    setVerificationResult(result);
+    if (!verifyInput.trim()) {
+      showValidationFailed('Please enter a badge number or scan a QR code.');
+      return;
+    }
+    const dismiss = showLoading('Verifying badge authentication...');
+    try {
+      const result = await FirestoreService.verifyBadge(activeCompany.companyId, verifyInput, verifyInput.startsWith('IDB-') ? 'QR' : 'NUMBER');
+      dismiss();
+      setVerificationResult(result);
+      if (result?.status === 'VALID') {
+        showSuccess(`✓ Badge Verified: ${result.badge?.badgeNumber || 'Valid'}`);
+      } else {
+        showError(`✕ Verification: Badge status is ${result?.status || 'INVALID'}`);
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Verification failed');
+    }
   };
 
   const fetchHistory = async (badgeId: string) => {

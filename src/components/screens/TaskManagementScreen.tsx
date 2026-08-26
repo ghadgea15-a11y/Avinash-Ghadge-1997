@@ -11,6 +11,7 @@ import {
 import { FirestoreService } from '../../services/firestoreService';
 import { BulkExportGovernanceService } from '../../services/bulkExportGovernanceService';
 import { useTheme } from '../../context/ThemeContext';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 import { 
   Plus, 
   CheckCircle2, 
@@ -36,6 +37,7 @@ interface Props {
 
 export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, onNavigate }) => {
   const { isDark } = useTheme();
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const companyId = company.companyId || userSession.companyId;
 
   // RBAC Helper
@@ -182,10 +184,11 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTask.title.trim() || !newTask.assignedTo) {
-      alert('Please provide task title and select an assignee.');
+      showValidationFailed('Please provide task title and select an assignee.');
       return;
     }
 
+    const dismiss = showLoading('Dispatching new operational task...');
     try {
       setActionProcessing(true);
       const assignedEmp = employees.find(e => e.id === newTask.assignedTo);
@@ -217,6 +220,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
       };
 
       await FirestoreService.saveTask(companyId, taskRecord);
+      dismiss();
 
       // Reset form
       setNewTask({
@@ -230,9 +234,10 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
         checklistItems: ['']
       });
       setShowCreateModal(false);
-    } catch (err) {
-      console.error('Error saving task:', err);
-      alert('Failed to dispatch task. Please check permissions.');
+      showSuccess(`✓ Operational task "${taskRecord.title}" dispatched successfully!`);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Failed to dispatch task');
     } finally {
       setActionProcessing(false);
     }
@@ -240,16 +245,19 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
 
   // Review & Approve / Reject Task
   const handleApproveTask = async (task: TaskRecord) => {
+    const dismiss = showLoading('Approving task completion...');
     try {
       setActionProcessing(true);
       await FirestoreService.updateTaskStatus(task.id, companyId, 'COMPLETED', {
         completionNotes: reviewNotes ? `${task.completionNotes || ''}\n[Reviewer Approval]: ${reviewNotes}`.trim() : task.completionNotes
       });
+      dismiss();
       setSelectedTaskForReview(null);
       setReviewNotes('');
-    } catch (err) {
-      console.error('Error approving task:', err);
-      alert('Failed to approve task.');
+      showSuccess(`✓ Task "${task.title}" approved and marked COMPLETED!`);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Failed to approve task');
     } finally {
       setActionProcessing(false);
     }
@@ -257,19 +265,22 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
 
   const handleRequestRevision = async (task: TaskRecord) => {
     if (!reviewNotes.trim()) {
-      alert('Please specify what needs revision in the feedback notes.');
+      showValidationFailed('Please specify what needs revision in the feedback notes.');
       return;
     }
+    const dismiss = showLoading('Submitting revision request...');
     try {
       setActionProcessing(true);
       await FirestoreService.updateTaskStatus(task.id, companyId, 'IN_PROGRESS', {
         completionNotes: `${task.completionNotes || ''}\n[Revision Requested]: ${reviewNotes}`.trim()
       });
+      dismiss();
       setSelectedTaskForReview(null);
       setReviewNotes('');
-    } catch (err) {
-      console.error('Error requesting revision:', err);
-      alert('Failed to update task.');
+      showSuccess(`✓ Revision requested for task "${task.title}"`);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Failed to request revision');
     } finally {
       setActionProcessing(false);
     }
@@ -278,42 +289,50 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
   // CSV Export
   const handleExportCsv = async () => {
     if (filteredTasks.length === 0) {
-      alert('No tasks to export.');
+      showValidationFailed('No tasks to export.');
       return;
     }
 
-    // Module 10.4: Export Governance Evaluation
-    await BulkExportGovernanceService.evaluateAndRecordExport({
-      session: userSession,
-      companyId: company.companyId,
-      module: 'OPERATIONS_TASKS',
-      entityType: 'TaskRecord',
-      exportFormat: 'CSV',
-      dataClassification: 'GENERAL',
-      recordCount: filteredTasks.length,
-      exportName: `Tasks_Export_${company.companyId}_${new Date().toISOString().slice(0, 10)}.csv`,
-      reason: 'Exported task assignments list'
-    });
+    const dismiss = showLoading('Generating tasks export...');
+    try {
+      // Module 10.4: Export Governance Evaluation
+      await BulkExportGovernanceService.evaluateAndRecordExport({
+        session: userSession,
+        companyId: company.companyId,
+        module: 'OPERATIONS_TASKS',
+        entityType: 'TASK',
+        exportFormat: 'CSV',
+        dataClassification: 'GENERAL_OPERATIONAL',
+        recordCount: filteredTasks.length,
+        exportName: `tasks_export_${company.companyId}.csv`
+      });
 
-    const headers = ['Task ID', 'Title', 'Priority', 'Status', 'Assignee', 'Site', 'SLA Deadline', 'Created Date'];
-    const rows = filteredTasks.map(t => [
-      t.id,
-      `"${t.title.replace(/"/g, '""')}"`,
-      t.priority || 'MEDIUM',
-      t.status,
-      `"${(t.assignedToName || t.assignedTo || '').replace(/"/g, '""')}"`,
-      `"${(t.siteName || t.siteId || '').replace(/"/g, '""')}"`,
-      t.slaDeadline ? new Date(t.slaDeadline).toLocaleString() : 'N/A',
-      new Date(t.createdAt).toLocaleString()
-    ]);
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Tasks_Export_${company.companyId}_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+      const headers = ['Task ID', 'Title', 'Priority', 'Status', 'Assignee', 'Site', 'Deadline', 'Created At'];
+      const rows = filteredTasks.map(t => [
+        t.id,
+        `"${(t.title || '').replace(/"/g, '""')}"`,
+        t.priority,
+        t.status,
+        `"${(t.assignedToName || '').replace(/"/g, '""')}"`,
+        `"${(t.siteName || '').replace(/"/g, '""')}"`,
+        t.slaDeadline || '',
+        new Date(t.createdAt).toISOString()
+      ]);
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `tasks_export_${company.companyId}_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      dismiss();
+      showSuccess('✓ Tasks CSV export generated and downloaded.');
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Export Failed');
+    }
   };
 
   if (loading) {

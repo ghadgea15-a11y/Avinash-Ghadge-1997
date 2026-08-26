@@ -29,11 +29,11 @@ export class RbacService {
     switch (session.role) {
       case 'SUPER_ADMIN':
       case 'OWNER_PROMOTER':
+      case 'COMPANY_ADMIN':
         return 'A0_OWNER';
       case 'DIRECTOR_CEO':
         return 'A1_DIRECTOR_CEO';
       case 'GENERAL_MANAGER':
-      case 'COMPANY_ADMIN': // Legacy mapping: Highest operation
         return 'A2_GENERAL_MANAGER';
       case 'HR_ADMIN':
       case 'FINANCE_MANAGER':
@@ -77,6 +77,7 @@ export class RbacService {
    * Determines the canonical data scope based on the user's authority level.
    */
   static getDataScope(session: UserSession): DataScope {
+    if (session.role === 'COMPANY_ADMIN') return 'COMPANY';
     if (session.dataScope) return session.dataScope;
 
     const authority = this.getAuthorityLevel(session);

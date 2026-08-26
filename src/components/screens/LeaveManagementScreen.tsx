@@ -33,6 +33,7 @@ import { LeavePolicyMaster } from '../hrms/LeavePolicyMaster';
 import { AbsenceRegularization } from '../hrms/AbsenceRegularization';
 import { RbacService } from '../../services/rbacService';
 import { WorkflowEngine } from '../../services/workflowEngine';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface LeaveManagementScreenProps {
   userSession: UserSession;
@@ -47,6 +48,7 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
   isOnline,
   onNavigate
 }) => {
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'APPROVALS' | 'POLICIES' | 'ABSENCE'>('DASHBOARD');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -116,30 +118,49 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
 
   const handleApplyLeave = async (data: any) => {
     setIsRefreshing(true);
+    const dismiss = showLoading('Submitting leave application...');
     try {
       await FirestoreService.createLeaveRequest(companyId, data);
+      dismiss();
       setShowApplyModal(false);
+      showSuccess('✓ Leave application submitted successfully!');
       // Refresh balance
       const bal = await FirestoreService.getLeaveBalance(companyId, userSession.employeeId || userSession.userId);
       setMyBalance(bal);
-    } catch (err) {
-      alert("Failed to submit leave request");
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Failed to submit leave request');
     } finally {
       setIsRefreshing(false);
     }
   };
 
   const handleCancelRequest = async (req: LeaveRequestRecord) => {
-    if (!confirm("Are you sure you want to withdraw this application?")) return;
+    const ok = await confirm({
+      title: 'Withdraw Leave Request',
+      message: 'Are you sure you want to withdraw this application?',
+      confirmLabel: 'Withdraw Application',
+      cancelLabel: 'Cancel',
+      isDestructive: true
+    });
+    if (!ok) {
+      showCancelled('🚫 Leave withdrawal cancelled');
+      return;
+    }
+
     setIsRefreshing(true);
+    const dismiss = showLoading('Withdrawing leave application...');
     try {
       await FirestoreService.updateLeaveRequestStatus(companyId, req.id, 'WITHDRAWN', {
         id: userSession.userId,
         name: userSession.fullName,
         reason: "Withdrawn by employee"
       });
-    } catch (err) {
-      alert("Failed to withdraw request");
+      dismiss();
+      showSuccess('✓ Leave application withdrawn successfully');
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Failed to withdraw request');
     } finally {
       setIsRefreshing(false);
     }
@@ -154,11 +175,12 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
     });
 
     if (!resolution.canApprove) {
-      alert(`Approval Denied: ${resolution.reason}`);
+      showValidationFailed(`Approval Denied: ${resolution.reason}`);
       return;
     }
 
     setIsRefreshing(true);
+    const dismiss = showLoading('Approving leave request...');
     try {
       await FirestoreService.updateLeaveRequestStatus(companyId, req.id, 'APPROVED', {
         id: userSession.userId,
@@ -169,8 +191,11 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
         const bal = await FirestoreService.getLeaveBalance(companyId, userSession.employeeId || userSession.userId);
         setMyBalance(bal);
       }
-    } catch (err) {
-      alert("Approval failed");
+      dismiss();
+      showSuccess(`✓ Leave request for ${req.employeeName || 'employee'} approved successfully!`);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Approval failed');
     } finally {
       setIsRefreshing(false);
     }
@@ -185,19 +210,23 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
     });
 
     if (!resolution.canApprove) {
-      alert(`Rejection Denied: ${resolution.reason}`);
+      showValidationFailed(`Rejection Denied: ${resolution.reason}`);
       return;
     }
 
     setIsRefreshing(true);
+    const dismiss = showLoading('Rejecting leave request...');
     try {
       await FirestoreService.updateLeaveRequestStatus(companyId, req.id, 'REJECTED', {
         id: userSession.userId,
         name: userSession.fullName,
         reason
       });
-    } catch (err) {
-      alert("Rejection failed");
+      dismiss();
+      showSuccess(`✓ Leave request for ${req.employeeName || 'employee'} rejected.`);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Rejection failed');
     } finally {
       setIsRefreshing(false);
     }
@@ -205,13 +234,17 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
 
   const handleSavePolicy = async (policy: any) => {
     setIsRefreshing(true);
+    const dismiss = showLoading('Saving leave policy...');
     try {
       await FirestoreService.saveLeavePolicy(companyId, {
         ...policy,
         companyId,
       });
-    } catch (err) {
-      alert("Failed to save policy");
+      dismiss();
+      showSuccess(`✓ Leave policy "${policy.policyName || policy.code}" saved successfully!`);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Failed to save policy');
     } finally {
       setIsRefreshing(false);
     }
@@ -219,10 +252,14 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
 
   const handleRegularize = async (data: any) => {
     setIsRefreshing(true);
+    const dismiss = showLoading('Submitting regularization request...');
     try {
       await FirestoreService.createAbsenceRegularization(companyId, data);
-    } catch (err) {
-      alert("Failed to submit regularization request");
+      dismiss();
+      showSuccess('✓ Absence regularization request submitted successfully!');
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Failed to submit regularization request');
     } finally {
       setIsRefreshing(false);
     }

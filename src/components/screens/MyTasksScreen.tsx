@@ -3,6 +3,7 @@ import { CompanyTenant, UserSession, PhaseAScreen, TaskRecord } from '../../type
 import { FirestoreService } from '../../services/firestoreService';
 import { StorageService } from '../../services/storageService';
 import { useTheme } from '../../context/ThemeContext';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 import { 
   CheckCircle2, 
   Clock, 
@@ -26,6 +27,7 @@ interface Props {
 
 export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigate }) => {
   const { isDark } = useTheme();
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError } = useFeedback();
   const companyId = company.companyId || userSession.companyId;
 
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
@@ -159,9 +161,10 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
       setSelectedFile(null);
       setFilePreview(null);
       setActionNotes('');
-    } catch (err) {
+      showSuccess(`✓ Task completion proof submitted for "${activeTaskForAction.title}"! Status: Pending Verification`);
+    } catch (err: any) {
       console.error('Error submitting proof:', err);
-      alert('Failed to submit proof. Please try again.');
+      handleError(err, '✕ Failed to submit proof');
     } finally {
       setUploading(false);
     }

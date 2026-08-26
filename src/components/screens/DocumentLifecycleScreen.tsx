@@ -3,6 +3,7 @@ import { UserSession, CompanyTenant } from '../../types';
 import { DocumentLifecycleService } from '../../services/documentLifecycleService';
 import { FileText, AlertTriangle, CheckCircle, Clock, Search, Filter, PlayCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface Props {
   session?: UserSession;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export const DocumentLifecycleScreen: React.FC<Props> = ({ session, userSession, activeCompany, onNavigate }) => {
+  const { showSuccess, showError, showLoading, showCancelled, handleError } = useFeedback();
   const currentSession = userSession || session!;
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -33,12 +35,15 @@ export const DocumentLifecycleScreen: React.FC<Props> = ({ session, userSession,
   };
 
   const handleEvaluateExpiries = async () => {
+    const dismiss = showLoading('Evaluating document expiries and dispatching reminders...');
     try {
       const updates = await DocumentLifecycleService.evaluateExpiries(activeCompany.companyId);
-      alert(`Evaluation complete. Triggered ${updates} expiry status/reminder updates.`);
+      dismiss();
+      showSuccess(`✓ Evaluation complete: Triggered ${updates} expiry status/reminder update(s).`);
       loadData();
     } catch (err: any) {
-      alert("Evaluation failed: " + err.message);
+      dismiss();
+      handleError(err, "✕ Evaluation failed");
     }
   };
 

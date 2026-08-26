@@ -3,6 +3,7 @@ import { UserSession, CompanyTenant } from '../../types';
 import { VendorRiskService } from '../../services/vendorRiskService';
 import { ShieldAlert, Users, CheckCircle, XCircle, AlertTriangle, FileText, Ban } from 'lucide-react';
 import { format } from 'date-fns';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface Props {
   session: UserSession;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export const ThirdPartyRiskScreen: React.FC<Props> = ({ session, activeCompany }) => {
+  const { showSuccess, showError, showLoading, showCancelled, handleError, confirm } = useFeedback();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,22 +32,40 @@ export const ThirdPartyRiskScreen: React.FC<Props> = ({ session, activeCompany }
   };
 
   const handleEvaluateRisks = async () => {
+    const dismiss = showLoading('Evaluating vendor risks and checking compliance policies...');
     try {
       const violations = await VendorRiskService.evaluateVendorRisks(activeCompany.companyId);
-      alert(`Evaluation complete. Found and addressed ${violations} risk violations.`);
+      dismiss();
+      showSuccess(`✓ Evaluation complete: Found and addressed ${violations} risk violation(s).`);
       loadData();
     } catch (err: any) {
-      alert("Evaluation failed: " + err.message);
+      dismiss();
+      handleError(err, '✕ Evaluation Failed');
     }
   };
 
   const handleRevoke = async (id: string) => {
+    const ok = await confirm({
+      title: 'Revoke Personnel Access',
+      message: 'Are you sure you want to revoke third-party vendor personnel access?',
+      confirmLabel: 'Revoke Access',
+      cancelLabel: 'Cancel',
+      isDestructive: true
+    });
+    if (!ok) {
+      showCancelled('🚫 Access revocation cancelled');
+      return;
+    }
+
+    const dismiss = showLoading('Revoking personnel access...');
     try {
       await VendorRiskService.revokePersonnelAccess(session, id);
-      alert("Access Revoked");
+      dismiss();
+      showSuccess('✓ Access revoked successfully');
       loadData();
     } catch (err: any) {
-      alert("Failed to revoke: " + err.message);
+      dismiss();
+      handleError(err, '✕ Failed to revoke access');
     }
   };
 

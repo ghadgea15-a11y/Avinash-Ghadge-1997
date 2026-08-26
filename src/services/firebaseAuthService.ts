@@ -94,9 +94,10 @@ export class FirebaseAuthService {
           throw new Error('Company Code is inactive or expired');
         }
         return {
+          ...data,
           companyId: data.companyId || cleanCode,
-          companyLegalName: data.companyLegalName || cleanCode,
-          brandName: data.brandName || cleanCode,
+          companyLegalName: data.companyLegalName || data.brandName || cleanCode,
+          brandName: data.brandName || data.companyLegalName || cleanCode,
           licenseTier: data.licenseTier || 'ENTERPRISE',
           allowedBranches: data.allowedBranches || ['MAIN'],
           maxEmployeesAllowed: data.maxEmployeesAllowed || 1000,
@@ -123,9 +124,10 @@ export class FirebaseAuthService {
             throw new Error('Company Code is inactive or expired');
           }
           return {
+            ...data,
             companyId: data.companyId || mappedCompanyId,
-            companyLegalName: data.companyLegalName || mappedCompanyId,
-            brandName: data.brandName || mappedCompanyId,
+            companyLegalName: data.companyLegalName || data.brandName || mappedCompanyId,
+            brandName: data.brandName || data.companyLegalName || mappedCompanyId,
             licenseTier: data.licenseTier || 'ENTERPRISE',
             allowedBranches: data.allowedBranches || ['MAIN'],
             maxEmployeesAllowed: data.maxEmployeesAllowed || 1000,
@@ -839,6 +841,15 @@ export class FirebaseAuthService {
         const fbUser = userCredential.user;
         const userEmail = (fbUser.email || cleanInputLower).toLowerCase();
 
+        // Retrieve fresh custom claims from Firebase Auth
+        let claims: any = {};
+        try {
+          const idTokenResult = await fbUser.getIdTokenResult(true);
+          claims = idTokenResult.claims || {};
+        } catch (claimsErr) {
+          console.warn('[FirebaseAuthService] Failed to retrieve fresh token claims:', claimsErr);
+        }
+
         // Safely fetch user profile from Firestore root 'users' collection with offline resilience
         let uData: any = null;
         try {
@@ -852,7 +863,7 @@ export class FirebaseAuthService {
           console.warn('[FirebaseAuthService] Firestore profile check skipped/handled (offline or missing):', firestoreErr);
         }
 
-        let isUserSuperAdmin = uData?.role === 'SUPER_ADMIN' || RESERVED_SUPER_ADMIN_EMAILS.includes(userEmail);
+        let isUserSuperAdmin = uData?.role === 'SUPER_ADMIN' || claims.role === 'SUPER_ADMIN' || claims.aLvl === 'SUPER_ADMIN' || RESERVED_SUPER_ADMIN_EMAILS.includes(userEmail);
         if (!isUserSuperAdmin) {
           try {
             const saSnap = await getDoc(doc(db, 'super_admins', fbUser.uid));
@@ -865,6 +876,18 @@ export class FirebaseAuthService {
         }
 
         if (isUserSuperAdmin) {
+          // Sync super admin claims with backend server endpoint
+          try {
+            fbUser.getIdToken(false).then((token) => {
+              fetch('/api/admin/sync-super-admin', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+              }).then(() => fbUser.getIdToken(true)).catch(e => console.warn('Super Admin sync call warning:', e));
+            }).catch(e => console.warn('Super Admin token retrieval warning:', e));
+          } catch (syncCallErr) {
+            console.warn('Super Admin sync call initiation warning:', syncCallErr);
+          }
+
           // Sync super admin status (Non-blocking fire-and-forget to prevent login hangs)
           setDoc(doc(db, 'super_admins', fbUser.uid), {
             id: fbUser.uid,
@@ -887,31 +910,20 @@ export class FirebaseAuthService {
           }, { merge: true }).catch(e => console.warn('User doc sync failed:', e));
         }
 
-        // Default session values
-        let role: UserRole = isUserSuperAdmin ? 'SUPER_ADMIN' : (uData?.role || 'SUPPORT');
-        let employeeId = uData?.employeeId || (isUserSuperAdmin ? 'SA-001' : `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`);
-        let fullName = uData?.fullName || fbUser.displayName || userEmail.split('@')[0] || 'Authenticated User';
-        let branchId = uData?.branchId || (isUserSuperAdmin ? 'HQ' : 'MAIN_BRANCH');
-        let assignedSiteId: string | undefined = uData?.assignedSiteId;
-        let accountStatus: AccountStatus = ((uData?.accountStatus as AccountStatus) || 'PENDING_APPROVAL');
-        let departmentId: string | undefined = uData?.departmentId || (isUserSuperAdmin ? 'DEPT-SUPER-ADMIN' : undefined);
-        let departmentName: string | undefined = uData?.departmentName || (isUserSuperAdmin ? 'Super Admin' : undefined);
-        let companyAdminApproval: ApprovalStatus = uData?.companyAdminApproval || 'PENDING';
-        let hrApproval: ApprovalStatus = uData?.hrApproval || 'PENDING';
-        
-        let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (companyId || '');
+        // Resolve trusted company ID from user profile or claims (never untrusted client input)
+        const trustedCompanyId = isUserSuperAdmin
+          ? 'GLOBAL_ADMIN'
+          : (uData?.companyId || (claims.cId as string) || (claims.companyId as string) || (claims.companyCode as string) || '');
+
+        let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (trustedCompanyId || companyId || '');
 
         if (!isUserSuperAdmin && companyId === 'GLOBAL_ADMIN') {
           throw new Error('Unauthorized: You are not a Global Administrator.');
         }
 
-        if (uData) {
-          if (companyId && uData.companyId && uData.companyId !== companyId && !isUserSuperAdmin) {
-            throw new Error(`User is not authorized for company: ${companyId}`);
-          }
-          if (!isUserSuperAdmin && uData.companyId && uData.companyId !== 'PENDING') {
-            userCompanyId = uData.companyId;
-          }
+        // Strict Tenant Isolation: If client provided a companyId, verify it matches trusted tenant
+        if (!isUserSuperAdmin && companyId && trustedCompanyId && trustedCompanyId !== companyId) {
+          throw new Error(`User is not authorized for company: ${companyId}`);
         }
 
         // If companyId is not determined, check user's memberships subcollection
@@ -922,9 +934,6 @@ export class FirebaseAuthService {
               const firstActive = memsSnap.docs.find(d => d.data().status === 'ACTIVE') || memsSnap.docs[0];
               const memData = firstActive.data();
               userCompanyId = memData.companyId || firstActive.id;
-              if (memData.role) role = memData.role;
-              if (memData.employeeId) employeeId = memData.employeeId;
-              if (memData.branchId) branchId = memData.branchId;
             }
           } catch (memErr) {
             console.warn('[FirebaseAuthService] Membership lookup handled:', memErr);
@@ -935,12 +944,41 @@ export class FirebaseAuthService {
           throw new Error('User is not associated with any company. Please enter your Company Code.');
         }
 
+        // Resolve trusted role and authority
+        const role: UserRole = isUserSuperAdmin
+          ? 'SUPER_ADMIN'
+          : ((uData?.role || claims.role || 'COMPANY_ADMIN') as UserRole);
+
+        const isCompanyAdmin = role === 'COMPANY_ADMIN';
+
+        const authorityLevel = isUserSuperAdmin
+          ? 'A0_OWNER'
+          : (uData?.authorityLevel || (claims.aLvl as any) || (isCompanyAdmin ? 'A0_OWNER' : 'A9_SUPPORT'));
+
+        const dataScope = isUserSuperAdmin || isCompanyAdmin
+          ? 'COMPANY'
+          : (uData?.dataScope || 'SELF');
+
+        const employeeId = uData?.employeeId || (isCompanyAdmin ? 'ADM-001' : (isUserSuperAdmin ? 'SA-001' : `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`));
+        const fullName = uData?.fullName || fbUser.displayName || userEmail.split('@')[0] || 'Authenticated User';
+        const branchId = uData?.branchId || (isUserSuperAdmin ? 'HQ' : 'MAIN');
+        const assignedSiteId: string | undefined = uData?.assignedSiteId || (claims.sId as string) || undefined;
+        const accountStatus: AccountStatus = isCompanyAdmin || isUserSuperAdmin
+          ? 'ACTIVE'
+          : (((uData?.accountStatus || uData?.status) as AccountStatus) || 'PENDING_APPROVAL');
+        const departmentId: string | undefined = uData?.departmentId || (claims.dId as string) || (isCompanyAdmin ? 'ADMINISTRATION' : (isUserSuperAdmin ? 'DEPT-SUPER-ADMIN' : undefined));
+        const departmentName: string | undefined = uData?.departmentName || (isCompanyAdmin ? 'Administration' : (isUserSuperAdmin ? 'Super Admin' : undefined));
+        const companyAdminApproval: ApprovalStatus = isCompanyAdmin || isUserSuperAdmin ? 'APPROVED' : (uData?.companyAdminApproval || 'PENDING');
+        const hrApproval: ApprovalStatus = isCompanyAdmin || isUserSuperAdmin ? 'APPROVED' : (uData?.hrApproval || 'PENDING');
+
         const session: UserSession = {
           userId: fbUser.uid,
           employeeId,
           fullName,
           email: userEmail,
           role,
+          authorityLevel,
+          dataScope,
           companyId: userCompanyId,
           branchId,
           assignedSiteId,
@@ -950,7 +988,7 @@ export class FirebaseAuthService {
           lastActiveAt: Date.now(),
           loginMode: 'PASSWORD',
           accountStatus,
-          emailVerified: fbUser.emailVerified ,
+          emailVerified: fbUser.emailVerified || Boolean(claims.email_verified),
           departmentId,
           departmentName,
           companyAdminApproval,
@@ -1227,6 +1265,15 @@ export class FirebaseAuthService {
       const fbUser = userCredential.user;
       const cleanInputLower = (emailOrId || fbUser.email || '').toLowerCase();
 
+      // Retrieve fresh custom claims from Firebase Auth
+      let claims: any = {};
+      try {
+        const idTokenResult = await fbUser.getIdTokenResult(true);
+        claims = idTokenResult.claims || {};
+      } catch (claimsErr) {
+        console.warn('[FirebaseAuthService] Failed to retrieve fresh token claims in MFA:', claimsErr);
+      }
+
       // Safely fetch user profile from Firestore root 'users' collection with offline resilience
       let uData: any = null;
       try {
@@ -1240,7 +1287,7 @@ export class FirebaseAuthService {
         console.warn('[FirebaseAuthService] Firestore profile check skipped/handled (offline or missing):', firestoreErr);
       }
 
-      let isUserSuperAdmin = uData?.role === 'SUPER_ADMIN';
+      let isUserSuperAdmin = uData?.role === 'SUPER_ADMIN' || claims.role === 'SUPER_ADMIN' || claims.aLvl === 'SUPER_ADMIN' || RESERVED_SUPER_ADMIN_EMAILS.includes(cleanInputLower);
       if (!isUserSuperAdmin) {
         try {
           const saSnap = await getDoc(doc(db, 'super_admins', fbUser.uid));
@@ -1278,31 +1325,20 @@ export class FirebaseAuthService {
         }
       }
 
-      // Default session values
-      let role: UserRole = isUserSuperAdmin ? 'SUPER_ADMIN' : (uData?.role || 'SUPPORT');
-      let employeeId = uData?.employeeId || (isUserSuperAdmin ? 'SA-001' : `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`);
-      let fullName = uData?.fullName || fbUser.displayName || cleanInputLower.split('@')[0] || 'Authenticated User';
-      let branchId = uData?.branchId || (isUserSuperAdmin ? 'HQ' : 'MAIN_BRANCH');
-      let assignedSiteId: string | undefined = uData?.assignedSiteId;
-      let accountStatus: AccountStatus = ((uData?.accountStatus as AccountStatus) || 'PENDING_APPROVAL');
-      let departmentId: string | undefined = uData?.departmentId || (isUserSuperAdmin ? 'DEPT-SUPER-ADMIN' : undefined);
-      let departmentName: string | undefined = uData?.departmentName || (isUserSuperAdmin ? 'Super Admin' : undefined);
-      let companyAdminApproval: ApprovalStatus = uData?.companyAdminApproval || 'PENDING';
-      let hrApproval: ApprovalStatus = uData?.hrApproval || 'PENDING';
-      
-      let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (companyId || '');
+      // Resolve trusted company ID from user profile or claims (never untrusted client input)
+      const trustedCompanyId = isUserSuperAdmin
+        ? 'GLOBAL_ADMIN'
+        : (uData?.companyId || (claims.cId as string) || (claims.companyId as string) || (claims.companyCode as string) || '');
+
+      let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (trustedCompanyId || companyId || '');
 
       if (!isUserSuperAdmin && companyId === 'GLOBAL_ADMIN') {
         throw new Error('Unauthorized: You are not a Global Administrator.');
       }
 
-      if (uData) {
-        if (companyId && uData.companyId && uData.companyId !== companyId && !isUserSuperAdmin) {
-          throw new Error(`User is not authorized for company: ${companyId}`);
-        }
-        if (!isUserSuperAdmin && uData.companyId && uData.companyId !== 'PENDING') {
-          userCompanyId = uData.companyId;
-        }
+      // Strict Tenant Isolation: If client provided a companyId, verify it matches trusted tenant
+      if (!isUserSuperAdmin && companyId && trustedCompanyId && trustedCompanyId !== companyId) {
+        throw new Error(`User is not authorized for company: ${companyId}`);
       }
 
       if (!userCompanyId && !isUserSuperAdmin) {
@@ -1312,9 +1348,6 @@ export class FirebaseAuthService {
             const firstActive = memsSnap.docs.find(d => d.data().status === 'ACTIVE') || memsSnap.docs[0];
             const memData = firstActive.data();
             userCompanyId = memData.companyId || firstActive.id;
-            if (memData.role) role = memData.role;
-            if (memData.employeeId) employeeId = memData.employeeId;
-            if (memData.branchId) branchId = memData.branchId;
           }
         } catch (memErr) {
           console.warn('[FirebaseAuthService] Membership lookup handled:', memErr);
@@ -1325,12 +1358,41 @@ export class FirebaseAuthService {
         throw new Error('User is not associated with any company.');
       }
 
+      // Resolve trusted role and authority
+      const role: UserRole = isUserSuperAdmin
+        ? 'SUPER_ADMIN'
+        : ((uData?.role || claims.role || 'COMPANY_ADMIN') as UserRole);
+
+      const isCompanyAdmin = role === 'COMPANY_ADMIN';
+
+      const authorityLevel = isUserSuperAdmin
+        ? 'A0_OWNER'
+        : (uData?.authorityLevel || (claims.aLvl as any) || (isCompanyAdmin ? 'A0_OWNER' : 'A9_SUPPORT'));
+
+      const dataScope = isUserSuperAdmin || isCompanyAdmin
+        ? 'COMPANY'
+        : (uData?.dataScope || 'SELF');
+
+      const employeeId = uData?.employeeId || (isCompanyAdmin ? 'ADM-001' : (isUserSuperAdmin ? 'SA-001' : `EMP-${fbUser.uid.substring(0, 6).toUpperCase()}`));
+      const fullName = uData?.fullName || fbUser.displayName || cleanInputLower.split('@')[0] || 'Authenticated User';
+      const branchId = uData?.branchId || (isUserSuperAdmin ? 'HQ' : 'MAIN');
+      const assignedSiteId: string | undefined = uData?.assignedSiteId || (claims.sId as string) || undefined;
+      const accountStatus: AccountStatus = isCompanyAdmin || isUserSuperAdmin
+        ? 'ACTIVE'
+        : (((uData?.accountStatus || uData?.status) as AccountStatus) || 'PENDING_APPROVAL');
+      const departmentId: string | undefined = uData?.departmentId || (claims.dId as string) || (isCompanyAdmin ? 'ADMINISTRATION' : (isUserSuperAdmin ? 'DEPT-SUPER-ADMIN' : undefined));
+      const departmentName: string | undefined = uData?.departmentName || (isCompanyAdmin ? 'Administration' : (isUserSuperAdmin ? 'Super Admin' : undefined));
+      const companyAdminApproval: ApprovalStatus = isCompanyAdmin || isUserSuperAdmin ? 'APPROVED' : (uData?.companyAdminApproval || 'PENDING');
+      const hrApproval: ApprovalStatus = isCompanyAdmin || isUserSuperAdmin ? 'APPROVED' : (uData?.hrApproval || 'PENDING');
+
       const session: UserSession = {
         userId: fbUser.uid,
         employeeId,
         fullName,
         email: cleanInputLower,
         role,
+        authorityLevel,
+        dataScope,
         companyId: userCompanyId,
         branchId,
         assignedSiteId,
@@ -1340,7 +1402,7 @@ export class FirebaseAuthService {
         lastActiveAt: Date.now(),
         loginMode: 'PASSWORD',
         accountStatus,
-        emailVerified: fbUser.emailVerified ,
+        emailVerified: fbUser.emailVerified || Boolean(claims.email_verified),
         departmentId,
         departmentName,
         companyAdminApproval,

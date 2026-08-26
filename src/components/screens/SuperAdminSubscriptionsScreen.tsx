@@ -8,6 +8,7 @@ import { UserSession, PhaseAScreen, SubscriptionPlan, CompanySubscription, Compa
 import { SubscriptionService } from '../../services/subscriptionService';
 import { FirestoreService } from '../../services/firestoreService';
 import { useTheme } from '../../context/ThemeContext';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface SuperAdminSubscriptionsScreenProps {
   userSession: UserSession;
@@ -25,6 +26,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
   onNavigate
 }) => {
   const { isDark } = useTheme();
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError } = useFeedback();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [companySubs, setCompanySubs] = useState<CompanySubItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,6 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
   const [durationMonths, setDurationMonths] = useState<number>(12);
   const [subStatus, setSubStatus] = useState<'ACTIVE' | 'TRIAL' | 'PAST_DUE' | 'SUSPENDED' | 'GRACE_PERIOD'>('ACTIVE');
   const [isUpdatingSub, setIsUpdatingSub] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // New Plan Creation Modal
   const [showCreatePlanModal, setShowCreatePlanModal] = useState(false);
@@ -193,14 +194,17 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
         updatedBy: userSession.userId
       };
 
+      const dismiss = showLoading('Seeding standard SaaS plans...');
       await SubscriptionService.createPlan(starter);
       await SubscriptionService.createPlan(pro);
       await SubscriptionService.createPlan(enterprise);
+      dismiss();
       
-      setToastMessage('Standard SaaS plans seeded successfully.');
+      showSuccess('✓ Successfully Created: Standard SaaS Plans');
       fetchData();
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to create default plans', e);
+      handleError(e, '✕ Creation Failed');
     }
   };
 
@@ -212,9 +216,20 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
     setDurationMonths(12);
   };
 
+  const handleCancelAssign = () => {
+    setSelectedTenant(null);
+    showCancelled('🚫 Cancelled');
+  };
+
+  const handleCancelCreatePlan = () => {
+    setShowCreatePlanModal(false);
+    showCancelled('🚫 Cancelled');
+  };
+
   const handleSaveSubscription = async () => {
-    if (!selectedTenant) return;
+    if (!selectedTenant || isUpdatingSub) return;
     setIsUpdatingSub(true);
+    const dismiss = showLoading('Updating SaaS subscription...');
     try {
       // 1. Assign plan & sync entitlements
       const newSub = await SubscriptionService.assignPlanToCompany(
@@ -234,19 +249,25 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
         );
       }
 
-      setToastMessage(`Updated SaaS subscription for ${selectedTenant.companyName} (${selectedTenant.companyId}).`);
+      dismiss();
+      showSuccess(`✓ Successfully Updated SaaS subscription for ${selectedTenant.companyName}`);
       setSelectedTenant(null);
       fetchData();
     } catch (err: any) {
+      dismiss();
       console.error('Error assigning subscription:', err);
-      setToastMessage(`Failed: ${err.message || 'Error updating subscription'}`);
+      handleError(err, '✕ Update Failed');
     } finally {
       setIsUpdatingSub(false);
     }
   };
 
   const handleCreateCustomPlan = async () => {
-    if (!newPlan.planCode || !newPlan.planName) return;
+    if (!newPlan.planCode || !newPlan.planName) {
+      showValidationFailed('Plan Code and Plan Name are required.');
+      return;
+    }
+    const dismiss = showLoading('Creating custom subscription plan...');
     try {
       const pId = `PLAN_${newPlan.planCode.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
       const planToSave: SubscriptionPlan = {
@@ -272,11 +293,14 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
       };
 
       await SubscriptionService.createPlan(planToSave);
+      dismiss();
       setShowCreatePlanModal(false);
-      setToastMessage(`Plan "${newPlan.planName}" created successfully.`);
+      showSuccess(`✓ Successfully Created: Plan "${newPlan.planName}"`);
       fetchData();
     } catch (err: any) {
+      dismiss();
       console.error('Failed to create plan:', err);
+      handleError(err, '✕ Creation Failed');
     }
   };
 
@@ -288,17 +312,6 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
   return (
     <div className={`min-h-screen ${isDark ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-800'}`}>
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        
-        {/* Toast Notification */}
-        {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 bg-indigo-600 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-indigo-400/30 animate-in fade-in slide-in-from-bottom-5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-            <span className="text-sm font-medium">{toastMessage}</span>
-            <button onClick={() => setToastMessage(null)} className="p-1 hover:bg-white/20 rounded-lg">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -646,8 +659,9 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
 
             <div className="flex justify-end gap-3 pt-2">
               <button
-                onClick={() => setSelectedTenant(null)}
-                className="px-4 py-2 text-xs font-semibold rounded-xl border hover:bg-slate-800 transition"
+                onClick={handleCancelAssign}
+                disabled={isUpdatingSub}
+                className="px-4 py-2 text-xs font-semibold rounded-xl border hover:bg-slate-800 transition disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -674,7 +688,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
                 <p className="text-xs opacity-60">Define custom pricing, quotas, and module entitlements.</p>
               </div>
               <button 
-                onClick={() => setShowCreatePlanModal(false)}
+                onClick={handleCancelCreatePlan}
                 className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
@@ -797,7 +811,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
 
             <div className="flex justify-end gap-3 pt-3">
               <button
-                onClick={() => setShowCreatePlanModal(false)}
+                onClick={handleCancelCreatePlan}
                 className="px-4 py-2 text-xs font-semibold rounded-xl border hover:bg-slate-800 transition"
               >
                 Cancel

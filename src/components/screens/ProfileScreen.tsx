@@ -29,6 +29,7 @@ import { FirestoreService } from '../../services/firestoreService';
 import { TotpService, TotpSetupResult } from '../../services/totpService';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface ProfileScreenProps {
   userSession: UserSession;
@@ -51,6 +52,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   activeCompany
 }) => {
   const { isDark } = useTheme();
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const [profile, setProfile] = useState<UserProfileData>(EMPTY_PROFILE);
   const [isEditing, setIsEditing] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState<string | null>(null);
@@ -87,15 +89,24 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   }, [userSession]);
 
   const handleSave = async () => {
-    await FirestoreService.saveUserProfile(userSession.userId, profile);
-    setIsEditing(false);
-    setSavedSuccess('Profile changes saved and synced to Firestore!');
-    setTimeout(() => setSavedSuccess(null), 3000);
+    const dismiss = showLoading('Saving profile details...');
+    try {
+      await FirestoreService.saveUserProfile(userSession.userId, profile);
+      dismiss();
+      setIsEditing(false);
+      showSuccess('✓ Profile changes saved and synced successfully!');
+      setSavedSuccess('Profile changes saved and synced to Firestore!');
+      setTimeout(() => setSavedSuccess(null), 3000);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Save Profile Failed');
+    }
   };
 
   const handleStartMfaSetup = async () => {
     setMfaVerifyError(null);
     setMfaVerifyCode('');
+    const dismiss = showLoading('Initializing 2FA setup...');
     try {
       const idToken = await auth.currentUser?.getIdToken();
       if (!idToken) throw new Error('Not authenticated');
@@ -109,6 +120,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       });
       
       const data = await res.json();
+      dismiss();
       if (!res.ok) throw new Error(data.error || 'Failed to initialize MFA generator.');
       
       // Store returned data temporarily for the modal
@@ -126,21 +138,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       
       setShowMfaModal(true);
     } catch (err: any) {
+      dismiss();
       setMfaVerifyError(err.message || 'Failed to initialize MFA generator.');
+      handleError(err, '✕ 2FA Setup Initialization Failed');
     }
   };
 
   const handleConfirmMfaActivation = async () => {
     if (!mfaSetupData) return;
     if (mfaVerifyCode.trim().length !== 6) {
+      showValidationFailed('Please enter the 6-digit code from your authenticator app.');
       setMfaVerifyError('Please enter the 6-digit code from your authenticator app.');
       return;
     }
 
     setIsActivatingMfa(true);
     setMfaVerifyError(null);
+    const dismiss = showLoading('Verifying 6-digit code and activating 2FA...');
 
-        try {
+    try {
       const idToken = await auth.currentUser?.getIdToken();
       if (!idToken) throw new Error('Not authenticated');
 
@@ -164,20 +180,34 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       setExistingBackupCodes(data.backupCodes || []);
       setShowMfaModal(false);
       setMfaSetupData(null);
+      dismiss();
 
+      showSuccess('✓ Two-Factor Authentication (TOTP) successfully activated!');
       setSavedSuccess('Two-Factor Authentication (TOTP) successfully activated!');
       setTimeout(() => setSavedSuccess(null), 4000);
     } catch (err: any) {
+      dismiss();
       setMfaVerifyError(err.message || 'Failed to save MFA configuration.');
+      handleError(err, '✕ 2FA Activation Failed');
     } finally {
       setIsActivatingMfa(false);
     }
   };
 
   const handleDisableMfa = async () => {
-    const confirm = window.confirm('Are you sure you want to disable Two-Factor Authentication? Your account will only be protected by password.');
-    if (!confirm) return;
+    const confirmed = await confirm({
+      title: 'Disable Two-Factor Authentication',
+      message: 'Are you sure you want to disable Two-Factor Authentication? Your account will only be protected by password.',
+      confirmLabel: 'Disable 2FA',
+      cancelLabel: 'Cancel',
+      isDestructive: true
+    });
+    if (!confirmed) {
+      showCancelled('🚫 2FA disable cancelled');
+      return;
+    }
 
+    const dismiss = showLoading('Disabling Two-Factor Authentication...');
     try {
       const idToken = await auth.currentUser?.getIdToken();
       if (!idToken) throw new Error('Not authenticated');
@@ -199,10 +229,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
       setMfaEnabled(false);
       setExistingBackupCodes([]);
+      dismiss();
+      showSuccess('✓ Two-Factor Authentication has been disabled.');
       setSavedSuccess('Two-Factor Authentication has been disabled.');
       setTimeout(() => setSavedSuccess(null), 3000);
     } catch (err: any) {
-      alert('Failed to disable MFA: ' + err.message);
+      dismiss();
+      handleError(err, '✕ Disable 2FA Failed');
     }
   };
 

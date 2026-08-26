@@ -17,6 +17,7 @@ import {
 import { CompanyTenant, UserSession, PhaseAScreen, MASTER_APP_MODULES, AppModule } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { useTheme } from '../../context/ThemeContext';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface SuperAdminModulesScreenProps {
   currentSession: UserSession;
@@ -28,6 +29,7 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
   onNavigate
 }) => {
   const { isDark } = useTheme();
+  const { showSuccess, showError, showLoading, handleError } = useFeedback();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [companies, setCompanies] = useState<CompanyTenant[]>([]);
@@ -35,7 +37,6 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const [searchFilter, setSearchFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
-  const [message, setMessage] = useState<{ type: 'SUCCESS' | 'ERROR'; text: string } | null>(null);
 
   useEffect(() => {
     loadCompanies();
@@ -52,6 +53,7 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
       }
     } catch (err) {
       console.error('[SuperAdminModulesScreen] Error loading companies:', err);
+      handleError(err, 'Failed to load companies');
     } finally {
       setLoading(false);
     }
@@ -62,7 +64,6 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
     const comp = companies.find(c => c.companyId === code);
     if (comp) {
       setEnabledModules(comp.enabledModules || MASTER_APP_MODULES.map(m => m.key));
-      setMessage(null);
     }
   };
 
@@ -78,21 +79,23 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
   const deselectAll = () => setEnabledModules([]);
 
   const handleSaveModules = async () => {
-    if (!selectedCompanyId) return;
+    if (!selectedCompanyId || saving) return;
     setSaving(true);
-    setMessage(null);
+    const dismiss = showLoading('Saving module entitlements...');
 
     try {
       const ok = await FirestoreService.updateCompanyModules(selectedCompanyId, enabledModules);
+      dismiss();
       if (ok) {
         // Update local state list
         setCompanies(companies.map(c => c.companyId === selectedCompanyId ? { ...c, enabledModules } : c));
-        setMessage({ type: 'SUCCESS', text: `Module entitlements updated for tenant company ${selectedCompanyId}.` });
+        showSuccess(`✓ Successfully Saved module entitlements for tenant ${selectedCompanyId}`);
       } else {
-        setMessage({ type: 'ERROR', text: 'Failed to update company module entitlements in Firestore.' });
+        showError('✕ Save Failed: Could not update company module entitlements');
       }
     } catch (err: any) {
-      setMessage({ type: 'ERROR', text: err.message || 'An error occurred while saving.' });
+      dismiss();
+      handleError(err, '✕ Save Failed');
     } finally {
       setSaving(false);
     }
@@ -142,17 +145,6 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
           <span>Save Module Configuration</span>
         </button>
       </div>
-
-      {message && (
-        <div className={`p-3.5 rounded-xl border text-xs flex items-center gap-2 ${
-          message.type === 'SUCCESS' 
-            ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300' 
-            : 'bg-rose-950/80 border-rose-800 text-rose-300'
-        }`}>
-          {message.type === 'SUCCESS' ? <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> : <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />}
-          <span>{message.text}</span>
-        </div>
-      )}
 
       {/* Tenant Company Selector Bar */}
       <div className={`p-4 rounded-2xl border transition-colors duration-300 ${isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-3`}>

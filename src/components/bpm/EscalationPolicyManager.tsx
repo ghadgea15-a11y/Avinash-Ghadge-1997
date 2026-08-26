@@ -23,12 +23,14 @@ import {
   Play
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface EscalationPolicyManagerProps {
   session: UserSession;
 }
 
 export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = ({ session }) => {
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError } = useFeedback();
   const [policies, setPolicies] = useState<EscalationPolicy[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPolicy, setEditingPolicy] = useState<Partial<EscalationPolicy> | null>(null);
@@ -90,24 +92,33 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
 
   const handleSavePolicy = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingPolicy || !editingPolicy.policyName) return;
+    if (!editingPolicy || !editingPolicy.policyName) {
+      showValidationFailed('Policy name is required.');
+      return;
+    }
 
     setSaving(true);
     setError(null);
     setSuccessMsg(null);
+    const dismiss = showLoading(editingPolicy.id ? 'Updating escalation policy...' : 'Creating escalation policy...');
 
     try {
       if (editingPolicy.id) {
         await BpmEscalationService.updatePolicy(session, editingPolicy.id, editingPolicy);
         setSuccessMsg(`Successfully updated policy '${editingPolicy.policyName}'.`);
+        showSuccess(`✓ Escalation policy '${editingPolicy.policyName}' updated successfully.`);
       } else {
         await BpmEscalationService.createPolicy(session, editingPolicy as any);
         setSuccessMsg(`Successfully created policy '${editingPolicy.policyName}'.`);
+        showSuccess(`✓ Escalation policy '${editingPolicy.policyName}' created successfully.`);
       }
+      dismiss();
       setEditingPolicy(null);
       await loadPolicies();
     } catch (err: any) {
+      dismiss();
       setError(err?.message || 'Failed to save escalation policy.');
+      handleError(err, '✕ Failed to save escalation policy');
     } finally {
       setSaving(false);
     }
@@ -116,6 +127,7 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
   const handleRunTestCheck = async () => {
     setTestProcessing(true);
     setTestResult(null);
+    const dismiss = showLoading('Evaluating timers and escalations...');
     try {
       const response = await fetch('/api/bpm/escalation/process', {
         method: 'POST',
@@ -128,14 +140,19 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
       }
       
       const data = await response.json();
+      dismiss();
       if (data.success) {
         setTestResult(`Evaluated ${data.result.totalChecked} instances. Reminders sent: ${data.result.totalReminders}, Escalations triggered: ${data.result.totalEscalated}.`);
+        showSuccess(`✓ Timer evaluation complete: ${data.result.totalChecked} checked, ${data.result.totalEscalated} escalated.`);
         await loadPolicies();
       } else {
         setTestResult(`Error: ${data.error}`);
+        showError(`Error: ${data.error}`);
       }
     } catch (err: any) {
+      dismiss();
       setTestResult(`Failed to execute timer check: ${err.message || 'Error processing'}`);
+      handleError(err, '✕ Timer check failed');
     } finally {
       setTestProcessing(false);
     }

@@ -26,6 +26,7 @@ import {
   FileCheck
 } from 'lucide-react';
 import { format, formatDistanceToNow, isPast, isFuture } from 'date-fns';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface DelegationManagerProps {
   session: UserSession;
@@ -59,6 +60,7 @@ const AVAILABLE_TRANSACTION_TYPES: { key: string; label: string }[] = [
 ];
 
 export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, onDelegationChanged }) => {
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError } = useFeedback();
   const [activeSubTab, setActiveSubTab] = useState<'MY_DELEGATIONS' | 'ASSIGNED_TO_ME' | 'ORGANIZATION_AUDIT'>('MY_DELEGATIONS');
   const [delegations, setDelegations] = useState<ProxyDelegation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -198,6 +200,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
     const delegatorEmp = employees.find(e => e.id === actualDelegatorId);
 
     setCreating(true);
+    const dismiss = showLoading('Creating proxy delegation...');
     try {
       await BpmDelegationService.createDelegation(session, {
         delegatorUserId: actualDelegatorId,
@@ -213,7 +216,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
         delegateDepartment: delegateEmp?.departmentId,
         
         scope: {
-          modules: selectedModules,
+          modules: selectedModules as ProxyScopeModule[],
           transactionTypes: selectedTransactionTypes,
           maxTier: maxTier > 0 ? maxTier : undefined
         },
@@ -222,12 +225,16 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
         reason: reason.trim()
       });
 
+      dismiss();
       setShowCreateModal(false);
       resetForm();
+      showSuccess('✓ Proxy delegation authority created successfully.');
       await loadDelegations();
       if (onDelegationChanged) onDelegationChanged();
     } catch (err: any) {
+      dismiss();
       setFormError(err.message || 'Failed to create proxy delegation.');
+      handleError(err, '✕ Failed to create proxy delegation');
     } finally {
       setCreating(false);
     }
@@ -236,14 +243,18 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
   const handleConfirmRevoke = async () => {
     if (!showRevokeModal) return;
     setRevoking(true);
+    const dismiss = showLoading('Revoking proxy delegation...');
     try {
       await BpmDelegationService.revokeDelegation(session, showRevokeModal.delegationId, revokeReason);
+      dismiss();
       setShowRevokeModal(null);
       setRevokeReason('');
+      showSuccess('✓ Proxy delegation revoked successfully.');
       await loadDelegations();
       if (onDelegationChanged) onDelegationChanged();
     } catch (err: any) {
-      alert(`Revocation failed: ${err.message || 'Error revoking delegation'}`);
+      dismiss();
+      handleError(err, '✕ Revocation failed');
     } finally {
       setRevoking(false);
     }

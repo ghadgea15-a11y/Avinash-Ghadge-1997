@@ -8,6 +8,7 @@ import { OfflineSyncService } from './services/offlineSyncService';
 import { FirestoreService } from './services/firestoreService';
 import { EnterpriseRiskScheduler } from './services/enterpriseRiskScheduler';
 import { ThemeProvider } from './context/ThemeContext';
+import { ActionFeedbackProvider } from './context/ActionFeedbackContext';
 import { getCurrentPathname, ROUTE_PATH_MAP, navigateToUrl } from './utils/publicRouter';
 import { updatePageSEO } from './utils/seo';
 import { NavigationDrawer } from './components/common/NavigationDrawer';
@@ -48,6 +49,7 @@ import { HistoricalTraceabilityScreen } from './components/screens/HistoricalTra
 import { EnterpriseScalabilityAssessmentScreen } from './components/screens/EnterpriseScalabilityAssessmentScreen';
 import { BiometricHubScreen } from './components/screens/BiometricHubScreen';
 import { SuperAdminGate } from './components/guards/SuperAdminGate';
+import { SuperAdminDashboard } from './components/screens/SuperAdminDashboard';
 import { PlatformDashboard } from './pages/super-admin/Dashboard';
 import { EnterpriseDashboardScreen } from './components/screens/EnterpriseDashboardScreen';
 import { CompanyBillingScreen } from './components/screens/CompanyBillingScreen';
@@ -82,6 +84,8 @@ import { MyTasksScreen } from './components/screens/MyTasksScreen';
 import { ReportsAnalyticsScreen } from './components/screens/ReportsAnalyticsScreen';
 
 import { ApprovalCenter } from './components/bpm/ApprovalCenter';
+import { FirebaseAuthService } from './services/firebaseAuthService';
+import { Loader2 } from 'lucide-react';
 
 export function App() {
   // Initialize current screen from URL if landing on legal, auth, or public route
@@ -156,6 +160,22 @@ export function App() {
       unsubAuth();
     };
   }, []);
+
+  // Ensure activeCompany tenant is loaded & consistent with userSession on startup/refresh
+  useEffect(() => {
+    if (userSession && userSession.companyId && userSession.companyId !== 'GLOBAL_ADMIN') {
+      if (!activeCompany || activeCompany.companyId !== userSession.companyId) {
+        FirebaseAuthService.verifyCompanyCode(userSession.companyId)
+          .then((comp) => {
+            setActiveCompany(comp);
+            SessionManager.setActiveCompany(comp);
+          })
+          .catch((err) => {
+            console.warn('[App] Failed to auto-load company tenant for active session:', err);
+          });
+      }
+    }
+  }, [userSession?.companyId, activeCompany?.companyId]);
 
   // Auto-detect screen size and set responsive viewport layout dynamically
   useEffect(() => {
@@ -309,7 +329,8 @@ export function App() {
 
   return (
     <ThemeProvider>
-      {/* 1. PUBLIC MARKETING WEBSITE: Rendered directly as a standalone full-width website */}
+      <ActionFeedbackProvider>
+        {/* 1. PUBLIC MARKETING WEBSITE: Rendered directly as a standalone full-width website */}
       {currentScreen === 'LANDING' ? (
         <div className="min-h-screen w-full font-sans transition-colors duration-200">
           <LandingPageScreen onNavigate={(s) => setCurrentScreen(s as any)} />
@@ -454,14 +475,17 @@ export function App() {
     {currentScreen.startsWith('SUPER_ADMIN') && (
   <SuperAdminGate userSession={userSession} onNavigate={(s) => setCurrentScreen(s as any)}>
     {currentScreen === 'SUPER_ADMIN_DASHBOARD' && (
-      <PlatformDashboard session={userSession} />
+      <SuperAdminDashboard 
+        currentSession={userSession!} 
+        onNavigate={setCurrentScreen} 
+      />
     )}
     {currentScreen === 'SUPER_ADMIN_CREATE_COMPANY' && (
       <SuperAdminCreateCompany
-        currentSession={userSession}
+        currentSession={userSession!}
         onNavigate={setCurrentScreen}
         onCompanyCreated={(companyId) => {
-          setCurrentScreen('SUPER_ADMIN_DASHBOARD');
+          setCurrentScreen('SUPER_ADMIN_COMPANIES');
         }}
       />
     )}
@@ -511,13 +535,22 @@ export function App() {
                         onSignOut={handleLogout}
                       />
                     )}
-                    {currentScreen === 'ENTERPRISE_DASHBOARD' && activeCompany && (
-                      <EnterpriseDashboardScreen
-                        userSession={userSession}
-                        company={activeCompany}
-                        onNavigate={setCurrentScreen}
-                        onLogout={handleLogout}
-                      />
+                    {currentScreen === 'ENTERPRISE_DASHBOARD' && (
+                      activeCompany ? (
+                        <EnterpriseDashboardScreen
+                          userSession={userSession}
+                          company={activeCompany}
+                          onNavigate={setCurrentScreen}
+                          onLogout={handleLogout}
+                        />
+                      ) : (
+                        <div id="company-resolving-loader" className="flex-1 flex items-center justify-center p-12 min-h-[400px]">
+                          <div className="flex flex-col items-center gap-3">
+                            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                            <p className="text-sm font-medium text-slate-500">Loading company workspace...</p>
+                          </div>
+                        </div>
+                      )
                     )}
 
                     {currentScreen === 'APPROVAL_MANAGEMENT' && (
@@ -875,6 +908,7 @@ export function App() {
           </main>
         </div>
       )}
+      </ActionFeedbackProvider>
     </ThemeProvider>
   );
 }

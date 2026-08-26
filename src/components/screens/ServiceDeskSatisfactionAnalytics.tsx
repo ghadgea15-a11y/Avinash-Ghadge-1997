@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { SatisfactionScoreService } from '../../services/satisfactionScoreService';
 import { SatisfactionScoreSummary, SatisfactionScoreFilter, UserSession } from '../../types';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface ServiceDeskSatisfactionAnalyticsProps {
   userSession: UserSession;
@@ -33,6 +34,7 @@ export function ServiceDeskSatisfactionAnalytics({
   activeCompany,
   onClose
 }: ServiceDeskSatisfactionAnalyticsProps) {
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError } = useFeedback();
   const [summary, setSummary] = useState<SatisfactionScoreSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string>('');
@@ -72,9 +74,37 @@ export function ServiceDeskSatisfactionAnalytics({
   }, [activeCompany.companyId, filters]);
 
   const handleExportCsv = async () => {
-    // In a full implementation we would export the CSAT CSV here.
-    // Assuming we fetch the raw feedback or the backend returns it.
-    alert('CSAT CSV Export initiated.');
+    if (!summary) {
+      showValidationFailed('No satisfaction metrics available to export.');
+      return;
+    }
+    const dismiss = showLoading('Exporting CSAT metrics report...');
+    try {
+      const headers = ['Metric', 'Value'];
+      const rows = [
+        ['Average Rating', (summary.overallAverageScore || 0).toFixed(2)],
+        ['Total Responses', (summary.totalFeedbackRecords || 0).toString()],
+        ['Response Rate %', (summary.surveyResponseRate || 0).toFixed(1)],
+        ['CSAT Positive %', (summary.overallSatisfactionPercentage || 0).toFixed(1)],
+        ['Positive Count (4-5 Stars)', (summary.positiveCount || 0).toString()],
+        ['Neutral Count (3 Stars)', (summary.neutralCount || 0).toString()],
+        ['Negative Count (1-2 Stars)', (summary.negativeCount || 0).toString()],
+        ['Escalation Count', (summary.escalationCount || 0).toString()],
+      ];
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `csat_analytics_${activeCompany.companyId}_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      dismiss();
+      showSuccess('✓ CSAT satisfaction analytics report exported.');
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Export Failed');
+    }
   };
 
   const updateFilter = (key: keyof SatisfactionScoreFilter, value: any) => {

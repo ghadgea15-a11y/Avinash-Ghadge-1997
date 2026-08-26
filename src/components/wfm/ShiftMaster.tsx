@@ -3,6 +3,7 @@ import { Plus, Edit3, Trash2, Clock, Calendar, CheckCircle2, XCircle, Search } f
 import { UserSession, CompanyTenant, ShiftRecord } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { motion, AnimatePresence } from 'motion/react';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface Props {
   userSession: UserSession;
@@ -10,11 +11,13 @@ interface Props {
 }
 
 export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => {
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const [shifts, setShifts] = useState<ShiftRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<ShiftRecord | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const [form, setForm] = useState<Partial<ShiftRecord>>({
     shiftName: '',
@@ -57,9 +60,18 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
     setIsModalOpen(true);
   };
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    showCancelled('🚫 Shift configuration cancelled');
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.shiftName || !form.shiftCode) return;
+    if (isSaving) return;
+    if (!form.shiftName?.trim() || !form.shiftCode?.trim()) {
+      showValidationFailed('Please provide both shift name and shift code.');
+      return;
+    }
 
     const shiftData: ShiftRecord = {
       ...(form as ShiftRecord),
@@ -71,13 +83,48 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
       updatedBy: userSession.userId,
     };
 
-    const success = await FirestoreService.saveShift(activeCompany.companyId, shiftData);
-    if (success) setIsModalOpen(false);
+    setIsSaving(true);
+    const dismiss = showLoading(editingShift ? 'Updating shift...' : 'Creating new shift...');
+    try {
+      const success = await FirestoreService.saveShift(activeCompany.companyId, shiftData);
+      dismiss();
+      if (success) {
+        setIsModalOpen(false);
+        showSuccess(`✓ Successfully ${editingShift ? 'Updated' : 'Created'}: Shift "${shiftData.shiftName}" (${shiftData.shiftCode})`);
+      } else {
+        showError('✕ Save Failed: Unable to save shift.');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Save Shift Failed');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDelete = async (shiftId: string) => {
-    if (window.confirm('Are you sure you want to delete this shift?')) {
+    const shift = shifts.find(s => s.id === shiftId);
+    const confirmed = await confirm({
+      title: 'Delete Shift',
+      message: `Are you sure you want to delete shift "${shift?.shiftName || shiftId}"?`,
+      confirmLabel: 'Delete Shift',
+      cancelLabel: 'Cancel',
+      isDestructive: true
+    });
+
+    if (!confirmed) {
+      showCancelled('🚫 Shift deletion cancelled');
+      return;
+    }
+
+    const dismiss = showLoading('Deleting shift...');
+    try {
       await FirestoreService.deleteShift(activeCompany.companyId, shiftId);
+      dismiss();
+      showSuccess(`✓ Successfully Deleted: Shift "${shift?.shiftName || shiftId}"`);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Delete Shift Failed');
     }
   };
 
@@ -197,7 +244,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
           >
             <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">{editingShift ? 'Edit Shift' : 'Create New Shift'}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
+              <button onClick={handleCloseModal} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
                 <XCircle className="w-6 h-6 text-slate-400" />
               </button>
             </div>
@@ -309,7 +356,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={handleCloseModal}
                   className="px-6 py-2.5 rounded-xl font-semibold text-slate-600 hover:bg-slate-100 transition-all"
                 >
                   Cancel

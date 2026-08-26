@@ -30,12 +30,14 @@ import {
   GitFork
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 interface ApprovalCenterProps {
   session: UserSession;
 }
 
 export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const [activeTab, setActiveTab] = useState<'PENDING' | 'DELEGATIONS' | 'POLICIES' | 'THRESHOLDS'>('PENDING');
   const [filterType, setFilterType] = useState<'ALL' | 'DIRECT' | 'DELEGATED'>('ALL');
   const [approvals, setApprovals] = useState<BpmApprovalInstance[]>([]);
@@ -80,12 +82,16 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
     }
     
     setActioningId(instanceId);
+    const dismiss = showLoading(`Processing ${action.toLowerCase()}...`);
     try {
       await BpmService.performAction(session, instanceId, action, reason);
+      dismiss();
+      showSuccess(`✓ Approval action "${action}" completed successfully.`);
       await loadApprovals();
     } catch (err: any) {
+      dismiss();
       console.error('Action failed:', err);
-      alert(`Action failed: ${err.message || 'Error processing approval'}`);
+      handleError(err, `✕ Action failed`);
     } finally {
       setActioningId(null);
     }
@@ -96,13 +102,17 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
     if (!returningInstance || !returnReason.trim()) return;
 
     setReturning(true);
+    const dismiss = showLoading('Returning approval for clarification...');
     try {
       await BpmService.performAction(session, returningInstance.id, 'RETURN', returnReason.trim());
+      dismiss();
       setReturningInstance(null);
       setReturnReason('');
+      showSuccess('✓ Approval returned for clarification.');
       await loadApprovals();
     } catch (err: any) {
-      alert(`Return failed: ${err.message || 'Error returning approval'}`);
+      dismiss();
+      handleError(err, '✕ Return failed');
     } finally {
       setReturning(false);
     }
@@ -113,6 +123,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
     if (!delegatingInstance || !delegateUserId.trim()) return;
 
     setDelegating(true);
+    const dismiss = showLoading('Delegating approval authority...');
     try {
       await BpmService.performAction(
         session, 
@@ -121,11 +132,14 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
         'Delegated approval authority', 
         delegateUserId.trim()
       );
+      dismiss();
       setDelegatingInstance(null);
       setDelegateUserId('');
+      showSuccess('✓ Approval delegated successfully.');
       await loadApprovals();
     } catch (err: any) {
-      alert(`Delegation failed: ${err.message || 'Error delegating approval'}`);
+      dismiss();
+      handleError(err, '✕ Delegation failed');
     } finally {
       setDelegating(false);
     }

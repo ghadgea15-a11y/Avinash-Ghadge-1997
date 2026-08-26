@@ -12,6 +12,7 @@ import { Pagination } from '../common/Pagination';
 import { StorageService } from '../../services/storageService';
 function uuidv4() { return crypto.randomUUID(); }
 import { getAuth } from 'firebase/auth';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 
 export const CertificationTrackingScreen: React.FC<{
   userSession: UserSession;
@@ -19,6 +20,7 @@ export const CertificationTrackingScreen: React.FC<{
   onNavigate: React.Dispatch<React.SetStateAction<PhaseAScreen>>;
 }> = ({ userSession, activeCompany, onNavigate }) => {
   const { isDark } = useTheme();
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError } = useFeedback();
   const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'EMPLOYEES'>('DASHBOARD');
   
   const [certifications, setCertifications] = useState<EmployeeCertificationRecord[]>([]);
@@ -91,14 +93,15 @@ export const CertificationTrackingScreen: React.FC<{
   const paginatedCerts = filteredCerts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleAssignCertification = async () => {
-    if (!activeCompany || !selectedEmployeeId || !newCert.certificationName || !newCert.certificateNumber) {
-       alert("Please fill all required fields");
+    if (!activeCompany || !selectedEmployeeId || !newCert.certificationName?.trim() || !newCert.certificateNumber?.trim()) {
+       showValidationFailed("Please fill all required fields (Employee, Certification Name, Certificate Number).");
        return;
     }
     const emp = employees.find(e => e.id === selectedEmployeeId);
     if (!emp) return;
 
     setLoading(true);
+    const dismiss = showLoading('Assigning certification to employee...');
     try {
       let documentUrl = '';
       if (selectedFile) {
@@ -133,20 +136,23 @@ export const CertificationTrackingScreen: React.FC<{
       await fetchData();
       setIsAssignModalOpen(false);
       setSelectedFile(null);
-    } catch (e) {
-      console.error(e);
-      alert("Failed to assign certification.");
+      dismiss();
+      showSuccess(`✓ Certification "${cert.certificationName}" assigned to ${cert.employeeName}!`);
+    } catch (e: any) {
+      dismiss();
+      handleError(e, "✕ Failed to assign certification");
     } finally {
       setLoading(false);
     }
   };
 
   const handleRenewCertification = async () => {
-    if (!activeCompany || !selectedCert || !newCert.certificateNumber || !newCert.issueDate || !newCert.expiryDate) {
-      alert("Please fill all required fields");
+    if (!activeCompany || !selectedCert || !newCert.certificateNumber?.trim() || !newCert.issueDate || !newCert.expiryDate) {
+      showValidationFailed("Please fill all required fields (Certificate Number, Issue Date, Expiry Date).");
       return;
     }
     setLoading(true);
+    const dismiss = showLoading('Renewing certification record...');
     try {
       let documentUrl = '';
       if (selectedFile) {
@@ -168,9 +174,11 @@ export const CertificationTrackingScreen: React.FC<{
       setIsRenewModalOpen(false);
       setSelectedCert(null);
       setSelectedFile(null);
-    } catch (e) {
-      console.error(e);
-      alert("Failed to renew certification");
+      dismiss();
+      showSuccess(`✓ Certification "${selectedCert.certificationName}" renewed successfully!`);
+    } catch (e: any) {
+      dismiss();
+      handleError(e, "✕ Failed to renew certification");
     } finally {
       setLoading(false);
     }

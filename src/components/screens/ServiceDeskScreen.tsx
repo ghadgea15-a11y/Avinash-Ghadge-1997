@@ -33,6 +33,7 @@ import { ServiceDeskFeedbackView } from './ServiceDeskFeedbackView';
 import { StorageService } from '../../services/storageService';
 import { OfflineSyncService } from '../../services/offlineSyncService';
 import { useTheme } from '../../context/ThemeContext';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 import { 
   LifeBuoy, 
   Plus, 
@@ -82,6 +83,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
   onNavigate
 }) => {
   const { isDark } = useTheme();
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const [tickets, setTickets] = useState<ServiceTicketRecord[]>([]);
   const [sites, setSites] = useState<SiteRecord[]>([]);
   const [clients, setClients] = useState<ClientRecord[]>([]);
@@ -264,11 +266,12 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
     if (!activeCompany || !userSession) return;
 
     if (!formData.title.trim() || !formData.category || !formData.siteId) {
-      alert('Please fill all required fields (Title, Category, and Site Location).');
+      showValidationFailed('Please fill all required fields (Title, Category, and Site Location).');
       return;
     }
 
     setSavingTicket(true);
+    const dismiss = showLoading('Creating service ticket...');
     try {
       const selectedSite = sites.find(s => s.id === formData.siteId);
       const siteClient = clients.find(c => c.legalName === selectedSite?.clientName || c.displayName === selectedSite?.clientName);
@@ -286,8 +289,9 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
         source: 'WEB'
       });
 
+      dismiss();
       if (!res.success) {
-        alert(res.error || 'Failed to create ticket.');
+        showError(res.error || 'Failed to create ticket.');
       } else {
         // If initial attachments were selected, securely upload them to the ticket evidence vault
         if (res.ticket && formData.attachments && formData.attachments.length > 0) {
@@ -322,9 +326,11 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
           clientId: '',
           attachments: []
         });
+        showSuccess(`✓ Ticket "${formData.title}" created successfully!`);
       }
     } catch (err: any) {
-      alert('Error creating ticket: ' + err.message);
+      dismiss();
+      handleError(err, '✕ Error creating ticket');
     } finally {
       setSavingTicket(false);
     }
@@ -495,15 +501,16 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
       );
 
       if (!res.success) {
-        alert(res.error || 'Failed to post comment.');
+        showError(res.error || 'Failed to post comment.');
       } else {
         setNewComment('');
         setCommentAttachments([]);
         setIsInternalComment(false);
+        showSuccess('✓ Comment posted.');
       }
     } catch (err: any) {
       console.error('Failed to add comment:', err);
-      alert(err.message || 'Failed to add comment.');
+      handleError(err, '✕ Failed to add comment');
     } finally {
       setIsSubmittingComment(false);
     }
@@ -523,14 +530,15 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
         editCommentText.trim()
       );
       if (!res.success) {
-        alert(res.error || 'Failed to edit comment.');
+        showError(res.error || 'Failed to edit comment.');
       } else {
         setEditingComment(null);
         setEditCommentText('');
+        showSuccess('✓ Comment updated.');
       }
     } catch (err: any) {
       console.error('Error editing comment:', err);
-      alert(err.message || 'Failed to edit comment.');
+      handleError(err, '✕ Failed to edit comment');
     } finally {
       setIsSavingEdit(false);
     }
@@ -550,14 +558,15 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
         archiveReason.trim()
       );
       if (!res.success) {
-        alert(res.error || 'Failed to archive comment.');
+        showError(res.error || 'Failed to archive comment.');
       } else {
         setArchivingComment(null);
         setArchiveReason('');
+        showSuccess('✓ Comment archived.');
       }
     } catch (err: any) {
       console.error('Error archiving comment:', err);
-      alert(err.message || 'Failed to archive comment.');
+      handleError(err, '✕ Failed to archive comment');
     } finally {
       setIsArchiving(false);
     }

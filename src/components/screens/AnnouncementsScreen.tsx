@@ -3,6 +3,7 @@ import { CompanyTenant, UserSession, PhaseAScreen, AnnouncementRecord, SiteRecor
 import { FirestoreService } from '../../services/firestoreService';
 import { RbacService } from '../../services/rbacService';
 import { useTheme } from '../../context/ThemeContext';
+import { useFeedback } from '../../context/ActionFeedbackContext';
 import { 
   Bell, 
   Megaphone, 
@@ -30,6 +31,7 @@ interface Props {
 
 export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onNavigate }) => {
   const { isDark } = useTheme();
+  const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
   const companyId = company.companyId || userSession.companyId;
 
   const [announcements, setAnnouncements] = useState<AnnouncementRecord[]>([]);
@@ -90,12 +92,13 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
   const handleCreateAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formState.title.trim() || !formState.message.trim()) {
-      alert('Please fill in both title and message.');
+      showValidationFailed('Please fill in both title and message.');
       return;
     }
 
+    setActionProcessing(true);
+    const dismiss = showLoading('Publishing announcement...');
     try {
-      setActionProcessing(true);
       const annId = `ANN-${Date.now()}`;
       const expiresAt = Date.now() + (formState.durationDays * 24 * 60 * 60 * 1000);
 
@@ -118,6 +121,9 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
 
       await FirestoreService.saveAnnouncement(companyId, record);
 
+      dismiss();
+      showSuccess(`✓ Successfully Published: "${record.title}"`);
+
       // Reset form
       setFormState({
         title: '',
@@ -129,9 +135,9 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
         durationDays: 7
       });
       setShowCreateModal(false);
-    } catch (err) {
-      console.error('Error creating announcement:', err);
-      alert('Failed to publish announcement.');
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Publish Failed');
     } finally {
       setActionProcessing(false);
     }
@@ -139,30 +145,53 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
 
   // Toggle Pin
   const handleTogglePin = async (ann: AnnouncementRecord) => {
+    const dismiss = showLoading(ann.isPinned ? 'Unpinning announcement...' : 'Pinning announcement...');
     try {
       const updated: AnnouncementRecord = {
         ...ann,
         isPinned: !ann.isPinned
       };
       await FirestoreService.saveAnnouncement(companyId, updated);
-    } catch (err) {
-      console.error('Error toggling pin:', err);
+      dismiss();
+      showSuccess(ann.isPinned ? `✓ Unpinned "${ann.title}"` : `✓ Pinned "${ann.title}" to top`);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Pin Toggle Failed');
     }
   };
 
   // Delete Handler
-  const handleDeleteAnnouncement = async (annId: string) => {
-    if (!window.confirm('Are you sure you want to delete this announcement? This action is permanent.')) return;
+  const handleDeleteAnnouncement = async (annId: string, title?: string) => {
+    const isConfirmed = await confirm({
+      title: 'Delete Announcement',
+      message: `Are you sure you want to permanently delete "${title || 'this announcement'}"? This action cannot be undone.`,
+      confirmLabel: 'Delete Announcement',
+      cancelLabel: 'Cancel',
+      isDestructive: true
+    });
 
+    if (!isConfirmed) {
+      showCancelled('🚫 Cancelled');
+      return;
+    }
+
+    setActionProcessing(true);
+    const dismiss = showLoading('Deleting announcement...');
     try {
-      setActionProcessing(true);
       await FirestoreService.deleteAnnouncement(companyId, annId);
-    } catch (err) {
-      console.error('Error deleting announcement:', err);
-      alert('Failed to delete announcement.');
+      dismiss();
+      showSuccess(`✓ Successfully Deleted: "${title || 'Announcement'}"`);
+    } catch (err: any) {
+      dismiss();
+      handleError(err, '✕ Delete Failed');
     } finally {
       setActionProcessing(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowCreateModal(false);
+    showCancelled('🚫 Cancelled');
   };
 
   // Filtered & Sorted Announcements
@@ -336,7 +365,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                           </button>
                           
                           <button
-                            onClick={() => handleDeleteAnnouncement(ann.id)}
+                            onClick={() => handleDeleteAnnouncement(ann.id, ann.title)}
                             title="Delete Announcement"
                             className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/40 text-slate-400 hover:text-rose-600"
                           >
@@ -401,7 +430,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                 </div>
               </div>
               <button 
-                onClick={() => setShowCreateModal(false)}
+                onClick={handleCloseModal}
                 className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
               >
                 <X className="w-5 h-5" />
@@ -525,7 +554,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
               <div className="flex items-center justify-end gap-2 pt-4 border-t">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={handleCloseModal}
                   className="px-4 py-2 text-xs font-semibold rounded-lg border hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   Cancel
