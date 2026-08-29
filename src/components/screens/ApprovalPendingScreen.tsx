@@ -138,7 +138,7 @@ export const ApprovalPendingScreen: React.FC<ApprovalPendingScreenProps> = ({
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} p-4 md:p-8 flex flex-col justify-between max-w-2xl mx-auto w-full`}>
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'} p-4 md:p-8 flex flex-col justify-between max-w-2xl mx-auto w-full`}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
@@ -146,7 +146,7 @@ export const ApprovalPendingScreen: React.FC<ApprovalPendingScreenProps> = ({
           <button
             onClick={onSignOut}
             className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition ${
-              isDark ? 'border-slate-800 hover:bg-slate-900 text-slate-300' : 'border-slate-200 hover:bg-slate-100 text-slate-700'
+              isDark ? 'border-slate-800 hover:bg-slate-900 text-slate-300' : 'border-slate-200 hover:bg-slate-100 text-slate-900'
             }`}
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -189,11 +189,11 @@ export const ApprovalPendingScreen: React.FC<ApprovalPendingScreenProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-2">
               <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80">
-                <span className="text-slate-500 text-[10px] uppercase font-mono block">Registered Email</span>
+                <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-mono block">Registered Email</span>
                 <span className="font-semibold text-white font-mono">{session.email}</span>
               </div>
               <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80">
-                <span className="text-slate-500 text-[10px] uppercase font-mono block">Company Code</span>
+                <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-mono block">Company Code</span>
                 <span className="font-semibold text-white font-mono">{session.companyId}</span>
               </div>
             </div>
@@ -330,7 +330,7 @@ export const ApprovalPendingScreen: React.FC<ApprovalPendingScreenProps> = ({
         </div>
       </div>
 
-      <div className="text-center pt-8 text-[11px] text-slate-500">
+      <div className="text-center pt-8 text-[11px] text-slate-500 dark:text-slate-400">
         Log Sheet Muster Enterprise System • Multi-Tenant Firestore Security
       </div>
     </div>

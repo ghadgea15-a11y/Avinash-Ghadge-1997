@@ -75,23 +75,23 @@ export const GenerateScorecardModal: React.FC<Props> = ({ session, company, defi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md">
         <div className="flex items-center justify-between p-6 border-b border-slate-200">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <FileBarChart className="w-5 h-5 text-indigo-600" />
             Generate Scorecard
           </h2>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full">
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-full">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {loading ? (
-          <div className="p-6 text-center text-slate-500">Loading configurations...</div>
+          <div className="p-6 text-center text-slate-500 dark:text-slate-400">Loading configurations...</div>
         ) : (
           <div className="p-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Contract</label>
+              <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Contract</label>
               <select
                 value={formData.contractId}
                 onChange={e => setFormData({ ...formData, contractId: e.target.value })}
@@ -102,13 +102,13 @@ export const GenerateScorecardModal: React.FC<Props> = ({ session, company, defi
                 ))}
               </select>
               {formData.contractId && (
-                <p className="text-xs mt-1 text-slate-500">{activeSlas} active SLA definitions found.</p>
+                <p className="text-xs mt-1 text-slate-500 dark:text-slate-400">{activeSlas} active SLA definitions found.</p>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Start Date</label>
                 <input
                   type="date"
                   value={formData.startDate}
@@ -117,7 +117,7 @@ export const GenerateScorecardModal: React.FC<Props> = ({ session, company, defi
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">End Date</label>
                 <input
                   type="date"
                   value={formData.endDate}
@@ -135,7 +135,7 @@ export const GenerateScorecardModal: React.FC<Props> = ({ session, company, defi
           </div>
         )}
 
-        <div className="p-6 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl">
+        <div className="p-6 border-t border-slate-200 flex justify-end gap-3 bg-white dark:bg-slate-950 rounded-b-xl">
           <button onClick={onClose} className="btn-secondary">Cancel</button>
           <button 
             onClick={handleGenerate} 

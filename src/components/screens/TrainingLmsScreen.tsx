@@ -52,6 +52,48 @@ export const TrainingLmsScreen: React.FC<{
     enrollment: null, attendance: 'PRESENT', score: 0, certFile: null
   });
 
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [verifyCertId, setVerifyCertId] = useState('');
+  const [verifyResult, setVerifyResult] = useState<any>(null);
+  const [selectedCertEnrollment, setSelectedCertEnrollment] = useState<TrainingEnrollmentRecord | null>(null);
+
+  const handleVerifyCertificate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeCompany || !verifyCertId.trim()) return;
+    const dismiss = showLoading('Verifying certificate signature & status...');
+    try {
+      const res = await LearningManagementService.verifyCertificate(activeCompany.companyId, verifyCertId.trim());
+      dismiss();
+      setVerifyResult(res);
+      if (res.isValid) {
+        showSuccess('✓ Certificate is VALID and verified.');
+      } else {
+        showError(`Certificate Status: ${res.status} - ${res.error || 'Invalid'}`);
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, 'Verification failed');
+    }
+  };
+
+  const handleUpdateRisk = async (enrollmentId: string, status: 'VERIFIED' | 'REVIEW_REQUIRED' | 'SUSPICIOUS' | 'INVALIDATED', reason: string) => {
+    if (!activeCompany || !userSession) return;
+    const dismiss = showLoading(`Updating anti-cheat risk status to ${status}...`);
+    try {
+      const res = await LearningManagementService.updateAntiCheatRiskStatus(userSession, enrollmentId, status, reason);
+      dismiss();
+      if (res.success) {
+        showSuccess(`✓ Risk status updated to ${status}`);
+        loadData();
+      } else {
+        showError(res.error || 'Failed to update risk status');
+      }
+    } catch (err: any) {
+      dismiss();
+      handleError(err, 'Failed to update risk');
+    }
+  };
+
   const loadData = async () => {
     if (!activeCompany) return;
     setLoading(true);
@@ -191,17 +233,20 @@ export const TrainingLmsScreen: React.FC<{
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-zinc-950">
+    <div className="flex-1 flex flex-col h-full bg-white dark:bg-slate-950 dark:bg-zinc-950">
       {/* HEADER */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-slate-900 dark:bg-zinc-900">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-xl font-bold text-black dark:text-white flex items-center gap-2">
             <FileBadge2 className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             Learning & Compliance
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Manage PSARA training, sessions, and certifications</p>
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={() => setIsVerifyModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-slate-200 rounded-xl text-sm font-bold shadow-sm transition-colors">
+            <ShieldAlert className="w-4 h-4 text-purple-600 dark:text-purple-400" /> Verify Certificate (QR)
+          </button>
           {activeTab === 'PROGRAMS' && (
             <button onClick={() => setIsProgramModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-bold shadow-sm transition-colors">
               <Plus className="w-4 h-4" /> New Program
@@ -221,7 +266,7 @@ export const TrainingLmsScreen: React.FC<{
       </div>
 
       {/* TABS */}
-      <div className="px-6 py-3 border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex gap-6">
+      <div className="px-6 py-3 border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-slate-900 dark:bg-zinc-900 flex gap-6">
         {[
           { id: 'PROGRAMS', label: 'Programs & Courses' },
           { id: 'SESSIONS', label: 'Scheduled Sessions' },
@@ -233,7 +278,7 @@ export const TrainingLmsScreen: React.FC<{
             className={`pb-3 text-sm font-bold border-b-2 transition-colors ${
               activeTab === tab.id 
                 ? 'border-purple-600 text-purple-600 dark:text-purple-400' 
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300'
             }`}
           >
             {tab.label}
@@ -243,7 +288,7 @@ export const TrainingLmsScreen: React.FC<{
 
       <div className="flex-1 overflow-auto p-6">
         {loading ? (
-          <div className="flex items-center justify-center h-full text-slate-500">Loading LMS Data...</div>
+          <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">Loading LMS Data...</div>
         ) : (
           <div className="space-y-4">
             
@@ -251,14 +296,14 @@ export const TrainingLmsScreen: React.FC<{
             {activeTab === 'PROGRAMS' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {programs.map(p => (
-                  <div key={p.id} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
+                  <div key={p.id} className="bg-white dark:bg-slate-900 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
                     <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-bold px-2 py-1 bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300 rounded-lg">{p.programCode}</span>
+                      <span className="text-xs font-bold px-2 py-1 bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 dark:text-slate-300 rounded-lg">{p.programCode}</span>
                       {p.isMandatoryForPSARA && (
                         <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 rounded-lg"><ShieldAlert className="w-3 h-3"/> PSARA MANDATORY</span>
                       )}
                     </div>
-                    <h3 className="font-bold text-slate-900 dark:text-white mb-1">{p.title}</h3>
+                    <h3 className="font-bold text-black dark:text-white mb-1">{p.title}</h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">{p.description}</p>
                     <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-400 border-t border-slate-100 dark:border-zinc-800 pt-4">
                       <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {p.durationHours} Hours</div>
@@ -268,7 +313,7 @@ export const TrainingLmsScreen: React.FC<{
                     </div>
                   </div>
                 ))}
-                {programs.length === 0 && <div className="col-span-full text-center p-8 text-slate-500">No training programs defined.</div>}
+                {programs.length === 0 && <div className="col-span-full text-center p-8 text-slate-500 dark:text-slate-400">No training programs defined.</div>}
               </div>
             )}
 
@@ -279,9 +324,9 @@ export const TrainingLmsScreen: React.FC<{
                   const prog = programs.find(p => p.id === s.programId);
                   const enrolledCount = enrollments.filter(e => e.sessionId === s.id).length;
                   return (
-                  <div key={s.id} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
+                  <div key={s.id} className="bg-white dark:bg-slate-900 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
                     <div className="flex justify-between items-start mb-3">
-                      <h3 className="font-bold text-slate-900 dark:text-white">{prog?.title || 'Unknown Program'}</h3>
+                      <h3 className="font-bold text-black dark:text-white">{prog?.title || 'Unknown Program'}</h3>
                       <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
                         s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                         s.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
@@ -314,15 +359,15 @@ export const TrainingLmsScreen: React.FC<{
                     )}
                   </div>
                 )})}
-                {sessions.length === 0 && <div className="col-span-full text-center p-8 text-slate-500">No scheduled sessions.</div>}
+                {sessions.length === 0 && <div className="col-span-full text-center p-8 text-slate-500 dark:text-slate-400">No scheduled sessions.</div>}
               </div>
             )}
 
             {/* ENROLLMENTS TAB */}
             {activeTab === 'ENROLLMENTS' && (
-              <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-white dark:bg-slate-900 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-slate-300">
+                  <thead className="bg-white dark:bg-slate-950 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 dark:text-slate-300">
                     <tr>
                       <th className="px-4 py-3 font-semibold">Employee</th>
                       <th className="px-4 py-3 font-semibold">Program</th>
@@ -332,9 +377,9 @@ export const TrainingLmsScreen: React.FC<{
                       <th className="px-4 py-3 font-semibold text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-zinc-800 text-slate-700 dark:text-slate-300">
+                  <tbody className="divide-y divide-slate-200 dark:divide-zinc-800 text-slate-900 dark:text-slate-300">
                     {enrollments.map(enr => (
-                      <tr key={enr.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50">
+                      <tr key={enr.id} className="hover:bg-white dark:bg-slate-950 dark:hover:bg-zinc-800/50">
                         <td className="px-4 py-3 font-medium">{enr.employeeName}</td>
                         <td className="px-4 py-3">{enr.programTitle}</td>
                         <td className="px-4 py-3">{enr.scheduledDate}</td>
@@ -342,7 +387,7 @@ export const TrainingLmsScreen: React.FC<{
                           <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
                             enr.attendanceStatus === 'PRESENT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                             enr.attendanceStatus === 'ABSENT' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' :
-                            'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-slate-400'
+                            'bg-slate-100 text-slate-900 dark:bg-zinc-800 dark:text-slate-400'
                           }`}>{enr.attendanceStatus}</span>
                         </td>
                         <td className="px-4 py-3">
@@ -376,7 +421,7 @@ export const TrainingLmsScreen: React.FC<{
                       </tr>
                     ))}
                     {enrollments.length === 0 && (
-                      <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">No enrollments found.</td></tr>
+                      <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">No enrollments found.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -389,10 +434,10 @@ export const TrainingLmsScreen: React.FC<{
       {/* CREATE PROGRAM MODAL */}
       {isProgramModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden">
-            <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-800/50">
-              <h3 className="font-bold text-slate-900 dark:text-white">Create Training Program</h3>
-              <button onClick={() => setIsProgramModalOpen(false)} className="text-slate-400 hover:text-slate-600"><XCircle className="w-5 h-5"/></button>
+          <div className="w-full max-w-lg bg-white dark:bg-slate-900 dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden">
+            <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-slate-950 dark:bg-zinc-800/50">
+              <h3 className="font-bold text-black dark:text-white">Create Training Program</h3>
+              <button onClick={() => setIsProgramModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><XCircle className="w-5 h-5"/></button>
             </div>
             <form onSubmit={handleCreateProgram} className="p-5 space-y-4">
               <div>
@@ -427,12 +472,12 @@ export const TrainingLmsScreen: React.FC<{
                   <input type="number" required min="0" value={progFormData.validityMonths} onChange={e => setProgFormData({...progFormData, validityMonths: parseInt(e.target.value)})} className="w-full px-3 py-2 text-sm rounded-xl border bg-transparent border-slate-300 dark:border-zinc-700 focus:outline-none" />
                 </div>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer mt-2 text-sm text-slate-700 dark:text-slate-300">
+              <label className="flex items-center gap-2 cursor-pointer mt-2 text-sm text-slate-900 dark:text-slate-300">
                 <input type="checkbox" checked={progFormData.isMandatoryForPSARA} onChange={e => setProgFormData({...progFormData, isMandatoryForPSARA: e.target.checked})} className="rounded text-purple-600" />
                 <span>Mandatory for PSARA Compliance</span>
               </label>
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-zinc-800">
-                <button type="button" onClick={() => setIsProgramModalOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-600">Cancel</button>
+                <button type="button" onClick={() => setIsProgramModalOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-400">Cancel</button>
                 <button type="submit" className="px-4 py-2 text-sm font-bold bg-purple-600 text-white rounded-xl hover:bg-purple-700">Save Program</button>
               </div>
             </form>
@@ -443,10 +488,10 @@ export const TrainingLmsScreen: React.FC<{
       {/* CREATE SESSION MODAL */}
       {isSessionModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden">
-            <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-800/50">
-              <h3 className="font-bold text-slate-900 dark:text-white">Schedule Training Session</h3>
-              <button onClick={() => setIsSessionModalOpen(false)} className="text-slate-400 hover:text-slate-600"><XCircle className="w-5 h-5"/></button>
+          <div className="w-full max-w-lg bg-white dark:bg-slate-900 dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden">
+            <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-slate-950 dark:bg-zinc-800/50">
+              <h3 className="font-bold text-black dark:text-white">Schedule Training Session</h3>
+              <button onClick={() => setIsSessionModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><XCircle className="w-5 h-5"/></button>
             </div>
             <form onSubmit={handleCreateSession} className="p-5 space-y-4">
               <div>
@@ -483,7 +528,7 @@ export const TrainingLmsScreen: React.FC<{
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-zinc-800">
-                <button type="button" onClick={() => setIsSessionModalOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-600">Cancel</button>
+                <button type="button" onClick={() => setIsSessionModalOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-400">Cancel</button>
                 <button type="submit" className="px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700">Schedule Session</button>
               </div>
             </form>
@@ -494,10 +539,10 @@ export const TrainingLmsScreen: React.FC<{
       {/* BULK ENROLL MODAL */}
       {isBulkEnrollModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-800/50 shrink-0">
-              <h3 className="font-bold text-slate-900 dark:text-white">Bulk Enroll Employees</h3>
-              <button onClick={() => setIsBulkEnrollModalOpen(false)} className="text-slate-400 hover:text-slate-600"><XCircle className="w-5 h-5"/></button>
+          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-slate-950 dark:bg-zinc-800/50 shrink-0">
+              <h3 className="font-bold text-black dark:text-white">Bulk Enroll Employees</h3>
+              <button onClick={() => setIsBulkEnrollModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><XCircle className="w-5 h-5"/></button>
             </div>
             <form onSubmit={handleBulkEnroll} className="flex-1 overflow-auto p-5 flex flex-col">
               <div className="mb-4 shrink-0">
@@ -512,7 +557,7 @@ export const TrainingLmsScreen: React.FC<{
               </div>
               <div className="flex-1 overflow-auto border border-slate-200 dark:border-zinc-800 rounded-xl mb-4">
                 <table className="w-full text-left text-sm relative">
-                  <thead className="bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-slate-300 sticky top-0 z-10">
+                  <thead className="bg-white dark:bg-slate-950 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 dark:text-slate-300 sticky top-0 z-10">
                     <tr>
                       <th className="px-4 py-2 font-semibold w-10">
                         <input type="checkbox" className="rounded" 
@@ -528,7 +573,7 @@ export const TrainingLmsScreen: React.FC<{
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-zinc-800">
                     {employees.map(emp => (
-                      <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 cursor-pointer" onClick={() => toggleEmployeeSelection(emp.id)}>
+                      <tr key={emp.id} className="hover:bg-white dark:bg-slate-950 dark:hover:bg-zinc-800/50 cursor-pointer" onClick={() => toggleEmployeeSelection(emp.id)}>
                         <td className="px-4 py-2">
                           <input type="checkbox" checked={bulkEnrollData.employeeIds.includes(emp.id)} readOnly className="rounded text-emerald-600" />
                         </td>
@@ -542,7 +587,7 @@ export const TrainingLmsScreen: React.FC<{
               <div className="flex justify-between items-center shrink-0 pt-4 border-t border-slate-200 dark:border-zinc-800">
                 <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">{bulkEnrollData.employeeIds.length} Selected</span>
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => setIsBulkEnrollModalOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-600">Cancel</button>
+                  <button type="button" onClick={() => setIsBulkEnrollModalOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-400">Cancel</button>
                   <button type="submit" className="px-4 py-2 text-sm font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">Confirm Enrollment</button>
                 </div>
               </div>
@@ -554,15 +599,15 @@ export const TrainingLmsScreen: React.FC<{
       {/* EVALUATE/ASSESSMENT MODAL */}
       {isAssessmentModalOpen && assessmentData.enrollment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden">
-            <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-800/50">
-              <h3 className="font-bold text-slate-900 dark:text-white">Evaluate Candidate</h3>
-              <button onClick={() => setIsAssessmentModalOpen(false)} className="text-slate-400 hover:text-slate-600"><XCircle className="w-5 h-5"/></button>
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden">
+            <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-slate-950 dark:bg-zinc-800/50">
+              <h3 className="font-bold text-black dark:text-white">Evaluate Candidate</h3>
+              <button onClick={() => setIsAssessmentModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><XCircle className="w-5 h-5"/></button>
             </div>
             <form onSubmit={handleAssessmentSubmit} className="p-5 space-y-4">
-              <div className="bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-slate-100 dark:border-zinc-800">
-                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{assessmentData.enrollment.employeeName}</p>
-                <p className="text-xs text-slate-500">{assessmentData.enrollment.programTitle}</p>
+              <div className="bg-white dark:bg-slate-950 dark:bg-zinc-800/50 p-3 rounded-xl border border-slate-100 dark:border-zinc-800">
+                <p className="text-sm font-bold text-black dark:text-slate-200">{assessmentData.enrollment.employeeName}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{assessmentData.enrollment.programTitle}</p>
               </div>
 
               <div>
@@ -587,8 +632,60 @@ export const TrainingLmsScreen: React.FC<{
               )}
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-zinc-800">
-                <button type="button" onClick={() => setIsAssessmentModalOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-600">Cancel</button>
+                <button type="button" onClick={() => setIsAssessmentModalOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-400">Cancel</button>
                 <button type="submit" className="px-4 py-2 text-sm font-bold bg-purple-600 text-white rounded-xl hover:bg-purple-700">Submit Result</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* VERIFY CERTIFICATE MODAL */}
+      {isVerifyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-white dark:bg-slate-900 dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden">
+            <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-slate-950 dark:bg-zinc-800/50">
+              <h3 className="font-bold text-black dark:text-white flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-purple-600 dark:text-purple-400" /> Verify Certificate (QR / ID)
+              </h3>
+              <button onClick={() => { setIsVerifyModalOpen(false); setVerifyResult(null); setVerifyCertId(''); }} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><XCircle className="w-5 h-5"/></button>
+            </div>
+            <form onSubmit={handleVerifyCertificate} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">Certificate ID / Enrollment ID *</label>
+                <div className="flex gap-2">
+                  <input type="text" required placeholder="e.g. ENR-1700000000-123" value={verifyCertId} onChange={e => setVerifyCertId(e.target.value)} className="flex-1 px-3 py-2 text-sm rounded-xl border bg-transparent border-slate-300 dark:border-zinc-700 focus:outline-none" />
+                  <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-bold">Verify</button>
+                </div>
+              </div>
+
+              {verifyResult && (
+                <div className={`p-4 rounded-xl border ${
+                  verifyResult.status === 'VALID' ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300' :
+                  verifyResult.status === 'EXPIRED' ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300' :
+                  'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300'
+                }`}>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-bold text-base">Status: {verifyResult.status}</span>
+                    <span className="text-xs px-2 py-1 bg-white/50 dark:bg-zinc-900/50 rounded">{verifyResult.isValid ? '✓ Trusted & Verified' : '✕ Verification Failed'}</span>
+                  </div>
+                  {verifyResult.enrollment ? (
+                    <div className="space-y-1 text-xs">
+                      <p><strong>Employee:</strong> {verifyResult.enrollment.employeeName}</p>
+                      <p><strong>Course:</strong> {verifyResult.enrollment.programTitle}</p>
+                      <p><strong>Score:</strong> {verifyResult.enrollment.scoreObtained}%</p>
+                      <p><strong>Issued:</strong> {verifyResult.enrollment.certificateIssuedDate ? new Date(verifyResult.enrollment.certificateIssuedDate).toLocaleDateString() : 'N/A'}</p>
+                      <p><strong>Expires:</strong> {verifyResult.enrollment.certificateExpiryDate ? new Date(verifyResult.enrollment.certificateExpiryDate).toLocaleDateString() : 'No Expiry'}</p>
+                      {verifyResult.error && <p className="text-rose-600 dark:text-rose-400 font-semibold mt-2">{verifyResult.error}</p>}
+                    </div>
+                  ) : (
+                    <p className="text-xs">{verifyResult.error || 'Certificate record not found.'}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-zinc-800">
+                <button type="button" onClick={() => { setIsVerifyModalOpen(false); setVerifyResult(null); setVerifyCertId(''); }} className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-400">Close</button>
               </div>
             </form>
           </div>

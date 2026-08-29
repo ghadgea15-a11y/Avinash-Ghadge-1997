@@ -35,7 +35,7 @@ export function TransferOrderTab({ session, company }: { session: UserSession, c
   return (
     <div className="flex h-full flex-col space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-slate-900">Transfer Orders</h3>
+        <h3 className="text-lg font-medium text-black dark:text-white">Transfer Orders</h3>
         <button 
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
@@ -44,9 +44,9 @@ export function TransferOrderTab({ session, company }: { session: UserSession, c
         </button>
       </div>
 
-      <div className="flex-1 overflow-auto rounded-md border border-slate-200 bg-white shadow-sm">
+      <div className="flex-1 overflow-auto rounded-md border border-slate-200 bg-white dark:bg-slate-900 shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-600 sticky top-0">
+          <thead className="bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 sticky top-0">
             <tr>
               <th className="px-4 py-3 font-medium">Transfer #</th>
               <th className="px-4 py-3 font-medium">Status</th>
@@ -63,15 +63,15 @@ export function TransferOrderTab({ session, company }: { session: UserSession, c
               const dstLoc = locations.find(l => l.id === t.destinationLocationId)?.name || t.destinationLocationId;
               
               return (
-                <tr key={t.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-900">{t.transferNumber}</td>
+                <tr key={t.id} className="hover:bg-white dark:bg-slate-950">
+                  <td className="px-4 py-3 font-medium text-black dark:text-white">{t.transferNumber}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={t.status} />
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{srcLoc}</td>
-                  <td className="px-4 py-3 text-slate-600 flex items-center gap-2"><ArrowRight className="h-3 w-3 text-slate-400" /> {dstLoc}</td>
-                  <td className="px-4 py-3 text-slate-600">{t.lines.length} items</td>
-                  <td className="px-4 py-3 text-slate-600">{t.expectedDeliveryDate ? new Date(t.expectedDeliveryDate).toLocaleDateString() : 'N/A'}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{srcLoc}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-400 flex items-center gap-2"><ArrowRight className="h-3 w-3 text-slate-400" /> {dstLoc}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{t.lines.length} items</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{t.expectedDeliveryDate ? new Date(t.expectedDeliveryDate).toLocaleDateString() : 'N/A'}</td>
                   <td className="px-4 py-3 text-right">
                     {t.status === 'SUBMITTED' && (
                       <button onClick={async () => {
@@ -91,7 +91,7 @@ export function TransferOrderTab({ session, company }: { session: UserSession, c
               );
             })}
             {transfers.length === 0 && !loading && (
-              <tr><td colSpan={7} className="text-center py-8 text-slate-500">No transfer orders found</td></tr>
+              <tr><td colSpan={7} className="text-center py-8 text-slate-500 dark:text-slate-400">No transfer orders found</td></tr>
             )}
           </tbody>
         </table>
@@ -104,7 +104,7 @@ export function TransferOrderTab({ session, company }: { session: UserSession, c
 }
 
 function StatusBadge({ status }: { status: string }) {
-  let bg = 'bg-slate-100 text-slate-800';
+  let bg = 'bg-slate-100 text-black';
   let Icon = Package;
   
   if (status === 'SUBMITTED') { bg = 'bg-blue-100 text-blue-800'; Icon = FileText; }
@@ -158,7 +158,7 @@ function CreateTransferModal({ session, company, locations, items, onClose, onSu
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl p-6">
+      <div className="w-full max-w-md rounded-xl bg-white dark:bg-slate-900 shadow-xl p-6">
         <h3 className="text-lg font-semibold mb-4">Create Transfer</h3>
         <form onSubmit={handleSave} className="space-y-4">
           <select required className="w-full border p-2 rounded text-sm" value={source} onChange={e=>setSource(e.target.value)}>
@@ -202,11 +202,11 @@ function ReceiveTransferModal({ session, company, transfer, onClose, onSuccess }
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl p-6">
+      <div className="w-full max-w-2xl rounded-xl bg-white dark:bg-slate-900 shadow-xl p-6">
         <h3 className="text-lg font-semibold mb-4">Receive Transfer: {transfer.transferNumber}</h3>
         <form onSubmit={handleSave} className="space-y-4">
           {lines.map((l: any, idx: number) => (
-            <div key={l.itemId} className="p-3 border rounded bg-slate-50 flex gap-4 items-center">
+            <div key={l.itemId} className="p-3 border rounded bg-white dark:bg-slate-950 flex gap-4 items-center">
               <div className="flex-1 font-medium">{l.itemName}</div>
               <div className="text-sm">Dispatched: {l.dispatchedQuantity}</div>
               <div className="flex flex-col gap-1 w-24">

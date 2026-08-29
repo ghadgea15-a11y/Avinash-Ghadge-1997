@@ -1,7 +1,7 @@
 import { BpmApprovalInstance } from '../types/bpm';
 import { FirestoreService } from './firestoreService';
 import { db } from '../firebase';
-import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 
 export class BpmIntegrationService {
   /**
@@ -37,31 +37,13 @@ export class BpmIntegrationService {
 
     switch (instance.sourceModule) {
       case 'LEAVE':
-        await FirestoreService.updateLeaveRequestStatus(
-          instance.companyId,
-          instance.sourceRecordId,
-          'APPROVED',
-          { uid: reviewerId, name: reviewerName, reason: 'Approved via BPM workflow' },
-          transaction
-        );
+        await this.performWrite(doc(db, 'companies', instance.companyId, 'leaveRequests', instance.sourceRecordId), { status: 'APPROVED' }, transaction);
         break;
       case 'OVERTIME':
         if (instance.transactionType === 'OVERTIME_REQUEST') {
-           await FirestoreService.updateOvertimeRequestStatus(
-             instance.companyId,
-             instance.sourceRecordId,
-             'APPROVED',
-             { uid: reviewerId, name: reviewerName, reason: 'Approved via BPM workflow' },
-             transaction
-           );
+           await this.performWrite(doc(db, 'companies', instance.companyId, 'overtime_requests', instance.sourceRecordId), { status: 'APPROVED' }, transaction);
         } else if (instance.transactionType === 'OVERTIME_ADJUSTMENT') {
-           await FirestoreService.updateOvertimeAdjustmentStatus(
-             instance.companyId,
-             instance.sourceRecordId,
-             'APPROVED',
-             { uid: reviewerId, name: reviewerName, reason: 'Approved via BPM workflow' },
-             transaction
-           );
+           await this.performWrite(doc(db, 'companies', instance.companyId, 'overtime_adjustments', instance.sourceRecordId), { status: 'APPROVED' }, transaction);
         }
         break;
       case 'SCM':
@@ -75,13 +57,7 @@ export class BpmIntegrationService {
         break;
       case 'PAYROLL':
         if (instance.transactionType === 'SALARY_ADVANCE') {
-           await FirestoreService.updateSalaryAdvanceStatus(
-             instance.companyId,
-             instance.sourceRecordId,
-             'APPROVED',
-             { uid: reviewerId, name: reviewerName },
-             transaction
-           );
+           await this.performWrite(doc(db, 'companies', instance.companyId, 'salary_advances', instance.sourceRecordId), { status: 'APPROVED' }, transaction);
         } else if (instance.transactionType === 'PAYMENT_BATCH') {
            const batchRef = doc(db, 'companies', instance.companyId, 'bank_payment_batches', instance.sourceRecordId);
            await this.performWrite(batchRef, { status: 'APPROVED', ...commonUpdate }, transaction);
@@ -120,6 +96,65 @@ export class BpmIntegrationService {
         };
         await this.performWrite(compRef, compPayload, transaction);
         break;
+      case 'PERFORMANCE_APPRAISAL':
+      case 'APPRAISAL': {
+        const appraisalRef = doc(db, 'companies', instance.companyId, 'performance_appraisals', instance.sourceRecordId);
+        const appraisalSnap = transaction ? await transaction.get(appraisalRef) : await getDoc(appraisalRef);
+        
+        await this.performWrite(appraisalRef, { status: 'APPROVED', ...commonUpdate }, transaction);
+
+        if (appraisalSnap.exists()) {
+          const appraisal = appraisalSnap.data() as any;
+          const employeeId = appraisal.employeeId;
+          const rating = appraisal.rating || appraisal.score || 3;
+          const proposedSalary = appraisal.proposedSalary || appraisal.newSalary;
+          const bonusAmount = appraisal.bonusAmount || appraisal.recommendedBonus || 0;
+
+          if (employeeId) {
+            const profilesQuery = query(collection(db, 'companies', instance.companyId, 'salaryProfiles'), where('employeeId', '==', employeeId));
+            const profilesSnap = await getDocs(profilesQuery);
+
+            let newBaseSalary = proposedSalary;
+            if (!newBaseSalary) {
+              const incrementPct = rating >= 5 ? 0.15 : (rating >= 4 ? 0.10 : (rating >= 3 ? 0.05 : 0));
+              if (!profilesSnap.empty) {
+                const existingProfile = profilesSnap.docs[0].data() as any;
+                const currentBase = existingProfile.baseMonthlySalary || 30000;
+                newBaseSalary = Math.round(currentBase * (1 + incrementPct));
+              } else {
+                newBaseSalary = 35000;
+              }
+            }
+
+            if (!profilesSnap.empty) {
+              const profileDoc = profilesSnap.docs[0];
+              const profileRef = doc(db, 'companies', instance.companyId, 'salaryProfiles', profileDoc.id);
+              await this.performWrite(profileRef, {
+                baseMonthlySalary: newBaseSalary,
+                lastAppraisalRating: rating,
+                lastAppraisalId: instance.sourceRecordId,
+                performanceBonus: bonusAmount,
+                updatedAt: now
+              }, transaction, 'UPDATE');
+            } else {
+              const newProfileId = `PRF-${Date.now()}`;
+              const profileRef = doc(db, 'companies', instance.companyId, 'salaryProfiles', newProfileId);
+              await this.performWrite(profileRef, {
+                id: newProfileId,
+                companyId: instance.companyId,
+                employeeId,
+                structureId: 'DEFAULT-STRUCT',
+                baseMonthlySalary: newBaseSalary,
+                lastAppraisalRating: rating,
+                lastAppraisalId: instance.sourceRecordId,
+                performanceBonus: bonusAmount,
+                effectiveDate: now.split('T')[0]
+              }, transaction, 'SET');
+            }
+          }
+        }
+        break;
+      }
       case 'TALENT_ACQUISITION':
         if (instance.transactionType === 'JOB_REQUISITION_APPROVAL') {
           const reqRef = doc(db, 'companies', instance.companyId, 'jobRequisitions', instance.sourceRecordId);
@@ -169,6 +204,12 @@ export class BpmIntegrationService {
         };
         await this.performWrite(compRef, compPayload, transaction);
         break;
+      case 'PERFORMANCE_APPRAISAL':
+      case 'APPRAISAL': {
+        const appraisalRef = doc(db, 'companies', instance.companyId, 'performance_appraisals', instance.sourceRecordId);
+        await this.performWrite(appraisalRef, { status: 'REJECTED', rejectedBy: reviewerId, rejectionReason: reason, updatedAt: now }, transaction);
+        break;
+      }
       case 'TALENT_ACQUISITION':
         if (instance.transactionType === 'JOB_REQUISITION_APPROVAL') {
           const reqRejectRef = doc(db, 'companies', instance.companyId, 'jobRequisitions', instance.sourceRecordId);
@@ -185,31 +226,13 @@ export class BpmIntegrationService {
         }
         break;
       case 'LEAVE':
-        await FirestoreService.updateLeaveRequestStatus(
-          instance.companyId,
-          instance.sourceRecordId,
-          'REJECTED',
-          { uid: reviewerId, name: reviewerName, reason },
-          transaction
-        );
+        await this.performWrite(doc(db, 'companies', instance.companyId, 'leaveRequests', instance.sourceRecordId), { status: 'REJECTED', rejectedBy: reviewerId, rejectionReason: reason, updatedAt: now }, transaction);
         break;
       case 'OVERTIME':
         if (instance.transactionType === 'OVERTIME_REQUEST') {
-           await FirestoreService.updateOvertimeRequestStatus(
-             instance.companyId,
-             instance.sourceRecordId,
-             'REJECTED',
-             { uid: reviewerId, name: reviewerName, reason },
-             transaction
-           );
+           await this.performWrite(doc(db, 'companies', instance.companyId, 'overtime_requests', instance.sourceRecordId), { status: 'REJECTED', rejectedBy: reviewerId, rejectionReason: reason, updatedAt: now }, transaction);
         } else if (instance.transactionType === 'OVERTIME_ADJUSTMENT') {
-           await FirestoreService.updateOvertimeAdjustmentStatus(
-             instance.companyId,
-             instance.sourceRecordId,
-             'REJECTED',
-             { uid: reviewerId, name: reviewerName, reason },
-             transaction
-           );
+           await this.performWrite(doc(db, 'companies', instance.companyId, 'overtime_adjustments', instance.sourceRecordId), { status: 'REJECTED', rejectedBy: reviewerId, rejectionReason: reason, updatedAt: now }, transaction);
         }
         break;
       case 'SCM':
@@ -223,13 +246,7 @@ export class BpmIntegrationService {
         break;
       case 'PAYROLL':
         if (instance.transactionType === 'SALARY_ADVANCE') {
-           await FirestoreService.updateSalaryAdvanceStatus(
-             instance.companyId,
-             instance.sourceRecordId,
-             'REJECTED',
-             { uid: reviewerId, name: reviewerName },
-             transaction
-           );
+           await this.performWrite(doc(db, 'companies', instance.companyId, 'salary_advances', instance.sourceRecordId), { status: 'REJECTED', rejectedBy: reviewerId, rejectionReason: reason, updatedAt: now }, transaction);
         } else if (instance.transactionType === 'PAYMENT_BATCH') {
            const batchRef = doc(db, 'companies', instance.companyId, 'bank_payment_batches', instance.sourceRecordId);
            await this.performWrite(batchRef, commonReject, transaction);
@@ -260,5 +277,6 @@ export class BpmIntegrationService {
     }
   }
 }
+
 
 

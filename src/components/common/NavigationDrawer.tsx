@@ -104,34 +104,37 @@ export function NavigationDrawer({
       
       {/* Drawer Panel */}
       <div className={`relative w-84 max-w-[88vw] h-full shadow-2xl flex flex-col z-10 transition-transform ${
-        isDark ? 'bg-slate-900 border-r border-slate-800 text-slate-100' : 'bg-white border-r border-slate-200 text-slate-900'
+        isDark ? 'bg-slate-900 border-r border-slate-800 text-slate-100' : 'bg-white border-r border-slate-200 text-black'
       }`}>
         
         {/* Drawer Header */}
         <div className={`p-4 border-b flex flex-col gap-2 shrink-0 ${
           isSuperAdmin 
             ? isDark ? 'bg-amber-950/30 border-amber-900/50' : 'bg-amber-500/10 border-amber-200'
-            : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+            : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-white shadow-sm ${
-                isSuperAdmin ? 'bg-amber-600 shadow-amber-600/30' : 'bg-indigo-600 shadow-indigo-600/30'
-              }`}>
-                {isSuperAdmin ? 'SA' : (activeCompany?.brandName?.[0] || 'L')}
-              </div>
-              <div className="overflow-hidden">
-                <h2 className="font-bold text-sm leading-tight truncate">
-                  {isSuperAdmin ? 'Platform Super Admin' : (activeCompany?.brandName || 'Log Sheet Muster')}
-                </h2>
-                <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full border inline-block ${
-                  isSuperAdmin 
-                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' 
-                    : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                }`}>
-                  {userSession?.role || 'AUTHENTICATED'}
-                </span>
-              </div>
+            <div className="flex items-center gap-2 overflow-hidden">
+              {isSuperAdmin ? (
+                <>
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-white shadow-sm bg-amber-600 shadow-amber-600/30">
+                    SA
+                  </div>
+                  <div className="overflow-hidden">
+                    <h2 className="font-bold text-sm leading-tight truncate">Platform Super Admin</h2>
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full border inline-block bg-amber-500/20 text-amber-400 border-amber-500/30">
+                      SUPER ADMIN
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col gap-0.5 overflow-hidden">
+                  <AppLogo size="sm" company={activeCompany} />
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full border inline-block w-max bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
+                    {userSession?.role || 'AUTHENTICATED'}
+                  </span>
+                </div>
+              )}
             </div>
 
             <button 
@@ -156,7 +159,7 @@ export function NavigationDrawer({
               className={`w-full pl-8 pr-3 py-1.5 rounded-xl text-xs border transition ${
                 isDark 
                   ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500' 
-                  : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
+                  : 'bg-white border-slate-300 text-black placeholder-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
               }`}
             />
             {searchQuery && (
@@ -175,7 +178,7 @@ export function NavigationDrawer({
           {filteredNavigation.length === 0 ? (
             <div className="py-8 text-center text-slate-400 space-y-1">
               <p className="font-semibold">No matching modules found</p>
-              <p className="text-[11px] text-slate-500">Try searching with another keyword</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Try searching with another keyword</p>
             </div>
           ) : (
             filteredNavigation.map((group) => {
@@ -204,7 +207,7 @@ export function NavigationDrawer({
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-slate-500">
+                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                       <span className="text-[10px] font-mono bg-slate-800/50 px-1.5 py-0.2 rounded text-slate-400">
                         {group.items.length}
                       </span>
@@ -238,7 +241,7 @@ export function NavigationDrawer({
                                   : 'bg-indigo-600 text-white font-bold shadow-sm'
                                 : isDark
                                   ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                                  : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                                  : 'text-slate-900 hover:bg-slate-100 hover:text-black'
                             }`}
                           >
                             <div className="flex items-center gap-2.5 min-w-0 pr-2">
@@ -282,7 +285,7 @@ export function NavigationDrawer({
         
         {/* Drawer Footer */}
         <div className={`p-3 border-t flex items-center justify-between gap-2 shrink-0 ${
-          isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+          isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           {onLockSession && (
             <button
@@ -293,7 +296,7 @@ export function NavigationDrawer({
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold border transition ${
                 isDark 
                   ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' 
-                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
+                  : 'bg-white border-slate-300 text-slate-900 hover:bg-slate-100'
               }`}
               title="Lock Session"
             >

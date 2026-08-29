@@ -50,7 +50,7 @@ export const LegalPoliciesScreen: React.FC<LegalPoliciesScreenProps> = ({
   ];
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} flex flex-col font-sans transition-colors duration-300`}>
+    <div className={`min-h-screen ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'} flex flex-col font-sans transition-colors duration-300`}>
       {/* Top Header */}
       <header className={`sticky top-0 z-30 border-b ${isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200'} backdrop-blur px-4 lg:px-8 py-3.5 flex items-center justify-between`}>
         <div className="flex items-center gap-4">
@@ -59,7 +59,7 @@ export const LegalPoliciesScreen: React.FC<LegalPoliciesScreenProps> = ({
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
               isDark 
                 ? 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700' 
-                : 'bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-950 hover:bg-slate-200'
+                : 'bg-slate-100 border-slate-200 text-slate-900 hover:text-slate-950 hover:bg-slate-200'
             }`}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -77,7 +77,7 @@ export const LegalPoliciesScreen: React.FC<LegalPoliciesScreenProps> = ({
         </div>
 
         <div className="flex items-center gap-3 text-xs">
-          <span className="hidden md:inline-block text-slate-500 font-mono text-[11px]">
+          <span className="hidden md:inline-block text-slate-500 dark:text-slate-400 font-mono text-[11px]">
             Platform: Log Sheet Muster (LSM)
           </span>
           <button
@@ -119,7 +119,7 @@ export const LegalPoliciesScreen: React.FC<LegalPoliciesScreenProps> = ({
                         : 'bg-indigo-50 border-indigo-300 text-indigo-900 font-semibold shadow-sm'
                       : isDark
                         ? 'bg-slate-900/60 border-slate-800/80 text-slate-400 hover:bg-slate-800/80 hover:text-slate-200'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-black'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -146,11 +146,11 @@ export const LegalPoliciesScreen: React.FC<LegalPoliciesScreenProps> = ({
             <p className="font-semibold text-slate-200">Shourya Enterprises Pvt. Ltd.</p>
             <div className="space-y-1 text-[11px] text-slate-400 font-mono">
               <p className="flex items-start gap-1.5">
-                <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-500 mt-0.5" />
+                <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-500 dark:text-slate-400 mt-0.5" />
                 <span>Ajanthanagar, Chinchwad, Pune, Maharashtra - 411019, India</span>
               </p>
               <p className="flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5 shrink-0 text-slate-500" />
+                <Mail className="w-3.5 h-3.5 shrink-0 text-slate-500 dark:text-slate-400" />
                 <span>ghadgea162@gmail.com</span>
               </p>
             </div>
@@ -158,7 +158,7 @@ export const LegalPoliciesScreen: React.FC<LegalPoliciesScreenProps> = ({
         </div>
 
         {/* Content View */}
-        <div className={`flex-1 p-6 sm:p-8 rounded-2xl border ${isDark ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-700 shadow-sm'} overflow-y-auto leading-relaxed`}>
+        <div className={`flex-1 p-6 sm:p-8 rounded-2xl border ${isDark ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-900 shadow-sm'} overflow-y-auto leading-relaxed`}>
           
           {/* Top Metadata */}
           <div className="border-b border-slate-800/80 pb-4 mb-6 flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-400">

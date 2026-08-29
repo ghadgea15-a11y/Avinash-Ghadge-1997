@@ -11,7 +11,7 @@ export const TrustValueStrip: React.FC = () => {
   ];
 
   return (
-    <section className="py-20 border-y border-[#E8E7E3] bg-[#F4F3EF]">
+    <section className="py-20 border-y border-slate-200 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Editorial Brand Statement */}
@@ -20,22 +20,22 @@ export const TrustValueStrip: React.FC = () => {
             Unified Operational Command
           </span>
           
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0A0D14] tracking-tight">
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-black tracking-tight">
             ONE PLATFORM.<br />
-            <span className="text-[#71717A]">EVERY OPERATION.</span>
+            <span className="text-slate-600">EVERY OPERATION.</span>
           </h2>
           
-          <p className="font-body text-sm sm:text-base text-[#52525B] leading-relaxed max-w-xl mx-auto">
+          <p className="font-body text-sm sm:text-base text-black leading-relaxed max-w-xl mx-auto">
             Eliminating fragmented point solutions, disconnected spreadsheets, and paper muster logs across nationwide enterprise facilities.
           </p>
         </div>
 
         {/* Minimal Typographic Horizon Line & Ticker */}
-        <div className="mt-12 pt-8 border-t border-[#E2E0D8]">
+        <div className="mt-12 pt-8 border-t border-slate-300">
           <div className="flex flex-wrap items-center justify-center gap-x-8 sm:gap-x-12 gap-y-4 text-center">
             {pillars.map((p, idx) => (
               <div key={idx} className="flex items-center gap-8 sm:gap-12">
-                <span className="font-display text-xs sm:text-sm font-bold tracking-widest text-[#0A0D14] hover:text-emerald-600 transition-colors">
+                <span className="font-display text-xs sm:text-sm font-bold tracking-widest text-black hover:text-emerald-600 transition-colors">
                   {p}
                 </span>
                 {idx < pillars.length - 1 && (

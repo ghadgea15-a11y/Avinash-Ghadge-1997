@@ -101,8 +101,8 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
             emailDeliveryStatus: data.emailDeliveryStatus || null,
             emailDeliveryError: data.emailDeliveryError || null,
             activationSentAt: data.activationSentAt || null,
-            createdAt: data.createdAt || new Date().toISOString(),
-            updatedAt: data.updatedAt || new Date().toISOString()
+            createdAt: data.createdAt?.seconds ? new Date(data.createdAt.seconds * 1000).toISOString() : (typeof data.createdAt === 'string' ? data.createdAt : new Date().toISOString()),
+            updatedAt: data.updatedAt?.seconds ? new Date(data.updatedAt.seconds * 1000).toISOString() : (typeof data.updatedAt === 'string' ? data.updatedAt : new Date().toISOString())
           } as CompanyTenant;
         });
 
@@ -297,7 +297,7 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
   const paginatedCompanies = filteredCompanies.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full`}>
+    <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'} p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full`}>
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -327,7 +327,7 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
             className={`px-3 py-2 text-xs font-semibold rounded-xl border transition flex items-center gap-1.5 ${
               isDark 
                 ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' 
-                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                : 'bg-white border-slate-200 text-slate-900 hover:bg-slate-100'
             }`}
             title="Refresh company records from Firestore"
           >
@@ -354,10 +354,10 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by company code, ID, brand name, admin email, legal entity..."
             className={`w-full pl-9 pr-3 py-2 text-xs rounded-xl border ${
-              isDark ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-900'
+              isDark ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-500' : 'bg-white border-slate-200 text-black'
             } focus:outline-none focus:border-amber-500`}
           />
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-500 dark:text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
 
         <div className="flex items-center gap-2">
@@ -370,7 +370,7 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
                   ? 'bg-amber-600 text-white'
                   : isDark
                     ? 'bg-slate-950 text-slate-400 border border-slate-800 hover:text-white'
-                    : 'bg-slate-100 text-slate-600 border border-slate-200 hover:text-slate-900'
+                    : 'bg-slate-100 text-slate-600 border border-slate-200 hover:text-black'
               }`}
             >
               {st === 'ALL' ? 'All Statuses' : st === 'ACTIVE' ? 'Active' : 'Suspended'}
@@ -403,12 +403,12 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
         </div>
       ) : filteredCompanies.length === 0 ? (
         <div className="py-16 text-center text-slate-400 space-y-3 bg-slate-900/20 rounded-2xl border border-slate-800/40 p-6">
-          <Building2 className="w-10 h-10 text-slate-600 mx-auto" />
+          <Building2 className="w-10 h-10 text-slate-600 dark:text-slate-400 mx-auto" />
           <div className="space-y-1">
             <p className="text-sm font-semibold text-slate-300">
               {companies.length === 0 ? 'No companies registered yet' : 'No matching companies found'}
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {companies.length === 0 
                 ? 'Provision your first tenant organization using the Register New Company button.'
                 : 'Try adjusting your search query or status filter.'}
@@ -470,7 +470,7 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
 
                   {/* Created Date */}
                   <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                    <Calendar className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                    <Calendar className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" />
                     <span>Registered: <strong className="text-slate-300 font-medium">{formatDate(company.createdAt)}</strong></span>
                   </div>
 
@@ -593,7 +593,7 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
       {/* Edit Modal */}
       {editingCompany && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className={`w-full max-w-lg p-6 rounded-2xl border ${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'} space-y-4 shadow-2xl`}>
+          <div className={`w-full max-w-lg p-6 rounded-2xl border ${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'} space-y-4 shadow-2xl`}>
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold flex items-center gap-2">
                 <Edit className="w-5 h-5 text-amber-500" />
@@ -669,7 +669,7 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
       {/* Delete Confirmation Modal */}
       {deletingCompany && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className={`w-full max-w-md p-6 rounded-2xl border ${isDark ? 'bg-slate-900 border-rose-800/80 text-white' : 'bg-white border-rose-300 text-slate-900'} space-y-4 shadow-2xl`}>
+          <div className={`w-full max-w-md p-6 rounded-2xl border ${isDark ? 'bg-slate-900 border-rose-800/80 text-white' : 'bg-white border-rose-300 text-black'} space-y-4 shadow-2xl`}>
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold flex items-center gap-2 text-rose-400">
                 <AlertCircle className="w-5 h-5" />

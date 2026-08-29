@@ -1,0 +1,6 @@
+export interface PolicyCondition { [key: string]: any; }
+export type PolicyConditionOperator = string;
+export type PolicyScopeType = string;
+export type PolicyEnforcementAction = string;
+export type PolicyType = string;
+export type ViolationStatus = string;

@@ -89,7 +89,7 @@ export const DeploymentManagementScreen: React.FC<Props> = ({ userSession, activ
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Layers className="w-6 h-6 text-indigo-600" /> Deployment Management
           </h2>
-          <p className="text-slate-500">Map employees to client sites and billing rates.</p>
+          <p className="text-slate-500 dark:text-slate-400">Map employees to client sites and billing rates.</p>
         </div>
         <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
           <Plus className="w-4 h-4" /> New Deployment
@@ -97,7 +97,7 @@ export const DeploymentManagementScreen: React.FC<Props> = ({ userSession, activ
       </div>
 
       {showCreate && (
-        <div className="bg-white p-6 rounded-xl shadow-sm border mb-6">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border mb-6">
           <h3 className="font-bold mb-4">{formData.id ? 'Edit Deployment' : 'New Deployment'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <select className="p-2 border rounded" value={formData.employeeId} onChange={e => setFormData({...formData, employeeId: e.target.value})}>
@@ -150,16 +150,16 @@ export const DeploymentManagementScreen: React.FC<Props> = ({ userSession, activ
           </div>
           <div className="flex gap-2 mt-6">
             <button onClick={handleSave} className="bg-indigo-600 text-white px-4 py-2 rounded">Save Deployment</button>
-            <button onClick={() => { setShowCreate(false); setFormData({}); }} className="bg-slate-200 px-4 py-2 rounded text-slate-700">Cancel</button>
+            <button onClick={() => { setShowCreate(false); setFormData({}); }} className="bg-slate-200 px-4 py-2 rounded text-slate-900 dark:text-slate-300">Cancel</button>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-sm">
+              <tr className="bg-white dark:bg-slate-950 border-b border-slate-200 text-slate-600 dark:text-slate-400 text-sm">
                 <th className="p-4 font-semibold">Employee</th>
                 <th className="p-4 font-semibold">Client & Site</th>
                 <th className="p-4 font-semibold">Type</th>
@@ -170,26 +170,26 @@ export const DeploymentManagementScreen: React.FC<Props> = ({ userSession, activ
             </thead>
             <tbody className="divide-y divide-slate-100">
               {deployments.map(dep => (
-                <tr key={dep.id} className="hover:bg-slate-50">
-                  <td className="p-4 font-medium text-slate-900">{dep.employeeName}</td>
+                <tr key={dep.id} className="hover:bg-white dark:bg-slate-950">
+                  <td className="p-4 font-medium text-black dark:text-white">{dep.employeeName}</td>
                   <td className="p-4">
-                    <div className="font-medium text-slate-900">{dep.clientName}</div>
-                    <div className="text-sm text-slate-500 flex items-center gap-1">
+                    <div className="font-medium text-black dark:text-white">{dep.clientName}</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
                       <MapPin className="w-3 h-3" /> {dep.siteName}
                     </div>
                   </td>
                   <td className="p-4">
-                    <span className="text-sm bg-slate-100 text-slate-700 px-2 py-1 rounded">{dep.deploymentType.replace('_', ' ')}</span>
+                    <span className="text-sm bg-slate-100 text-slate-900 dark:text-slate-300 px-2 py-1 rounded">{dep.deploymentType.replace('_', ' ')}</span>
                   </td>
                   <td className="p-4">
                     <div className="font-medium">₹{dep.billingRate}</div>
-                    <div className="text-xs text-slate-500">{dep.billingRateType.replace('_', ' ')}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{dep.billingRateType.replace('_', ' ')}</div>
                   </td>
                   <td className="p-4">
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       dep.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' :
                       dep.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' :
-                      'bg-slate-100 text-slate-700'
+                      'bg-slate-100 text-slate-900'
                     }`}>
                       {dep.status}
                     </span>
@@ -203,7 +203,7 @@ export const DeploymentManagementScreen: React.FC<Props> = ({ userSession, activ
               ))}
               {deployments.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-500">No deployments found.</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-500 dark:text-slate-400">No deployments found.</td>
                 </tr>
               )}
             </tbody>

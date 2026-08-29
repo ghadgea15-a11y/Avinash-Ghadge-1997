@@ -12,7 +12,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
   };
 
   return (
-    <footer className="bg-[#0A0D14] text-white border-t border-[#18181B] pt-16 pb-12 font-body">
+    <footer className="bg-black text-white border-t border-[#18181B] pt-16 pb-12 font-body">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* Main Footer Links Columns */}
@@ -102,7 +102,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
         </div>
 
         {/* Bottom Bar: Copyright & Compliance */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-mono">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 font-mono">
           <div>
             &copy; {new Date().getFullYear()} Log Sheet Muster &bull; Shourya Enterprises Pvt. Ltd. All rights reserved.
           </div>

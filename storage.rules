@@ -1,0 +1,52 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && request.auth.token.superAdmin == true;
+    }
+    
+    function belongsToCompany(companyId) {
+      return isAuthenticated() && request.auth.token.cId == companyId;
+    }
+    
+    function isHRAdmin(companyId) {
+      return belongsToCompany(companyId) && (
+        request.auth.token.aLvl == 'A0_OWNER' || 
+        request.auth.token.aLvl == 'A1_DIRECTOR_CEO' || 
+        request.auth.token.aLvl == 'A2_GENERAL_MANAGER' || 
+        request.auth.token.aLvl == 'A3_OFFICIAL_STAFF'
+      );
+    }
+
+    match /companies/{companyId}/{allPaths=**} {
+      // General company-scoped access
+      allow read: if belongsToCompany(companyId);
+      allow write: if isHRAdmin(companyId);
+      
+      // Strict protection for employee sensitive documents
+      match /employees/{employeeId}/{type}/{filename} {
+        allow read: if belongsToCompany(companyId) && (
+          isHRAdmin(companyId) || 
+          request.auth.uid == employeeId || 
+          request.auth.token.employeeId == employeeId
+        );
+        allow write: if belongsToCompany(companyId) && (
+          request.auth.uid == employeeId || 
+          isHRAdmin(companyId)
+        );
+        allow delete: if isHRAdmin(companyId);
+      }
+    }
+    
+    // Super Admin global access
+    match /{allPaths=**} {
+      allow read, write: if isSuperAdmin();
+    }
+  }
+}

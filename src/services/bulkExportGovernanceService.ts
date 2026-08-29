@@ -84,7 +84,7 @@ export class BulkExportGovernanceService {
       ).catch(() => {});
 
       // Audit Trail
-      const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId };
+      const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId } as any;
       await AuditTrailService.logUpdate(
         actorInfo,
         'GRC_GOVERNANCE',
@@ -192,7 +192,7 @@ export class BulkExportGovernanceService {
       const evidence = evidenceParts.length > 0 ? evidenceParts.join(' | ') : `Standard bulk ${operation} of ${affectedRecordCount} records.`;
 
       // Log to Immutable Audit Trail
-      const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId };
+      const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId } as any;
       await AuditTrailService.logAction(
         actorInfo,
         module,
@@ -200,11 +200,9 @@ export class BulkExportGovernanceService {
         entityType,
         correlationId,
         true,
-        undefined,
+        severity,
         `Bulk operation ${operation} on ${affectedRecordCount} ${entityType} records. Severity: ${severity}`,
-        { affectedCount: affectedRecordCount, rules: rulesTriggered, riskScore, isAfterHours },
-        undefined,
-        correlationId
+        { affectedCount: affectedRecordCount, rules: rulesTriggered, riskScore, isAfterHours }
       );
 
       // Only create high-level Governance Alert & Anomaly if risk score >= 25 or rules triggered
@@ -369,7 +367,7 @@ export class BulkExportGovernanceService {
       const evidence = evidenceParts.length > 0 ? evidenceParts.join(' | ') : `Standard export of ${recordCount} ${entityType} records (${exportFormat}).`;
 
       // Log to Immutable Audit Trail
-      const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId };
+      const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId } as any;
       await AuditTrailService.logAction(
         actorInfo,
         module,
@@ -379,9 +377,7 @@ export class BulkExportGovernanceService {
         true,
         severity,
         `Exported ${recordCount} ${entityType} records [${exportFormat}]. Sensitivity: ${dataClassification}. Severity: ${severity}`,
-        { exportFormat, dataClassification, recordCount, exportName, rules: rulesTriggered, riskScore, isAfterHours },
-        undefined,
-        correlationId
+        { exportFormat, dataClassification, recordCount, exportName, rules: rulesTriggered, riskScore, isAfterHours }
       );
 
       // Create Alert record if rules triggered, after-hours, or sensitive data involved
@@ -464,7 +460,7 @@ export class BulkExportGovernanceService {
             session,
             correlationId,
             source: 'DATA_EXPORT_GOVERNANCE'
-          });
+          } as any);
         } catch (compErr) {
           console.warn('[Compliance] Export evaluation warning:', compErr);
         }
@@ -554,7 +550,7 @@ export class BulkExportGovernanceService {
       }, { merge: true });
 
       // Immutable Audit Trail
-      const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId };
+      const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId } as any;
       await AuditTrailService.logUpdate(
         actorInfo,
         'GRC_SECURITY',

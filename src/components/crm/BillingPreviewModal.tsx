@@ -54,20 +54,20 @@ export const BillingPreviewModal: React.FC<Props> = ({ session, company, contrac
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-6 border-b border-slate-200">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <Calculator className="w-5 h-5 text-indigo-600" />
             Billing Matrix Calculation Preview
           </h2>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full">
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-full">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 bg-slate-50 border-b border-slate-200 grid grid-cols-1 md:grid-cols-4 gap-4 flex-shrink-0">
+        <div className="p-6 bg-white dark:bg-slate-950 border-b border-slate-200 grid grid-cols-1 md:grid-cols-4 gap-4 flex-shrink-0">
            <div className="md:col-span-2">
-             <label className="block text-sm font-medium text-slate-700 mb-1">Select Contract</label>
+             <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Select Contract</label>
              <select
                 value={formData.contractId}
                 onChange={e => setFormData({ ...formData, contractId: e.target.value })}
@@ -79,7 +79,7 @@ export const BillingPreviewModal: React.FC<Props> = ({ session, company, contrac
               </select>
            </div>
            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Period Start</label>
+              <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Period Start</label>
               <input
                 type="date"
                 value={formData.startDate}
@@ -88,7 +88,7 @@ export const BillingPreviewModal: React.FC<Props> = ({ session, company, contrac
               />
            </div>
            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Period End</label>
+              <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Period End</label>
               <div className="flex gap-2">
                 <input
                   type="date"
@@ -118,7 +118,7 @@ export const BillingPreviewModal: React.FC<Props> = ({ session, company, contrac
             <div className="flex flex-col items-center justify-center h-full text-amber-500 space-y-3">
                <AlertCircle className="w-12 h-12 text-amber-200" />
                <p className="font-medium">No billable operational quantities found for this period.</p>
-               <p className="text-sm text-slate-500">Ensure active rates exist and operational records (attendance/work orders) are marked as complete/present.</p>
+               <p className="text-sm text-slate-500 dark:text-slate-400">Ensure active rates exist and operational records (attendance/work orders) are marked as complete/present.</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -134,32 +134,32 @@ export const BillingPreviewModal: React.FC<Props> = ({ session, company, contrac
 
               <div className="border border-slate-200 rounded-lg overflow-hidden">
                 <table className="min-w-full divide-y divide-slate-200">
-                  <thead className="bg-slate-50">
+                  <thead className="bg-white dark:bg-slate-950">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Rate Type / Site</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Applicable Rate</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Quantity (Unit)</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Source Reference</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Gross Amount</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Rate Type / Site</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Applicable Rate</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Quantity (Unit)</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Source Reference</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Gross Amount</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-slate-200">
+                  <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200">
                     {previews.map((p, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50">
+                      <tr key={idx} className="hover:bg-white dark:bg-slate-950">
                         <td className="px-6 py-4">
-                          <div className="font-medium text-slate-900">{(p.rateType || 'Standard').replace(/_/g, ' ')}</div>
-                          <div className="text-xs text-slate-500">{p.siteId ? `Site: ${p.siteId}` : 'All Sites'}</div>
+                          <div className="font-medium text-black dark:text-white">{(p.rateType || 'Standard').replace(/_/g, ' ')}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{p.siteId ? `Site: ${p.siteId}` : 'All Sites'}</div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-900">
+                        <td className="px-6 py-4 text-sm text-black dark:text-white">
                            {p.currency} {(p.applicableRate ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
-                        <td className="px-6 py-4 text-sm font-medium text-slate-900">
+                        <td className="px-6 py-4 text-sm font-medium text-black dark:text-white">
                            {p.quantity} {p.unit}
                         </td>
-                        <td className="px-6 py-4 text-xs text-slate-500 font-mono">
+                        <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 font-mono">
                            {p.sourceReference}
                         </td>
-                        <td className="px-6 py-4 text-sm font-bold text-slate-900 text-right">
+                        <td className="px-6 py-4 text-sm font-bold text-black dark:text-white text-right">
                            {p.currency} {p.grossAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                       </tr>

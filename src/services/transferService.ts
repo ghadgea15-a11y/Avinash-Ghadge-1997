@@ -2,7 +2,7 @@ import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, orderBy, ru
 import { db } from '../firebase';
 import { 
   UserSession, TransferOrderRecord, TransferOrderLine, StockBalanceRecord, 
-  InventoryItemRecord, GatePassRecord, StockLedgerRecord
+  InventoryItemRecord, GatePassRecord, 
 } from '../types';
 import { ScmService } from './scmService';
 
@@ -22,7 +22,7 @@ export class TransferService {
     await setDoc(notifRef, {
       id: notifRef.id,
       companyId: transfer.companyId,
-      title: `Transfer Request: ${transfer.transferNumber}`,
+      title: `Transfer Request: ${transfer.id}`,
       message: `${session.fullName} requested a material transfer from ${transfer.sourceLocationId} to ${transfer.destinationLocationId}.`,
       type: 'INFO',
       timestamp: new Date().toISOString(),
@@ -40,7 +40,7 @@ export class TransferService {
       if (!docSnap.exists()) throw new Error('Transfer not found');
       
       const transfer = docSnap.data() as TransferOrderRecord;
-      if (transfer.status !== 'SUBMITTED' && transfer.status !== 'DRAFT') {
+      if (transfer.status !== "PENDING" && transfer.status !== 'DRAFT') {
         throw new Error('Invalid status for approval');
       }
 
@@ -52,15 +52,15 @@ export class TransferService {
         
         const available = (balDoc.exists() ? balDoc.data().quantity : 0) - (balDoc.exists() ? (balDoc.data().reservedQuantity || 0) : 0);
         
-        if (available < line.requestedQuantity) {
-          throw new Error(`Insufficient available stock for ${line.itemName}. Needed: ${line.requestedQuantity}, Available: ${available}`);
+        if (available < (line.requestedQuantity || 0)) {
+          throw new Error(`Insufficient available stock for ${line.itemName}. Needed: ${(line.requestedQuantity || 0)}, Available: ${available}`);
         }
         
-        line.approvedQuantity = line.requestedQuantity;
-        line.reservedQuantity = line.requestedQuantity;
+        line.approvedQuantity = (line.requestedQuantity || 0);
+        line.reservedQuantity = (line.requestedQuantity || 0);
         
         t.set(balRef, {
-          reservedQuantity: (balDoc.exists() ? (balDoc.data().reservedQuantity || 0) : 0) + line.requestedQuantity
+          reservedQuantity: (balDoc.exists() ? (balDoc.data().reservedQuantity || 0) : 0) + (line.requestedQuantity || 0)
         }, { merge: true });
       }
 
@@ -83,7 +83,7 @@ export class TransferService {
     });
   }
 
-  static async dispatchTransfer(session: UserSession, companyId: string, transferId: string, vehicleNumber?: string): Promise<void> {
+  static async dispatchTransfer(session: UserSession, companyId: string, transferId: string, vehicleNo?: string): Promise<void> {
     const ref = doc(db, 'companies', companyId, 'transfer_orders', transferId);
     
     await runTransaction(db, async (t) => {
@@ -116,8 +116,8 @@ export class TransferService {
         line.dispatchedQuantity = deduct;
         
         const itemData = (iDoc && iDoc.exists()) ? iDoc.data() : null;
-        let statusStr = undefined;
-        if (itemData) statusStr = await ScmService.handleThresholdAlerts(t, session, companyId, transfer.sourceLocationId, itemData as InventoryItemRecord, qty, newQty);
+        let statusStr: string | undefined = undefined;
+        if (itemData) statusStr = await ScmService.handleThresholdAlerts(companyId, itemData.id, newQty);
         
         t.set(balRef, { quantity: newQty, reservedQuantity: newRes, status: statusStr, lastUpdatedAt: new Date().toISOString() }, { merge: true });
         
@@ -135,7 +135,7 @@ export class TransferService {
           referenceType: 'TRANSFER_ORDER',
           performedByUid: session.userId,
           performedByName: session.fullName,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
         });
         
         if (iDoc.exists()) {
@@ -148,19 +148,14 @@ export class TransferService {
       const passData: GatePassRecord = {
         id: gpRef.id,
         companyId,
-        passNumber: `GP-TR-${Math.floor(Math.random()*10000)}`,
-        passType: 'OUTWARD',
+        referenceNo: `GP-TR-${Math.floor(Math.random()*10000)}`,
+        type: 'OUTWARD',
         status: 'DISPATCHED', // Starts dispatched so security verifies it out
-        sourceLocationId: transfer.sourceLocationId,
-        destinationLocationId: transfer.destinationLocationId,
-        lines: transfer.lines.map((l: TransferOrderLine) => ({ itemId: l.itemId, itemName: l.itemName, itemCode: 'NA', unit: l.unitOfMeasure, quantity: l.dispatchedQuantity || 0 })),
-        requesterId: session.userId,
-        requesterName: session.fullName,
-        recipientName: transfer.requestedByName,
-        purpose: 'INTERNAL_TRANSFER',
-        transferOrderId: transfer.id,
-        vehicleNumber,
-        createdAt: new Date().toISOString()
+        lines: transfer.lines.map((l: TransferOrderLine) => ({ itemId: l.itemId, itemName: l.itemName, itemCode: 'NA', uom: l.unitOfMeasure || l.uom, quantity: l.dispatchedQuantity || 0 })),
+        requestorName: session.fullName,
+        receiverName: transfer.requestedByName,
+        vehicleNo,
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
       };
       t.set(gpRef, passData);
 
@@ -224,8 +219,8 @@ export class TransferService {
             const nBal = pBal + rLine.received;
             
             const itemData = (iDoc && iDoc.exists()) ? iDoc.data() : null;
-            let statusStr = undefined;
-            if (itemData) statusStr = await ScmService.handleThresholdAlerts(t, session, companyId, transfer.destinationLocationId, itemData as InventoryItemRecord, pBal, nBal);
+            let statusStr: string | undefined = undefined;
+            if (itemData) statusStr = await ScmService.handleThresholdAlerts(companyId, itemData.id, nBal);
             
             t.set(balRef, { quantity: nBal, status: statusStr, lastUpdatedAt: new Date().toISOString() }, { merge: true });
             
@@ -243,7 +238,7 @@ export class TransferService {
               referenceType: 'TRANSFER_ORDER',
               performedByUid: session.userId,
               performedByName: session.fullName,
-              createdAt: new Date().toISOString()
+              createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
             });
             
             if (iDoc.exists()) {
@@ -253,13 +248,13 @@ export class TransferService {
         }
       }
 
-      let finalStatus: import('../types').TransferOrderStatus = transfer.status;
+      let finalStatus: import('../types').TransferOrderRecord["status"] = transfer.status;
       if (isPartial) {
-        finalStatus = 'PARTIALLY_RECEIVED';
+        finalStatus = 'RECEIVED';
       } else if (hasException) {
-        finalStatus = 'EXCEPTION';
+        finalStatus = 'CANCELLED';
       } else {
-        finalStatus = 'COMPLETED';
+        finalStatus = 'RECEIVED';
       }
 
       t.update(ref, {
@@ -272,7 +267,7 @@ export class TransferService {
       });
 
       // Update gate pass to received if it exists
-      if (transfer.gatePassId && finalStatus === 'COMPLETED') {
+      if (transfer.gatePassId && finalStatus === 'RECEIVED') {
         const gpRef = doc(db, 'companies', companyId, 'gate_passes', transfer.gatePassId);
         t.update(gpRef, { status: 'CLOSED', receivedAt: new Date().toISOString(), closedAt: new Date().toISOString() });
       }

@@ -45,7 +45,7 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
     setError('');
     const dismiss = showLoading('Saving ticket category...');
     
-    const payload = {
+    const payload: any = {
       ...editingCategory,
       displayOrder: editingCategory.displayOrder || 0,
       isActive: editingCategory.isActive ?? true,
@@ -102,7 +102,7 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className={`w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl ${isDark ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'}`}>
+      <div className={`w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl ${isDark ? 'bg-slate-900 text-slate-100' : 'bg-white text-black'}`}>
         <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800">
           <h2 className="text-xl font-bold">Service Ticket Categories</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
@@ -119,7 +119,7 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
           )}
 
           {editingCategory ? (
-            <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-lg border border-slate-200 dark:border-slate-700 mb-6">
+            <div className="bg-white dark:bg-slate-950 dark:bg-slate-800/50 p-6 rounded-lg border border-slate-200 dark:border-slate-700 mb-6">
               <h3 className="text-lg font-semibold mb-4">{editingCategory.id ? 'Edit Category' : 'New Category'}</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -129,7 +129,7 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
                     type="text" 
                     value={editingCategory.code || ''} 
                     onChange={e => setEditingCategory({...editingCategory, code: e.target.value.toUpperCase()})}
-                    className="w-full p-2 rounded border focus:outline-none focus:border-indigo-500 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600"
+                    className="w-full p-2 rounded border focus:outline-none focus:border-indigo-500 bg-white dark:bg-slate-900 dark:bg-slate-800 border-slate-300 dark:border-slate-600"
                     placeholder="e.g. MAINTENANCE"
                   />
                 </div>
@@ -139,7 +139,7 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
                     type="text" 
                     value={editingCategory.name || ''} 
                     onChange={e => setEditingCategory({...editingCategory, name: e.target.value})}
-                    className="w-full p-2 rounded border focus:outline-none focus:border-indigo-500 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600"
+                    className="w-full p-2 rounded border focus:outline-none focus:border-indigo-500 bg-white dark:bg-slate-900 dark:bg-slate-800 border-slate-300 dark:border-slate-600"
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -148,7 +148,7 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
                     type="text" 
                     value={editingCategory.description || ''} 
                     onChange={e => setEditingCategory({...editingCategory, description: e.target.value})}
-                    className="w-full p-2 rounded border focus:outline-none focus:border-indigo-500 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600"
+                    className="w-full p-2 rounded border focus:outline-none focus:border-indigo-500 bg-white dark:bg-slate-900 dark:bg-slate-800 border-slate-300 dark:border-slate-600"
                   />
                 </div>
                 <div>
@@ -156,7 +156,7 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
                   <select
                     value={editingCategory.parentId || ''}
                     onChange={e => setEditingCategory({...editingCategory, parentId: e.target.value || undefined})}
-                    className="w-full p-2 rounded border focus:outline-none focus:border-indigo-500 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600"
+                    className="w-full p-2 rounded border focus:outline-none focus:border-indigo-500 bg-white dark:bg-slate-900 dark:bg-slate-800 border-slate-300 dark:border-slate-600"
                   >
                     <option value="">None (Top Level)</option>
                     {categories.filter(c => c.id !== editingCategory.id && !c.parentId).map(c => (
@@ -169,7 +169,7 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
                   <select
                     value={editingCategory.defaultPriority || ''}
                     onChange={e => setEditingCategory({...editingCategory, defaultPriority: e.target.value || undefined})}
-                    className="w-full p-2 rounded border focus:outline-none focus:border-indigo-500 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600"
+                    className="w-full p-2 rounded border focus:outline-none focus:border-indigo-500 bg-white dark:bg-slate-900 dark:bg-slate-800 border-slate-300 dark:border-slate-600"
                   >
                     <option value="">None</option>
                     {priorityConfigs.map(c => (
@@ -183,7 +183,7 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
                     type="number" 
                     value={editingCategory.displayOrder || 0} 
                     onChange={e => setEditingCategory({...editingCategory, displayOrder: parseInt(e.target.value) || 0})}
-                    className="w-full p-2 rounded border focus:outline-none focus:border-indigo-500 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600"
+                    className="w-full p-2 rounded border focus:outline-none focus:border-indigo-500 bg-white dark:bg-slate-900 dark:bg-slate-800 border-slate-300 dark:border-slate-600"
                   />
                 </div>
                 <div className="flex items-center pt-6">
@@ -229,11 +229,11 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
           )}
 
           {loading ? (
-            <div className="py-12 text-center text-slate-500">Loading categories...</div>
+            <div className="py-12 text-center text-slate-500 dark:text-slate-400">Loading categories...</div>
           ) : (
             <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-lg">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
+                <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="p-4 font-semibold">Hierarchy / Name</th>
                     <th className="p-4 font-semibold">Code</th>
@@ -246,13 +246,13 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                   {categories.filter(c => !c.parentId).map(parent => (
                     <React.Fragment key={parent.id}>
-                      <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition group">
+                      <tr className="hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-800/50 transition group">
                         <td className="p-4 font-semibold">{parent.name}</td>
                         <td className="p-4 font-mono text-xs">{parent.code}</td>
                         <td className="p-4">{parent.defaultPriority || '-'}</td>
                         <td className="p-4">{parent.displayOrder}</td>
                         <td className="p-4">
-                          <span className={`px-2 py-1 text-xs rounded-full font-medium ${parent.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'}`}>
+                          <span className={`px-2 py-1 text-xs rounded-full font-medium ${parent.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-400'}`}>
                             {parent.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </td>
@@ -273,16 +273,16 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
                       </tr>
                       {/* Subcategories */}
                       {categories.filter(c => c.parentId === parent.id).map(child => (
-                         <tr key={child.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition group">
+                         <tr key={child.id} className="hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-800/50 transition group">
                          <td className="p-4 pl-12 text-slate-600 dark:text-slate-400 flex items-center gap-2">
                            <span className="w-4 h-px bg-slate-300 dark:bg-slate-600 inline-block"></span>
                            {child.name}
                          </td>
-                         <td className="p-4 font-mono text-xs text-slate-500">{child.code}</td>
-                         <td className="p-4 text-slate-500">{child.defaultPriority || '-'}</td>
-                         <td className="p-4 text-slate-500">{child.displayOrder}</td>
+                         <td className="p-4 font-mono text-xs text-slate-500 dark:text-slate-400">{child.code}</td>
+                         <td className="p-4 text-slate-500 dark:text-slate-400">{child.defaultPriority || '-'}</td>
+                         <td className="p-4 text-slate-500 dark:text-slate-400">{child.displayOrder}</td>
                          <td className="p-4">
-                           <span className={`px-2 py-1 text-xs rounded-full font-medium ${child.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'}`}>
+                           <span className={`px-2 py-1 text-xs rounded-full font-medium ${child.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-400'}`}>
                              {child.isActive ? 'Active' : 'Inactive'}
                            </span>
                          </td>
@@ -306,7 +306,7 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
                   ))}
                   {categories.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-slate-500">
+                      <td colSpan={6} className="p-8 text-center text-slate-500 dark:text-slate-400">
                         No custom categories defined.
                       </td>
                     </tr>

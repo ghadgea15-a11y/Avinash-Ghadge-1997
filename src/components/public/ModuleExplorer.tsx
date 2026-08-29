@@ -239,7 +239,7 @@ export const ModuleExplorer: React.FC = () => {
   const ActiveIcon = activeDomain.icon;
 
   return (
-    <section id="domains" className="py-24 lg:py-32 border-b border-[#E8E7E3] bg-[#F4F3EF]">
+    <section id="domains" className="py-24 lg:py-32 border-b border-slate-200 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
         
         {/* Section Header */}
@@ -247,10 +247,10 @@ export const ModuleExplorer: React.FC = () => {
           <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600">
             Enterprise Scope
           </span>
-          <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-[#0A0D14] tracking-tight">
+          <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-black tracking-tight">
             14 ENTERPRISE DOMAINS
           </h2>
-          <p className="font-body text-sm sm:text-base text-[#52525B] leading-relaxed">
+          <p className="font-body text-sm sm:text-base text-black leading-relaxed">
             A comprehensive operational matrix engineered to orchestrate every facet of modern enterprise workforce and facility management.
           </p>
         </div>
@@ -259,7 +259,7 @@ export const ModuleExplorer: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left: Vertical Typographic Domain Selector */}
-          <div className="lg:col-span-5 bg-white rounded-3xl border border-[#E7E6E1] p-3 sm:p-4 shadow-sm space-y-1 max-h-[620px] overflow-y-auto">
+          <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 p-3 sm:p-4 shadow-sm space-y-1 max-h-[620px] overflow-y-auto">
             {domains.map((domain, index) => {
               const isSelected = activeDomainIndex === index;
               return (
@@ -268,12 +268,12 @@ export const ModuleExplorer: React.FC = () => {
                   onClick={() => setActiveDomainIndex(index)}
                   className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-150 flex items-center justify-between cursor-pointer ${
                     isSelected 
-                      ? 'bg-[#0A0D14] text-white shadow-xs' 
-                      : 'text-[#52525B] hover:bg-[#F4F3EF] hover:text-[#0A0D14]'
+                      ? 'bg-black text-white shadow-xs' 
+                      : 'text-black hover:bg-white hover:text-black'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`font-mono text-xs font-bold ${isSelected ? 'text-emerald-400' : 'text-[#71717A]'}`}>
+                    <span className={`font-mono text-xs font-bold ${isSelected ? 'text-emerald-400' : 'text-slate-600'}`}>
                       {domain.num}
                     </span>
                     <span className="font-display text-xs sm:text-sm font-bold tracking-tight">
@@ -281,7 +281,7 @@ export const ModuleExplorer: React.FC = () => {
                     </span>
                   </div>
                   <span className={`font-mono text-[10px] px-2 py-0.5 rounded font-semibold ${
-                    isSelected ? 'bg-[#27272A] text-emerald-400' : 'bg-[#F4F3EF] text-[#71717A]'
+                    isSelected ? 'bg-[#27272A] text-emerald-400' : 'bg-white text-slate-600'
                   }`}>
                     {domain.code}
                   </span>
@@ -291,19 +291,19 @@ export const ModuleExplorer: React.FC = () => {
           </div>
 
           {/* Right: Detailed Editorial Disclosure */}
-          <div className="lg:col-span-7 bg-white rounded-3xl border border-[#E7E6E1] p-8 sm:p-10 shadow-sm space-y-6">
+          <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 p-8 sm:p-10 shadow-sm space-y-6">
             
-            <div className="flex items-center justify-between pb-6 border-b border-[#E8E7E3]">
+            <div className="flex items-center justify-between pb-6 border-b border-slate-200">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#0A0D14] text-emerald-400 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-black text-emerald-400 flex items-center justify-center">
                   <ActiveIcon className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs font-bold text-emerald-600">DOMAIN {activeDomain.num}</span>
-                    <span className="font-mono text-xs bg-[#F4F3EF] px-2 py-0.5 rounded font-bold text-[#0A0D14]">{activeDomain.code}</span>
+                    <span className="font-mono text-xs bg-white px-2 py-0.5 rounded font-bold text-black">{activeDomain.code}</span>
                   </div>
-                  <h3 className="font-display text-xl sm:text-2xl font-extrabold text-[#0A0D14]">
+                  <h3 className="font-display text-xl sm:text-2xl font-extrabold text-black">
                     {activeDomain.name}
                   </h3>
                 </div>
@@ -312,16 +312,16 @@ export const ModuleExplorer: React.FC = () => {
 
             <div className="space-y-4 font-body">
               <div>
-                <span className="font-mono text-[11px] uppercase font-bold text-[#71717A] block">CORE OBJECTIVE</span>
-                <p className="text-sm font-semibold text-[#0A0D14] mt-1">{activeDomain.tagline}</p>
-                <p className="text-xs sm:text-sm text-[#52525B] mt-1.5 leading-relaxed">{activeDomain.desc}</p>
+                <span className="font-mono text-[11px] uppercase font-bold text-slate-600 block">CORE OBJECTIVE</span>
+                <p className="text-sm font-semibold text-black mt-1">{activeDomain.tagline}</p>
+                <p className="text-xs sm:text-sm text-black mt-1.5 leading-relaxed">{activeDomain.desc}</p>
               </div>
 
               <div className="pt-3 border-t border-[#F0EFEB]">
-                <span className="font-mono text-[11px] uppercase font-bold text-[#71717A] block mb-2">KEY CAPABILITIES</span>
+                <span className="font-mono text-[11px] uppercase font-bold text-slate-600 block mb-2">KEY CAPABILITIES</span>
                 <div className="space-y-2">
                   {activeDomain.features.map((feat, i) => (
-                    <div key={i} className="flex items-start gap-2.5 text-xs text-[#27272A]">
+                    <div key={i} className="flex items-start gap-2.5 text-xs text-black">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
                       <span>{feat}</span>
                     </div>
@@ -329,13 +329,13 @@ export const ModuleExplorer: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] space-y-2 text-xs">
+              <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 text-xs">
                 <div>
-                  <strong className="font-mono text-[11px] uppercase text-[#0A0D14] block">BUSINESS LOGIC & ENFORCEMENT:</strong>
-                  <p className="text-[#52525B] mt-0.5">{activeDomain.rules}</p>
+                  <strong className="font-mono text-[11px] uppercase text-black block">BUSINESS LOGIC & ENFORCEMENT:</strong>
+                  <p className="text-black mt-0.5">{activeDomain.rules}</p>
                 </div>
-                <div className="pt-2 border-t border-[#E8E7E3]">
-                  <strong className="font-mono text-[11px] uppercase text-[#0A0D14] block">AUDITABLE OUTPUTS:</strong>
+                <div className="pt-2 border-t border-slate-200">
+                  <strong className="font-mono text-[11px] uppercase text-black block">AUDITABLE OUTPUTS:</strong>
                   <p className="text-emerald-700 font-medium mt-0.5">{activeDomain.exports}</p>
                 </div>
               </div>

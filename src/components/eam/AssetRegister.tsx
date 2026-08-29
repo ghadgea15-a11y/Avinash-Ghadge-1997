@@ -35,7 +35,7 @@ export function AssetRegister({ session, assets, sites, employees, onDeploy, onR
       case 'UNDER_MAINTENANCE': return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'LOST':
       case 'DAMAGED': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-slate-100 text-slate-800 border-slate-200';
+      default: return 'bg-slate-100 text-black border-slate-200';
     }
   };
 
@@ -70,7 +70,7 @@ export function AssetRegister({ session, assets, sites, employees, onDeploy, onR
 
       <div className="flex-1 overflow-auto">
         <table className="w-full text-sm text-left">
-          <thead className="bg-slate-50 text-slate-600 font-medium sticky top-0 shadow-sm z-10">
+          <thead className="bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-medium sticky top-0 shadow-sm z-10">
             <tr>
               <th className="px-4 py-3">Asset Identity</th>
               <th className="px-4 py-3">Category</th>
@@ -83,19 +83,19 @@ export function AssetRegister({ session, assets, sites, employees, onDeploy, onR
           <tbody className="divide-y divide-slate-100">
             {filteredAssets.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
+                <td colSpan={6} className="px-4 py-12 text-center text-slate-500 dark:text-slate-400">
                   <HardDrive className="w-8 h-8 mx-auto mb-3 opacity-20" />
                   No assets found matching the criteria.
                 </td>
               </tr>
             ) : (
               filteredAssets.map(asset => (
-                <tr key={asset.id} className="hover:bg-slate-50 transition-colors">
+                <tr key={asset.id} className="hover:bg-white dark:bg-slate-950 transition-colors">
                   <td className="px-4 py-3">
-                    <div className="font-bold text-slate-900">{asset.assetName}</div>
-                    <div className="font-mono text-xs text-slate-500 mt-0.5">{asset.assetCode}</div>
+                    <div className="font-bold text-black dark:text-white">{asset.assetName}</div>
+                    <div className="font-mono text-xs text-slate-500 dark:text-slate-400 mt-0.5">{asset.assetCode}</div>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                     {asset.category || asset.categoryId || 'N/A'}
                   </td>
                   <td className="px-4 py-3">
@@ -103,15 +103,15 @@ export function AssetRegister({ session, assets, sites, employees, onDeploy, onR
                       <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${getStatusBadge(asset.status || 'AVAILABLE')}`}>
                         {(asset.status || 'AVAILABLE').replace(/_/g, ' ')}
                       </span>
-                      <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
                         Cond: {asset.condition}
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                     {asset.siteId ? sites.find(s => s.id === asset.siteId)?.name || asset.siteName : 'Warehouse / Unassigned'}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                     {asset.assignedEmployeeId ? employees.find(e => e.id === asset.assignedEmployeeId)?.firstName + ' ' + (employees.find(e => e.id === asset.assignedEmployeeId)?.lastName || '') : 'None'}
                   </td>
                   <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
@@ -135,7 +135,7 @@ export function AssetRegister({ session, assets, sites, employees, onDeploy, onR
                     {onViewIncidents && (
                       <button 
                         onClick={() => onViewIncidents(asset)}
-                        className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 rounded-lg text-xs font-medium transition-colors"
+                        className="px-3 py-1.5 bg-white dark:bg-slate-950 border border-slate-200 text-slate-900 dark:text-slate-300 hover:bg-slate-100 rounded-lg text-xs font-medium transition-colors"
                         title="View Incident History"
                       >
                         History

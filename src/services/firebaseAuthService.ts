@@ -29,12 +29,14 @@ import { SecurityAuditService } from './securityAuditService';
 import { SessionManager } from './sessionManager';
 import { AccountProtectionService } from './accountProtectionService';
 import { TotpService } from './totpService';
+import { PermissionRegistry } from './permissionRegistry';
 
 export const RESERVED_SUPER_ADMIN_EMAILS: string[] = [
   "admin@logsheetmuster.com",
   "superadmin@logsheetmuster.com",
   "ghadgea15@gmail.com",
-  "sysadmin@logsheetmuster.com"
+  "sysadmin@logsheetmuster.com",
+  "support@logsheetmuster.online"
 ];
 
 export class FirebaseAuthService {
@@ -953,7 +955,7 @@ export class FirebaseAuthService {
 
         const authorityLevel = isUserSuperAdmin
           ? 'A0_OWNER'
-          : (uData?.authorityLevel || (claims.aLvl as any) || (isCompanyAdmin ? 'A0_OWNER' : 'A9_SUPPORT'));
+          : (uData?.authorityLevel || (claims.aLvl as any) || (isCompanyAdmin ? 'A0_OWNER' : PermissionRegistry.mapRoleToDefaultAuthority(claims.role as string) || 'A9_SUPPORT'));
 
         const dataScope = isUserSuperAdmin || isCompanyAdmin
           ? 'COMPANY'
@@ -1464,35 +1466,61 @@ export class FirebaseAuthService {
   }
 
   /**
-   * Refreshes the user session token and claims
+   * Triggers a server-side custom claims refresh and synchronizes the local session.
+   * Useful when roles or permissions change during an active session.
    */
-  static async refreshSession(currentSession: UserSession): Promise<UserSession> {
+  static async refreshSession(currentSession?: UserSession | null): Promise<UserSession | null> {
     if (!auth.currentUser) {
-      return currentSession;
+      return currentSession || null;
     }
+
     try {
-      const idTokenResult = await auth.currentUser.getIdTokenResult(true);
+      // 1. Trigger server-side claims synchronization
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch('/api/auth/refresh-session', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.warn('[FirebaseAuthService] Server session refresh failed, falling back to local refresh:', response.statusText);
+      }
+
+      // 2. Force local token refresh to pull latest claims
+      await auth.currentUser.getIdToken(true);
+      const idTokenResult = await auth.currentUser.getIdTokenResult();
       const claims = idTokenResult.claims || {};
 
       if (claims.status === 'TERMINATED' || claims.status === 'SUSPENDED') {
-        await signOut(auth);
+        await this.logoutUser();
         throw new Error(`Account is ${claims.status}. Session terminated.`);
       }
 
-      return {
-        ...currentSession,
+      const sessionToUpdate = currentSession || SessionManager.getUserSession();
+      if (!sessionToUpdate) return null;
+
+      const updatedSession: UserSession = {
+        ...sessionToUpdate,
         token: await auth.currentUser.getIdToken(),
-        tokenExpiresAt: idTokenResult.expirationTime ? new Date(idTokenResult.expirationTime).getTime() : currentSession.tokenExpiresAt,
-        authorityLevel: (claims.aLvl as any) || currentSession.authorityLevel,
-        regionId: (claims.rId as string) || currentSession.regionId,
-        assignedSiteId: (claims.sId as string) || currentSession.assignedSiteId,
-        departmentId: (claims.dId as string) || currentSession.departmentId,
-        permissionsVersion: (claims.pV as number) || currentSession.permissionsVersion,
+        tokenExpiresAt: idTokenResult.expirationTime ? new Date(idTokenResult.expirationTime).getTime() : Date.now() + (12 * 60 * 60 * 1000),
+        role: (claims.role as UserRole) || sessionToUpdate.role,
+        accountStatus: (claims.status as AccountStatus) || sessionToUpdate.accountStatus,
+        authorityLevel: (claims.aLvl as any) || sessionToUpdate.authorityLevel,
+        regionId: (claims.rId as string) || sessionToUpdate.regionId,
+        assignedSiteId: (claims.sId as string) || sessionToUpdate.assignedSiteId,
+        departmentId: (claims.dId as string) || sessionToUpdate.departmentId,
+        permissionsVersion: (claims.pV as number) || sessionToUpdate.permissionsVersion,
         lastActiveAt: Date.now()
       };
+
+      SessionManager.setUserSession(updatedSession);
+      return updatedSession;
     } catch (err) {
       console.error('[FirebaseAuthService] Session refresh error:', err);
-      return currentSession;
+      return currentSession || null;
     }
   }
 

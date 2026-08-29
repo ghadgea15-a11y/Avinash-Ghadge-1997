@@ -36,7 +36,13 @@ import { Network,
   FileSpreadsheet,
   History,
   Server,
-  Fingerprint
+  Fingerprint,
+  Activity,
+  Sliders,
+  Radio,
+  FileBarChart,
+  UserCog,
+  EyeOff
 } from 'lucide-react';
 import { PhaseAScreen, UserRole } from '../types';
 
@@ -257,6 +263,16 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     shortLabel: 'Modules',
     description: 'Enable or restrict enterprise modules per client contract',
     icon: Layers,
+    category: 'COMPANIES',
+    dataType: 'SYSTEM',
+    isSuperAdminOnly: true,
+  },
+  {
+    screen: 'SUPER_ADMIN_SUPPORT',
+    label: 'Controlled Support Access',
+    shortLabel: 'Support Access',
+    description: 'Time-bounded, auditable support sessions for tenant troubleshooting',
+    icon: LifeBuoy,
     category: 'COMPANIES',
     dataType: 'SYSTEM',
     isSuperAdminOnly: true,
@@ -628,6 +644,16 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
 
   // 12. REPORTS & ANALYTICS
   {
+    screen: 'SUPER_ADMIN_REPORTS',
+    label: 'Platform SaaS Analytics & BI',
+    shortLabel: 'Platform BI',
+    description: 'Multi-tenant licensing analytics, module adoption and platform usage reports',
+    icon: FileBarChart,
+    category: 'REPORTS_ANALYTICS',
+    dataType: 'ANALYTICS',
+    isSuperAdminOnly: true,
+  },
+  {
     screen: 'OPERATIONAL_INTELLIGENCE',
     label: 'CFO/COO Operational Intelligence',
     shortLabel: 'Ops Intelligence',
@@ -670,6 +696,46 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
 
   // 14. SECURITY & AUDIT
   {
+    screen: 'SUPER_ADMIN_ADMINS',
+    label: 'Platform Administrators',
+    shortLabel: 'Platform Admins',
+    description: 'Manage platform Super Admins, Support Auditors and Platform Ops users',
+    icon: UserCog,
+    category: 'SECURITY_AUDIT',
+    dataType: 'SYSTEM',
+    isSuperAdminOnly: true,
+  },
+  {
+    screen: 'SUPER_ADMIN_SECURITY',
+    label: 'Platform Security & Claims',
+    shortLabel: 'Platform Security',
+    description: 'Custom claims enforcement, security anomaly feed and access audit',
+    icon: ShieldAlert,
+    category: 'SECURITY_AUDIT',
+    dataType: 'SYSTEM',
+    isSuperAdminOnly: true,
+  },
+  {
+    screen: 'SUPER_ADMIN_AUDIT',
+    label: 'Immutable Platform Audit Log',
+    shortLabel: 'Platform Audit',
+    description: 'Cryptographically ordered platform mutation logs with before/after diffs',
+    icon: History,
+    category: 'SECURITY_AUDIT',
+    dataType: 'SYSTEM',
+    isSuperAdminOnly: true,
+  },
+  {
+    screen: 'SUPER_ADMIN_MONITORING',
+    label: 'System Telemetry & Health',
+    shortLabel: 'Telemetry',
+    description: 'Live latency tests, Firestore health, error rates and cloud storage status',
+    icon: Activity,
+    category: 'SECURITY_AUDIT',
+    dataType: 'SYSTEM',
+    isSuperAdminOnly: true,
+  },
+  {
     screen: 'HISTORICAL_TRACEABILITY',
     label: 'Enterprise Historical Traceability',
     shortLabel: 'Traceability',
@@ -710,6 +776,16 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
 
   // 15. SETTINGS
   {
+    screen: 'SUPER_ADMIN_CONFIG',
+    label: 'Platform Global Configuration',
+    shortLabel: 'Global Config',
+    description: 'Multi-tenant global parameters, maintenance mode & feature flags',
+    icon: Sliders,
+    category: 'SETTINGS',
+    dataType: 'SYSTEM',
+    isSuperAdminOnly: true,
+  },
+  {
     screen: 'BIOMETRIC_DEVICES',
     label: 'Universal Biometric Hub',
     shortLabel: 'Biometrics',
@@ -739,7 +815,7 @@ export function getNavItemsForRole(
 ): NavigationItemDef[] {
   return ENTERPRISE_NAV_ITEMS.filter((item) => {
     if (isSuperAdmin) {
-      return item.isSuperAdminOnly === true || item.screen === 'SETTINGS';
+      return item.isSuperAdminOnly === true || item.screen === 'SETTINGS' || item.screen === 'PROFILE' || item.screen === 'SESSION_LOCK';
     }
     if (item.isSuperAdminOnly) {
       return false;

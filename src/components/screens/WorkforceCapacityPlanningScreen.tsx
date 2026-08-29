@@ -492,7 +492,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                 <Users className="w-4 h-4 text-blue-400" />
               </div>
               <div className="text-2xl font-bold text-slate-100">{summary.totalRequiredWorkforce}</div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Configured site floor</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Configured site floor</div>
             </div>
 
             <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 shadow-sm">
@@ -501,7 +501,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                 <Calendar className="w-4 h-4 text-indigo-400" />
               </div>
               <div className="text-2xl font-bold text-indigo-300">{summary.totalScheduledWorkforce}</div>
-              <div className="text-[11px] text-slate-500 mt-0.5">Rostered personnel</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Rostered personnel</div>
             </div>
 
             <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 shadow-sm">
@@ -512,7 +512,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
               <div className="text-2xl font-bold text-amber-400">
                 {summary.totalLeavesCount + summary.totalAbsencesCount}
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 {summary.totalLeavesCount} Leaves · {summary.totalAbsencesCount} No-Shows
               </div>
             </div>
@@ -534,7 +534,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
               <div className={`text-2xl font-bold ${summary.netShortageCount > 0 ? 'text-rose-400' : 'text-slate-400'}`}>
                 {summary.netShortageCount}
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 {summary.understaffedShiftsCount} understaffed shifts
               </div>
             </div>
@@ -547,7 +547,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
               <div className={`text-2xl font-bold ${summary.skillShortageShiftsCount > 0 ? 'text-purple-400' : 'text-slate-400'}`}>
                 {summary.skillShortageShiftsCount}
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">First Aid / Armed / Fire</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">First Aid / Armed / Fire</div>
             </div>
           </div>
 
@@ -787,7 +787,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                                 </span>
                               </div>
                               <p className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
-                                <MapPin className="w-3 h-3 text-slate-500" />
+                                <MapPin className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                                 <span>{site.address || 'Deployment Zone'}</span>
                                 {(site as any).zone && <span>· Zone: {(site as any).zone}</span>}
                               </p>
@@ -953,7 +953,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                                 {/* Rostered Staff Pill Row */}
                                 {breakdown.scheduledStaff.length > 0 && (
                                   <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center gap-2">
-                                    <span className="text-[10px] uppercase font-bold text-slate-500">Rostered:</span>
+                                    <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Rostered:</span>
                                     {breakdown.scheduledStaff.map(staff => (
                                       <div
                                         key={staff.employeeId}
@@ -1170,7 +1170,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                     )}
 
                     <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                      <span className="text-[11px] text-slate-500">Days: {req.applicableDays.length === 7 ? 'All Week' : `${req.applicableDays.length} Days`}</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">Days: {req.applicableDays.length === 7 ? 'All Week' : `${req.applicableDays.length} Days`}</span>
                       <button
                         onClick={() => setConfigModalRequirement(req)}
                         className="text-indigo-400 hover:text-indigo-300 font-semibold"
@@ -1675,10 +1675,10 @@ class WorkforceCapacityEngine {
                       </div>
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="font-bold text-slate-200">{entry.stage}</span>
-                        <span className="text-slate-500 font-mono">{entry.timestamp.slice(11, 19)}</span>
+                        <span className="text-slate-500 dark:text-slate-400 font-mono">{entry.timestamp.slice(11, 19)}</span>
                       </div>
                       <p className="text-slate-400">{entry.note}</p>
-                      <div className="text-[10px] text-slate-500">Actor: {entry.actor} ({entry.actorRole || 'USER'})</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400">Actor: {entry.actor} ({entry.actorRole || 'USER'})</div>
                     </div>
                   ))}
                 </div>

@@ -33,11 +33,11 @@ export const EmployeeSelfServicePage: React.FC<EmployeeSelfServicePageProps> = (
           MOBILE EMPLOYEE SELF-SERVICE (ESS) APP
         </div>
 
-        <h1 id="ess-hero-heading" className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-[#0A0D14] tracking-tight leading-tight">
+        <h1 id="ess-hero-heading" className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-black tracking-tight leading-tight">
           Mobile-First Employee Self-Service (ESS) Portal
         </h1>
 
-        <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
+        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
           Empower your deskless workers, guards, and technicians with a lightweight mobile self-service app. Staff can punch attendance, view upcoming duty shifts, apply for leaves, download payslips, and check company announcements.
         </p>
 
@@ -45,7 +45,7 @@ export const EmployeeSelfServicePage: React.FC<EmployeeSelfServicePageProps> = (
           <a
             href="/contact"
             onClick={(e) => handleLinkClick(e, '/contact')}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#0A0D14] hover:bg-slate-800 text-white text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-black hover:bg-slate-800 text-white text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2"
           >
             Schedule ESS Demo
             <ArrowRight className="w-4 h-4" />
@@ -53,7 +53,7 @@ export const EmployeeSelfServicePage: React.FC<EmployeeSelfServicePageProps> = (
           <a
             href="/hrms"
             onClick={(e) => handleLinkClick(e, '/hrms')}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white text-slate-800 hover:bg-slate-50 text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-xs"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white dark:bg-slate-900 text-black dark:text-slate-200 hover:bg-white dark:bg-slate-950 text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-xs"
           >
             Explore HRMS Suite &rarr;
           </a>
@@ -62,32 +62,32 @@ export const EmployeeSelfServicePage: React.FC<EmployeeSelfServicePageProps> = (
 
       {/* Grid of Key Features */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 rounded-2xl bg-white border border-[#E8E7E3] space-y-3 shadow-xs">
+        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 space-y-3 shadow-xs">
           <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
             <CalendarCheck className="w-5 h-5" />
           </div>
-          <h3 className="text-base font-bold text-[#0A0D14]">Geotagged Mobile Punch</h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <h3 className="text-base font-bold text-black">Geotagged Mobile Punch</h3>
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             One-touch check-in and check-out with GPS location detection and offline queue synchronization when connection is restored.
           </p>
         </div>
 
-        <div className="p-6 rounded-2xl bg-white border border-[#E8E7E3] space-y-3 shadow-xs">
+        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 space-y-3 shadow-xs">
           <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
             <CreditCard className="w-5 h-5" />
           </div>
-          <h3 className="text-base font-bold text-[#0A0D14]">Digital Payslips Download</h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <h3 className="text-base font-bold text-black">Digital Payslips Download</h3>
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             Staff can securely access and download their monthly salary slips with complete breakdown of earnings, deductions, PF, and ESI.
           </p>
         </div>
 
-        <div className="p-6 rounded-2xl bg-white border border-[#E8E7E3] space-y-3 shadow-xs">
+        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 space-y-3 shadow-xs">
           <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
-          <h3 className="text-base font-bold text-[#0A0D14]">Leave Requests & Balance</h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <h3 className="text-base font-bold text-black">Leave Requests & Balance</h3>
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             Submit leave requests with reasons and dates directly to supervisors with instant status alerts on approval or rejection.
           </p>
         </div>

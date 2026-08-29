@@ -62,7 +62,7 @@ export const BiometricHubScreen: React.FC<BiometricHubScreenProps> = ({
 
   if (!userSession || !companyId) {
     return (
-      <div className="p-8 text-center text-slate-500">
+      <div className="p-8 text-center text-slate-500 dark:text-slate-400">
         Please sign in and select a company tenant to manage biometric devices.
       </div>
     );

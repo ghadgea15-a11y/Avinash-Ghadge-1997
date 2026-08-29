@@ -137,7 +137,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-black dark:text-white flex items-center gap-2">
             <Clock className="w-6 h-6 text-indigo-600" /> Shift Master
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">Configure standard working hours and shift policies.</p>
@@ -181,7 +181,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="font-bold text-slate-900 dark:text-white">{shift.shiftName}</h3>
+                    <h3 className="font-bold text-black dark:text-white">{shift.shiftName}</h3>
                     <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{shift.shiftCode}</span>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -196,14 +196,14 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
 
                 <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500 uppercase font-semibold tracking-tighter">Timings</p>
-                    <p className="font-medium text-slate-900 dark:text-white flex items-center gap-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-tighter">Timings</p>
+                    <p className="font-medium text-black dark:text-white flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-indigo-500" /> {shift.startTime} - {shift.endTime}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500 uppercase font-semibold tracking-tighter">Grace Period</p>
-                    <p className="font-medium text-slate-900 dark:text-white">{shift.gracePeriodMinutes} mins</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-tighter">Grace Period</p>
+                    <p className="font-medium text-black dark:text-white">{shift.gracePeriodMinutes} mins</p>
                   </div>
                 </div>
 
@@ -243,7 +243,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
             className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
           >
             <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">{editingShift ? 'Edit Shift' : 'Create New Shift'}</h3>
+              <h3 className="text-xl font-bold text-black dark:text-white">{editingShift ? 'Edit Shift' : 'Create New Shift'}</h3>
               <button onClick={handleCloseModal} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
                 <XCircle className="w-6 h-6 text-slate-400" />
               </button>
@@ -255,7 +255,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
                   <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Shift Name</label>
                   <input
                     required
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="e.g. Day Shift"
                     value={form.shiftName}
                     onChange={(e) => setForm({ ...form, shiftName: e.target.value })}
@@ -265,7 +265,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
                   <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Shift Code</label>
                   <input
                     required
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500 uppercase"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500 uppercase"
                     placeholder="DS-01"
                     value={form.shiftCode}
                     onChange={(e) => setForm({ ...form, shiftCode: e.target.value })}
@@ -279,7 +279,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
                   <input
                     type="time"
                     required
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
                     value={form.startTime}
                     onChange={(e) => setForm({ ...form, startTime: e.target.value })}
                   />
@@ -289,7 +289,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
                   <input
                     type="time"
                     required
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
                     value={form.endTime}
                     onChange={(e) => setForm({ ...form, endTime: e.target.value })}
                   />
@@ -301,7 +301,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
                   <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Grace (Min)</label>
                   <input
                     type="number"
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
                     value={form.gracePeriodMinutes}
                     onChange={(e) => setForm({ ...form, gracePeriodMinutes: parseInt(e.target.value) })}
                   />
@@ -310,7 +310,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
                   <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Break (Min)</label>
                   <input
                     type="number"
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
                     value={form.breakDurationMinutes}
                     onChange={(e) => setForm({ ...form, breakDurationMinutes: parseInt(e.target.value) })}
                   />
@@ -319,7 +319,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
                   <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Min Work (Min)</label>
                   <input
                     type="number"
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
                     value={form.minWorkMinutes}
                     onChange={(e) => setForm({ ...form, minWorkMinutes: parseInt(e.target.value) })}
                   />
@@ -357,7 +357,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-6 py-2.5 rounded-xl font-semibold text-slate-600 hover:bg-slate-100 transition-all"
+                  className="px-6 py-2.5 rounded-xl font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all"
                 >
                   Cancel
                 </button>

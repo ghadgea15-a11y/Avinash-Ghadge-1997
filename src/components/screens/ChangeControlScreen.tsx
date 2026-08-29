@@ -56,10 +56,10 @@ export const ChangeControlScreen: React.FC<Props> = ({ session }) => {
 
   if (!['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN'].includes(session.role) && !['A0_OWNER', 'A1_DIRECTOR_CEO'].includes((session as any).authority || '')) {
     return (
-      <div className="p-8 text-center max-w-lg mx-auto mt-12 bg-white rounded-3xl shadow-sm border border-slate-200">
+      <div className="p-8 text-center max-w-lg mx-auto mt-12 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200">
         <ShieldAlert className="w-16 h-16 text-rose-500 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Access Denied</h2>
-        <p className="text-slate-500 text-sm">
+        <h2 className="text-xl font-bold text-black dark:text-white mb-2">Access Denied</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">
           You do not have the required authorization to review critical system changes.
         </p>
       </div>
@@ -70,7 +70,7 @@ export const ChangeControlScreen: React.FC<Props> = ({ session }) => {
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-black dark:text-white flex items-center gap-3 tracking-tight">
             <ShieldAlert className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
             Change Control Center
           </h1>
@@ -80,7 +80,7 @@ export const ChangeControlScreen: React.FC<Props> = ({ session }) => {
         </div>
         <button 
           onClick={loadRequests}
-          className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-800 transition-colors"
         >
           Refresh Queue
         </button>
@@ -98,20 +98,20 @@ export const ChangeControlScreen: React.FC<Props> = ({ session }) => {
       )}
 
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-3">
+        <div className="p-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 dark:bg-slate-900/50 flex items-center gap-3">
           <Clock className="w-5 h-5 text-indigo-600" />
-          <h2 className="font-bold text-slate-900 dark:text-white">Pending Authorizations</h2>
+          <h2 className="font-bold text-black dark:text-white">Pending Authorizations</h2>
           <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-bold">
             {requests.length} Request(s)
           </span>
         </div>
 
         {loading ? (
-          <div className="p-12 text-center text-slate-500">Loading pending requests...</div>
+          <div className="p-12 text-center text-slate-500 dark:text-slate-400">Loading pending requests...</div>
         ) : requests.length === 0 ? (
           <div className="p-16 flex flex-col items-center justify-center text-center">
             <CheckCircle className="w-16 h-16 text-emerald-500 mb-4 opacity-50" />
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">All Clear</h3>
+            <h3 className="text-lg font-bold text-black dark:text-white">All Clear</h3>
             <p className="text-slate-500 dark:text-slate-400 max-w-md mt-2">
               There are no pending critical changes requiring your authorization at this time.
             </p>
@@ -119,7 +119,7 @@ export const ChangeControlScreen: React.FC<Props> = ({ session }) => {
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {requests.map(req => (
-              <div key={req.id} className="p-6 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+              <div key={req.id} className="p-6 hover:bg-white dark:bg-slate-950/50 dark:hover:bg-slate-800/30 transition-colors">
                 <div className="flex flex-col lg:flex-row gap-6">
                   <div className="flex-1 space-y-4">
                     <div className="flex items-start justify-between">
@@ -130,19 +130,19 @@ export const ChangeControlScreen: React.FC<Props> = ({ session }) => {
                           </span>
                           <span className="text-xs font-mono text-slate-400">{req.id}</span>
                         </div>
-                        <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <h3 className="text-base font-bold text-black dark:text-white flex items-center gap-2">
                           Modify {req.entityType} Record: {req.entityId}
                         </h3>
                       </div>
                       <div className="text-right text-xs">
-                        <p className="text-slate-500 font-medium">Requested By</p>
-                        <p className="font-bold text-slate-900 dark:text-white">{req.requesterName}</p>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium">Requested By</p>
+                        <p className="font-bold text-black dark:text-white">{req.requesterName}</p>
                         <p className="text-slate-400 mt-1">{format(new Date(req.requestedAt), 'MMM d, yyyy HH:mm')}</p>
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
-                      <p className="text-sm text-slate-700 dark:text-slate-300 font-medium mb-3 flex items-center gap-2">
+                    <div className="bg-white dark:bg-slate-950 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+                      <p className="text-sm text-slate-900 dark:text-slate-300 font-medium mb-3 flex items-center gap-2">
                         <FileText className="w-4 h-4 text-slate-400" />
                         Business Justification
                       </p>

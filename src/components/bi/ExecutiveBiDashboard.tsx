@@ -25,7 +25,7 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
   const [generating, setGenerating] = useState(false);
   const [activeCategory, setActiveCategory] = useState<KpiCategory | 'ALL'>('ALL');
   
-  const authorityLevel = RbacService.getAuthorityLevel(session);
+  const authorityLevel = RbacService.getAuthorityLevel(session) || '';
   const canGenerate = ['A0_OWNER', 'A1_DIRECTOR_CEO'].includes(authorityLevel);
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
     }
   };
 
-  const filteredValues = snapshot?.values.filter(v => activeCategory === 'ALL' || v.category === activeCategory) || [];
+  const filteredValues = snapshot?.values.filter((v: any) => activeCategory === 'ALL' || v.category === activeCategory) || [];
 
   return (
     <div className="space-y-6">
@@ -97,7 +97,7 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Executive Telemetry</h2>
+            <h2 className="text-2xl font-bold text-black dark:text-white tracking-tight">Executive Telemetry</h2>
             {snapshot && snapshot.status !== 'COMPLETE' && (
               <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider
                 ${snapshot.status === 'PARTIAL' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' : ''}
@@ -134,7 +134,7 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
           className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
             activeCategory === 'ALL' 
               ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' 
-              : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+              : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
           }`}
         >
           All Metrics
@@ -146,7 +146,7 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
             className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
               activeCategory === cat.id 
                 ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' 
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
             }`}
           >
             {cat.label}
@@ -158,11 +158,11 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
       {loading ? (
         <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
           <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-slate-500 font-medium">Loading Telemetry...</p>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Loading Telemetry...</p>
         </div>
       ) : snapshot ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredValues.map(val => (
+          {filteredValues.map((val: any) => (
             <div key={val.kpiId} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
               {/* Category indicator line */}
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-50"></div>
@@ -171,7 +171,7 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
                 <div>
                   <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider">{val.name}</h3>
                   <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                    <span className="text-3xl font-bold text-black dark:text-white">
                       {val.currentValue.toLocaleString()}
                     </span>
                     <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">{val.unit}</span>
@@ -205,7 +205,7 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
       ) : (
         <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4 opacity-50" />
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No Snapshots Available</h3>
+          <h3 className="text-lg font-bold text-black dark:text-white mb-2">No Snapshots Available</h3>
           <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-6">
             There is no KPI snapshot data for this company yet. Generate the first snapshot to populate the dashboard.
           </p>

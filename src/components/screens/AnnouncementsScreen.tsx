@@ -221,14 +221,14 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center space-y-3">
           <div className="w-9 h-9 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-medium">Loading Announcements Broadcast...</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Loading Announcements Broadcast...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`p-6 max-w-5xl mx-auto space-y-6 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className={`p-6 max-w-5xl mx-auto space-y-6 ${isDark ? 'text-slate-100' : 'text-black'}`}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5">
         <div className="flex items-center gap-3">
@@ -237,7 +237,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Company Announcements</h1>
-            <p className="text-xs text-slate-500">Corporate & site-specific notices, policy bulletins, and safety alerts</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Corporate & site-specific notices, policy bulletins, and safety alerts</p>
           </div>
         </div>
 
@@ -263,7 +263,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className={`w-full pl-9 pr-3 py-2 text-xs rounded-lg border outline-none ${
-              isDark ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200'
+              isDark ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-200'
             }`}
           />
         </div>
@@ -273,7 +273,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value)}
             className={`px-3 py-2 text-xs rounded-lg border outline-none ${
-              isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'
             }`}
           >
             <option value="ALL">All Categories</option>
@@ -288,7 +288,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
             value={priorityFilter}
             onChange={e => setPriorityFilter(e.target.value)}
             className={`px-3 py-2 text-xs rounded-lg border outline-none ${
-              isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'
             }`}
           >
             <option value="ALL">All Priorities</option>
@@ -339,12 +339,12 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                       )}
 
                       {ann.category && (
-                        <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300">
+                        <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 text-slate-900 dark:text-slate-300 dark:bg-slate-700 dark:text-slate-300">
                           {ann.category}
                         </span>
                       )}
 
-                      <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 flex items-center gap-1">
+                      <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 text-slate-600 dark:text-slate-400 dark:bg-slate-800 dark:text-slate-400 flex items-center gap-1">
                         <Users className="w-3 h-3" /> Audience: {ann.targetAudience === 'ALL' ? 'Company-wide' : ann.targetAudience}
                       </span>
                     </div>
@@ -380,13 +380,13 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                     {ann.title || 'Official Notice'}
                   </h3>
 
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
                     {ann.message}
                   </p>
 
                   <div className="pt-2 border-t flex items-center justify-between text-[11px] text-slate-400">
                     <div>
-                      Posted by: <span className="font-semibold text-slate-600 dark:text-slate-300">{ann.createdByName || 'Management'}</span>
+                      Posted by: <span className="font-semibold text-slate-600 dark:text-slate-400 dark:text-slate-300">{ann.createdByName || 'Management'}</span>
                     </div>
                     {ann.expiresAt && (
                       <div className="flex items-center gap-1">
@@ -402,7 +402,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
 
         {filteredAnnouncements.length === 0 && (
           <div className={`text-center py-16 px-4 rounded-2xl border border-dashed ${
-            isDark ? 'bg-slate-800/40 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-300 text-slate-500'
+            isDark ? 'bg-slate-800/40 border-slate-700 text-slate-400' : 'bg-white border-slate-300 text-slate-500'
           }`}>
             <Megaphone className="w-12 h-12 mx-auto text-slate-400 mb-3 opacity-60" />
             <h3 className="text-base font-bold">No Bulletins Active</h3>
@@ -417,7 +417,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className={`w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-2xl border ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
             <div className="flex items-center justify-between pb-4 border-b">
               <div className="flex items-center gap-2.5">
@@ -426,7 +426,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">Broadcast Announcement</h3>
-                  <p className="text-xs text-slate-500">Publish corporate bulletin or site-wide alert</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Publish corporate bulletin or site-wide alert</p>
                 </div>
               </div>
               <button 
@@ -447,7 +447,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                   value={formState.title}
                   onChange={e => setFormState({ ...formState, title: e.target.value })}
                   className={`w-full p-2.5 rounded-lg border outline-none ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -461,7 +461,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                   value={formState.message}
                   onChange={e => setFormState({ ...formState, message: e.target.value })}
                   className={`w-full p-2.5 rounded-lg border outline-none ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -473,7 +473,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                     value={formState.category}
                     onChange={e => setFormState({ ...formState, category: e.target.value })}
                     className={`w-full p-2.5 rounded-lg border outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                     }`}
                   >
                     <option value="Operational Notice">Operational Notice</option>
@@ -490,7 +490,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                     value={formState.targetAudience}
                     onChange={e => setFormState({ ...formState, targetAudience: e.target.value })}
                     className={`w-full p-2.5 rounded-lg border outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                     }`}
                   >
                     <option value="ALL">All Company Employees</option>
@@ -511,7 +511,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                     value={formState.priority}
                     onChange={e => setFormState({ ...formState, priority: e.target.value as any })}
                     className={`w-full p-2.5 rounded-lg border outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                     }`}
                   >
                     <option value="NORMAL">Normal Priority</option>
@@ -525,7 +525,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                     value={formState.durationDays}
                     onChange={e => setFormState({ ...formState, durationDays: Number(e.target.value) })}
                     className={`w-full p-2.5 rounded-lg border outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                     }`}
                   >
                     <option value={1}>1 Day (24 Hours)</option>
@@ -545,7 +545,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                     onChange={e => setFormState({ ...formState, isPinned: e.target.checked })}
                     className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
                   />
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="font-semibold text-slate-900 dark:text-slate-300">
                     Pin this announcement to top of the bulletin feed
                   </span>
                 </label>

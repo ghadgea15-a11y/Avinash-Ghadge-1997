@@ -39,13 +39,13 @@ export function CustodyManagement({ session, assets, sites, employees, custodyRe
     <div className="p-6 space-y-8">
       {/* Pending Acknowledgements */}
       <div>
-        <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+        <h3 className="text-base font-bold text-black dark:text-white mb-4 flex items-center gap-2">
           <AlertCircle className="w-5 h-5 text-amber-500" />
           Pending Acknowledgements
         </h3>
         
         {myPendingRecords.length === 0 ? (
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+          <div className="bg-white dark:bg-slate-950 border border-slate-200 rounded-xl p-8 text-center text-slate-500 dark:text-slate-400">
             <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
             <p>You have no pending asset assignments.</p>
           </div>
@@ -56,12 +56,12 @@ export function CustodyManagement({ session, assets, sites, employees, custodyRe
               if (!asset) return null;
               
               return (
-                <div key={record.id} className="bg-white border-2 border-amber-200 shadow-sm rounded-xl p-4 flex flex-col">
+                <div key={record.id} className="bg-white dark:bg-slate-900 border-2 border-amber-200 shadow-sm rounded-xl p-4 flex flex-col">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="font-bold text-slate-900">{asset.assetName}</span>
+                    <span className="font-bold text-black dark:text-white">{asset.assetName}</span>
                     <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded">PENDING</span>
                   </div>
-                  <p className="font-mono text-xs text-slate-500 mb-4">{asset.assetCode}</p>
+                  <p className="font-mono text-xs text-slate-500 dark:text-slate-400 mb-4">{asset.assetCode}</p>
                   
                   <div className="mt-auto pt-4 flex gap-2 border-t border-slate-100">
                     <button 
@@ -86,30 +86,30 @@ export function CustodyManagement({ session, assets, sites, employees, custodyRe
 
       {/* Current Custody */}
       <div>
-        <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+        <h3 className="text-base font-bold text-black dark:text-white mb-4 flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-indigo-600" />
           Assets In My Custody
         </h3>
         
         {myCurrentAssets.length === 0 ? (
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+          <div className="bg-white dark:bg-slate-950 border border-slate-200 rounded-xl p-8 text-center text-slate-500 dark:text-slate-400">
             <p>You are not currently responsible for any assets.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {myCurrentAssets.map(asset => (
-              <div key={asset.id} className="bg-white border border-slate-200 shadow-sm rounded-xl p-4 flex flex-col">
+              <div key={asset.id} className="bg-white dark:bg-slate-900 border border-slate-200 shadow-sm rounded-xl p-4 flex flex-col">
                 <div className="flex justify-between items-start mb-2">
-                  <span className="font-bold text-slate-900 line-clamp-1">{asset.assetName}</span>
+                  <span className="font-bold text-black dark:text-white line-clamp-1">{asset.assetName}</span>
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded">IN CUSTODY</span>
                 </div>
-                <p className="font-mono text-xs text-slate-500">{asset.assetCode}</p>
-                <div className="mt-3 text-xs text-slate-600 bg-slate-50 p-2 rounded">
+                <p className="font-mono text-xs text-slate-500 dark:text-slate-400">{asset.assetCode}</p>
+                <div className="mt-3 text-xs text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 p-2 rounded">
                   <p><strong>Condition:</strong> {asset.condition}</p>
                   <p><strong>Location:</strong> {sites.find(s => s.id === asset.siteId)?.name || 'Unknown'}</p>
                 </div>
                 <div className="mt-4 pt-3 flex gap-2 border-t border-slate-100">
-                  <button className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition">
+                  <button className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-900 dark:text-slate-300 rounded text-xs font-medium transition">
                     Report Issue
                   </button>
                   <button className="flex-1 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded text-xs font-medium transition">

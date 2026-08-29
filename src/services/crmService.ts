@@ -1,5 +1,6 @@
 import { collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, where, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { db } from '../firebase';
+import { FirestoreService } from './firestoreService';
 import { 
   ClientRecord, 
   ClientContactRecord, 
@@ -30,14 +31,14 @@ export const crmService = {
     const client = { ...data, createdAt: ts, updatedAt: ts };
     await setDoc(docRef, client);
 
-    await this.logAudit(companyId, 'client.created', data.id, null, data.createdByUid, data.createdByName);
+    await FirestoreService.logAuditEvent(companyId, data.createdByUid, data.createdByName, 'CLIENT_CREATED', `Client ${data.name} created`, data.id);
   },
 
   async updateClient(companyId: string, clientId: string, data: Partial<ClientRecord>, userId?: string, userName?: string): Promise<void> {
     const docRef = doc(db, 'companies', companyId, 'clients', clientId);
     await updateDoc(docRef, { ...data, updatedAt: new Date().toISOString() });
     
-    await this.logAudit(companyId, 'client.updated', clientId, null, userId, userName);
+    await FirestoreService.logAuditEvent(companyId, userId || 'SYSTEM', userName || 'System', 'CLIENT_UPDATED', `Client ${clientId} updated`, clientId);
   },
 
   // CLIENT CONTACTS

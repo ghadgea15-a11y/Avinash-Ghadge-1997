@@ -25,21 +25,30 @@ export function initializeFirebaseAdmin() {
         try {
           const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
           config.credential = cert(sa);
-          config.projectId = sa.project_id || sa.projectId;
+          if (sa.project_id || sa.projectId) {
+            config.projectId = sa.project_id || sa.projectId;
+          }
           adminCredentialsConfigured = true;
         } catch (parseErr) {
           console.warn('[Firebase Admin] Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY JSON:', parseErr);
         }
       }
 
-      // 2. Fallback to firebase-applet-config.json for projectId
-      if (!config.projectId) {
+      // 2. Fallback to firebase-applet-config.json for projectId ONLY if no credentials
+      // BUT: If no credentials are provided, it's often safer to let initializeApp() 
+      // discover the project ID from the environment (ADC) to avoid permission mismatches.
+      if (!config.credential) {
         try {
           const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
           if (fs.existsSync(configPath)) {
             const appletConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            if (appletConfig.projectId) {
+            if (appletConfig.projectId && !config.projectId) {
+              // In AI Studio, when using a custom provisioned Firebase project,
+              // we must supply the projectId so verifyIdToken checks the correct audience.
               config.projectId = appletConfig.projectId;
+              process.env.GOOGLE_CLOUD_PROJECT = appletConfig.projectId;
+              process.env.GOOGLE_CLOUD_QUOTA_PROJECT = appletConfig.projectId;
+              adminCredentialsConfigured = true;
             }
           }
         } catch (e) {
@@ -47,8 +56,15 @@ export function initializeFirebaseAdmin() {
         }
       }
 
-      initializeApp(config);
-      console.log('[Firebase Admin] Initialized with config (hasCredentials=' + hasAdminCredentials() + ')');
+      // In AI Studio, calling initializeApp() with no arguments 
+      // allows it to use the platform's default service account and project ID.
+      if (Object.keys(config).length === 0) {
+        initializeApp();
+      } else {
+        initializeApp(config);
+      }
+      
+      console.log('[Firebase Admin] Initialized (hasCredentials=' + hasAdminCredentials() + ')');
     } catch (err) {
       console.error('[Firebase Admin] Initialization error:', err);
     }
@@ -56,17 +72,26 @@ export function initializeFirebaseAdmin() {
 }
 
 export function getAdminDb(): Firestore {
+  let db: Firestore | null = null;
   try {
     const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
     if (fs.existsSync(configPath)) {
       const appletConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
       if (appletConfig.firestoreDatabaseId && appletConfig.firestoreDatabaseId !== '(default)') {
         // @ts-ignore - The admin SDK supports dynamic databaseId
-        return getFirestore(getApps()[0], appletConfig.firestoreDatabaseId);
+        db = getFirestore(getApps()[0], appletConfig.firestoreDatabaseId);
       }
     }
   } catch (e) {
     // fallback
   }
-  return getFirestore();
+  if (!db) {
+    db = getFirestore();
+  }
+  try {
+    db.settings({ ignoreUndefinedProperties: true });
+  } catch (e) {
+    // Settings can only be set once per instance, ignore if already set.
+  }
+  return db;
 }

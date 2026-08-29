@@ -91,11 +91,11 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onNavigate }) => {
           TRANSPARENT ENTERPRISE PRICING
         </div>
 
-        <h1 id="pricing-hero-heading" className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-[#0A0D14] tracking-tight leading-tight">
+        <h1 id="pricing-hero-heading" className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-black tracking-tight leading-tight">
           Transparent, Scalable Plans for Every Stage of Growth
         </h1>
 
-        <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
+        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
           No hidden onboarding fees or surprise charges. All plans include secure cloud infrastructure, unlimited customer sites, role-based security, and ongoing statutory updates.
         </p>
       </section>
@@ -107,8 +107,8 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onNavigate }) => {
             key={plan.name}
             className={`rounded-3xl p-8 flex flex-col justify-between space-y-8 relative transition-all ${
               plan.popular 
-                ? 'bg-[#0A0D14] text-white border-2 border-emerald-500 shadow-2xl ring-4 ring-emerald-500/10' 
-                : 'bg-white text-[#0A0D14] border border-[#E8E7E3] shadow-sm'
+                ? 'bg-black text-white border-2 border-emerald-500 shadow-2xl ring-4 ring-emerald-500/10' 
+                : 'bg-white text-black border border-slate-200 shadow-sm'
             }`}
           >
             {plan.popular && (
@@ -120,7 +120,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onNavigate }) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className={`text-[11px] font-mono font-bold tracking-wider uppercase px-2.5 py-1 rounded-md ${
-                  plan.popular ? 'bg-slate-800 text-emerald-400' : 'bg-slate-100 text-slate-700'
+                  plan.popular ? 'bg-slate-800 text-emerald-400' : 'bg-slate-100 text-slate-900'
                 }`}>
                   {plan.badge}
                 </span>
@@ -140,7 +140,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onNavigate }) => {
                 {plan.features.map((feat) => (
                   <li key={feat} className="flex items-start gap-2.5">
                     <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${plan.popular ? 'text-emerald-400' : 'text-emerald-600'}`} />
-                    <span className={plan.popular ? 'text-slate-300' : 'text-slate-700'}>{feat}</span>
+                    <span className={plan.popular ? 'text-slate-300' : 'text-slate-900'}>{feat}</span>
                   </li>
                 ))}
               </ul>
@@ -152,7 +152,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onNavigate }) => {
               className={`w-full py-3.5 rounded-xl font-mono font-bold text-xs uppercase tracking-wider text-center transition-all flex items-center justify-center gap-2 ${
                 plan.popular 
                   ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md' 
-                  : 'bg-[#0A0D14] hover:bg-slate-800 text-white shadow-xs'
+                  : 'bg-black hover:bg-slate-800 text-white shadow-xs'
               }`}
             >
               {plan.ctaText}

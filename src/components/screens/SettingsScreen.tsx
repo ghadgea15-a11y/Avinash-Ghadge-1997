@@ -28,6 +28,7 @@ import {
   KeyRound,
   Eye,
   EyeOff,
+  Bell,
   AlertCircle
 } from 'lucide-react';
 import { AppSettings, UserSession, CompanyTenant, PhaseAScreen } from '../../types';
@@ -67,14 +68,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 }) => {
   const { themeMode, setThemeMode, isDark } = useTheme();
   const [settings, setSettings] = useState<AppSettings>({
+    
     themeMode: themeMode,
     notificationsEnabled: true,
+    inAppNotifications: true,
+    emailNotifications: true,
+    pushNotifications: false,
+    alertThreshold: 'ALL',
     biometricUnlock: true,
     hapticFeedback: true,
     offlineAutoSync: true,
     defaultView: 'AUTO',
     language: 'EN',
     gpsTrackingHighAccuracy: true
+
   });
   const [saveToast, setSaveToast] = useState<string | null>(null);
   const [testSuiteReport, setTestSuiteReport] = useState<{ passedCount: number; failedCount: number; results: TestResult[] } | null>(null);
@@ -182,7 +189,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   };
 
   return (
-    <div className={`p-4 space-y-4 overflow-y-auto max-h-full ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className={`p-4 space-y-4 overflow-y-auto max-h-full ${isDark ? 'text-slate-100' : 'text-black'}`}>
       {/* Save Notification */}
       {saveToast && (
         <div className="bg-indigo-950 border border-indigo-800 p-3 rounded-2xl text-indigo-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
@@ -196,7 +203,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
       }`}>
         <div className="flex items-center gap-3">
-          <button onClick={onOpenDrawer} className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">
+          <button onClick={onOpenDrawer} className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-300 transition">
             <Menu className="w-6 h-6" />
           </button>
           <div className="p-2.5 rounded-2xl bg-indigo-600/20 text-indigo-400 hidden sm:block">
@@ -222,7 +229,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-2 transition ${
               settings.themeMode === 'LIGHT'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-900'
             }`}
           >
             <Sun className="w-5 h-5 text-amber-400" />
@@ -234,7 +241,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-2 transition ${
               settings.themeMode === 'DARK'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-900'
             }`}
           >
             <Moon className="w-5 h-5 text-indigo-400" />
@@ -246,7 +253,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-2 transition ${
               settings.themeMode === 'SYSTEM'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-900'
             }`}
           >
             <Monitor className="w-5 h-5 text-emerald-400" />
@@ -268,7 +275,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-2 transition ${
               viewportMode === 'PHONE'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-900'
             }`}
           >
             <Smartphone className="w-5 h-5 text-sky-400" />
@@ -280,7 +287,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-2 transition ${
               viewportMode === 'TABLET'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-900'
             }`}
           >
             <Tablet className="w-5 h-5 text-indigo-400" />
@@ -292,7 +299,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center gap-2 transition ${
               viewportMode === 'FULLSCREEN'
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-900'
             }`}
           >
             <Monitor className="w-5 h-5 text-emerald-400" />
@@ -362,12 +369,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   value={newPin}
                   onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
                   className={`w-full p-3 rounded-xl border text-sm font-mono tracking-widest text-center ${
-                    isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
+                    isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-black'
                   }`}
                 />
                 <button
                   onClick={() => setShowPin(!showPin)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-300"
                 >
                   {showPin ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -380,7 +387,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 value={confirmPin}
                 onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
                 className={`w-full p-3 rounded-xl border text-sm font-mono tracking-widest text-center ${
-                  isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
+                  isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-black'
                 }`}
               />
 
@@ -412,19 +419,25 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </h3>
 
           <div className="grid grid-cols-2 gap-2">
-            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+            <button 
+              onClick={() => onNavigate('NOTIFICATION_ADMIN')}
+              className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
+              <Bell className="w-5 h-5 text-rose-400" />
+              <span>Notification Config</span>
+            </button>
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
               <Building2 className="w-5 h-5 text-indigo-400" />
               <span>Agency Profile</span>
             </button>
-            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
               <Sliders className="w-5 h-5 text-indigo-400" />
               <span>Branding Setup</span>
             </button>
-            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
               <Database className="w-5 h-5 text-indigo-400" />
               <span>Firebase Rules</span>
             </button>
-            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
               <FileText className="w-5 h-5 text-indigo-400" />
               <span>Security Audit Log</span>
             </button>
@@ -442,26 +455,98 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => onNavigate('SUPER_ADMIN_COMPANIES')}
-              className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300"
+              className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300"
             >
               <Globe className="w-5 h-5 text-emerald-400" />
               <span>Global Tenants</span>
             </button>
-            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
               <Award className="w-5 h-5 text-emerald-400" />
               <span>License Tiers</span>
             </button>
-            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
               <Database className="w-5 h-5 text-emerald-400" />
               <span>Database Health</span>
             </button>
-            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-700 dark:text-slate-300">
+            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
               <ShieldCheck className="w-5 h-5 text-emerald-400" />
               <span>Platform Go-Live Audit</span>
             </button>
           </div>
         </div>
       )}
+
+      
+      {/* Notification Preferences (Phase 14) */}
+      <div className={`p-4 rounded-3xl border space-y-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b pb-2 border-slate-800">
+          <Bell className="w-4 h-4 text-rose-400" />
+          Notification Preferences
+        </h3>
+
+        <div className="space-y-2 text-xs">
+          <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-800/80">
+            <div className="space-y-0.5">
+              <span className="font-bold block">In-App Notifications</span>
+              <span className="text-[10px] text-slate-400">Receive alerts within the application</span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!!settings.inAppNotifications}
+                onChange={(e) => updateSetting('inAppNotifications', e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:bg-slate-900 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-800/80">
+            <div className="space-y-0.5">
+              <span className="font-bold block">Email Notifications</span>
+              <span className="text-[10px] text-slate-400">Receive summaries and important alerts via email</span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!!settings.emailNotifications}
+                onChange={(e) => updateSetting('emailNotifications', e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:bg-slate-900 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-800/80">
+            <div className="space-y-0.5">
+              <span className="font-bold block">Push Notifications (Mobile)</span>
+              <span className="text-[10px] text-slate-400">Receive native push notifications on devices</span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!!settings.pushNotifications}
+                onChange={(e) => updateSetting('pushNotifications', e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:bg-slate-900 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+          
+          <div className="p-3 rounded-2xl border border-slate-800/80 flex justify-between items-center">
+            <span className="font-bold">Alert Threshold</span>
+            <select
+              value={settings.alertThreshold || 'ALL'}
+              onChange={(e) => updateSetting('alertThreshold', e.target.value)}
+              className={`p-1.5 rounded-lg border text-xs outline-none ${isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-100 border-slate-200 text-black'}`}
+            >
+              <option value="ALL">All Events</option>
+              <option value="IMPORTANT">Important Only</option>
+              <option value="CRITICAL">Critical Only</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
       {/* Location & GPS */}
       <div className={`p-4 rounded-3xl border space-y-3 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
@@ -483,7 +568,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 onChange={(e) => updateSetting('gpsTrackingHighAccuracy', e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:bg-slate-900 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
             </label>
           </div>
         </div>
@@ -509,7 +594,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 onChange={(e) => updateSetting('offlineAutoSync', e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:bg-slate-900 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
             </label>
           </div>
 

@@ -1,177 +1,189 @@
 import { db } from '../firebase';
-import { collection, doc, setDoc, query, where, getDocs, orderBy, limit, startAfter } from 'firebase/firestore';
-import { AuditTrailRecord, UserSession } from '../types';
-import { QueryScopeEngine } from './queryScopeEngine';
+import { 
+  collection, 
+  addDoc, 
+  serverTimestamp, 
+  query, 
+  where, 
+  orderBy, 
+  getDocs,
+  limit,
+  Timestamp
+} from 'firebase/firestore';
+import { UserSession } from '../types';
 
-export let _auditSetDoc = setDoc;
-export function _setAuditSetDocMock(mock: any) { _auditSetDoc = mock; }
+export interface AuditLogEntry {
+  id?: string;
+  companyId: string;
+  userId: string;
+  userName?: string;
+  role: string;
+  action: string;
+  module: string;
+  resourceId?: string;
+  previousValue?: any;
+  newValue?: any;
+  metadata?: Record<string, any>;
+  ipAddress?: string;
+  timestamp: Timestamp | any;
+  status: 'SUCCESS' | 'FAILURE' | 'WARNING';
+}
 
+/**
+ * Enterprise Audit Trail Service
+ * 
+ * Provides immutable logs of all sensitive operations within the platform.
+ */
 export class AuditTrailService {
-  static buildAuditRecord(
-    actor: { userId: string, employeeId?: string, role?: string, companyId: string, assignedSiteId?: string, assignedBranchId?: string, assignedRegionId?: string } | null,
-    companyId: string,
-    module: string,
+  /**
+   * Records a security or business event in the audit trail.
+   */
+  public static async log(
+    session: UserSession,
     action: string,
-    operation: string,
-    entityType: string,
-    entityId: string,
-    success: boolean,
-    severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW',
-    correlationId?: string,
-    changeSummary?: string,
-    failureReason?: string,
-    metadata?: any
-  ): any {
-    if (!actor) return null;
-    const targetCompanyId = companyId || actor.companyId;
-    if (!targetCompanyId) return null;
-
-    const id = `AUDIT-${Date.now()}-${Math.random().toString(36).substring(2,8).toUpperCase()}`;
-    const record: any = {
-      id,
-      companyId: targetCompanyId,
-      actorId: actor.userId,
-      actorEmployeeId: actor.employeeId,
-      actorRole: actor.role,
-      regionId: actor.assignedRegionId || metadata?.regionId,
-      branchId: actor.assignedBranchId || metadata?.branchId,
-      siteId: actor.assignedSiteId || metadata?.siteId,
-      module,
-      action,
-      operation,
-      entityType,
-      entityId,
-      timestamp: new Date().toISOString(),
-      severity,
-      success,
-      failureReason,
-      correlationId,
-      source: 'WEB_APP',
-      changeSummary,
-      metadata
-    };
-    return record;
-  }
-
-  static async recordEvent(
-    actor: { userId: string, employeeId?: string, role?: string, companyId: string, assignedSiteId?: string, assignedBranchId?: string, assignedRegionId?: string } | null,
-    companyId: string,
     module: string,
-    action: string,
-    operation: string,
-    entityType: string,
-    entityId: string,
-    success: boolean,
-    severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW',
-    correlationId?: string,
-    changeSummary?: string,
-    failureReason?: string,
-    metadata?: any
-  ): Promise<void> {
-    try {
-      const record = this.buildAuditRecord(
-        actor, companyId, module, action, operation, entityType, entityId, 
-        success, severity, correlationId, changeSummary, failureReason, metadata
-      );
-      
-      if (!record) return;
-
-      Object.keys(record).forEach(key => {
-        if (record[key] === undefined) {
-          delete record[key];
-        }
-      });
-
-      const auditRef = doc(db, 'companies', record.companyId, 'audit_logs', record.id);
-      await _auditSetDoc(auditRef, record as AuditTrailRecord);
-    } catch (error) {
-      console.error('[AuditTrailService] Error recording audit event:', error);
+    details: {
+      resourceId?: string;
+      previousValue?: any;
+      newValue?: any;
+      metadata?: Record<string, any>;
+      status?: 'SUCCESS' | 'FAILURE' | 'WARNING';
     }
-  }
-
-  static async logCreate(actor: { userId: string, employeeId?: string, role?: string, companyId: string }, module: string, entityType: string, entityId: string, summary?: string, metadata?: any) {
-    return this.recordEvent(actor, actor.companyId, module, 'CREATE', 'CREATE_RECORD', entityType, entityId, true, 'LOW', undefined, summary, undefined, metadata);
-  }
-
-  static async logUpdate(actor: { userId: string, employeeId?: string, role?: string, companyId: string }, module: string, entityType: string, entityId: string, changeSummary?: string, metadata?: any, correlationId?: string) {
-    return this.recordEvent(actor, actor.companyId, module, 'UPDATE', 'UPDATE_RECORD', entityType, entityId, true, 'MEDIUM', correlationId, changeSummary, undefined, metadata);
-  }
-
-  static async logDeleteAttempt(actor: { userId: string, employeeId?: string, role?: string, companyId: string }, module: string, entityType: string, entityId: string, success: boolean, reason?: string, metadata?: any) {
-    return this.recordEvent(actor, actor.companyId, module, 'DELETE', 'DELETE_RECORD', entityType, entityId, success, 'HIGH', undefined, undefined, reason, metadata);
-  }
-
-  static async logApproval(actor: { userId: string, employeeId?: string, role?: string, companyId: string }, module: string, entityType: string, entityId: string, correlationId?: string, summary?: string) {
-    return this.recordEvent(actor, actor.companyId, module, 'APPROVE', 'WORKFLOW_APPROVE', entityType, entityId, true, 'MEDIUM', correlationId, summary);
-  }
-  
-  static async logRejection(actor: { userId: string, employeeId?: string, role?: string, companyId: string }, module: string, entityType: string, entityId: string, correlationId?: string, reason?: string) {
-    return this.recordEvent(actor, actor.companyId, module, 'REJECT', 'WORKFLOW_REJECT', entityType, entityId, true, 'MEDIUM', correlationId, undefined, reason);
-  }
-
-  static async logAction(
-    actor: { userId: string; employeeId?: string; role?: string; companyId: string },
-    module: string,
-    action: string,
-    entityType: string,
-    entityId: string,
-    success: boolean = true,
-    severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW',
-    changeSummary?: string,
-    metadata?: any,
-    failureReason?: string,
-    correlationId?: string
-  ) {
-    return this.recordEvent(
-      actor,
-      actor.companyId,
+  ): Promise<void> {
+    await this.logAction(
+      session,
       module,
       action,
-      action,
-      entityType,
-      entityId,
-      success,
-      severity,
-      correlationId,
-      changeSummary,
-      failureReason,
-      metadata
+      'UNKNOWN',
+      details.resourceId || 'N/A',
+      details.status !== 'FAILURE',
+      details.status === 'WARNING' ? 'MEDIUM' : (details.status === 'FAILURE' ? 'HIGH' : 'INFO'),
+      `Action ${action} performed on module ${module}`,
+      details
     );
   }
 
-  static async getAuditLogs(session: UserSession, filterOptions?: {
-    module?: string;
-    action?: string;
-    actorId?: string;
-    severity?: string;
-    correlationId?: string;
-    limitCount?: number;
-  }): Promise<AuditTrailRecord[]> {
+  /**
+   * Alias for log to match legacy usage
+   */
+  public static async logAction(
+    session: UserSession,
+    module: string,
+    action: string,
+    resourceType: string,
+    resourceId: string,
+    success: boolean,
+    severity: string,
+    message: string,
+    metadata?: any
+  ): Promise<void> {
     try {
-      const baseRef = collection(db, 'companies', session.companyId, 'audit_logs');
-      let q = query(baseRef, ...QueryScopeEngine.buildScope(session, 'AUDIT_LOGS'));
-      
-      // We do manual filtering in memory for simplicity to avoid compound index requirements dynamically, 
-      // but in production, we should add composite indexes or just basic orderBy
-      
-      const snap = await getDocs(q);
-      let logs = snap.docs.map(d => d.data() as AuditTrailRecord);
-      
-      logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const logEntry: Omit<AuditLogEntry, 'id'> = {
+        companyId: session.companyId,
+        userId: session.userId,
+        userName: session.fullName || 'Unknown',
+        role: session.role,
+        action: `${action}:${resourceType}:${resourceId}`,
+        module,
+        resourceId,
+        metadata: { ...metadata, success, severity, message },
+        status: success ? 'SUCCESS' : 'FAILURE',
+        timestamp: serverTimestamp()
+      };
 
-      if (filterOptions) {
-        if (filterOptions.module) logs = logs.filter(l => l.module === filterOptions.module);
-        if (filterOptions.action) logs = logs.filter(l => l.action === filterOptions.action);
-        if (filterOptions.actorId) logs = logs.filter(l => l.actorId === filterOptions.actorId);
-        if (filterOptions.severity) logs = logs.filter(l => l.severity === filterOptions.severity);
-        if (filterOptions.correlationId) logs = logs.filter(l => l.correlationId === filterOptions.correlationId);
-      }
+      await addDoc(collection(db, 'audit_trails'), logEntry);
+    } catch (error) {
+      console.error('[AuditTrailService] Failed to log event:', error);
+    }
+  }
 
-      const limitCount = filterOptions?.limitCount || 100;
-      return logs.slice(0, limitCount);
-    } catch (err) {
-      console.error('[AuditTrailService] getAuditLogs error:', err);
-      return [];
+  /**
+   * Flexible log create to handle different legacy call signatures
+   */
+  public static async logCreate(session: UserSession, ...args: any[]): Promise<void> {
+    if (args.length >= 7) {
+      // (module, action, resourceType, resourceId, success, severity, message, metadata?)
+      await this.logAction(session, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+    } else if (args.length >= 4) {
+      // (module, resourceType, resourceId, message, metadata?)
+      await this.logAction(session, args[0], 'CREATE', args[1], args[2], true, 'INFO', args[3], args[4]);
+    }
+  }
+
+  /**
+   * Flexible log update to handle different legacy call signatures
+   */
+  public static async logUpdate(session: UserSession, ...args: any[]): Promise<void> {
+    if (args.length >= 7) {
+      await this.logAction(session, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+    } else if (args.length >= 4) {
+      await this.logAction(session, args[0], 'UPDATE', args[1], args[2], true, 'INFO', args[3], args[4]);
+    }
+  }
+
+  /**
+   * Retrieves audit logs for a specific company.
+   */
+  public static async getCompanyLogs(
+    companyId: string, 
+    options: { module?: string; limitCount?: number } = {}
+  ): Promise<AuditLogEntry[]> {
+    let q = query(
+      collection(db, 'audit_trails'),
+      where('companyId', '==', companyId),
+      orderBy('timestamp', 'desc'),
+      limit(options.limitCount || 100)
+    );
+
+    if (options.module) {
+      q = query(q, where('module', '==', options.module));
+    }
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditLogEntry));
+  }
+
+  /**
+   * Helper to build a standard audit record object for cross-module consistency.
+   */
+  public static buildAuditRecord(
+    session: UserSession,
+    module: string,
+    action: string,
+    resourceType: string,
+    resourceId: string,
+    success: boolean,
+    severity: string,
+    message: string,
+    metadata?: any
+  ): any {
+    return {
+      companyId: session.companyId,
+      userId: session.userId,
+      userName: session.fullName || 'Unknown',
+      role: session.role,
+      action: `${action}:${resourceType}:${resourceId}`,
+      module,
+      resourceId,
+      metadata: { ...metadata, success, severity, message },
+      status: success ? 'SUCCESS' : 'FAILURE',
+      timestamp: new Date().toISOString(),
+      clientSource: 'WEB_APP'
+    };
+  }
+
+  /**
+   * Directly records an audit record.
+   */
+  public static async recordEvent(record: any): Promise<void> {
+    try {
+      const logEntry = {
+        ...record,
+        timestamp: record.timestamp ? Timestamp.fromDate(new Date(record.timestamp)) : serverTimestamp()
+      };
+      await addDoc(collection(db, 'audit_trails'), logEntry);
+    } catch (error) {
+      console.error('[AuditTrailService] recordEvent failed:', error);
     }
   }
 }

@@ -31,7 +31,7 @@ export const DataPrivacyViewer: React.FC<DataPrivacyViewerProps> = ({ userSessio
     <div className="space-y-6" id="data-privacy-viewer">
       {/* 3 Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-start space-x-4">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-200 shadow-sm flex items-start space-x-4">
           <div className="p-3 bg-emerald-50 rounded-lg text-emerald-600">
             <ShieldCheck className="w-6 h-6" />
           </div>
@@ -41,7 +41,7 @@ export const DataPrivacyViewer: React.FC<DataPrivacyViewerProps> = ({ userSessio
             <div className="text-xs text-gray-500 mt-1">Full ISO/GRC-compliant catalog</div>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-start space-x-4">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-200 shadow-sm flex items-start space-x-4">
           <div className="p-3 bg-indigo-50 rounded-lg text-indigo-600">
             <Layers className="w-6 h-6" />
           </div>
@@ -51,7 +51,7 @@ export const DataPrivacyViewer: React.FC<DataPrivacyViewerProps> = ({ userSessio
             <div className="text-xs text-gray-500 mt-1">Aadhaar, PAN, Bank, CTC redactions</div>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-start space-x-4">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-200 shadow-sm flex items-start space-x-4">
           <div className="p-3 bg-amber-50 rounded-lg text-amber-600">
             <Lock className="w-6 h-6" />
           </div>
@@ -64,7 +64,7 @@ export const DataPrivacyViewer: React.FC<DataPrivacyViewerProps> = ({ userSessio
       </div>
 
       {/* Sensitive Data Classification Registry */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-5 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">

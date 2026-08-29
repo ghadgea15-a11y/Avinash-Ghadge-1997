@@ -90,7 +90,7 @@ export const UpdateCheckerScreen: React.FC<UpdateCheckerScreenProps> = ({
             Release Highlights ({updateInfo.latestVersion})
           </h3>
           <ul className="space-y-2 text-xs text-slate-300">
-            {updateInfo.releaseNotes.map((note, idx) => (
+            {updateInfo.releaseNotes.map((note: any, idx: number) => (
               <li key={idx} className="flex items-start gap-2">
                 <span className="text-indigo-400 mt-0.5">•</span>
                 <span>{note}</span>

@@ -308,10 +308,10 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
   return (
     <div className="space-y-4">
       {/* Header & Stats Bar */}
-      <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+      <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-black dark:text-white dark:text-slate-100 flex items-center gap-2">
               <Camera className="w-4 h-4 text-indigo-500" />
               Evidence & Attachments Vault
               <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300">
@@ -344,7 +344,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
             <ImageIcon className="w-4 h-4 text-indigo-500" />
             <div>
               <span className="text-[10px] text-slate-400 block font-medium">Photos</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">{photoCount}</span>
+              <span className="font-bold text-black dark:text-slate-200">{photoCount}</span>
             </div>
           </div>
 
@@ -352,7 +352,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
             <FileText className="w-4 h-4 text-blue-500" />
             <div>
               <span className="text-[10px] text-slate-400 block font-medium">Reports & Docs</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">{reportCount}</span>
+              <span className="font-bold text-black dark:text-slate-200">{reportCount}</span>
             </div>
           </div>
 
@@ -360,7 +360,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
             <FileCheck className="w-4 h-4 text-emerald-500" />
             <div>
               <span className="text-[10px] text-slate-400 block font-medium">Completion Proof</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">{completionCount}</span>
+              <span className="font-bold text-black dark:text-slate-200">{completionCount}</span>
             </div>
           </div>
 
@@ -394,7 +394,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
             className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
               filterType === 'ALL'
                 ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
             }`}
           >
             All ({attachments.length})
@@ -405,7 +405,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
             className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
               filterType === 'PHOTOS'
                 ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
             }`}
           >
             Photos ({photoCount})
@@ -416,7 +416,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
             className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
               filterType === 'REPORTS'
                 ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
             }`}
           >
             Reports & Docs ({reportCount})
@@ -427,7 +427,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
             className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
               filterType === 'CLIENT'
                 ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-300 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
             }`}
           >
             Client Visible ({clientVisibleCount})
@@ -439,7 +439,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
               className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition ${
                 filterType === 'INTERNAL'
                   ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-300 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
               }`}
             >
               <Lock className="w-3 h-3" />
@@ -458,7 +458,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={`pl-8.5 pr-3 py-1.5 text-xs rounded-xl border focus:outline-none focus:ring-1 focus:ring-indigo-500 w-40 sm:w-56 ${
-                isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
               }`}
             />
           </div>
@@ -491,8 +491,8 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
         </div>
       ) : filteredAttachments.length === 0 ? (
         <div className="text-center py-10 border-2 border-dashed rounded-2xl border-slate-200 dark:border-slate-800 p-6">
-          <UploadCloud className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-          <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">No Evidence Records Found</h4>
+          <UploadCloud className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 dark:text-slate-400 mb-2" />
+          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">No Evidence Records Found</h4>
           <p className="text-[11px] text-slate-400 max-w-sm mx-auto mb-4">
             {searchQuery || filterType !== 'ALL' 
               ? 'No attachments match your current search or filter criteria.' 
@@ -540,7 +540,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                     />
                   ) : (
                     <div className="flex flex-col items-center gap-1.5 p-4 text-center">
-                      <div className="p-3 rounded-2xl bg-white dark:bg-slate-800 shadow-xs border border-slate-200 dark:border-slate-700">
+                      <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 dark:bg-slate-800 shadow-xs border border-slate-200 dark:border-slate-700">
                         {getFileIcon(att.fileName, att.fileType)}
                       </div>
                       <span className="text-[10px] font-mono uppercase text-slate-400 font-semibold">
@@ -556,7 +556,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                         type="button"
                         onClick={() => setPreviewAttachment(att)}
                         title="Preview Image"
-                        className="p-2 rounded-xl bg-white/90 text-slate-800 hover:bg-white shadow-md transition"
+                        className="p-2 rounded-xl bg-white dark:bg-slate-900/90 text-black dark:text-slate-200 hover:bg-white shadow-md transition"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -567,7 +567,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                       rel="noreferrer"
                       download={att.fileName}
                       title="Download / Open"
-                      className="p-2 rounded-xl bg-white/90 text-slate-800 hover:bg-white shadow-md transition"
+                      className="p-2 rounded-xl bg-white dark:bg-slate-900/90 text-black dark:text-slate-200 hover:bg-white shadow-md transition"
                     >
                       <Download className="w-4 h-4" />
                     </a>
@@ -596,7 +596,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                 {/* Metadata Body */}
                 <div className="p-3 flex-1 flex flex-col justify-between space-y-2">
                   <div>
-                    <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate" title={att.fileName}>
+                    <h5 className="text-xs font-bold text-black dark:text-white dark:text-slate-100 truncate" title={att.fileName}>
                       {att.fileName}
                     </h5>
                     
@@ -655,7 +655,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className={`border-b text-[10px] font-bold uppercase tracking-wider ${
-                isDark ? 'border-slate-800 bg-slate-900/60 text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500'
+                isDark ? 'border-slate-800 bg-slate-900/60 text-slate-400' : 'border-slate-200 bg-white text-slate-500'
               }`}>
                 <tr>
                   <th className="py-2.5 px-3">File / Document</th>
@@ -676,7 +676,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                   );
 
                   return (
-                    <tr key={att.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+                    <tr key={att.id} className="hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-800/40 transition">
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-2.5">
                           <div className="shrink-0 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
@@ -685,7 +685,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                           <div className="min-w-0">
                             <span 
                               onClick={() => isImg && setPreviewAttachment(att)}
-                              className={`font-semibold text-slate-900 dark:text-slate-100 block truncate max-w-xs ${isImg ? 'cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400' : ''}`}
+                              className={`font-semibold text-black dark:text-slate-100 block truncate max-w-xs ${isImg ? 'cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400' : ''}`}
                             >
                               {att.fileName}
                             </span>
@@ -698,7 +698,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                         </div>
                       </td>
                       <td className="py-2.5 px-3">
-                        <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase">
+                        <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300 uppercase">
                           {att.evidenceType.replace('_', ' ')}
                         </span>
                       </td>
@@ -713,7 +713,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                           </span>
                         )}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-300">
+                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400 dark:text-slate-300">
                         {att.uploadedByName}
                       </td>
                       <td className="py-2.5 px-3 text-slate-400 text-[10px]">
@@ -787,9 +787,9 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
       {showUploadModal && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className={`w-full max-w-lg rounded-2xl shadow-2xl border overflow-hidden ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
-            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-100 bg-slate-50'}`}>
+            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-100 bg-white'}`}>
               <div className="flex items-center gap-2">
                 <Camera className="w-4 h-4 text-indigo-500" />
                 <h3 className="font-bold text-sm">Upload Evidence or Report</h3>
@@ -832,7 +832,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                     ? 'border-emerald-400 bg-emerald-50/30 dark:bg-emerald-950/20'
                     : isDark 
                     ? 'border-slate-700 hover:border-slate-600 bg-slate-800/40' 
-                    : 'border-slate-300 hover:border-slate-400 bg-slate-50/50'
+                    : 'border-slate-300 hover:border-slate-400 bg-white/50'
                 }`}
               >
                 <input
@@ -852,7 +852,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                       <CheckCircle2 className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="font-bold text-slate-900 dark:text-slate-100 block truncate max-w-xs mx-auto">
+                      <span className="font-bold text-black dark:text-white dark:text-slate-100 block truncate max-w-xs mx-auto">
                         {selectedFile.name}
                       </span>
                       <span className="text-[10px] text-slate-400">
@@ -870,7 +870,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                   <label htmlFor="evidence-file-input" className="cursor-pointer block space-y-2">
                     <UploadCloud className="w-8 h-8 mx-auto text-indigo-500" />
                     <div>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      <span className="font-semibold text-black dark:text-slate-200">
                         Click to browse or drag & drop evidence file
                       </span>
                       <span className="text-[10px] text-slate-400 block mt-0.5">
@@ -883,14 +883,14 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
 
               {/* Evidence Type */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Evidence Classification *
                 </label>
                 <select
                   value={evidenceType}
                   onChange={(e) => setEvidenceType(e.target.value as TicketEvidenceType)}
                   className={`w-full p-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                   }`}
                 >
                   <option value="PHOTO">Site / Defect Photo (Visual Proof)</option>
@@ -904,7 +904,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
 
               {/* Visibility Setting */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Audience & Visibility
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -914,7 +914,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                     className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition ${
                       visibility === 'CLIENT_VISIBLE'
                         ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200'
-                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                        : 'border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800'
                     }`}
                   >
                     <Unlock className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -931,7 +931,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                       className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition ${
                         visibility === 'INTERNAL'
                           ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200'
-                          : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                          : 'border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800'
                       }`}
                     >
                       <Lock className="w-4 h-4 text-amber-500 shrink-0" />
@@ -951,7 +951,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
 
               {/* Notes / Caption */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Notes & Captions (Optional)
                 </label>
                 <textarea
@@ -961,7 +961,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className={`w-full p-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                   }`}
                 />
               </div>
@@ -971,7 +971,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                   type="button"
                   onClick={() => setShowUploadModal(false)}
                   disabled={isUploading}
-                  className="px-3.5 py-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  className="px-3.5 py-1.5 rounded-xl text-slate-600 dark:text-slate-400 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                 >
                   Cancel
                 </button>
@@ -1075,9 +1075,9 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
       {editingAttachment && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className={`w-full max-w-md rounded-2xl shadow-2xl border overflow-hidden ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
-            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-100 bg-slate-50'}`}>
+            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-100 bg-white'}`}>
               <h3 className="font-bold text-sm">Edit Evidence Details</h3>
               <button onClick={() => setEditingAttachment(null)} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full">
                 <X className="w-4 h-4" />
@@ -1086,14 +1086,14 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
 
             <form onSubmit={handleUpdateMetadata} className="p-4 space-y-3.5 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Evidence Classification
                 </label>
                 <select
                   value={editType}
                   onChange={(e) => setEditType(e.target.value as TicketEvidenceType)}
                   className={`w-full p-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                   }`}
                 >
                   <option value="PHOTO">Site / Defect Photo</option>
@@ -1107,14 +1107,14 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
 
               {isStaff && (
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
                     Visibility
                   </label>
                   <select
                     value={editVisibility}
                     onChange={(e) => setEditVisibility(e.target.value as 'CLIENT_VISIBLE' | 'INTERNAL')}
                     className={`w-full p-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                     }`}
                   >
                     <option value="CLIENT_VISIBLE">Client Visible (Accessible in portal)</option>
@@ -1124,7 +1124,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
               )}
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Notes & Captions
                 </label>
                 <textarea
@@ -1133,7 +1133,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
                   className={`w-full p-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                   }`}
                 />
               </div>
@@ -1143,7 +1143,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                   type="button"
                   onClick={() => setEditingAttachment(null)}
                   disabled={isUpdating}
-                  className="px-3 py-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="px-3 py-1.5 rounded-xl text-slate-600 dark:text-slate-400 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
@@ -1164,7 +1164,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
       {archivingAttachment && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className={`w-full max-w-md rounded-2xl shadow-2xl border overflow-hidden ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
             <div className="p-4 border-b border-rose-200 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/20 flex items-center justify-between">
               <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
@@ -1177,12 +1177,12 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
             </div>
 
             <div className="p-4 space-y-3 text-xs">
-              <p className="text-slate-600 dark:text-slate-300">
+              <p className="text-slate-600 dark:text-slate-400 dark:text-slate-300">
                 Are you sure you want to archive <strong>"{archivingAttachment.fileName}"</strong>? This will remove it from active views while maintaining the immutable audit trail.
               </p>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Reason for Archival *
                 </label>
                 <input
@@ -1191,7 +1191,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                   value={archiveReason}
                   onChange={(e) => setArchiveReason(e.target.value)}
                   className={`w-full p-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-rose-500 ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                   }`}
                 />
               </div>
@@ -1201,7 +1201,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                   type="button"
                   onClick={() => setArchivingAttachment(null)}
                   disabled={isArchiving}
-                  className="px-3 py-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="px-3 py-1.5 rounded-xl text-slate-600 dark:text-slate-400 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>

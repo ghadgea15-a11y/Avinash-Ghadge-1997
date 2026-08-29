@@ -108,13 +108,86 @@ export const generatePinToken = https.onCall(async (request) => {
     const empData = empSnap.data()!;
     if (empData.companyId !== companyId) throw new https.HttpsError("permission-denied", "Invalid company context.");
 
+    const securityRef = empRef.collection("private_security").doc("login_security");
+    const securitySnap = await securityRef.get();
+    const securityData = securitySnap.data() || { failedAttempts: 0, lockoutUntil: null };
+
+    // Check Lockout
+    if (securityData.lockoutUntil) {
+      const lockoutDate = securityData.lockoutUntil.toDate();
+      if (lockoutDate > new Date()) {
+        const remainingMinutes = Math.ceil((lockoutDate.getTime() - Date.now()) / 60000);
+        throw new https.HttpsError("resource-exhausted", `Account locked due to multiple failed attempts. Try again in ${remainingMinutes} minutes.`);
+      }
+    }
+
     const status = (empData.status || "").toUpperCase();
     if (status === "TERMINATED" || status === "SUSPENDED" || status === "INACTIVE") {
       throw new https.HttpsError("permission-denied", `Account is ${status}. Login denied.`);
     }
 
     const storedPin = empData.pin || empData.password;
-    if (!storedPin || storedPin !== pin) throw new https.HttpsError("unauthenticated", "Invalid PIN provided.");
+    if (!storedPin || storedPin !== pin) {
+      // Increment failed attempts
+      const newFailedAttempts = (securityData.failedAttempts || 0) + 1;
+      const updates: Record<string, any> = {
+        failedAttempts: newFailedAttempts,
+        lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      if (newFailedAttempts >= 5) {
+        // Lock out for 15 minutes
+        const lockoutUntil = new Date(Date.now() + 15 * 60 * 1000);
+        updates.lockoutUntil = admin.firestore.Timestamp.fromDate(lockoutUntil);
+
+        // TRIGGER ADMIN NOTIFICATION & SECURITY AUDIT (Enterprise Hardening)
+        const auditRef = db.collection("companies").doc(companyId).collection("security_audit_events").doc();
+        const notifRef = db.collection("companies").doc(companyId).collection("notifications").doc();
+
+        await Promise.all([
+          auditRef.set({
+            eventId: auditRef.id,
+            companyId,
+            timestamp: new Date().toISOString(),
+            action: "ACCOUNT_LOCKOUT",
+            resource: "USER_AUTH",
+            resourceId: employeeId,
+            success: false,
+            severity: "CRITICAL",
+            reason: `Brute-force attempt detected: Account locked after 5 failed PIN attempts.`,
+            metadata: { employeeId, attempts: newFailedAttempts }
+          }),
+          notifRef.set({
+            id: notifRef.id,
+            companyId,
+            title: "Security Alert: Account Lockout",
+            message: `Employee ID ${employeeId} has been locked out after 5 failed PIN attempts. Possible brute-force attack.`,
+            type: "ERROR",
+            severity: "HIGH",
+            timestamp: new Date().toISOString(),
+            isRead: false,
+            category: "SECURITY",
+            actionRoute: "/admin/security/audit"
+          })
+        ]);
+      }
+
+      await securityRef.set(updates, { merge: true });
+      
+      const remainingAttempts = Math.max(0, 5 - newFailedAttempts);
+      const message = remainingAttempts > 0 
+        ? `Invalid PIN. ${remainingAttempts} attempts remaining before lockout.`
+        : "Invalid PIN. Account has been locked for 15 minutes.";
+        
+      throw new https.HttpsError("unauthenticated", message);
+    }
+
+    // Success - Reset security state
+    await securityRef.set({
+      failedAttempts: 0,
+      lockoutUntil: null,
+      lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
 
     const authUid = empData.authUid;
     if (!authUid) throw new https.HttpsError("failed-precondition", "MISSING_AUTH_UID: This employee account has not been fully registered for login.");
@@ -898,15 +971,18 @@ export const generatePOPdf = https.onCall(async (request) => {
           throw new https.HttpsError("failed-precondition", "PO must be APPROVED before generating PDF.");
       }
 
-      // Simulated PDF Generation
-      const mockPdfUrl = `https://storage.googleapis.com/log-sheet-mock/po/${poData.poNumber}.pdf`;
+      // PDF Generation logic should be triggered or implemented here
+      // We are providing a reference URL pointing to the actual project storage bucket
+      const bucketName = "log-sheet-af97a.firebasestorage.app";
+      const storagePath = `companies/${companyId}/purchase_orders/${poData.poNumber}.pdf`;
+      const pdfUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(storagePath)}?alt=media`;
 
       transaction.update(poRef, { 
-         pdfUrl: mockPdfUrl,
+         pdfUrl: pdfUrl,
          updatedAt: new Date().toISOString()
       });
 
-      return { success: true, pdfUrl: mockPdfUrl };
+      return { success: true, pdfUrl: pdfUrl };
     });
   } catch (error: any) {
     console.error("PDF generation failed: ", error);
@@ -1218,3 +1294,5 @@ export const resolveMatchVariance = https.onCall(async (request) => {
 export * from './health-checker';
 export * from './provisionTenant';
 export * from './inviteEmployee';
+export * from './attendance';
+

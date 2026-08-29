@@ -22,6 +22,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { formatTimestamp, formatDateSafe } from '../../utils/dateUtils';
 
 interface BulkExportAlertsDashboardProps {
   userSession: UserSession;
@@ -133,7 +134,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
     <div className="space-y-6">
       {/* Top Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Bulk Edit Alerts</span>
             <div className="text-2xl font-black text-gray-900 mt-1">{bulkCount}</div>
@@ -143,7 +144,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">After-Hours Exports</span>
             <div className="text-2xl font-black text-gray-900 mt-1">{afterHoursCount}</div>
@@ -153,7 +154,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">High / Critical Alerts</span>
             <div className="text-2xl font-black text-red-600 mt-1">{criticalHighCount}</div>
@@ -163,7 +164,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pending Review</span>
             <div className="text-2xl font-black text-gray-900 mt-1">{pendingCount}</div>
@@ -175,7 +176,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
       </div>
 
       {/* Main Container */}
-      <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
         {/* Header with Search & Controls */}
         <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row gap-4 justify-between items-center">
           <div className="flex items-center gap-3">
@@ -194,7 +195,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
             {isAdmin && (
               <button
                 onClick={() => setShowConfigModal(true)}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition shadow-2xs"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-white dark:bg-slate-900 border border-gray-200 rounded-xl hover:bg-gray-50 transition shadow-2xs"
               >
                 <Settings className="w-3.5 h-3.5 text-gray-500" />
                 Policy Config
@@ -203,7 +204,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
 
             <button
               onClick={loadData}
-              className="p-2 text-gray-500 hover:text-gray-900 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition shadow-2xs"
+              className="p-2 text-gray-500 hover:text-gray-900 bg-white dark:bg-slate-900 border border-gray-200 rounded-xl hover:bg-gray-50 transition shadow-2xs"
               title="Refresh alerts"
             >
               <RefreshCw className="w-4 h-4" />
@@ -212,7 +213,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
         </div>
 
         {/* Filters Bar */}
-        <div className="p-4 border-b border-gray-100 bg-white flex flex-wrap gap-3 items-center">
+        <div className="p-4 border-b border-gray-100 bg-white dark:bg-slate-900 flex flex-wrap gap-3 items-center">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -227,7 +228,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
           <select
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value)}
-            className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 bg-white font-medium focus:outline-hidden"
+            className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 bg-white dark:bg-slate-900 font-medium focus:outline-hidden"
           >
             <option value="ALL">All Categories</option>
             <option value="BULK_EDIT">Bulk Edit</option>
@@ -240,7 +241,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
           <select
             value={severityFilter}
             onChange={e => setSeverityFilter(e.target.value)}
-            className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 bg-white font-medium focus:outline-hidden"
+            className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 bg-white dark:bg-slate-900 font-medium focus:outline-hidden"
           >
             <option value="ALL">All Severities</option>
             <option value="CRITICAL">Critical</option>
@@ -252,7 +253,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 bg-white font-medium focus:outline-hidden"
+            className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 bg-white dark:bg-slate-900 font-medium focus:outline-hidden"
           >
             <option value="ALL">All Statuses</option>
             <option value="DETECTED">Detected</option>
@@ -297,10 +298,10 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                     <td className="px-4 py-3.5 whitespace-nowrap">
                       <div className="font-medium text-gray-900 flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5 text-gray-400" />
-                        {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        {formatTimestamp(alert.timestamp).split(',')[1]?.trim() || formatTimestamp(alert.timestamp)}
                       </div>
                       <div className="text-[10px] text-gray-500 mt-0.5">
-                        {new Date(alert.timestamp).toISOString().split('T')[0]}
+                        {formatDateSafe(alert.timestamp)}
                       </div>
                       {alert.isAfterHours && (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold rounded-md mt-1 border border-amber-200">
@@ -396,7 +397,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-gray-100"
+              className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-gray-100"
             >
               <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/80">
                 <div className="flex items-center gap-2">
@@ -517,7 +518,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-gray-100 max-h-[85vh] flex flex-col"
+              className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-gray-100 max-h-[85vh] flex flex-col"
             >
               {/* Modal Header */}
               <div className="p-5 border-b border-gray-100 bg-gray-50/80 flex justify-between items-center shrink-0">
@@ -589,7 +590,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                     )}
                   </div>
                   <div className="text-gray-600 text-xs">
-                    Executed at <span className="font-mono font-semibold text-gray-800">{new Date(selectedAlert.timestamp).toLocaleString()}</span> (Local hour: {selectedAlert.localTimeHour}:00).
+                    Executed at <span className="font-mono font-semibold text-gray-800">{formatTimestamp(selectedAlert.timestamp)}</span> (Local hour: {selectedAlert.localTimeHour}:00).
                   </div>
                 </div>
 
@@ -598,7 +599,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                   <h4 className="font-bold text-gray-900 mb-2">Detection Rules & Security Evidence</h4>
                   <div className="bg-slate-900 text-slate-200 p-4 rounded-xl font-mono text-xs border border-slate-800 space-y-2">
                     <div className="flex flex-wrap gap-1.5 mb-2">
-                      {selectedAlert.rulesTriggered.map((rule, idx) => (
+                      {selectedAlert.rulesTriggered.map((rule: any, idx: number) => (
                         <span key={idx} className="px-2 py-0.5 bg-red-950/80 text-red-300 rounded-md border border-red-800 text-[10px] font-bold">
                           {rule}
                         </span>
@@ -623,7 +624,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                         value={resolveNote}
                         onChange={e => setResolveNote(e.target.value)}
                         placeholder="Enter investigation justification, administrative verification, or incident notes..."
-                        className="w-full border border-gray-200 rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden bg-white"
+                        className="w-full border border-gray-200 rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden bg-white dark:bg-slate-900"
                         rows={3}
                       />
                       <div className="flex flex-wrap gap-2">
@@ -660,7 +661,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                           {selectedAlert.status}
                         </span>
                         <span className="text-[10px] text-gray-500">
-                          Reviewed by {selectedAlert.reviewedBy} at {selectedAlert.reviewedAt ? new Date(selectedAlert.reviewedAt).toLocaleString() : ''}
+                          Reviewed by {selectedAlert.reviewedBy} at {formatTimestamp(selectedAlert.reviewedAt)}
                         </span>
                       </div>
                       <p className="text-gray-700 text-xs font-medium">{selectedAlert.resolutionNotes}</p>

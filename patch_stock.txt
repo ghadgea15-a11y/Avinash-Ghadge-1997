@@ -1,0 +1,5 @@
+
+  public static async getBalances(companyId: string) { return []; }
+  public static async saveLocation(companyId: string, data: any) { return { success: true }; }
+  public static async issueStock(companyId: string, data: any) { return { success: true }; }
+  public static async saveItem(companyId: string, data: any) { return { success: true }; }

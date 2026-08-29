@@ -31,7 +31,7 @@ export function WorkOrderList({ workOrders, onSelect }: WorkOrderListProps) {
   const getStatusBadge = (status: WorkOrderStatus) => {
     switch (status) {
       case 'DRAFT':
-        return 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700';
+        return 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300 border-slate-300 dark:border-slate-700';
       case 'SUBMITTED':
         return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800';
       case 'APPROVED':
@@ -54,7 +54,7 @@ export function WorkOrderList({ workOrders, onSelect }: WorkOrderListProps) {
       case 'OVERDUE':
         return 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200 border-red-300 dark:border-red-700 font-semibold';
       default:
-        return 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700';
+        return 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300 border-slate-300 dark:border-slate-700';
     }
   };
 
@@ -67,9 +67,9 @@ export function WorkOrderList({ workOrders, onSelect }: WorkOrderListProps) {
       case 'MEDIUM':
         return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900';
       case 'LOW':
-        return 'text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800';
+        return 'text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800';
       default:
-        return 'text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800';
+        return 'text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800';
     }
   };
 
@@ -94,7 +94,7 @@ export function WorkOrderList({ workOrders, onSelect }: WorkOrderListProps) {
             placeholder="Search by title, ID, category, or assignee..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-black dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
         </div>
 
@@ -103,7 +103,7 @@ export function WorkOrderList({ workOrders, onSelect }: WorkOrderListProps) {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             aria-label="Filter work orders by status"
-            className="px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-300 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="ALL">All Statuses</option>
             <option value="DRAFT">Draft</option>
@@ -122,7 +122,7 @@ export function WorkOrderList({ workOrders, onSelect }: WorkOrderListProps) {
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
             aria-label="Filter work orders by priority"
-            className="px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-300 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="ALL">All Priorities</option>
             <option value="CRITICAL">Critical</option>
@@ -134,14 +134,14 @@ export function WorkOrderList({ workOrders, onSelect }: WorkOrderListProps) {
       </div>
 
       {/* Orders List / Table */}
-      <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700/60">
+      <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700/60">
         {filteredOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center px-4">
             <div className="p-3 bg-slate-100 dark:bg-slate-700/50 rounded-full text-slate-400 mb-3">
               <FileText className="w-8 h-8" />
             </div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">No Work Orders Found</h3>
-            <p className="text-sm text-slate-500 max-w-sm mt-1">
+            <h3 className="text-base font-semibold text-black dark:text-white">No Work Orders Found</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mt-1">
               {searchTerm || statusFilter !== 'ALL' || priorityFilter !== 'ALL'
                 ? 'Try adjusting your search criteria or filter filters.'
                 : 'Get started by creating your first operational work order.'}
@@ -149,14 +149,14 @@ export function WorkOrderList({ workOrders, onSelect }: WorkOrderListProps) {
           </div>
         ) : (
           filteredOrders.map(order => {
-            const completedChecklists = order.checklist ? order.checklist.filter(c => c.isCompleted).length : 0;
+            const completedChecklists = order.checklist ? order.checklist.filter((c: any) => c.isCompleted).length : 0;
             const totalChecklists = order.checklist ? order.checklist.length : 0;
 
             return (
               <div
                 key={order.id}
                 onClick={() => onSelect(order)}
-                className="p-4 sm:p-5 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors flex items-center justify-between gap-4"
+                className="p-4 sm:p-5 hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700/40 cursor-pointer transition-colors flex items-center justify-between gap-4"
               >
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
@@ -171,7 +171,7 @@ export function WorkOrderList({ workOrders, onSelect }: WorkOrderListProps) {
                     </span>
                   </div>
 
-                  <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white truncate">
+                  <h3 className="text-sm sm:text-base font-semibold text-black dark:text-white truncate">
                     {order.title}
                   </h3>
 
@@ -197,7 +197,7 @@ export function WorkOrderList({ workOrders, onSelect }: WorkOrderListProps) {
                     )}
 
                     {totalChecklists > 0 && (
-                      <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                      <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400 dark:text-slate-300">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                         {completedChecklists}/{totalChecklists} Tasks
                       </span>
@@ -212,7 +212,7 @@ export function WorkOrderList({ workOrders, onSelect }: WorkOrderListProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <div className="flex items-center text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200">
                   <ChevronRight className="w-5 h-5" />
                 </div>
               </div>

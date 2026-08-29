@@ -3,7 +3,7 @@ import { CompanyTenant, UserSession, SrmVendorRecord, VendorTier, VendorStatus }
 import { Search, Plus, Filter, FileText, CheckCircle, XCircle, ShieldAlert, Star, Building2, Ban } from 'lucide-react';
 import { getFirestore, collection, query, getDocs } from 'firebase/firestore';
 import { format } from 'date-fns';
-import { ScmService } from '../../services/scmService';
+import { SrmService } from '../../services/srmService';
 
 interface Props {
   userSession: UserSession;
@@ -21,7 +21,7 @@ export function VendorDirectoryScreen({ userSession, activeCompany, onNavigate }
     async function fetchData() {
       setLoading(true);
       try {
-        const fetchedVendors = await ScmService.getSrmVendors(userSession, activeCompany.companyId);
+        const fetchedVendors = await SrmService.getVendors(activeCompany.companyId);
         setVendors(fetchedVendors);
       } catch (err) {
         console.error('Failed to fetch vendors:', err);
@@ -43,18 +43,20 @@ export function VendorDirectoryScreen({ userSession, activeCompany, onNavigate }
   };
 
   const filteredVendors = vendors.filter(v => {
-    const matchesSearch = v.businessName.toLowerCase().includes(searchQuery.toLowerCase()) || v.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const vendorName = v.businessName || v.name || '';
+    const category = v.category || '';
+    const matchesSearch = vendorName.toLowerCase().includes(searchQuery.toLowerCase()) || category.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTier = tierFilter === 'ALL' || v.tier === tierFilter;
     return matchesSearch && matchesTier;
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-20 px-4 sm:px-6 lg:px-8 pb-12">
+    <div className="min-h-screen bg-white dark:bg-slate-950 pt-20 px-4 sm:px-6 lg:px-8 pb-12">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Vendor Management</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl font-bold text-black dark:text-white tracking-tight">Vendor Management</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Onboarding, Document Verification, and Compliance Directory.
             </p>
           </div>
@@ -66,18 +68,18 @@ export function VendorDirectoryScreen({ userSession, activeCompany, onNavigate }
 
         {/* Dashboard Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Total Vendors</p>
-              <p className="text-2xl font-bold text-slate-900">{loading ? '-' : vendors.length}</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Total Vendors</p>
+              <p className="text-2xl font-bold text-black dark:text-white">{loading ? '-' : vendors.length}</p>
             </div>
             <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
               <Building2 className="w-5 h-5" />
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Tier 1 Preferred</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Tier 1 Preferred</p>
               <p className="text-2xl font-bold text-emerald-600">
                 {loading ? '-' : vendors.filter(s => s.tier === 'TIER_1_PREFERRED').length}
               </p>
@@ -86,9 +88,9 @@ export function VendorDirectoryScreen({ userSession, activeCompany, onNavigate }
               <CheckCircle className="w-5 h-5" />
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Under Review</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Under Review</p>
               <p className="text-2xl font-bold text-amber-600">
                 {loading ? '-' : vendors.filter(s => s.status === 'UNDER_REVIEW').length}
               </p>
@@ -97,9 +99,9 @@ export function VendorDirectoryScreen({ userSession, activeCompany, onNavigate }
               <FileText className="w-5 h-5" />
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 p-5 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Blacklisted</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Blacklisted</p>
               <p className="text-2xl font-bold text-red-600">
                 {loading ? '-' : vendors.filter(s => s.tier === 'BLACKLISTED').length}
               </p>
@@ -119,13 +121,13 @@ export function VendorDirectoryScreen({ userSession, activeCompany, onNavigate }
               placeholder="Search by vendor name or category..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             />
           </div>
           <select
             value={tierFilter}
             onChange={(e) => setTierFilter(e.target.value as VendorTier | 'ALL')}
-            className="px-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            className="px-4 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
           >
             <option value="ALL">All Tiers</option>
             <option value="TIER_1_PREFERRED">Tier 1 (Preferred)</option>
@@ -136,14 +138,14 @@ export function VendorDirectoryScreen({ userSession, activeCompany, onNavigate }
         </div>
 
         {/* Status Directory */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-            <h2 className="text-lg font-semibold text-slate-800">Vendor Master List</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white dark:bg-slate-950/50">
+            <h2 className="text-lg font-semibold text-black dark:text-slate-200">Vendor Master List</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500">
+                <tr className="bg-white dark:bg-slate-950 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <th className="px-6 py-3 font-medium">Business Name</th>
                   <th className="px-6 py-3 font-medium">Category</th>
                   <th className="px-6 py-3 font-medium">Compliance</th>
@@ -155,55 +157,63 @@ export function VendorDirectoryScreen({ userSession, activeCompany, onNavigate }
               <tbody className="divide-y divide-slate-200 text-sm">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                       Loading vendors...
                     </td>
                   </tr>
                 ) : filteredVendors.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                       No vendors found matching criteria.
                     </td>
                   </tr>
                 ) : (
-                  filteredVendors.map((vendor) => (
-                    <tr key={vendor.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-slate-900">{vendor.businessName}</div>
-                        <div className="text-slate-500 text-xs">{vendor.contactPerson.email}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-slate-800 font-medium">{vendor.category}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full rounded-full ${vendor.complianceScore >= 80 ? 'bg-emerald-500' : vendor.complianceScore >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
-                              style={{ width: `${vendor.complianceScore}%` }}
-                            />
+                  filteredVendors.map((vendor) => {
+                    const email = typeof vendor.contactPerson === 'object' 
+                      ? vendor.contactPerson?.email || vendor.email || 'N/A'
+                      : vendor.email || vendor.contactPerson || 'N/A';
+                    const score = typeof vendor.complianceScore === 'number' ? vendor.complianceScore : 100;
+                    const rating = typeof vendor.ratingAverage === 'number' ? vendor.ratingAverage : 5.0;
+
+                    return (
+                      <tr key={vendor.id} className="hover:bg-white dark:bg-slate-950/80 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-medium text-black dark:text-white">{vendor.businessName || vendor.name}</div>
+                          <div className="text-slate-500 dark:text-slate-400 text-xs">{email}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-black dark:text-slate-200 font-medium">{vendor.category}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full rounded-full ${score >= 80 ? 'bg-emerald-500' : score >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                style={{ width: `${score}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{score}%</span>
                           </div>
-                          <span className="text-xs font-medium text-slate-600">{vendor.complianceScore}%</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center text-slate-700 font-medium">
-                          <Star className="w-4 h-4 text-amber-500 mr-1 fill-amber-500" />
-                          {vendor.ratingAverage.toFixed(1)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getTierBadge(vendor.tier)}`}>
-                          {vendor.tier.replace(/_/g, ' ')}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <button className="text-indigo-600 hover:text-indigo-900 font-medium text-sm transition-colors">
-                          View Profile
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-slate-900 dark:text-slate-300 font-medium">
+                            <Star className="w-4 h-4 text-amber-500 mr-1 fill-amber-500" />
+                            {rating.toFixed(1)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getTierBadge(vendor.tier)}`}>
+                            {String(vendor.tier).replace(/_/g, ' ')}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <button className="text-indigo-600 hover:text-indigo-900 font-medium text-sm transition-colors">
+                            View Profile
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

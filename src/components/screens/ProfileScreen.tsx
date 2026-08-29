@@ -251,7 +251,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   };
 
   return (
-    <div className={`p-4 space-y-4 overflow-y-auto max-h-full ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className={`p-4 space-y-4 overflow-y-auto max-h-full ${isDark ? 'text-slate-100' : 'text-black'}`}>
       {/* Toast Alert */}
       {savedSuccess && (
         <div className="bg-emerald-950 border border-emerald-800 p-3 rounded-2xl text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
@@ -349,7 +349,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 : 'Protect your enterprise account against unauthorized password theft by pairing an authenticator app.'}
             </p>
             {mfaEnabled && existingBackupCodes.length > 0 && (
-              <p className="text-[11px] text-slate-500 font-mono">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                 {existingBackupCodes.length} single-use backup recovery codes active
               </p>
             )}
@@ -361,7 +361,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 <button
                   onClick={() => setShowBackupCodes(!showBackupCodes)}
                   className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition ${
-                    isDark ? 'bg-slate-950 border-slate-700 text-slate-300 hover:bg-slate-800' : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-700 text-slate-300 hover:bg-slate-800' : 'bg-slate-100 border-slate-200 text-slate-900 hover:bg-slate-200'
                   }`}
                 >
                   {showBackupCodes ? 'Hide Backup Codes' : 'View Backup Codes'}
@@ -387,7 +387,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
         {/* Existing Backup Codes Drawer */}
         {showBackupCodes && existingBackupCodes.length > 0 && (
-          <div className={`mt-3 p-3 rounded-2xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+          <div className={`mt-3 p-3 rounded-2xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Recovery Codes</span>
               <button
@@ -413,7 +413,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       {showMfaModal && mfaSetupData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
           <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto ${
-            isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
             <div className="flex items-center justify-between border-b pb-3 border-slate-800">
               <div className="flex items-center gap-2">
@@ -428,19 +428,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
 
             {/* QR Code Display */}
-            <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-slate-300">
+            <div className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-300">
               <img
                 src={mfaSetupData.qrCodeDataUrl}
                 alt="MFA QR Code"
                 className="w-48 h-48 object-contain"
               />
-              <span className="text-[10px] text-slate-600 font-mono mt-1 font-semibold">
+              <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono mt-1 font-semibold">
                 RFC 6238 (SHA-1 • 6-Digits • 30s)
               </span>
             </div>
 
             {/* Manual Secret Key */}
-            <div className={`p-3 rounded-2xl border space-y-1.5 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+            <div className={`p-3 rounded-2xl border space-y-1.5 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
               <div className="flex items-center justify-between">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Manual Setup Key</label>
                 <button
@@ -458,7 +458,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
 
             {/* Emergency Recovery Codes */}
-            <div className={`p-3 rounded-2xl border space-y-1.5 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+            <div className={`p-3 rounded-2xl border space-y-1.5 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
               <div className="flex items-center justify-between">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">8 Emergency Recovery Codes</label>
                 <button
@@ -494,7 +494,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 }}
                 placeholder="123456"
                 className={`w-full p-3 rounded-xl border font-mono text-center text-xl tracking-[0.4em] font-bold ${
-                  isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                  isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                 }`}
               />
 
@@ -545,7 +545,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {(profile.certifications || []).map((cert, idx) => (
+          {(profile.certifications || []).map((cert: any, idx: number) => (
             <span
               key={idx}
               className={`text-xs px-3 py-1.5 rounded-xl border font-medium flex items-center gap-1.5 ${
@@ -577,7 +577,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 value={profile.phoneNumber}
                 onChange={(e) => setProfile({ ...profile, phoneNumber: e.target.value })}
                 className={`w-full p-2.5 rounded-xl border font-mono text-xs ${
-                  isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                  isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                 }`}
               />
             ) : (
@@ -595,7 +595,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 value={profile.emergencyContact}
                 onChange={(e) => setProfile({ ...profile, emergencyContact: e.target.value })}
                 className={`w-full p-2.5 rounded-xl border font-mono text-xs ${
-                  isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                  isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                 }`}
               />
             ) : (
@@ -614,7 +614,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 value={profile.bloodGroup}
                 onChange={(e) => setProfile({ ...profile, bloodGroup: e.target.value })}
                 className={`w-full p-2.5 rounded-xl border font-mono text-xs ${
-                  isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                  isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                 }`}
               />
             ) : (
@@ -640,7 +640,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               value={profile.address}
               onChange={(e) => setProfile({ ...profile, address: e.target.value })}
               className={`w-full p-2.5 rounded-xl border text-xs ${
-                isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
               }`}
             />
           ) : (
@@ -657,7 +657,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </h3>
 
         <div className="grid grid-cols-1 gap-3 text-xs">
-          <div className={`p-3 rounded-2xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+          <div className={`p-3 rounded-2xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
             <span className="text-[10px] text-slate-400 block mb-0.5">Device ID Lock</span>
             <span className="font-mono font-bold text-indigo-400">ANDR-SEC-9901-X</span>
           </div>

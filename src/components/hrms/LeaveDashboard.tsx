@@ -1,4 +1,5 @@
 // @ts-nocheck
+// @ts-nocheck
 import React from 'react';
 import { 
   Calendar, 
@@ -38,9 +39,9 @@ export const LeaveDashboard: React.FC<LeaveDashboardProps> = ({
         return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-300 dark:border-rose-800 uppercase tracking-wider">Rejected</span>;
       case 'CANCELLED':
       case 'WITHDRAWN':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border border-slate-300 dark:border-slate-700 uppercase tracking-wider">Cancelled</span>;
+        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-900 dark:text-slate-300 dark:bg-slate-800 dark:text-slate-400 border border-slate-300 dark:border-slate-700 uppercase tracking-wider">Cancelled</span>;
       default:
-        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 uppercase tracking-wider">{status}</span>;
+        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-900 dark:text-slate-300 uppercase tracking-wider">{status}</span>;
     }
   };
 
@@ -49,26 +50,38 @@ export const LeaveDashboard: React.FC<LeaveDashboardProps> = ({
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {balance?.balances.map((b) => (
-          <div key={b.leaveCode} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
+          <div key={b.leaveCode} className="p-4 rounded-2xl bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
               <Calendar className="w-8 h-8" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">{b.leaveName}</span>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{b.leaveName}</span>
+                {b.isProRataApplied && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black bg-indigo-100 text-indigo-800 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                    Pro-Rata
+                  </span>
+                )}
+              </div>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-slate-900 dark:text-white">
+                <span className="text-3xl font-black text-black dark:text-white">
                   {LeaveService.calculateAvailableBalance(b)}
                 </span>
-                <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Days</span>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Days Available</span>
               </div>
               <div className="mt-3 flex items-center justify-between text-[10px] font-bold text-slate-400">
+                <span>Accrued: {b.accrued ?? (b.openingBalance + (b.carriedForward || 0))}</span>
                 <span>Used: {b.used}</span>
-                <span>Pending: {b.pending}</span>
               </div>
+              {b.isProRataApplied && b.joiningDate && (
+                <div className="mt-1 text-[9px] font-semibold text-indigo-600 dark:text-indigo-400">
+                  Joined: {b.joiningDate} (Ratio: {((b.proRataFactor || 1) * 100).toFixed(0)}%)
+                </div>
+              )}
               <div className="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-2 overflow-hidden">
                 <div 
                   className="bg-indigo-600 h-full rounded-full transition-all duration-500" 
-                  style={{ width: `${Math.min(100, (b.used / (b.openingBalance + b.accrued)) * 100)}%` }} 
+                  style={{ width: `${Math.min(100, (b.used / Math.max(1, (b.openingBalance || 0) + (b.accrued || 0))) * 100)}%` }} 
                 />
               </div>
             </div>
@@ -76,16 +89,16 @@ export const LeaveDashboard: React.FC<LeaveDashboardProps> = ({
         ))}
 
         {!balance?.balances.length && !isLoading && (
-          <div className="col-span-full p-8 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+          <div className="col-span-full p-8 text-center bg-white dark:bg-slate-950 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800">
             <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-            <p className="text-sm font-bold text-slate-500">No leave entitlements found for the current year.</p>
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No leave entitlements found for the current year.</p>
           </div>
         )}
       </div>
 
       {/* Quick Actions */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-black text-black dark:text-white flex items-center gap-2">
           <Clock className="w-5 h-5 text-indigo-600" />
           Recent Applications
         </h3>
@@ -101,26 +114,26 @@ export const LeaveDashboard: React.FC<LeaveDashboardProps> = ({
       {/* Request History */}
       <div className="space-y-3">
         {myRequests.length === 0 ? (
-          <div className="p-12 text-center bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
+          <div className="p-12 text-center bg-white dark:bg-slate-900 dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm">
             <Calendar className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-            <h4 className="text-base font-black text-slate-800 dark:text-white">No Leave History</h4>
-            <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">Your leave applications and their status will appear here once you submit them.</p>
+            <h4 className="text-base font-black text-black dark:text-slate-200 dark:text-white">No Leave History</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">Your leave applications and their status will appear here once you submit them.</p>
           </div>
         ) : (
           myRequests.slice(0, 10).map((req) => (
-            <div key={req.id} className="group p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:border-indigo-200 dark:hover:border-indigo-900 transition-all">
+            <div key={req.id} className="group p-4 rounded-2xl bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:border-indigo-200 dark:hover:border-indigo-900 transition-all">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center border border-slate-100 dark:border-slate-800">
+                  <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-950 dark:bg-slate-900 flex flex-col items-center justify-center border border-slate-100 dark:border-slate-800">
                     <span className="text-[10px] font-black text-slate-400 uppercase">{new Date(req.startDate).toLocaleString('default', { month: 'short' })}</span>
-                    <span className="text-lg font-black text-slate-900 dark:text-white leading-none">{new Date(req.startDate).getDate()}</span>
+                    <span className="text-lg font-black text-black dark:text-white leading-none">{new Date(req.startDate).getDate()}</span>
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-black text-slate-900 dark:text-white">{req.leaveTypeName}</h4>
+                      <h4 className="text-sm font-black text-black dark:text-white">{req.leaveTypeName}</h4>
                       {getStatusBadge(req.status)}
                     </div>
-                    <p className="text-[11px] font-bold text-slate-500 mt-0.5">
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">
                       {req.startDate} to {req.endDate} • {req.daysCount} {req.isHalfDay ? 'Half Day' : req.daysCount === 1 ? 'Day' : 'Days'}
                     </p>
                   </div>
@@ -129,7 +142,7 @@ export const LeaveDashboard: React.FC<LeaveDashboardProps> = ({
                 <div className="flex items-center gap-3">
                   <div className="hidden sm:block text-right">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</p>
-                    <p className="text-xs font-black text-slate-700 dark:text-slate-300">
+                    <p className="text-xs font-black text-slate-900 dark:text-slate-300">
                       {req.status === 'APPROVED' ? 'Finalized' : req.status === 'REJECTED' ? 'Rejected' : 'In Review'}
                     </p>
                   </div>
@@ -139,7 +152,7 @@ export const LeaveDashboard: React.FC<LeaveDashboardProps> = ({
               
               {req.reason && (
                 <div className="mt-3 pt-3 border-t border-slate-50 dark:border-slate-700/50">
-                  <p className="text-[11px] text-slate-500 italic">"{req.reason}"</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">"{req.reason}"</p>
                 </div>
               )}
 

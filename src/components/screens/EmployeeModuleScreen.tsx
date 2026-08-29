@@ -89,7 +89,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   const [sites, setSites] = useState<SiteRecord[]>([]);
   const [departments, setDepartments] = useState<DepartmentRecord[]>([]);
   const [designations, setDesignations] = useState<DesignationRecord[]>([]);
-  const [vendors, setVendors] = useState<{id: string; vendorName: string; vendorCode: string}[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
 
   const [activeTab, setActiveTab] = useState<'DIRECTORY' | 'REGISTER' | 'APPROVALS'>('DIRECTORY');
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeRecord | null>(null);
@@ -165,7 +165,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   // Form state for registration / edit
   const [formData, setFormData] = useState({
     hasSystemAccess: false,
-      employeeId: '', // Business ID (e.g. EMP-101)
+    employeeId: '', // Business ID (e.g. EMP-101)
     employeeCode: '', // Secondary code
     firstName: '',
     middleName: '',
@@ -269,7 +269,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     const active = employees.filter(e => e.status === 'ACTIVE').length;
     const pending = employees.filter(e => e.status === 'PENDING_VERIFICATION').length;
     const suspended = employees.filter(e => e.status === 'SUSPENDED').length;
-    const kycPending = employees.filter(e => (e.documents || []).some(d => d.status === 'UPLOADED')).length;
+    const kycPending = employees.filter(e => (e.documents || []).some((d: any) => d.status === 'UPLOADED')).length;
     return { total, active, pending, suspended, kycPending };
   }, [employees]);
 
@@ -422,7 +422,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       employmentType: (emp.employmentType as any) || 'PERMANENT',
       vendorId: emp.vendorId || '',
       role: emp.role || 'GUARD',
-      aadharNumber: emp.documents?.find(d => d.documentTypeCode === 'AADHAR')?.documentNumber || '',
+      aadharNumber: emp.documents?.find((d: any) => d.documentTypeCode === 'AADHAR')?.documentNumber || '',
       panNumber: emp.panNumber || '',
       address: emp.address || '',
       bankDetailsRef: emp.bankDetailsRef || '',
@@ -441,7 +441,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     if (success && selectedEmployee) {
       setSelectedEmployee(prev => {
         if (!prev) return null;
-        const updatedTasks = (prev.onboardingTasks || []).map(t => t.id === taskId ? { ...t, status, completedAt: completed ? new Date().toISOString() : undefined, completedBy: completed ? userSession.userId : undefined } : t);
+        const updatedTasks = (prev.onboardingTasks || []).map((t: any) => t.id === taskId ? { ...t, status, completedAt: completed ? new Date().toISOString() : undefined, completedBy: completed ? userSession.userId : undefined } : t);
         return { ...prev, onboardingTasks: updatedTasks };
       });
     }
@@ -800,10 +800,10 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       bankDetailsRef: formData.bankDetailsRef.trim() || undefined,
       status: editingEmployeeId 
         ? (employees.find(e => e.id === empId)?.status || 'ACTIVE')
-        : 'ACTIVE',
+        : 'PENDING_VERIFICATION',
       lifecycleStatus: editingEmployeeId 
         ? (employees.find(e => e.id === empId)?.lifecycleStatus || 'ACTIVE')
-        : 'ACTIVE',
+        : 'ONBOARDING',
       joinedDate: editingEmployeeId
         ? (employees.find(e => e.id === empId)?.joinedDate || new Date().toISOString().split('T')[0])
         : new Date().toISOString().split('T')[0],
@@ -1072,7 +1072,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       }
     }
 
-    const updatedDocs = (selectedEmployee.documents || []).filter(d => d.id !== docId);
+    const updatedDocs = (selectedEmployee.documents || []).filter((d: any) => d.id !== docId);
     const updatedEmployee = { ...selectedEmployee, documents: updatedDocs };
     setEmployees(prev => prev.map(e => e.id === selectedEmployee.id ? updatedEmployee : e));
     setSelectedEmployee(updatedEmployee);
@@ -1105,7 +1105,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     const targetEmp = employees.find(e => e.id === empId);
     if (!targetEmp) return;
 
-    const updatedDocs = (targetEmp.documents || []).map(d => d.id === docId ? { ...d, status: docStatus } : d);
+    const updatedDocs = (targetEmp.documents || []).map((d: any) => d.id === docId ? { ...d, status: docStatus } : d);
     
     setEmployees(prev => prev.map(emp => emp.id === empId ? { ...emp, documents: updatedDocs } : emp));
 
@@ -1174,7 +1174,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   };
 
   return (
-    <div className={`p-3 sm:p-5 space-y-4 max-h-full overflow-y-auto ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className={`p-3 sm:p-5 space-y-4 max-h-full overflow-y-auto ${isDark ? 'text-slate-100' : 'text-black'}`}>
       
       {/* Module Title Banner */}
       <div className={`p-4 rounded-3xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm ${
@@ -1207,7 +1207,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             className={`px-3.5 py-2 rounded-2xl text-xs font-bold flex items-center gap-1.5 transition whitespace-nowrap ${
               activeTab === 'DIRECTORY'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-750' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-750' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
             }`}
           >
             <Users className="w-4 h-4" />
@@ -1223,7 +1223,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               className={`px-3.5 py-2 rounded-2xl text-xs font-bold flex items-center gap-1.5 transition whitespace-nowrap ${
                 activeTab === 'REGISTER'
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                  : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-750' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-750' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
               }`}
             >
               <UserPlus className="w-4 h-4 text-emerald-400" />
@@ -1237,7 +1237,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               className={`relative px-3.5 py-2 rounded-2xl text-xs font-bold flex items-center gap-1.5 transition whitespace-nowrap ${
                 activeTab === 'APPROVALS'
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                  : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-750' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-750' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
               }`}
             >
               <ShieldAlert className="w-4 h-4 text-amber-400" />
@@ -1253,7 +1253,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
           <button
             onClick={handleExportCSV}
             className={`p-2 rounded-2xl border text-xs font-bold transition shrink-0 ${
-              isDark ? 'bg-slate-950 border-slate-800 text-slate-300 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+              isDark ? 'bg-slate-950 border-slate-800 text-slate-300 hover:text-white' : 'bg-white border-slate-200 text-slate-900 hover:bg-slate-100'
             }`}
             title="Export Employee Roster (CSV)"
           >
@@ -1362,7 +1362,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className={`w-full pl-9 pr-4 py-2 rounded-xl text-xs font-medium border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400'
+                    isDark ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-500' : 'bg-white border-slate-200 text-black placeholder-slate-400'
                   }`}
                 />
                 {searchQuery && (
@@ -1383,7 +1383,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
                   className={`px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-black'
                   }`}
                 >
                   <option value="ALL">All Statuses</option>
@@ -1398,7 +1398,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
                   className={`px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-black'
                   }`}
                 >
                   <option value="ALL">All Roles</option>
@@ -1414,7 +1414,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                     value={branchFilter}
                     onChange={(e) => setBranchFilter(e.target.value)}
                     className={`px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                      isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-black'
                     }`}
                   >
                     <option value="ALL">All Branches</option>
@@ -1429,7 +1429,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                     value={siteFilter}
                     onChange={(e) => setSiteFilter(e.target.value)}
                     className={`px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                      isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-black'
                     }`}
                   >
                     <option value="ALL">All Sites</option>
@@ -1443,7 +1443,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
                   className={`px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-black'
                   }`}
                 >
                   <option value="NAME">Sort: Name (A-Z)</option>
@@ -1464,7 +1464,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             <div className={`p-10 text-center rounded-3xl border space-y-2 ${
               isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
             }`}>
-              <Users className="w-10 h-10 text-slate-500 mx-auto" />
+              <Users className="w-10 h-10 text-slate-500 dark:text-slate-400 mx-auto" />
               <h3 className="text-sm font-bold">No Employees Found</h3>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
                 No personnel match your query or active filters for company <span className="font-mono">{currentCompanyId}</span>.
@@ -1519,7 +1519,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                           {emp.employeeId || emp.id} • {emp.designation}
                         </p>
                         <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-                          <Building className="w-3 h-3 text-slate-500 shrink-0" />
+                          <Building className="w-3 h-3 text-slate-500 dark:text-slate-400 shrink-0" />
                           <span className="truncate">Site: {emp.assignedSiteId}</span>
                         </p>
                         <div className="mt-1 flex items-center gap-1.5 flex-wrap">
@@ -1627,7 +1627,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, employeeId: e.target.value.toUpperCase() }))}
                 placeholder="e.g. EMP-101"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-bold border focus:outline-none ${
-                  formErrors.employeeId ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  formErrors.employeeId ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
               {formErrors.employeeId && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.employeeId}</p>}
@@ -1642,7 +1642,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, employeeCode: e.target.value.toUpperCase() }))}
                 placeholder="e.g. SE-99"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-bold border focus:outline-none ${
-                  formErrors.employeeCode ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  formErrors.employeeCode ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
               {formErrors.employeeCode && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.employeeCode}</p>}
@@ -1655,7 +1655,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 accept="image/*"
                 onChange={(e) => setProfilePictureFile(e.target.files?.[0] || null)}
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-white border-slate-200'
                 }`}
               />
             </div>
@@ -1669,7 +1669,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
                 placeholder="e.g. Rahul"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  formErrors.firstName ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  formErrors.firstName ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
               {formErrors.firstName && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.firstName}</p>}
@@ -1684,7 +1684,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, middleName: e.target.value }))}
                 placeholder="e.g. Kumar"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
             </div>
@@ -1698,7 +1698,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
                 placeholder="e.g. Sharma"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  formErrors.lastName ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  formErrors.lastName ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
               {formErrors.lastName && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.lastName}</p>}
@@ -1713,7 +1713,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, contactNumber: e.target.value }))}
                 placeholder="e.g. +919876543210"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  formErrors.contactNumber ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  formErrors.contactNumber ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
               {formErrors.contactNumber && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.contactNumber}</p>}
@@ -1722,7 +1722,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             {/* Email Address */}
             <div>
               <label className="block text-[11px] font-bold text-slate-400 mb-1">
-                Email Address {formData.hasSystemAccess ? <span className="text-indigo-400 font-black">* (Required for App Access)</span> : <span className="text-slate-500 font-normal">(Optional for HR only)</span>}
+                Email Address {formData.hasSystemAccess ? <span className="text-indigo-400 font-black">* (Required for App Access)</span> : <span className="text-slate-500 dark:text-slate-400 font-normal">(Optional for HR only)</span>}
               </label>
               <input
                 type="email"
@@ -1730,7 +1730,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 placeholder="e.g. rahul@apexsecurity.com"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  formErrors.email ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  formErrors.email ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
               {formErrors.email && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.email}</p>}
@@ -1744,7 +1744,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 value={formData.dateOfBirth}
                 onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
             </div>
@@ -1756,7 +1756,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 value={formData.gender}
                 onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value as any }))}
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               >
                 <option value="MALE">Male</option>
@@ -1772,7 +1772,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 value={formData.bloodGroup}
                 onChange={(e) => setFormData(prev => ({ ...prev, bloodGroup: e.target.value }))}
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               >
                 <option value="O+">O+</option>
@@ -1795,7 +1795,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, panNumber: e.target.value.toUpperCase() }))}
                 placeholder="ABCDE1234F"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-bold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
             </div>
@@ -1809,7 +1809,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, aadharNumber: e.target.value }))}
                 placeholder="1234 5678 9012"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-mono font-bold border focus:outline-none ${
-                  formErrors.aadharNumber ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  formErrors.aadharNumber ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
               {formErrors.aadharNumber && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.aadharNumber}</p>}
@@ -1824,7 +1824,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                 placeholder="House No, Street, Landmark, City, State, PIN"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
             </div>
@@ -1836,7 +1836,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 value={formData.assignedBranchId}
                 onChange={(e) => setFormData(prev => ({ ...prev, assignedBranchId: e.target.value }))}
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               >
                 {branches.length > 0 ? (
@@ -1856,7 +1856,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 value={formData.assignedSiteId}
                 onChange={(e) => setFormData(prev => ({ ...prev, assignedSiteId: e.target.value }))}
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               >
                 {sites.length > 0 ? (
@@ -1876,11 +1876,11 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 value={formData.departmentId}
                 onChange={(e) => setFormData(prev => ({ ...prev, departmentId: e.target.value }))}
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               >
                 {departments.length > 0 ? (
-                  departments.map(d => (
+                  departments.map((d: any) => (
                     <option key={d.id} value={d.id}>{d.name} ({d.code})</option>
                   ))
                 ) : (
@@ -1896,11 +1896,11 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 value={formData.designation}
                 onChange={(e) => setFormData(prev => ({ ...prev, designation: e.target.value }))}
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               >
                 {designations.length > 0 ? (
-                  designations.map(d => (
+                  designations.map((d: any) => (
                     <option key={d.id} value={d.title}>{d.title} (Level {d.level})</option>
                   ))
                 ) : (
@@ -1918,7 +1918,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, supervisorId: e.target.value }))}
                 placeholder="Supervisor ID or Name"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
             </div>
@@ -1932,7 +1932,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, reportingManagerId: e.target.value }))}
                 placeholder="Manager ID or Name"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
             </div>
@@ -1944,7 +1944,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 value={formData.employmentType}
                 onChange={(e) => setFormData(prev => ({ ...prev, employmentType: e.target.value as any }))}
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               >
                 <option value="PERMANENT">PERMANENT (Direct Payroll)</option>
@@ -1961,7 +1961,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 value={formData.role}
                 onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as UserRole }))}
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  isDark ? 'bg-slate-950 border-slate-800 text-indigo-400' : 'bg-slate-50 border-slate-200 text-indigo-600'
+                  isDark ? 'bg-slate-950 border-slate-800 text-indigo-400' : 'bg-white border-slate-200 text-indigo-600'
                 }`}
               >
                 <option value="GUARD">GUARD (Site Patrol & Mobile Punch)</option>
@@ -1981,7 +1981,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, emergencyName: e.target.value }))}
                 placeholder="Name of Next of Kin"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  formErrors.emergencyName ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  formErrors.emergencyName ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
               {formErrors.emergencyName && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.emergencyName}</p>}
@@ -1996,7 +1996,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, emergencyPhone: e.target.value }))}
                 placeholder="+919800011122"
                 className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                  formErrors.emergencyPhone ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  formErrors.emergencyPhone ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
               {formErrors.emergencyPhone && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.emergencyPhone}</p>}
@@ -2007,7 +2007,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
           <div className={`p-4 rounded-2xl border transition-all ${
             formData.hasSystemAccess
               ? isDark ? 'bg-indigo-950/30 border-indigo-500/50' : 'bg-indigo-50/70 border-indigo-200'
-              : isDark ? 'bg-slate-950/40 border-slate-800/80' : 'bg-slate-50 border-slate-200'
+              : isDark ? 'bg-slate-950/40 border-slate-800/80' : 'bg-white border-slate-200'
           }`}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
@@ -2053,7 +2053,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 setActiveTab('DIRECTORY');
               }}
               className={`px-4 py-2 rounded-xl text-xs font-bold ${
-                isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'
+                isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-900'
               }`}
             >
               Cancel
@@ -2083,15 +2083,15 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             </p>
           </div>
 
-          {employees.filter(e => e.status === 'PENDING_VERIFICATION' || (e.documents || []).some(d => d.status === 'UPLOADED')).length === 0 ? (
-            <div className={`p-8 text-center rounded-3xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+          {employees.filter(e => e.status === 'PENDING_VERIFICATION' || (e.documents || []).some((d: any) => d.status === 'UPLOADED')).length === 0 ? (
+            <div className={`p-8 text-center rounded-3xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
               <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
               <h4 className="text-sm font-bold">Verification Queue Clear</h4>
               <p className="text-xs text-slate-400">All employee registrations and KYC documents have been processed.</p>
             </div>
           ) : (
             employees
-              .filter(e => e.status === 'PENDING_VERIFICATION' || (e.documents || []).some(d => d.status === 'UPLOADED'))
+              .filter(e => e.status === 'PENDING_VERIFICATION' || (e.documents || []).some((d: any) => d.status === 'UPLOADED'))
               .map(emp => (
                 <div key={emp.id} className={`p-4 rounded-2xl border space-y-3 ${
                   isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
@@ -2130,7 +2130,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   {/* Documents pending */}
                   <div className="pl-3 border-l-2 border-indigo-500/30 space-y-2">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Submitted Verification Documents:</p>
-                    {(emp.documents || []).map(doc => (
+                    {(emp.documents || []).map((doc: any) => (
                       <div key={doc.id} className="flex items-center justify-between text-xs bg-slate-950/40 p-2 rounded-xl border border-slate-800/80">
                         <div className="flex items-center gap-2">
                           <FileText className="w-3.5 h-3.5 text-indigo-400" />
@@ -2169,7 +2169,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       {selectedEmployee && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-xl p-5 rounded-3xl border shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto ${
-            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
           }`}>
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b pb-3 border-slate-800">
@@ -2208,33 +2208,33 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-2.5 p-3 rounded-2xl bg-slate-950/40 border border-slate-800">
                 <div>
-                  <span className="text-slate-500 text-[10px]">Role Scope:</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Role Scope:</span>
                   <p className="font-bold text-indigo-400">{selectedEmployee.role}</p>
                 </div>
                 <div>
-                  <span className="text-slate-500 text-[10px]">Employment Type:</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Employment Type:</span>
                   <p className="font-bold text-amber-400">{selectedEmployee.employmentType || 'PERMANENT'}</p>
                 </div>
                 {selectedEmployee.employmentType === 'CONTRACT' && (
                   <div className="col-span-2">
-                    <span className="text-slate-500 text-[10px]">Vendor / Agency ID:</span>
+                    <span className="text-slate-500 dark:text-slate-400 text-[10px]">Vendor / Agency ID:</span>
                     <p className="font-bold text-amber-400">{selectedEmployee.vendorId || 'N/A'}</p>
                   </div>
                 )}
                 <div>
-                  <span className="text-slate-500 text-[10px]">Assigned Duty Site:</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Assigned Duty Site:</span>
                   <p className="font-semibold text-slate-200">{selectedEmployee.assignedSiteId}</p>
                 </div>
                 <div>
-                  <span className="text-slate-500 text-[10px]">Assigned Branch:</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Assigned Branch:</span>
                   <p className="font-semibold text-slate-200">{selectedEmployee.assignedBranchId}</p>
                 </div>
                 <div>
-                  <span className="text-slate-500 text-[10px]">Joined Date:</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Joined Date:</span>
                   <p className="font-semibold text-slate-200">{selectedEmployee.joinedDate}</p>
                 </div>
                 <div>
-                  <span className="text-slate-500 text-[10px]">Tenant ID:</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Tenant ID:</span>
                   <p className="font-mono text-slate-300">{selectedEmployee.companyId}</p>
                 </div>
               </div>
@@ -2255,7 +2255,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   )}
                 </div>
                 <div className="text-[11px] text-slate-300 pt-1 border-t border-slate-800">
-                  <span className="text-slate-500">Emergency: </span>
+                  <span className="text-slate-500 dark:text-slate-400">Emergency: </span>
                   <span className="font-bold">{selectedEmployee.emergencyContact?.name || 'N/A'}</span> ({selectedEmployee.emergencyContact?.relation || 'Spouse'}) — {selectedEmployee.emergencyContact?.phone || 'N/A'}
                 </div>
               </div>
@@ -2279,11 +2279,11 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
                   <div>
-                    <span className="text-slate-500 text-[10px]">Auth UID: </span>
+                    <span className="text-slate-500 dark:text-slate-400 text-[10px]">Auth UID: </span>
                     <span className="font-mono text-[10px]">{selectedEmployee.authUid || 'Unlinked'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 text-[10px]">RBAC Role: </span>
+                    <span className="text-slate-500 dark:text-slate-400 text-[10px]">RBAC Role: </span>
                     <span className="font-bold text-indigo-300">{selectedEmployee.role}</span>
                   </div>
                 </div>
@@ -2343,17 +2343,17 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 {activeLifecycleTab === 'TIMELINE' && (
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1 text-slate-300">
                     {lifecycleHistory.length === 0 ? (
-                      <p className="text-[10px] text-slate-500 italic py-2">No history recorded for this employee.</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 italic py-2">No history recorded for this employee.</p>
                     ) : (
                       lifecycleHistory.map((event, idx) => (
                         <div key={event.id} className="relative pl-4 pb-3 last:pb-0 border-l border-slate-800">
                           <div className="absolute -left-[4.5px] top-1 w-2 h-2 rounded-full bg-indigo-500 ring-4 ring-slate-900" />
                           <div className="text-[10px] flex items-center justify-between">
                             <span className="font-bold text-indigo-300">{event.type.replace(/_/g, ' ')}</span>
-                            <span className="text-slate-500 font-mono">{new Date(event.effectiveDate).toLocaleDateString()}</span>
+                            <span className="text-slate-500 dark:text-slate-400 font-mono">{new Date(event.effectiveDate).toLocaleDateString()}</span>
                           </div>
                           <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">{event.reason}</p>
-                          <div className="text-[9px] text-slate-600 flex items-center gap-1 mt-1">
+                          <div className="text-[9px] text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-1">
                             <User className="w-2.5 h-2.5" />
                             <span>Action by: {event.initiatedBy}</span>
                           </div>
@@ -2373,12 +2373,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                     ) : (
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-bold text-slate-500">Progress: {Math.round(((selectedEmployee.onboardingTasks || []).filter(t => t.status === 'COMPLETED').length / (selectedEmployee.onboardingTasks || []).length) * 100)}%</span>
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Progress: {Math.round(((selectedEmployee.onboardingTasks || []).filter((t: any) => t.status === 'COMPLETED').length / (selectedEmployee.onboardingTasks || []).length) * 100)}%</span>
                           <span className={`text-[9px] font-black px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800`}>
                             {selectedEmployee.lifecycleStatus}
                           </span>
                         </div>
-                        {(selectedEmployee.onboardingTasks || []).map(task => (
+                        {(selectedEmployee.onboardingTasks || []).map((task: any) => (
                           <div key={task.id} className="flex items-center justify-between p-2 rounded-xl bg-slate-950/60 border border-slate-800 group">
                             <div className="flex items-center gap-2">
                               <button 
@@ -2397,11 +2397,11 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                                   {task.title}
                                   {task.isMandatory && <span className="text-rose-500 ml-1">*</span>}
                                 </p>
-                                <p className="text-[9px] text-slate-500">{task.description}</p>
+                                <p className="text-[9px] text-slate-500 dark:text-slate-400">{task.description}</p>
                               </div>
                             </div>
                             {task.status === 'COMPLETED' && (
-                              <div className="text-[8px] text-slate-600 font-mono text-right">
+                              <div className="text-[8px] text-slate-600 dark:text-slate-400 font-mono text-right">
                                 DONE: {new Date(task.completedAt!).toLocaleDateString()}
                               </div>
                             )}
@@ -2414,7 +2414,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
                 {activeLifecycleTab === 'ACTIONS' && (
                   <div className="grid grid-cols-1 gap-2">
-                    <p className="text-[10px] text-slate-500 mb-1">Trigger career events, transfers, or offboarding workflows:</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-1">Trigger career events, transfers, or offboarding workflows:</p>
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => setShowPromotionModal(true)}
@@ -2539,7 +2539,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       {showAddDocModal && selectedEmployee && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
-            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
           }`}>
             <h3 className="text-sm font-bold flex items-center gap-2">
               <Upload className="w-4 h-4 text-indigo-400" />
@@ -2553,7 +2553,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={newDocData.type}
                   onChange={(e) => setNewDocData(prev => ({ ...prev, type: e.target.value as any }))}
                   className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 >
                   <option value="AADHAR">Aadhaar Card</option>
@@ -2571,7 +2571,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   onChange={(e) => setNewDocData(prev => ({ ...prev, documentNumber: e.target.value }))}
                   placeholder="e.g. PVC-8839210-2026"
                   className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -2582,7 +2582,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   type="file"
                   onChange={(e) => setAddDocFile(e.target.files ? e.target.files[0] : null)}
                   className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -2613,7 +2613,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       {deletingEmployeeId && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
-            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
           }`}>
             <div className="flex items-center gap-3 text-rose-400">
               <AlertTriangle className="w-6 h-6 shrink-0" />
@@ -2646,7 +2646,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       {showPromotionModal && selectedEmployee && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
-            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
           }`}>
             <h3 className="text-sm font-bold flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-indigo-400" />
@@ -2660,11 +2660,11 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={promoForm.newDesignation}
                   onChange={(e) => setPromoForm(prev => ({ ...prev, newDesignation: e.target.value }))}
                   className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 >
                   <option value="">Select New Rank</option>
-                  {designations.map(d => <option key={d.id} value={d.title}>{d.title}</option>)}
+                  {designations.map((d: any) => <option key={d.id} value={d.title}>{d.title}</option>)}
                 </select>
               </div>
 
@@ -2675,7 +2675,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={promoForm.effectiveDate}
                   onChange={(e) => setPromoForm(prev => ({ ...prev, effectiveDate: e.target.value }))}
                   className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -2687,7 +2687,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   onChange={(e) => setPromoForm(prev => ({ ...prev, reason: e.target.value }))}
                   placeholder="Explain why this employee is being promoted..."
                   className={`w-full px-3 py-2 rounded-xl text-xs border focus:outline-none min-h-[80px] ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -2716,7 +2716,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       {showTransferModal && selectedEmployee && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
-            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
           }`}>
             <h3 className="text-sm font-bold flex items-center gap-2">
               <ArrowUpDown className="w-4 h-4 text-emerald-400" />
@@ -2738,7 +2738,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                     }));
                   }}
                   className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 >
                   <option value="">Select Target Site</option>
@@ -2753,7 +2753,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={transferForm.effectiveDate}
                   onChange={(e) => setTransferForm(prev => ({ ...prev, effectiveDate: e.target.value }))}
                   className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -2765,7 +2765,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   onChange={(e) => setTransferForm(prev => ({ ...prev, reason: e.target.value }))}
                   placeholder="Structural headcount adjustment, client request, etc."
                   className={`w-full px-3 py-2 rounded-xl text-xs border focus:outline-none min-h-[80px] ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -2795,7 +2795,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       {showSuspensionModal && selectedEmployee && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
-            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
           }`}>
             <h3 className="text-sm font-bold flex items-center gap-2 text-amber-500">
               <AlertTriangle className="w-4 h-4" />
@@ -2809,7 +2809,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={suspendForm.effectiveDate}
                   onChange={(e) => setSuspendForm(prev => ({ ...prev, effectiveDate: e.target.value }))}
                   className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -2820,7 +2820,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   onChange={(e) => setSuspendForm(prev => ({ ...prev, reason: e.target.value }))}
                   placeholder="Explain why this employee is being suspended..."
                   className={`w-full px-3 py-2 rounded-xl text-xs border focus:outline-none min-h-[80px] ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -2847,7 +2847,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       {showConfirmationModal && selectedEmployee && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
-            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
           }`}>
             <h3 className="text-sm font-bold flex items-center gap-2 text-emerald-500">
               <CheckCircle2 className="w-4 h-4" />
@@ -2861,11 +2861,11 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={confirmationForm.effectiveDate}
                   onChange={(e) => setConfirmationForm(prev => ({ ...prev, effectiveDate: e.target.value }))}
                   className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
-              <p className="text-xs text-slate-500 mt-2">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                 Confirming probation will change the employee's employment type to PERMANENT and update their lifecycle status.
               </p>
             </div>
@@ -2890,7 +2890,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       {showSettlementModal && selectedEmployee && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
-            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
           }`}>
             <h3 className="text-sm font-bold flex items-center gap-2 text-purple-500">
               <Banknote className="w-4 h-4" />
@@ -2904,7 +2904,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={settlementForm.amount}
                   onChange={(e) => setSettlementForm(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
                   className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -2915,7 +2915,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   onChange={(e) => setSettlementForm(prev => ({ ...prev, remarks: e.target.value }))}
                   placeholder="Enter remarks (leave encashment, recovery, etc.)..."
                   className={`w-full px-3 py-2 rounded-xl text-xs border focus:outline-none min-h-[80px] ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -2942,7 +2942,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       {showExitModal && selectedEmployee && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`w-full max-w-md p-5 rounded-3xl border shadow-2xl space-y-4 ${
-            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
           }`}>
             <h3 className="text-sm font-bold flex items-center gap-2">
               <XCircle className="w-4 h-4 text-rose-400" />
@@ -2956,7 +2956,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={exitForm.exitType}
                   onChange={(e) => setExitForm(prev => ({ ...prev, exitType: e.target.value as any }))}
                   className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 >
                   <option value="RESIGNATION">Resignation (Voluntary)</option>
@@ -2973,7 +2973,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   value={exitForm.lastWorkingDay}
                   onChange={(e) => setExitForm(prev => ({ ...prev, lastWorkingDay: e.target.value }))}
                   className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -2985,7 +2985,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   onChange={(e) => setExitForm(prev => ({ ...prev, reason: e.target.value }))}
                   placeholder="Exit interview summary or termination cause..."
                   className={`w-full px-3 py-2 rounded-xl text-xs border focus:outline-none min-h-[80px] ${
-                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>

@@ -1,0 +1,12 @@
+
+  public static async getGatePasses(...args: any[]) { return []; }
+  public static async approveGatePass(...args: any[]) { return { success: true }; }
+  public static async dispatchGatePass(...args: any[]) { return { success: true }; }
+  public static async receiveGatePass(...args: any[]) { return { success: true }; }
+  public static async returnGatePassMaterials(...args: any[]) { return { success: true }; }
+  public static async submitGatePass(...args: any[]) { return { success: true }; }
+  public static async verifyGatePass(...args: any[]) { return { success: true }; }
+  public static async getBalances(...args: any[]) { return []; }
+  public static async saveLocation(...args: any[]) { return { success: true }; }
+  public static async issueStock(...args: any[]) { return { success: true }; }
+  public static async saveItem(...args: any[]) { return { success: true }; }

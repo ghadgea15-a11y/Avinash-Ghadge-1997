@@ -123,7 +123,7 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
               activeSubTab === 'OCCURRENCES' 
                 ? 'bg-white text-indigo-600 shadow-sm' 
-                : 'text-slate-600 hover:text-slate-900'
+                : 'text-slate-600 hover:text-black'
             }`}
           >
             Maintenance Schedule
@@ -133,7 +133,7 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
               activeSubTab === 'PLANS' 
                 ? 'bg-white text-indigo-600 shadow-sm' 
-                : 'text-slate-600 hover:text-slate-900'
+                : 'text-slate-600 hover:text-black'
             }`}
           >
             Maintenance Plans
@@ -176,7 +176,7 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
       ) : activeSubTab === 'OCCURRENCES' ? (
         <div className="space-y-4">
           {filteredOccurrences.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-950 rounded-xl border-2 border-dashed border-slate-200 text-slate-400">
               <Calendar className="w-12 h-12 mb-4 opacity-20" />
               <p className="text-lg font-medium">No maintenance occurrences scheduled</p>
               <p className="text-sm">Create a plan to start automated scheduling</p>
@@ -193,7 +193,7 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     key={occ.maintenanceOccurrenceId}
-                    className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow flex items-center justify-between"
+                    className="p-4 bg-white dark:bg-slate-900 border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow flex items-center justify-between"
                   >
                     <div className="flex items-center gap-4">
                       <div className={`p-3 rounded-lg ${
@@ -201,26 +201,26 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
                         isDue ? 'bg-amber-50 text-amber-600' : 
                         occ.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600' :
                         occ.status === 'IN_PROGRESS' ? 'bg-blue-50 text-blue-600' :
-                        'bg-slate-50 text-slate-600'
+                        'bg-white text-slate-600'
                       }`}>
                         <Calendar className="w-6 h-6" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-slate-900">{asset?.assetName || 'Unknown Asset'}</h4>
-                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                          <h4 className="font-semibold text-black dark:text-white">{asset?.assetName || 'Unknown Asset'}</h4>
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:text-slate-400">
                             {asset?.assetCode}
                           </span>
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
                             isOverdue ? 'bg-red-100 text-red-700' : 
                             isDue ? 'bg-amber-100 text-amber-700' : 
                             occ.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' :
-                            'bg-slate-100 text-slate-700'
+                            'bg-slate-100 text-slate-900'
                           }`}>
                             {occ.status}
                           </span>
                         </div>
-                        <div className="flex items-center gap-4 mt-1 text-xs text-slate-500">
+                        <div className="flex items-center gap-4 mt-1 text-xs text-slate-500 dark:text-slate-400">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" />
                             Due: {occ.dueDate ? new Date(occ.dueDate).toLocaleDateString() : 'N/A'}
@@ -237,11 +237,11 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
                     
                     <div className="flex items-center gap-2">
                       {occ.status === 'UPCOMING' && (
-                        <button className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 rounded-lg">
+                        <button className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-white dark:bg-slate-950 rounded-lg">
                           Reschedule
                         </button>
                       )}
-                      <button className="p-2 text-slate-400 hover:text-slate-900 rounded-lg transition-colors">
+                      <button className="p-2 text-slate-400 hover:text-black dark:text-white rounded-lg transition-colors">
                         <ChevronRight className="w-5 h-5" />
                       </button>
                     </div>
@@ -254,7 +254,7 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
       ) : (
         <div className="space-y-4">
           {plans.length === 0 ? (
-             <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 text-slate-400">
+             <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-950 rounded-xl border-2 border-dashed border-slate-200 text-slate-400">
              <Settings className="w-12 h-12 mb-4 opacity-20" />
              <p className="text-lg font-medium">No maintenance plans defined</p>
              <p className="text-sm">Create plans to automate recurring asset maintenance</p>
@@ -266,30 +266,30 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
                 const assignee = employees.find(e => e.id === plan.assignedTo);
                 
                 return (
-                  <div key={plan.maintenancePlanId} className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
+                  <div key={plan.maintenancePlanId} className="p-5 bg-white dark:bg-slate-900 border border-slate-200 rounded-xl shadow-sm">
                     <div className="flex justify-between items-start mb-4">
                       <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
                         <Settings className="w-5 h-5" />
                       </div>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                        plan.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'
+                        plan.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-900'
                       }`}>
                         {plan.status}
                       </span>
                     </div>
                     
-                    <h4 className="font-bold text-slate-900 mb-1">{asset?.assetName}</h4>
-                    <p className="text-xs text-slate-500 mb-4">{plan.maintenanceType} - {plan.frequency} {plan.frequencyUnit}</p>
+                    <h4 className="font-bold text-black dark:text-white mb-1">{asset?.assetName}</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{plan.maintenanceType} - {plan.frequency} {plan.frequencyUnit}</p>
                     
                     <div className="space-y-2 border-t border-slate-100 pt-4">
-                      <div className="flex items-center justify-between text-xs text-slate-600">
+                      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
                         <span className="flex items-center gap-1.5">
                           <User className="w-3.5 h-3.5 text-slate-400" />
                           Assignee:
                         </span>
                         <span className="font-medium">{assignee ? `${assignee.firstName} ${assignee.lastName}` : 'Unassigned'}</span>
                       </div>
-                      <div className="flex items-center justify-between text-xs text-slate-600">
+                      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
                         <span className="flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
                           Next Due:
@@ -320,11 +320,11 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden"
+              className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden"
             >
-              <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-900">New Maintenance Plan</h3>
-                <button onClick={() => setIsPlanModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <div className="p-6 border-b border-slate-100 bg-white dark:bg-slate-950 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-black dark:text-white">New Maintenance Plan</h3>
+                <button onClick={() => setIsPlanModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400">
                   <Plus className="w-6 h-6 rotate-45" />
                 </button>
               </div>
@@ -332,14 +332,14 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
               <form onSubmit={handleCreatePlan} className="p-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Asset</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Asset</label>
                     <select
                       value={newPlan.assetId || ''}
                       onChange={(e) => {
                         const asset = assets.find(a => a.id === e.target.value);
                         setNewPlan({ ...newPlan, assetId: e.target.value, siteId: asset?.siteId });
                       }}
-                      className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                       required
                     >
                       <option value="">Select Asset</option>
@@ -349,11 +349,11 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Type</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Type</label>
                     <select
                       value={newPlan.maintenanceType || ''}
                       onChange={(e) => setNewPlan({ ...newPlan, maintenanceType: e.target.value as any })}
-                      className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                       required
                     >
                       <option value="PREVENTIVE">Preventive</option>
@@ -365,7 +365,7 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Frequency</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Frequency</label>
                     <div className="flex gap-2">
                       <input
                         type="number"
@@ -389,7 +389,7 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Start Date</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Start Date</label>
                     <input
                       type="date"
                       value={newPlan.startDate || ''}
@@ -401,7 +401,7 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Assignee (Optional)</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Assignee (Optional)</label>
                   <select
                     value={newPlan.assignedTo || ''}
                     onChange={(e) => setNewPlan({ ...newPlan, assignedTo: e.target.value })}
@@ -418,7 +418,7 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
                   <button
                     type="button"
                     onClick={() => setIsPlanModalOpen(false)}
-                    className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-white dark:bg-slate-950 transition-colors"
                   >
                     Cancel
                   </button>

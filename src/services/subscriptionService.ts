@@ -1,5 +1,6 @@
 import { collection, doc, getDoc, getDocs, query, where, setDoc, updateDoc, writeBatch, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { db } from '../firebase';
+import { FirestoreService } from './firestoreService';
 import { 
   SubscriptionPlan, 
   CompanySubscription, 
@@ -147,6 +148,7 @@ export class SubscriptionService {
 
     // 1. Save Subscription Record
     await this.saveCompanySubscription(companyId, newSub);
+    FirestoreService.logAuditEvent(companyId, updatedByUid, 'System', 'SUBSCRIPTION_ASSIGNED', `Plan ${planId} assigned to company`, subId);
 
     // 2. Update Company Tenant tier & employee/site quotas
     const companyRef = doc(db, 'companies', companyId);
@@ -163,6 +165,116 @@ export class SubscriptionService {
     await this.syncEntitlementsForPlan(companyId, plan.planId, subId, plan.enabledModules);
 
     return newSub;
+  }
+
+  /**
+   * Calculates the unused value (credit) of the current subscription
+   */
+  static calculateProratedCredit(currentSub: CompanySubscription, currentPlan: SubscriptionPlan): number {
+    const now = new Date();
+    const start = new Date(currentSub.currentPeriodStart);
+    const end = new Date(currentSub.currentPeriodEnd);
+    
+    // Safety check: if period not started or already ended
+    if (now < start) return currentSub.lastPaymentAmount || 0;
+    if (now >= end) return 0;
+
+    const totalDuration = end.getTime() - start.getTime();
+    const remainingDuration = end.getTime() - now.getTime();
+    
+    if (totalDuration <= 0) return 0;
+
+    const lastAmount = currentSub.lastPaymentAmount || (currentSub.billingCycle === 'YEARLY' ? currentPlan.yearlyPrice : currentPlan.monthlyPrice) || 0;
+    const proratedCredit = (lastAmount * remainingDuration) / totalDuration;
+
+    return Math.floor(proratedCredit * 100) / 100; // Round to 2 decimal places
+  }
+
+  /**
+   * Upgrades or Downgrades a subscription with pro-rated credit application
+   */
+  static async upgradeDowngradeSubscription(
+    companyId: string,
+    newPlanId: string,
+    newBillingCycle: 'MONTHLY' | 'YEARLY',
+    actorUid: string
+  ): Promise<CompanySubscription> {
+    const timestamp = new Date().toISOString();
+    
+    return await runTransaction(db, async (transaction) => {
+      // 1. Get current state
+      const currentSub = await this.getCompanySubscription(companyId);
+      const newPlan = await this.getPlan(newPlanId);
+
+      if (!newPlan) throw new Error("Target plan not found.");
+
+      let credit = 0;
+      if (currentSub && currentSub.status === 'ACTIVE') {
+        const currentPlan = await this.getPlan(currentSub.planId);
+        if (currentPlan) {
+          credit = this.calculateProratedCredit(currentSub, currentPlan);
+        }
+      }
+
+      // 2. Prepare new subscription
+      const subId = `SUB-${companyId}-${Date.now().toString().slice(-4)}`;
+      const durationMs = newBillingCycle === 'YEARLY' ? 365 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+      const endPeriod = new Date(Date.now() + durationMs).toISOString();
+      const newPrice = newBillingCycle === 'YEARLY' ? newPlan.yearlyPrice : newPlan.monthlyPrice;
+
+      const newSub: CompanySubscription = {
+        subscriptionId: subId,
+        companyId: companyId,
+        planId: newPlan.planId,
+        status: 'ACTIVE',
+        billingCycle: newBillingCycle,
+        startDate: currentSub?.startDate || timestamp,
+        currentPeriodStart: timestamp,
+        currentPeriodEnd: endPeriod,
+        renewalDate: endPeriod,
+        autoRenew: true,
+        cancelAtPeriodEnd: false,
+        employeeLimit: newPlan.employeeLimit,
+        userLimit: newPlan.userLimit,
+        storageLimitMB: newPlan.storageLimitMB,
+        source: 'SYSTEM',
+        proratedCredit: credit,
+        nextBillingAmount: Math.max(0, (newPrice || 0) - credit),
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        createdBy: actorUid,
+        updatedBy: actorUid
+      };
+
+      // 3. Persist new subscription
+      const subRef = doc(db, 'companies', companyId, SUBSCRIPTIONS_COLLECTION, subId);
+      transaction.set(subRef, newSub);
+
+      // 4. Update Company Tenant
+      const companyRef = doc(db, 'companies', companyId);
+      const tier = newPlan.planCode === 'STARTER' ? 'STARTER' : newPlan.planCode === 'PRO' ? 'PROFESSIONAL' : 'ENTERPRISE';
+      transaction.update(companyRef, {
+        licenseTier: tier,
+        maxEmployeesAllowed: newPlan.employeeLimit,
+        maxSitesAllowed: tier === 'STARTER' ? 5 : tier === 'PROFESSIONAL' ? 25 : 100,
+        enabledModules: newPlan.enabledModules,
+        updatedAt: timestamp
+      });
+
+      // 5. Entitlements (Async, but outside transaction if needed - here we do it after)
+      // Note: We cannot easily do collection writes in transactions if we don't know the IDs.
+      // But we can use writeBatch for entitlements later or just use the subscription update as authoritative.
+      
+      return newSub;
+    }).then(async (newSub) => {
+      // Sync entitlements after transaction success
+      await this.syncEntitlementsForPlan(companyId, newPlanId, newSub.subscriptionId, (await this.getPlan(newPlanId))?.enabledModules || []);
+      
+      FirestoreService.logAuditEvent(companyId, actorUid, 'System', 'SUBSCRIPTION_UPGRADED', 
+        `Subscription changed to ${newPlanId}. Applied credit: ${newSub.proratedCredit}`, newSub.subscriptionId);
+      
+      return newSub;
+    });
   }
 
   static async updateCompanySubscriptionStatus(

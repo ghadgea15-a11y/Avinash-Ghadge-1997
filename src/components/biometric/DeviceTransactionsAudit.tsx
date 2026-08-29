@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { BiometricDevice, DeviceAuditLog, DevicePunchTransaction } from '../../types/biometric';
 import { BiometricDeviceService } from '../../services/biometric/BiometricDeviceService';
+import { formatTimestamp, formatTimeSafe } from '../../utils/dateUtils';
 
 interface DeviceTransactionsAuditProps {
   companyId: string;
@@ -105,7 +106,7 @@ export const DeviceTransactionsAudit: React.FC<DeviceTransactionsAuditProps> = (
       {activeTab === 'AUDIT_LOGS' ? (
         <div className="space-y-4">
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
             <input
               type="text"
               value={searchQuery}
@@ -129,14 +130,14 @@ export const DeviceTransactionsAudit: React.FC<DeviceTransactionsAuditProps> = (
               <tbody className="divide-y divide-slate-800/60 bg-slate-900/50">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-500">
+                    <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">
                       <RefreshCw className="w-5 h-5 animate-spin mx-auto text-amber-400 mb-2" />
                       Loading audit records...
                     </td>
                   </tr>
                 ) : filteredLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-500">
+                    <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">
                       No audit events recorded yet. Connect a biometric device to generate hardware events.
                     </td>
                   </tr>
@@ -144,7 +145,7 @@ export const DeviceTransactionsAudit: React.FC<DeviceTransactionsAuditProps> = (
                   filteredLogs.map(log => (
                     <tr key={log.id} className="hover:bg-slate-800/40 transition-colors">
                       <td className="px-4 py-3 text-slate-400 font-mono text-[11px] whitespace-nowrap">
-                        {new Date(log.timestamp).toLocaleString()}
+                        {formatTimestamp(log.timestamp)}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${
@@ -177,23 +178,23 @@ export const DeviceTransactionsAudit: React.FC<DeviceTransactionsAuditProps> = (
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-slate-500 block text-[10.5px]">Device Clock</span>
+                  <span className="text-slate-500 dark:text-slate-400 block text-[10.5px]">Device Clock</span>
                   <span className="text-white font-mono text-[11px]">
-                    {d.telemetry?.deviceTimeIso ? new Date(d.telemetry.deviceTimeIso).toLocaleTimeString() : 'Synced'}
+                    {formatTimeSafe(d.telemetry?.deviceTimeIso, 'Synced')}
                   </span>
                 </div>
                 <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-slate-500 block text-[10.5px]">NTP Clock Drift</span>
+                  <span className="text-slate-500 dark:text-slate-400 block text-[10.5px]">NTP Clock Drift</span>
                   <span className="text-emerald-400 font-mono">{d.telemetry?.serverTimeDriftSeconds || 0}s</span>
                 </div>
                 <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-slate-500 block text-[10.5px]">Last Heartbeat</span>
+                  <span className="text-slate-500 dark:text-slate-400 block text-[10.5px]">Last Heartbeat</span>
                   <span className="text-slate-300 text-[11px]">
-                    {d.telemetry?.lastSeenAt ? new Date(d.telemetry.lastSeenAt).toLocaleTimeString() : 'Online'}
+                    {formatTimeSafe(d.telemetry?.lastSeenAt, 'Online')}
                   </span>
                 </div>
                 <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-slate-500 block text-[10.5px]">Sync Mode</span>
+                  <span className="text-slate-500 dark:text-slate-400 block text-[10.5px]">Sync Mode</span>
                   <span className="text-sky-400 font-medium">{d.syncConfig?.syncMode || 'REALTIME_PUSH'}</span>
                 </div>
               </div>

@@ -95,25 +95,25 @@ export const CompanyBankModal: React.FC<CompanyBankModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white dark:bg-slate-950/80">
           <div className="flex items-center space-x-3">
             <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">
+              <h3 className="text-base font-bold text-black dark:text-white">
                 {existingAccount ? 'Edit Company Disbursement Bank' : 'Add Corporate Disbursement Account'}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Primary debit account for automated NEFT / RTGS disbursements
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -129,7 +129,7 @@ export const CompanyBankModal: React.FC<CompanyBankModalProps> = ({
           )}
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-300 mb-1">
               Bank Name *
             </label>
             <input
@@ -138,12 +138,12 @@ export const CompanyBankModal: React.FC<CompanyBankModalProps> = ({
               placeholder="e.g. HDFC Bank, State Bank of India, ICICI Bank"
               value={bankName}
               onChange={e => setBankName(e.target.value)}
-              className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="w-full px-3.5 py-2 text-xs bg-white dark:bg-slate-950 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-300 mb-1">
               Account Holder / Entity Name *
             </label>
             <input
@@ -152,13 +152,13 @@ export const CompanyBankModal: React.FC<CompanyBankModalProps> = ({
               placeholder="e.g. SHOURYA ENTERPRISES PVT LTD"
               value={accountHolderName}
               onChange={e => setAccountHolderName(e.target.value)}
-              className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="w-full px-3.5 py-2 text-xs bg-white dark:bg-slate-950 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-300 mb-1">
                 Account Number *
               </label>
               <input
@@ -167,12 +167,12 @@ export const CompanyBankModal: React.FC<CompanyBankModalProps> = ({
                 placeholder="9-18 digit account number"
                 value={accountNumber}
                 onChange={e => setAccountNumber(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full px-3.5 py-2 text-xs font-mono bg-white dark:bg-slate-950 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-300 mb-1">
                 IFSC Code *
               </label>
               <input
@@ -181,20 +181,20 @@ export const CompanyBankModal: React.FC<CompanyBankModalProps> = ({
                 placeholder="e.g. HDFC0001234"
                 value={ifscCode}
                 onChange={e => setIfscCode(e.target.value.toUpperCase())}
-                className="w-full px-3.5 py-2 text-xs font-mono uppercase bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full px-3.5 py-2 text-xs font-mono uppercase bg-white dark:bg-slate-950 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-300 mb-1">
                 Account Type
               </label>
               <select
                 value={accountType}
                 onChange={e => setAccountType(e.target.value as any)}
-                className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full px-3.5 py-2 text-xs bg-white dark:bg-slate-950 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               >
                 <option value="CURRENT">Current Account</option>
                 <option value="OVERDRAFT">Overdraft (OD) Account</option>
@@ -203,7 +203,7 @@ export const CompanyBankModal: React.FC<CompanyBankModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-300 mb-1">
                 Branch Name
               </label>
               <input
@@ -211,7 +211,7 @@ export const CompanyBankModal: React.FC<CompanyBankModalProps> = ({
                 placeholder="e.g. Nariman Point, Mumbai"
                 value={branchName}
                 onChange={e => setBranchName(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full px-3.5 py-2 text-xs bg-white dark:bg-slate-950 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               />
             </div>
           </div>
@@ -224,12 +224,12 @@ export const CompanyBankModal: React.FC<CompanyBankModalProps> = ({
               onChange={e => setIsDefault(e.target.checked)}
               className="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
             />
-            <label htmlFor="isDefaultAcc" className="text-xs text-slate-700 font-medium">
+            <label htmlFor="isDefaultAcc" className="text-xs text-slate-900 dark:text-slate-300 font-medium">
               Set as primary disbursement account for NEFT/RTGS batch files
             </label>
           </div>
 
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500 flex items-center space-x-2">
+          <div className="p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 text-[11px] text-slate-500 dark:text-slate-400 flex items-center space-x-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <span>Never enter passwords, PINs, or OTPs. Only debit account identifiers are stored.</span>
           </div>
@@ -239,7 +239,7 @@ export const CompanyBankModal: React.FC<CompanyBankModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-xl transition-colors"
             >
               Cancel
             </button>

@@ -68,16 +68,16 @@ export function EnterpriseAssetManagement({ session, sites, employees, companyId
       {/* KPI Dashboard */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         {[
-          { label: 'Total Assets', value: stats.total, color: 'text-slate-900 bg-slate-100' },
+          { label: 'Total Assets', value: stats.total, color: 'text-black bg-slate-100' },
           { label: 'Available', value: stats.available, color: 'text-emerald-700 bg-emerald-100' },
           { label: 'Deployed/Custody', value: stats.deployed, color: 'text-blue-700 bg-blue-100' },
           { label: 'Maintenance', value: stats.maintenance, color: 'text-amber-700 bg-amber-100' },
           { label: 'Lost/Damaged', value: stats.exceptions, color: 'text-red-700 bg-red-100' },
           { label: 'Pending Transfers', value: stats.pendingTransfers, color: 'text-purple-700 bg-purple-100' }
         ].map((s, i) => (
-          <div key={i} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col justify-center items-center text-center">
+          <div key={i} className="p-4 rounded-xl border border-slate-200 bg-white dark:bg-slate-900 shadow-sm flex flex-col justify-center items-center text-center">
             <span className={`text-2xl font-bold ${s.color.split(' ')[0]}`}>{s.value}</span>
-            <span className="text-xs font-medium text-slate-500 mt-1">{s.label}</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">{s.label}</span>
           </div>
         ))}
       </div>
@@ -100,7 +100,7 @@ export function EnterpriseAssetManagement({ session, sites, employees, companyId
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 isActive 
                   ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50' 
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  : 'border-transparent text-slate-600 hover:text-black hover:bg-white'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -116,7 +116,7 @@ export function EnterpriseAssetManagement({ session, sites, employees, companyId
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm min-h-[500px]">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 rounded-xl shadow-sm min-h-[500px]">
         {activeTab === 'REGISTER' && (
           <AssetRegister 
             session={session} 

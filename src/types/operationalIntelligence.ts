@@ -6,7 +6,8 @@ export type OperationalAnomalyType =
   | 'MAINTENANCE_SPIKE'
   | 'INCIDENT_SPIKE'
   | 'PROCUREMENT_ANOMALY'
-  | 'ATTENDANCE_ANOMALY';
+  | 'ATTENDANCE_ANOMALY'
+  | 'SECURITY_ANOMALY';
 
 export type OperationalAnomalySeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
@@ -20,7 +21,8 @@ export type OperationalModuleSource =
   | 'INVENTORY'
   | 'INCIDENTS'
   | 'CONTRACTS'
-  | 'OPERATIONS';
+  | 'OPERATIONS'
+  | 'PATROL';
 
 export interface OperationalSourceTransaction {
   id: string;

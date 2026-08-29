@@ -3,6 +3,36 @@
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    @apply bg-white text-black transition-colors duration-200;
+  }
+
+  .dark body {
+    @apply bg-slate-950 text-slate-100;
+  }
+
+  /* Default text colors for standard elements */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-black dark:text-white font-bold;
+  }
+
+  p {
+    @apply text-slate-800 dark:text-slate-400;
+  }
+
+  label {
+    @apply text-slate-900 dark:text-slate-300;
+  }
+
+  input, select, textarea {
+    @apply bg-white dark:bg-slate-900 text-black dark:text-slate-100 border-slate-300 dark:border-slate-700;
+  }
+
+  input::placeholder {
+    @apply text-slate-400 dark:text-slate-500;
+  }
+
+  button:disabled {
+    @apply opacity-50 cursor-not-allowed;
   }
 }
 
@@ -17,7 +47,7 @@
 
 /* Color Tokens & Utility Classes for Public Website */
 .bg-warm-canvas {
-  background-color: #FBFBFA;
+  background-color: #FFFFFF;
 }
 
 .bg-warm-card {
@@ -25,15 +55,15 @@
 }
 
 .bg-warm-subtle {
-  background-color: #F4F3EF;
+  background-color: #F8F8F8;
 }
 
 .text-deep-ink {
-  color: #0A0D14;
+  color: #000000;
 }
 
 .text-editorial-muted {
-  color: #52525B;
+  color: #333333;
 }
 
 .border-warm-subtle {

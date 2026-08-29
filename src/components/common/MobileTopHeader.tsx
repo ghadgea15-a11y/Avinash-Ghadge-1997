@@ -7,18 +7,20 @@ interface MobileTopHeaderProps {
   onOpenDrawer: () => void;
   unreadNotifCount: number;
   onNavigateNotifications: () => void;
+  activeCompany?: import('../../types').CompanyTenant | null;
 }
 
 export const MobileTopHeader: React.FC<MobileTopHeaderProps> = ({
   onOpenDrawer,
   unreadNotifCount,
-  onNavigateNotifications
+  onNavigateNotifications,
+  activeCompany
 }) => {
   const { isDark } = useTheme();
 
   return (
     <header className={`w-full flex items-center justify-between px-4 py-3 shrink-0 z-20 shadow-sm ${
-      isDark ? 'bg-slate-900 border-b border-slate-800 text-slate-100' : 'bg-white border-b border-slate-200 text-slate-900'
+      isDark ? 'bg-slate-900 border-b border-slate-800 text-slate-100' : 'bg-white border-b border-slate-200 text-black'
     }`}>
       <div className="flex items-center gap-3">
         <button
@@ -27,7 +29,7 @@ export const MobileTopHeader: React.FC<MobileTopHeaderProps> = ({
         >
           <Menu className="w-5 h-5" />
         </button>
-        <AppLogo size="sm" showSubtitle={false} />
+        <AppLogo size="sm" company={activeCompany} />
       </div>
 
       <button

@@ -158,15 +158,15 @@ export const EmployeeMappingTable: React.FC<EmployeeMappingTableProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[11px] text-slate-500 block">Total Hardware Users</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Total Hardware Users</span>
             <span className="text-lg font-bold text-white">{mappings.length}</span>
           </div>
-          <Users className="w-5 h-5 text-slate-500" />
+          <Users className="w-5 h-5 text-slate-500 dark:text-slate-400" />
         </div>
 
         <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[11px] text-slate-500 block">Mapped Employees</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Mapped Employees</span>
             <span className="text-lg font-bold text-emerald-400">{exactCount}</span>
           </div>
           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
@@ -174,7 +174,7 @@ export const EmployeeMappingTable: React.FC<EmployeeMappingTableProps> = ({
 
         <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[11px] text-slate-500 block">Unmapped PINs</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Unmapped PINs</span>
             <span className="text-lg font-bold text-amber-400">{unmappedCount}</span>
           </div>
           <HelpCircle className="w-5 h-5 text-amber-500" />
@@ -211,7 +211,7 @@ export const EmployeeMappingTable: React.FC<EmployeeMappingTableProps> = ({
 
         <div className="flex items-center space-x-2 flex-1">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
             <input
               type="text"
               value={searchQuery}
@@ -251,14 +251,14 @@ export const EmployeeMappingTable: React.FC<EmployeeMappingTableProps> = ({
             <tbody className="divide-y divide-slate-800/60 bg-slate-900/50">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500">
+                  <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">
                     <RefreshCw className="w-5 h-5 animate-spin mx-auto text-amber-400 mb-2" />
                     Loading enrolled hardware profiles...
                   </td>
                 </tr>
               ) : filteredMappings.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500">
+                  <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">
                     No machine user mappings found. Click "Auto-Match All" to query connected device.
                   </td>
                 </tr>

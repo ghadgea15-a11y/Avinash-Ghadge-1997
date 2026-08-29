@@ -439,6 +439,17 @@
       "schema": { "$ref": "#/entities/Employee" },
       "description": "Employee records for company"
     },
+    "/companies/{companyId}/employees/{employeeId}/private_security/login_security": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "failedAttempts": { "type": "number" },
+          "lockoutUntil": { "type": "object" },
+          "lastAttemptAt": { "type": "object" }
+        }
+      },
+      "description": "Sensitive login security state for brute-force protection"
+    },
     "/companies/{companyId}/attendance/{attendanceId}": {
       "schema": { "$ref": "#/entities/AttendanceLog" },
       "description": "Attendance log records for company"

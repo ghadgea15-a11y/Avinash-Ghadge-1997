@@ -76,17 +76,17 @@ export class SuspiciousPunchService {
       }
 
       // 3. Geofence Evaluation (Using provided GPS)
-      if (site.geofenceEnabled && site.latitude && site.longitude && gps) {
+      if ((site as any).geofenceEnabled && site.latitude && site.longitude && gps) {
         const { GeoUtils } = await import('../utils/geoUtils');
         const geoResult = GeoUtils.evaluateGeofence(
           gps.latitude, gps.longitude, gps.accuracy || 0,
-          site.latitude, site.longitude, site.geofenceRadius || 100, site.accuracyThreshold || 50
+          site.latitude, site.longitude, (site as any).geofenceRadius || 100, (site as any).accuracyThreshold || 50
         );
 
         if (geoResult.result === 'OUTSIDE_GEOFENCE') {
            anomalies.push({
              type: 'GEOFENCE_VIOLATION',
-             evidence: `Punch outside assigned site. Distance: ${geoResult.distance.toFixed(1)}m. Limit: ${site.geofenceRadius}m.`,
+             evidence: `Punch outside assigned site. Distance: ${geoResult.distance.toFixed(1)}m. Limit: ${(site as any).geofenceRadius}m.`,
              score: geoResult.distance > 5000 ? 80 : 50 // Far away = higher score
            });
         }
@@ -98,7 +98,7 @@ export class SuspiciousPunchService {
              score: 90
            });
         }
-      } else if (site.geofenceEnabled && !gps) {
+      } else if ((site as any).geofenceEnabled && !gps) {
         // No GPS provided but required
         anomalies.push({
           type: 'GEOFENCE_VIOLATION',
@@ -146,7 +146,7 @@ export class SuspiciousPunchService {
 
       // Security Audit & Immutable Audit integration
       if (finalSeverity === 'CRITICAL' || finalSeverity === 'HIGH') {
-        const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId };
+        const actorInfo: any = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId };
         
         await SecurityAuditService.logEvent(
           companyId,
@@ -212,7 +212,7 @@ export class SuspiciousPunchService {
         reviewedAt: new Date().toISOString()
       }, { merge: true });
 
-      const actorInfo = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId };
+      const actorInfo: any = { userId: session.userId, employeeId: session.employeeId, role: session.role, companyId };
       await AuditTrailService.logUpdate(
         actorInfo,
         'WFM_SECURITY',

@@ -25,6 +25,7 @@ import {
   SiteRecord 
 } from '../../types';
 import { GeoUtils } from '../../utils/geoUtils';
+import { QRScannerModal } from '../common/QRScannerModal';
 
 interface PatrolTourRunnerModalProps {
   isOpen: boolean;
@@ -57,6 +58,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
   const [gpsError, setGpsError] = useState<string>('');
   const [isReadingGps, setIsReadingGps] = useState<boolean>(false);
   const [scanCodeInput, setScanCodeInput] = useState<string>('');
+  const [isCameraScanning, setIsCameraScanning] = useState<boolean>(false);
   const [checkpointNotes, setCheckpointNotes] = useState<string>('');
   const [tourRemarks, setTourRemarks] = useState<string>('');
   const [isSubmittingScan, setIsSubmittingScan] = useState<boolean>(false);
@@ -67,7 +69,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
 
   // Sorted list of checkpoints configured for this tour/plan
   const orderedCheckpoints = siteCheckpoints.sort((a, b) => a.sequenceOrder - b.sequenceOrder);
-  const scannedCheckpointIds = (tour.checkpointScans || []).map(s => s.checkpointId);
+  const scannedCheckpointIds = (tour.checkpointScans || []).map((s: any) => s.checkpointId);
 
   // Timer for active tour duration
   useEffect(() => {
@@ -263,13 +265,13 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
     }
   };
 
-  const completedCount = (tour.checkpointScans || []).filter(s => s.status === 'COMPLETED').length;
+  const completedCount = (tour.checkpointScans || []).filter((s: any) => s.status === 'COMPLETED').length;
   const totalCount = tour.totalCheckpoints || orderedCheckpoints.length || 1;
   const progressPercent = Math.round((completedCount / totalCount) * 100);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden border border-slate-200 my-6 animate-in fade-in zoom-in duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden border border-slate-200 my-6 animate-in fade-in zoom-in duration-200">
         
         {/* Top Header */}
         <div className="bg-slate-900 px-6 py-4 text-white flex items-center justify-between">
@@ -310,7 +312,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
         {/* Progress Metric Bar */}
         <div className="bg-slate-100 px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
-            <span className="text-xs font-semibold text-slate-700">Checkpoints Visited:</span>
+            <span className="text-xs font-semibold text-slate-900 dark:text-slate-300">Checkpoints Visited:</span>
             <span className="text-sm font-bold text-indigo-600 font-mono">{completedCount} / {totalCount}</span>
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-mono">
               {progressPercent}% Complete
@@ -323,7 +325,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
               type="button"
               onClick={fetchCurrentLocation}
               disabled={isReadingGps}
-              className="flex items-center space-x-1.5 px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              className="flex items-center space-x-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 dark:text-slate-300 hover:bg-white dark:bg-slate-950 transition-colors"
             >
               <Navigation className={`w-3.5 h-3.5 ${isReadingGps ? 'text-indigo-600 animate-spin' : 'text-emerald-600'}`} />
               <span>{isReadingGps ? 'Acquiring GPS...' : currentGps ? `GPS ±${Math.round(currentGps.accuracy)}m` : 'Read GPS'}</span>
@@ -362,7 +364,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setOutOfSequenceConfirm(null)}
-                  className="px-3 py-1.5 text-xs font-medium text-amber-900 bg-white border border-amber-300 rounded-lg hover:bg-amber-100"
+                  className="px-3 py-1.5 text-xs font-medium text-amber-900 bg-white dark:bg-slate-900 border border-amber-300 rounded-lg hover:bg-amber-100"
                 >
                   Cancel
                 </button>
@@ -389,12 +391,12 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
                     <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider">
                       Current Target Checkpoint
                     </span>
-                    <h4 className="text-lg font-bold text-slate-900">{currentTargetCheckpoint.checkpointName}</h4>
+                    <h4 className="text-lg font-bold text-black dark:text-white">{currentTargetCheckpoint.checkpointName}</h4>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <span className="font-mono text-xs font-bold px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 shadow-2xs">
+                  <span className="font-mono text-xs font-bold px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-300 rounded-lg text-slate-900 dark:text-slate-300 shadow-2xs">
                     Tag Code: {currentTargetCheckpoint.code}
                   </span>
                   {scannedCheckpointIds.includes(currentTargetCheckpoint.id) && (
@@ -406,7 +408,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
               </div>
 
               {currentTargetCheckpoint.locationDescription && (
-                <p className="text-xs text-slate-600 mb-3 flex items-center">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-3 flex items-center">
                   <MapPin className="w-3.5 h-3.5 mr-1.5 text-slate-400 shrink-0" />
                   {currentTargetCheckpoint.locationDescription}
                 </p>
@@ -414,15 +416,15 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
 
               {/* Distance & Geofence Live status */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
-                  <span className="text-xs text-slate-500">Live Distance:</span>
-                  <span className="font-mono text-sm font-bold text-slate-800">
+                <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 flex items-center justify-between">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Live Distance:</span>
+                  <span className="font-mono text-sm font-bold text-black dark:text-slate-200">
                     {distanceToTarget !== null ? `${distanceToTarget} meters` : 'Acquiring GPS...'}
                   </span>
                 </div>
 
-                <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
-                  <span className="text-xs text-slate-500">Geofence Validation:</span>
+                <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 flex items-center justify-between">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Geofence Validation:</span>
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                     isWithinGeofence ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
                   }`}>
@@ -440,10 +442,20 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
                       value={scanCodeInput}
                       onChange={e => setScanCodeInput(e.target.value)}
                       placeholder={`Scan QR Code or enter code (e.g. ${currentTargetCheckpoint.code})`}
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full pl-9 pr-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-300 rounded-xl text-sm font-mono text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     <QrCode className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsCameraScanning(true)}
+                    className="flex items-center justify-center space-x-1.5 px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-bold text-sm rounded-xl transition-all"
+                    title="Open Camera QR Scanner"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>Scan QR</span>
+                  </button>
 
                   <button
                     type="button"
@@ -463,7 +475,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
                     value={checkpointNotes}
                     onChange={e => setCheckpointNotes(e.target.value)}
                     placeholder="Optional observation notes (e.g. Gate locked, light functioning)"
-                    className="w-2/3 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-2/3 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 rounded-lg text-xs text-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
 
                   {onReportIncidentAtCheckpoint && (
@@ -483,7 +495,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
 
           {/* Checkpoint Route Carousel / Checklist */}
           <div>
-            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wider mb-2">
               Patrol Route Sequence ({orderedCheckpoints.length} Checkpoints)
             </h4>
 
@@ -491,7 +503,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
               {orderedCheckpoints.map((cp, idx) => {
                 const isVisited = scannedCheckpointIds.includes(cp.id);
                 const isCurrent = idx === activeCheckpointIndex;
-                const scanData = (tour.checkpointScans || []).find(s => s.checkpointId === cp.id);
+                const scanData = (tour.checkpointScans || []).find((s: any) => s.checkpointId === cp.id);
 
                 return (
                   <div
@@ -502,17 +514,17 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
                         ? 'border-indigo-600 bg-indigo-50/80 shadow-xs'
                         : isVisited
                         ? 'border-emerald-200 bg-emerald-50/50'
-                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                        : 'border-slate-200 bg-white hover:bg-slate-100'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center space-x-2">
                         <span className={`w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center ${
-                          isVisited ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                          isVisited ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-900'
                         }`}>
                           {cp.sequenceOrder}
                         </span>
-                        <span className="text-xs font-bold text-slate-800 truncate max-w-[120px]">{cp.checkpointName}</span>
+                        <span className="text-xs font-bold text-black dark:text-slate-200 truncate max-w-[120px]">{cp.checkpointName}</span>
                       </div>
 
                       {isVisited ? (
@@ -523,7 +535,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
                     </div>
 
                     {scanData && (
-                      <div className="text-[10px] text-slate-500 flex items-center justify-between mt-1">
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-between mt-1">
                         <span>{new Date(scanData.scannedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
                         <span className={scanData.geofenceStatus === 'WITHIN_GEOFENCE' ? 'text-emerald-700 font-semibold' : 'text-amber-700 font-semibold'}>
                           {scanData.geofenceStatus === 'WITHIN_GEOFENCE' ? '✓ In Geofence' : '⚠ Off-site'}
@@ -538,7 +550,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
 
           {/* Tour Finalization Remarks */}
           <div className="pt-4 border-t border-slate-200">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 uppercase tracking-wider mb-1">
               Tour Conclusion Remarks / Handover Notes
             </label>
             <input
@@ -546,17 +558,17 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
               value={tourRemarks}
               onChange={e => setTourRemarks(e.target.value)}
               placeholder="e.g. All gates and perimeter points secure. No security anomalies observed."
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-950 border border-slate-300 rounded-xl text-sm text-black dark:text-white focus:bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
         </div>
 
         {/* Bottom Actions */}
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-white dark:bg-slate-950 px-6 py-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-slate-900 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors"
           >
             Leave Tour In Progress
           </button>
@@ -576,6 +588,29 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
           </button>
         </div>
       </div>
+
+      <QRScannerModal
+        isOpen={isCameraScanning}
+        onClose={() => setIsCameraScanning(false)}
+        onScan={(scannedCode) => {
+          setScanCodeInput(scannedCode);
+          setIsCameraScanning(false);
+          // If current target exists, verify immediately
+          if (currentTargetCheckpoint) {
+            setTimeout(() => {
+              if (scannedCode.trim().toUpperCase() === currentTargetCheckpoint.code.trim().toUpperCase()) {
+                handleVerifyCurrentCheckpoint(currentTargetCheckpoint);
+              } else {
+                setStatusFeedback({
+                  type: 'ERROR',
+                  message: `Scanned code "${scannedCode}" did not match expected tag "${currentTargetCheckpoint.code}".`
+                });
+              }
+            }, 100);
+          }
+        }}
+        title={`Scan Tag for: ${currentTargetCheckpoint?.checkpointName || 'Checkpoint'}`}
+      />
     </div>
   );
 };

@@ -210,7 +210,7 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
       <div className={`w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border flex flex-col max-h-[90vh] ${
-        isDark ? 'bg-slate-900 border-slate-750 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+        isDark ? 'bg-slate-900 border-slate-750 text-slate-100' : 'bg-white border-slate-200 text-black'
       }`}>
         
         {/* Header */}
@@ -239,7 +239,7 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
           <button 
             type="button" 
             onClick={onClose} 
-            className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 transition"
+            className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:text-slate-400 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -280,12 +280,12 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
           )}
 
           {/* Ticket Summary & Prior Resolution Accordion */}
-          <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-850/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+          <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-850/50 border-slate-800' : 'bg-white border-slate-200'}`}>
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Ticket Summary</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{ticket.title}</span>
-                <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500">
+                <span className="font-semibold text-black dark:text-slate-200 text-sm">{ticket.title}</span>
+                <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                   <span>Client: <strong>{ticket.clientName}</strong></span>
                   <span>Site: <strong>{ticket.siteName}</strong></span>
                   <span>Current Status: <strong className="text-rose-600">{ticket.status}</strong></span>
@@ -308,7 +308,7 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
               <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-750 space-y-2">
                 <div className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
                   <span className="text-[10px] font-bold text-slate-400 block mb-1">Previous Resolution Summary:</span>
-                  <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{ticket.resolutionSummary}</p>
+                  <p className="text-slate-900 dark:text-slate-300 whitespace-pre-wrap">{ticket.resolutionSummary}</p>
                 </div>
                 {ticket.rootCause && (
                   <div className="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
@@ -324,7 +324,7 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
             
             {/* Reason Category Selection */}
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block font-bold text-slate-900 dark:text-slate-300 mb-1.5">
                 Reopen Classification / Category <span className="text-rose-500">*</span>
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -344,7 +344,7 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className={`font-bold text-xs ${isSelected ? 'text-rose-700 dark:text-rose-300' : 'text-slate-800 dark:text-slate-200'}`}>
+                        <span className={`font-bold text-xs ${isSelected ? 'text-rose-700 dark:text-rose-300' : 'text-black dark:text-slate-200'}`}>
                           {cat.label}
                         </span>
                         {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-rose-600" />}
@@ -361,7 +361,7 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
             {/* Mandatory Justification */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="font-bold text-slate-700 dark:text-slate-300">
+                <label className="font-bold text-slate-900 dark:text-slate-300">
                   Detailed Justification & Operational Finding <span className="text-rose-500">*</span>
                 </label>
                 <span className={`text-[10px] ${reason.trim().length >= 5 ? 'text-emerald-600' : 'text-slate-400'}`}>
@@ -375,14 +375,14 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
                 onChange={e => setReason(e.target.value)}
                 placeholder="Explain why the ticket must be reopened (e.g. CCTV recording still dropping frames after power supply swap, client reported recurrence during shift change)..."
                 className={`w-full p-3 text-xs rounded-xl border focus:outline-hidden focus:ring-2 focus:ring-rose-500 resize-none ${
-                  isDark ? 'bg-slate-850 border-slate-750 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  isDark ? 'bg-slate-850 border-slate-750 text-slate-100' : 'bg-white border-slate-300 text-black'
                 }`}
               />
             </div>
 
             {/* Actionable Next Steps / Notes */}
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block font-bold text-slate-900 dark:text-slate-300 mb-1">
                 Rework Instructions & Next Steps (Optional)
               </label>
               <textarea
@@ -391,7 +391,7 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
                 onChange={e => setNotes(e.target.value)}
                 placeholder="Specific guidance for the responding technician (e.g. Replace patch cable on port 7, verify switch voltage reading)..."
                 className={`w-full p-3 text-xs rounded-xl border focus:outline-hidden focus:ring-2 focus:ring-rose-500 resize-none ${
-                  isDark ? 'bg-slate-850 border-slate-750 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  isDark ? 'bg-slate-850 border-slate-750 text-slate-100' : 'bg-white border-slate-300 text-black'
                 }`}
               />
             </div>
@@ -399,14 +399,14 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
             {/* Target Status & Priority Escalation */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Target Reopen Status
                 </label>
                 <select
                   value={targetStatus}
                   onChange={e => setTargetStatus(e.target.value as ServiceTicketStatus)}
                   className={`w-full px-3 py-2 text-xs rounded-xl border focus:outline-hidden focus:ring-2 focus:ring-rose-500 ${
-                    isDark ? 'bg-slate-850 border-slate-750 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-850 border-slate-750 text-slate-100' : 'bg-white border-slate-300 text-black'
                   }`}
                 >
                   <option value="REOPENED">↺ REOPENED (Awaiting Triage / Queue)</option>
@@ -416,14 +416,14 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Priority Escalation
                 </label>
                 <select
                   value={updatedPriority}
                   onChange={e => setUpdatedPriority(e.target.value as ServiceTicketPriority)}
                   className={`w-full px-3 py-2 text-xs rounded-xl border focus:outline-hidden focus:ring-2 focus:ring-rose-500 ${
-                    isDark ? 'bg-slate-850 border-slate-750 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-850 border-slate-750 text-slate-100' : 'bg-white border-slate-300 text-black'
                   }`}
                 >
                   <option value="CRITICAL">🔴 CRITICAL (2h Target - Highest Escalation)</option>
@@ -437,14 +437,14 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
             {/* Assignee Routing & SLA Mode */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Assigned Technician
                 </label>
                 <select
                   value={assignedToUserId}
                   onChange={e => setAssignedToUserId(e.target.value)}
                   className={`w-full px-3 py-2 text-xs rounded-xl border focus:outline-hidden focus:ring-2 focus:ring-rose-500 ${
-                    isDark ? 'bg-slate-850 border-slate-750 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-850 border-slate-750 text-slate-100' : 'bg-white border-slate-300 text-black'
                   }`}
                 >
                   <option value="">-- Unassigned (Dispatch Queue) --</option>
@@ -462,14 +462,14 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block font-bold text-slate-900 dark:text-slate-300 mb-1">
                   SLA Calculation Mode
                 </label>
                 <select
                   value={slaMode}
                   onChange={e => setSlaMode(e.target.value as any)}
                   className={`w-full px-3 py-2 text-xs rounded-xl border focus:outline-hidden focus:ring-2 focus:ring-rose-500 ${
-                    isDark ? 'bg-slate-850 border-slate-750 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-850 border-slate-750 text-slate-100' : 'bg-white border-slate-300 text-black'
                   }`}
                 >
                   <option value="NEW_CYCLE">Fresh SLA Resolution Cycle (Default)</option>
@@ -482,7 +482,7 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
             {/* Custom SLA Minutes input if selected */}
             {slaMode === 'CUSTOM' && (
               <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Target Resolution Time in Minutes
                 </label>
                 <input
@@ -501,11 +501,11 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
 
             {/* Evidence & Attachments Upload */}
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block font-bold text-slate-900 dark:text-slate-300 mb-1.5">
                 Attach Diagnostic Evidence / Photos (Optional)
               </label>
               <div className={`p-4 rounded-xl border-2 border-dashed text-center transition ${
-                isDark ? 'border-slate-750 hover:border-slate-600 bg-slate-850/40' : 'border-slate-300 hover:border-slate-400 bg-slate-50/50'
+                isDark ? 'border-slate-750 hover:border-slate-600 bg-slate-850/40' : 'border-slate-300 hover:border-slate-400 bg-white/50'
               }`}>
                 <input
                   type="file"
@@ -553,13 +553,13 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
 
         {/* Footer Actions */}
         <div className={`p-4 sm:p-5 border-t flex items-center justify-between shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'
+          isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-white'
         }`}>
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition disabled:opacity-50"
+            className="px-4 py-2 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-400 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition disabled:opacity-50"
           >
             Cancel
           </button>

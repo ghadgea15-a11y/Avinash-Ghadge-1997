@@ -412,7 +412,7 @@ export class WorkforceCapacityEngine {
         approvedLeaves.push({
           employeeId: r.employeeId,
           name: r.employeeName || `${emp?.firstName || ''} ${emp?.lastName || ''}`.trim(),
-          leaveType
+          leaveType: leaveType || 'Leave'
         });
       } else if (attRecord && (attRecord.checkIn || attRecord.status === 'PRESENT' || attRecord.status === 'LATE')) {
         status = 'PRESENT';
@@ -580,8 +580,8 @@ export class WorkforceCapacityEngine {
         sourceType = 'STANDBY_POOL';
       }
 
-      // Simulated weekly OT hours and rest hours (WFM compliance)
-      const weeklyOvertimeHours = (emp as any).weeklyOvertimeHours || Math.floor(Math.random() * 8);
+      // Extracted weekly OT hours and rest hours (WFM compliance)
+      const weeklyOvertimeHours = (emp as any).weeklyOvertimeHours || 0;
       const restHours = (emp as any).restHours || 14;
       const isEligibleForOvertime = weeklyOvertimeHours <= 12; // Standard statutory overtime cap
 
@@ -590,7 +590,7 @@ export class WorkforceCapacityEngine {
       if (weeklyOvertimeHours > 12) complianceScore -= 40;
       if (restHours < 11) complianceScore -= 30; // Minimum 11 hours rest period compliance
 
-      const originSiteName = siteMap.get(emp.assignedSiteId)?.name || 'Central Reserve';
+      const originSiteName = emp.assignedSiteId ? (siteMap.get(emp.assignedSiteId)?.name || 'Central Reserve') : 'Central Reserve';
 
       candidates.push({
         employeeId: emp.id,
@@ -601,9 +601,9 @@ export class WorkforceCapacityEngine {
         skillGrade: emp.skillGrade || 'SKILLED',
         skills: empSkills,
         certifications: (emp as any).certifications || ['Standard PSARA Training'],
-        assignedSiteId: emp.assignedSiteId,
+        assignedSiteId: emp.assignedSiteId || '',
         assignedSiteName: originSiteName,
-        assignedBranchId: emp.assignedBranchId,
+        assignedBranchId: emp.assignedBranchId || '',
         sourceType,
         weeklyOvertimeHours,
         restHoursSinceLastShift: restHours,

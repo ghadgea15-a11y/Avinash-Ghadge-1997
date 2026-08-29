@@ -28,7 +28,7 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ userSession, company,
   }, [company.companyId]);
 
   if (loading) {
-    return <div className="p-8 text-center text-slate-500">Loading Admin Metrics...</div>;
+    return <div className="p-8 text-center text-slate-500 dark:text-slate-400">Loading Admin Metrics...</div>;
   }
 
   const activeAssets = assets.filter(a => a.status === 'AVAILABLE' || a.status === 'ASSIGNED').length;
@@ -37,12 +37,12 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ userSession, company,
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+        <div className="bg-white dark:bg-slate-900 dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-500">Tracked Assets</h3>
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Tracked Assets</h3>
             <MonitorSmartphone className="w-5 h-5 text-indigo-500" />
           </div>
-          <p className="text-3xl font-black text-slate-900 dark:text-white">{activeAssets}</p>
+          <p className="text-3xl font-black text-black dark:text-white">{activeAssets}</p>
           {RbacService.hasModuleAccess(userSession, 'ASSETS') && (
             <button 
               onClick={() => onNavigate('ASSET_TRACKING')}
@@ -53,12 +53,12 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ userSession, company,
           )}
         </div>
 
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+        <div className="bg-white dark:bg-slate-900 dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-500">Low Stock Inventory</h3>
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Low Stock Inventory</h3>
             <Package className="w-5 h-5 text-amber-500" />
           </div>
-          <p className="text-3xl font-black text-slate-900 dark:text-white">{lowStockItems}</p>
+          <p className="text-3xl font-black text-black dark:text-white">{lowStockItems}</p>
           {RbacService.hasModuleAccess(userSession, 'INVENTORY') && (
             <button 
               onClick={() => onNavigate('INVENTORY_STOCK')}

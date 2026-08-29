@@ -20,6 +20,7 @@ import { CompanyCodeScreen } from './components/screens/CompanyCodeScreen';
 import { LoginScreen } from './components/screens/LoginScreen';
 import { ForgotPasswordScreen } from './components/screens/ForgotPasswordScreen';
 import { SessionLockScreen } from './components/screens/SessionLockScreen';
+import { PlatformLoginScreen } from './components/screens/PlatformLoginScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
 import { SettingsScreen } from './components/screens/SettingsScreen';
 import { NotificationsScreen } from './components/screens/NotificationsScreen';
@@ -30,6 +31,7 @@ import { DeploymentManagementScreen } from './components/screens/DeploymentManag
 import { ShiftRosterScreen } from './components/screens/ShiftRosterScreen';
 
 import { CompanyManagementScreen } from './components/screens/CompanyManagementScreen';
+import { NotificationAdminScreen } from './components/screens/NotificationAdminScreen';
 import { OrgControlScreen } from './components/screens/OrgControlScreen';
 import { ChangeControlScreen } from './components/screens/ChangeControlScreen';
 import { AttendanceShiftsScreen } from './components/screens/AttendanceShiftsScreen';
@@ -42,6 +44,8 @@ import { ApprovalManagementScreen } from './components/screens/ApprovalManagemen
 import { ApprovalIntelligenceScreen } from './components/screens/ApprovalIntelligenceScreen';
 import { ThirdPartyRiskScreen } from './components/screens/ThirdPartyRiskScreen';
 import { DocumentLifecycleScreen } from './components/screens/DocumentLifecycleScreen';
+import { AiAssistantScreen } from './components/screens/AiAssistantScreen';
+import { SyncDashboardScreen } from './components/screens/SyncDashboardScreen';
 import { ExecutiveOperationalIntelligenceScreen } from './components/screens/ExecutiveOperationalIntelligenceScreen';
 import { WorkforceCapacityPlanningScreen } from './components/screens/WorkforceCapacityPlanningScreen';
 import { EnterpriseConflictManagementScreen } from './components/screens/EnterpriseConflictManagementScreen';
@@ -50,14 +54,21 @@ import { EnterpriseScalabilityAssessmentScreen } from './components/screens/Ente
 import { BiometricHubScreen } from './components/screens/BiometricHubScreen';
 import { SuperAdminGate } from './components/guards/SuperAdminGate';
 import { SuperAdminDashboard } from './components/screens/SuperAdminDashboard';
-import { PlatformDashboard } from './pages/super-admin/Dashboard';
 import { EnterpriseDashboardScreen } from './components/screens/EnterpriseDashboardScreen';
 import { CompanyBillingScreen } from './components/screens/CompanyBillingScreen';
 import { SuperAdminCreateCompany } from './components/screens/SuperAdminCreateCompany';
 import { SuperAdminModulesScreen } from './components/screens/SuperAdminModulesScreen';
 import { SuperAdminCompaniesScreen } from './components/screens/SuperAdminCompaniesScreen';
 import { SuperAdminSubscriptionsScreen } from './components/screens/SuperAdminSubscriptionsScreen';
+import { SuperAdminManagementScreen } from './components/screens/SuperAdminManagementScreen';
 import { SuperAdminLeadsScreen } from './components/screens/SuperAdminLeadsScreen';
+import { SuperAdminAuditScreen } from './components/screens/SuperAdminAuditScreen';
+import { SuperAdminMonitoringScreen } from './components/screens/SuperAdminMonitoringScreen';
+import { SuperAdminSupportScreen } from './components/screens/SuperAdminSupportScreen';
+import { SuperAdminConfigScreen } from './components/screens/SuperAdminConfigScreen';
+import { SuperAdminSecurityScreen } from './components/screens/SuperAdminSecurityScreen';
+import { SuperAdminReportsScreen } from './components/screens/SuperAdminReportsScreen';
+import { SuperAdminAdminsScreen } from './components/screens/SuperAdminAdminsScreen';
 import { LandingPageScreen } from './components/screens/LandingPageScreen';
 import { LegalPoliciesScreen } from './components/screens/LegalPoliciesScreen';
 import { LeaveManagementScreen } from './components/screens/LeaveManagementScreen';
@@ -161,6 +172,62 @@ export function App() {
     };
   }, []);
 
+  // 5-Minute Inactivity Auto-Logout & Strict Refresh Logout
+  useEffect(() => {
+    // 1. Strict Refresh Logout: clear session on page unload/refresh
+    const handleUnload = () => {
+      SessionManager.clearUserSession();
+    };
+    window.addEventListener('beforeunload', handleUnload);
+
+    // 2. 5-Minute Inactivity Timer
+    let inactivityTimer: NodeJS.Timeout;
+    
+    const resetInactivityTimer = () => {
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      
+      // Only enforce timeout if the user is authenticated
+      if (userSession) {
+        inactivityTimer = setTimeout(async () => {
+          // Trigger strict logout after 5 minutes (300,000 ms)
+          await FirebaseAuthService.logoutUser();
+          SessionManager.clearSession();
+          setActiveCompany(null);
+          setUserSession(null);
+          setCurrentScreen('LOGIN');
+          setIsDrawerOpen(false);
+        }, 5 * 60 * 1000);
+      }
+    };
+
+    // Throttle user activity handling to avoid performance hits
+    let lastActivityTime = Date.now();
+    const handleUserActivity = () => {
+      const now = Date.now();
+      if (now - lastActivityTime > 1000) { // Throttle to 1 second
+        lastActivityTime = now;
+        resetInactivityTimer();
+      }
+    };
+
+    // Listen to all relevant genuine user interactions
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+    activityEvents.forEach(event => {
+      window.addEventListener(event, handleUserActivity, { passive: true });
+    });
+
+    // Start timer on mount/session-change
+    resetInactivityTimer();
+
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, handleUserActivity);
+      });
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+    };
+  }, [userSession]);
+
   // Ensure activeCompany tenant is loaded & consistent with userSession on startup/refresh
   useEffect(() => {
     if (userSession && userSession.companyId && userSession.companyId !== 'GLOBAL_ADMIN') {
@@ -219,7 +286,10 @@ export function App() {
           return;
         }
         if (uData.role && uData.role !== userSession.role) {
-          setUserSession(prev => prev ? { ...prev, role: uData.role } : null);
+          FirebaseAuthService.refreshSession(userSession).then(updated => {
+            if (updated) setUserSession(updated);
+            else setUserSession(prev => prev ? { ...prev, role: uData.role } : null);
+          });
         }
       }
     }, (err) => console.warn('[App] Realtime user listener:', err));
@@ -234,7 +304,10 @@ export function App() {
           return;
         }
         if (mData.role && mData.role !== userSession.role) {
-          setUserSession(prev => prev ? { ...prev, role: mData.role } : null);
+          FirebaseAuthService.refreshSession(userSession).then(updated => {
+            if (updated) setUserSession(updated);
+            else setUserSession(prev => prev ? { ...prev, role: mData.role } : null);
+          });
         }
         if (mData.siteId && mData.siteId !== userSession.assignedSiteId) {
           setUserSession(prev => prev ? { ...prev, assignedSiteId: mData.siteId } : null);
@@ -271,8 +344,9 @@ export function App() {
     };
   }, [userSession?.companyId, userSession?.role]);
 
-  const handleLogout = () => {
-    SessionManager.clearUserSession();
+  const handleLogout = async () => {
+    await FirebaseAuthService.logoutUser();
+    setActiveCompany(null);
     setUserSession(null);
     setCurrentScreen('LANDING');
     setIsDrawerOpen(false);
@@ -315,6 +389,7 @@ export function App() {
     'SUPER_ADMIN_MODULES',
     'SUPER_ADMIN_PENDING_APPROVALS',
     'SUPER_ADMIN_SUBSCRIPTIONS',
+    'SUPER_ADMIN_MANAGEMENT',
     'APPROVAL_MANAGEMENT',
     'BIOMETRIC_DEVICES',
     'DEVICE_INTEGRATION_HUB'
@@ -349,7 +424,9 @@ export function App() {
         </div>
       ) : !userSession ? (
         /* 2. PUBLIC AUTHENTICATION SCREENS (Login, SignUp, ForgotPassword, Splash) */
-        <div className="min-h-screen w-full flex flex-col justify-center items-center font-sans bg-slate-50 dark:bg-slate-950 transition-colors duration-200 p-4">
+        <div 
+          style={activeCompany?.loginBackgroundUrl ? { backgroundImage: `url(${activeCompany.loginBackgroundUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+          className={`min-h-screen w-full flex flex-col justify-center items-center font-sans transition-colors duration-200 p-4 ${!activeCompany?.loginBackgroundUrl ? 'bg-white dark:bg-slate-950' : ''}`}>
           <div className="w-full max-w-xl">
             {currentScreen === 'LOGIN' && (
               <LoginScreen activeCompany={activeCompany}
@@ -362,6 +439,20 @@ export function App() {
                     } else {
                       setCurrentScreen('ENTERPRISE_DASHBOARD');
                     }
+                  } else {
+                    setCurrentScreen('APPROVAL_PENDING');
+                  }
+                }}
+                onNavigate={setCurrentScreen}
+              />
+            )}
+
+            {currentScreen === 'PLATFORM_LOGIN' && (
+              <PlatformLoginScreen
+                onLoginSuccess={(session) => {
+                  setUserSession(session);
+                  if (session.accountStatus === 'ACTIVE') {
+                    setCurrentScreen('SUPER_ADMIN_DASHBOARD');
                   } else {
                     setCurrentScreen('APPROVAL_PENDING');
                   }
@@ -445,11 +536,12 @@ export function App() {
           />
 
           {/* Main Stage Area */}
-          <main className="flex-1 flex flex-col w-full h-full bg-slate-50 dark:bg-slate-900">
+          <main className="flex-1 flex flex-col w-full h-full bg-white dark:bg-slate-950 dark:bg-slate-900">
             <div className="flex-1 w-full flex flex-col overflow-hidden relative">
               {/* Mobile Top Header */}
               {viewportMode === 'PHONE' && isMainAppScreen && (
                 <MobileTopHeader
+                  activeCompany={activeCompany}
                   onOpenDrawer={() => setIsDrawerOpen(true)}
                   unreadNotifCount={unreadNotifCount}
                   onNavigateNotifications={() => setCurrentScreen('NOTIFICATIONS')}
@@ -502,9 +594,15 @@ export function App() {
       />
     )}
     {currentScreen === 'SUPER_ADMIN_SUBSCRIPTIONS' && (
-      <SuperAdminSubscriptionsScreen 
-        userSession={userSession!} 
-        onNavigate={setCurrentScreen} 
+      <SuperAdminSubscriptionsScreen
+        userSession={userSession!}
+        onNavigate={setCurrentScreen}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_MANAGEMENT' && (
+      <SuperAdminManagementScreen
+        currentSession={userSession!}
+        onNavigate={setCurrentScreen}
       />
     )}
     {currentScreen === 'SUPER_ADMIN_PENDING_APPROVALS' && (
@@ -515,6 +613,48 @@ export function App() {
     )}
     {currentScreen === 'SUPER_ADMIN_LEADS' && (
       <SuperAdminLeadsScreen
+        currentSession={userSession!}
+        onNavigate={setCurrentScreen}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_AUDIT' && (
+      <SuperAdminAuditScreen
+        currentSession={userSession!}
+        onNavigate={setCurrentScreen}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_MONITORING' && (
+      <SuperAdminMonitoringScreen
+        currentSession={userSession!}
+        onNavigate={setCurrentScreen}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_SUPPORT' && (
+      <SuperAdminSupportScreen
+        currentSession={userSession!}
+        onNavigate={setCurrentScreen}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_CONFIG' && (
+      <SuperAdminConfigScreen
+        currentSession={userSession!}
+        onNavigate={setCurrentScreen}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_SECURITY' && (
+      <SuperAdminSecurityScreen
+        currentSession={userSession!}
+        onNavigate={setCurrentScreen}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_REPORTS' && (
+      <SuperAdminReportsScreen
+        currentSession={userSession!}
+        onNavigate={setCurrentScreen}
+      />
+    )}
+    {currentScreen === 'SUPER_ADMIN_ADMINS' && (
+      <SuperAdminAdminsScreen
         currentSession={userSession!}
         onNavigate={setCurrentScreen}
       />
@@ -547,7 +687,7 @@ export function App() {
                         <div id="company-resolving-loader" className="flex-1 flex items-center justify-center p-12 min-h-[400px]">
                           <div className="flex flex-col items-center gap-3">
                             <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-                            <p className="text-sm font-medium text-slate-500">Loading company workspace...</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Loading company workspace...</p>
                           </div>
                         </div>
                       )
@@ -624,7 +764,7 @@ export function App() {
                       />
                     )}
 
-                    {currentScreen === 'PAYROLL_COMPENSATION' && (
+                    {currentScreen === 'PAYROLL_COMPENSATION' && activeCompany && (
                       <PayrollCompensationScreen
                         userSession={userSession}
                         activeCompany={activeCompany}
@@ -658,6 +798,7 @@ export function App() {
                     {currentScreen === 'COMPLIANCE' && activeCompany && (
                       <ComplianceDashboardScreen
                         userSession={userSession}
+                        activeCompany={activeCompany}
                       />
                     )}
 
@@ -691,6 +832,13 @@ export function App() {
                         userSession={userSession}
                         activeCompany={activeCompany}
                         isOnline={isOnline}
+                      />
+                    )}
+
+                    {currentScreen === 'AI_ASSISTANT' && activeCompany && (
+                      <AiAssistantScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
                       />
                     )}
 
@@ -850,6 +998,12 @@ export function App() {
                       />
                     )}
 
+                    {currentScreen === 'NOTIFICATION_ADMIN' && (
+                      <NotificationAdminScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                      />
+                    )}
                     {currentScreen === 'COMPANY_MANAGEMENT' && (
                       <CompanyManagementScreen
                         userSession={userSession}

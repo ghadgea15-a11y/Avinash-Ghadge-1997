@@ -1,0 +1,6 @@
+export type PolicyModule = string;
+export type ContractStatus = string;
+export type BillingRateType = string;
+export type SlaMeasurementType = string;
+export type SlaSeverity = string;
+export type AssetCategory = string;

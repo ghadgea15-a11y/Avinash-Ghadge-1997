@@ -61,15 +61,15 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
             initial={{ scale: 0.95, opacity: 0 }} 
             animate={{ scale: 1, opacity: 1 }} 
             exit={{ scale: 0.95, opacity: 0 }}
-            className="relative w-full max-w-4xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            className="relative w-full max-w-4xl bg-white dark:bg-slate-900 dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
           >
-            <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-950/50 dark:bg-slate-900/50">
               <div>
-                <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <h4 className="font-bold text-black dark:text-white flex items-center gap-2">
                   <Save className="w-4 h-4 text-indigo-600" />
                   Manage Document Types
                 </h4>
-                <p className="text-[10px] text-slate-500">Configure global document requirements and alert thresholds</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">Configure global document requirements and alert thresholds</p>
               </div>
               <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition">
                 <X className="w-5 h-5 text-slate-400" />
@@ -99,8 +99,8 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <h5 className="text-xs font-bold text-slate-900 dark:text-white">{type.name}</h5>
-                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">{type.code}</p>
+                        <h5 className="text-xs font-bold text-black dark:text-white">{type.name}</h5>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">{type.code}</p>
                       </div>
                       {type.isMandatory && (
                         <span className="px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 rounded text-[8px] font-bold">MANDATORY</span>
@@ -111,7 +111,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
               </div>
 
               {/* Right Side: Editor */}
-              <div className="w-1/2 bg-slate-50/30 dark:bg-slate-900/20 p-6 overflow-y-auto">
+              <div className="w-1/2 bg-white dark:bg-slate-950/30 dark:bg-slate-900/20 p-6 overflow-y-auto">
                 {editingType ? (
                   <form onSubmit={handleSave} className="space-y-4">
                     <div>
@@ -120,7 +120,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                         required
                         type="text" 
                         placeholder="e.g. Identity Document"
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 transition"
                         value={editingType.name || ''}
                         onChange={e => setEditingType(prev => ({ ...prev, name: e.target.value }))}
                       />
@@ -132,13 +132,13 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                         required
                         type="text" 
                         placeholder="e.g. ID_DOC"
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono outline-none focus:ring-2 focus:ring-indigo-500 transition"
                         value={editingType.code || ''}
                         onChange={e => setEditingType(prev => ({ ...prev, code: e.target.value }))}
                       />
                     </div>
 
-                    <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
                       <input 
                         type="checkbox" 
                         id="isMandatory"
@@ -146,7 +146,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                         checked={editingType.isMandatory || false}
                         onChange={e => setEditingType(prev => ({ ...prev, isMandatory: e.target.checked }))}
                       />
-                      <label htmlFor="isMandatory" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                      <label htmlFor="isMandatory" className="text-xs font-bold text-slate-900 dark:text-slate-300 cursor-pointer">
                         Mark as Mandatory Compliance Document
                       </label>
                     </div>
@@ -159,7 +159,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                       <input 
                         type="text" 
                         placeholder="90, 60, 30, 15, 7, 1"
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 transition"
                         value={editingType.expiryAlertThresholds?.join(', ') || ''}
                         onChange={e => {
                           const val = e.target.value.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v));
@@ -171,7 +171,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Description</label>
                       <textarea 
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 transition min-h-[80px]"
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 transition min-h-[80px]"
                         placeholder="Add internal notes or requirements..."
                         value={editingType.description || ''}
                         onChange={e => setEditingType(prev => ({ ...prev, description: e.target.value }))}
@@ -190,7 +190,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                       <button 
                         type="button"
                         onClick={() => setEditingType(null)}
-                        className="px-4 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-700"
+                        className="px-4 py-2.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-300"
                       >
                         Cancel
                       </button>

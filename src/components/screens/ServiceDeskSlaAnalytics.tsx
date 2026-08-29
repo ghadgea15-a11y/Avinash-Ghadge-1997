@@ -124,7 +124,7 @@ export function ServiceDeskSlaAnalytics({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className={`w-full max-w-5xl max-h-[92vh] flex flex-col rounded-2xl shadow-2xl border ${isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'}`}>
+      <div className={`w-full max-w-5xl max-h-[92vh] flex flex-col rounded-2xl shadow-2xl border ${isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-black'}`}>
         
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-5 border-b border-slate-200 dark:border-slate-800">
@@ -148,7 +148,7 @@ export function ServiceDeskSlaAnalytics({
               <RefreshCw className={`w-3.5 h-3.5 ${monitoring ? 'animate-spin' : ''}`} />
               {monitoring ? 'Running SLA Monitor...' : 'Run SLA Monitor Now'}
             </button>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500">
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -166,54 +166,54 @@ export function ServiceDeskSlaAnalytics({
 
           {/* Top KPI Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-sm">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 dark:bg-slate-850 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-500">Resolution Compliance</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Resolution Compliance</span>
                 <Award className={`w-4 h-4 ${resolutionComplianceRate >= 90 ? 'text-emerald-500' : 'text-amber-500'}`} />
               </div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+              <div className="text-2xl font-bold text-black dark:text-white">
                 {resolutionComplianceRate}%
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                 {breachedTickets} breached out of {totalEvaluated} tickets
               </div>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-sm">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 dark:bg-slate-850 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-500">Response SLA Compliance</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Response SLA Compliance</span>
                 <Clock className="w-4 h-4 text-blue-500" />
               </div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+              <div className="text-2xl font-bold text-black dark:text-white">
                 {responseComplianceRate}%
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                 {responseMetCount} responded within deadline
               </div>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-sm">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 dark:bg-slate-850 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-500">At-Risk / Warning</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">At-Risk / Warning</span>
                 <AlertTriangle className="w-4 h-4 text-amber-500" />
               </div>
               <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                 {warningTickets}
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                 Approaching breach threshold
               </div>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-sm">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 dark:bg-slate-850 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-500">Currently Paused</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Currently Paused</span>
                 <PauseCircle className="w-4 h-4 text-purple-500" />
               </div>
               <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                 {pausedTickets}
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                 Timer stopped (client/parts hold)
               </div>
             </div>
@@ -227,7 +227,7 @@ export function ServiceDeskSlaAnalytics({
                   <Star className="w-5 h-5 fill-current" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  <h3 className="text-sm font-bold text-black dark:text-white dark:text-slate-100">
                     Client Satisfaction (CSAT) & Quality Health
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -243,7 +243,7 @@ export function ServiceDeskSlaAnalytics({
                     <span>{avgCsatScore}</span>
                     <span className="text-xs text-slate-400 font-normal">/ 5.0</span>
                   </div>
-                  <div className="text-[11px] text-slate-500 font-medium">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                     {totalRated} Rating{totalRated === 1 ? '' : 's'} Recorded
                   </div>
                 </div>
@@ -251,22 +251,22 @@ export function ServiceDeskSlaAnalytics({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              <div className="p-3 bg-white dark:bg-slate-850 rounded-lg border border-amber-100 dark:border-amber-900/40 text-xs">
-                <span className="text-slate-500 block mb-1">Satisfaction Rate (≥ 4★)</span>
+              <div className="p-3 bg-white dark:bg-slate-900 dark:bg-slate-850 rounded-lg border border-amber-100 dark:border-amber-900/40 text-xs">
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Satisfaction Rate (≥ 4★)</span>
                 <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{csatPositivePct}%</span>
                 <span className="text-[10px] text-slate-400 block mt-0.5">{satisfiedCount} satisfied out of {totalRated || 0} reviews</span>
               </div>
 
-              <div className="p-3 bg-white dark:bg-slate-850 rounded-lg border border-amber-100 dark:border-amber-900/40 text-xs">
-                <span className="text-slate-500 block mb-1">Negative Feedback Escalations</span>
-                <span className={`text-lg font-bold ${escalatedFeedbackCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300'}`}>
+              <div className="p-3 bg-white dark:bg-slate-900 dark:bg-slate-850 rounded-lg border border-amber-100 dark:border-amber-900/40 text-xs">
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Negative Feedback Escalations</span>
+                <span className={`text-lg font-bold ${escalatedFeedbackCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-300'}`}>
                   {escalatedFeedbackCount} Active
                 </span>
                 <span className="text-[10px] text-slate-400 block mt-0.5">Automated ops reviews triggered</span>
               </div>
 
-              <div className="p-3 bg-white dark:bg-slate-850 rounded-lg border border-amber-100 dark:border-amber-900/40 text-xs">
-                <span className="text-slate-500 block mb-1">Feedback Response Rate</span>
+              <div className="p-3 bg-white dark:bg-slate-900 dark:bg-slate-850 rounded-lg border border-amber-100 dark:border-amber-900/40 text-xs">
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Feedback Response Rate</span>
                 <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
                   {resolvedTickets.length > 0 ? Math.round((totalRated / resolvedTickets.length) * 100) : 0}%
                 </span>
@@ -278,17 +278,17 @@ export function ServiceDeskSlaAnalytics({
           {/* Breaches Table */}
           <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-3">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 flex items-center gap-2">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-300 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-red-500" />
                 SLA Breach Register ({filteredBreaches.length})
               </h3>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">Severity:</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Severity:</span>
                 <select
                   value={severityFilter}
                   onChange={e => setSeverityFilter(e.target.value)}
-                  className="px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                  className="px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                 >
                   <option value="ALL">All Severities</option>
                   <option value="CRITICAL">CRITICAL</option>
@@ -299,17 +299,17 @@ export function ServiceDeskSlaAnalytics({
             </div>
 
             {loading ? (
-              <div className="py-12 text-center text-sm text-slate-500">Loading breach records...</div>
+              <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">Loading breach records...</div>
             ) : filteredBreaches.length === 0 ? (
-              <div className="py-10 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
+              <div className="py-10 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-950/50 dark:bg-slate-800/30">
                 <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-500 mb-2" />
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">No SLA Breaches Registered</p>
-                <p className="text-xs text-slate-500 mt-0.5">All tickets are meeting target response and resolution commitments.</p>
+                <p className="text-sm font-semibold text-black dark:text-slate-200">No SLA Breaches Registered</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">All tickets are meeting target response and resolution commitments.</p>
               </div>
             ) : (
               <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
+                  <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th className="py-3 px-4">Breach ID</th>
                       <th className="py-3 px-4">Ticket</th>
@@ -323,15 +323,15 @@ export function ServiceDeskSlaAnalytics({
                     {filteredBreaches.map(b => {
                       const t = tickets.find(ticket => ticket.id === b.sourceRecordId);
                       return (
-                        <tr key={b.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                        <tr key={b.id} className="hover:bg-white dark:bg-slate-950/50 dark:hover:bg-slate-800/40">
                           <td className="py-3 px-4 font-mono font-bold text-red-600 dark:text-red-400">
                             {b.id}
                           </td>
                           <td className="py-3 px-4 font-medium">
                             {t ? (
                               <div>
-                                <span className="font-semibold text-slate-900 dark:text-white">{t.ticketNumber}</span>
-                                <span className="block text-[11px] text-slate-500 truncate max-w-xs">{t.title}</span>
+                                <span className="font-semibold text-black dark:text-white">{t.ticketNumber}</span>
+                                <span className="block text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-xs">{t.title}</span>
                               </div>
                             ) : (
                               b.sourceRecordId
@@ -348,13 +348,13 @@ export function ServiceDeskSlaAnalytics({
                               {b.severity}
                             </span>
                           </td>
-                          <td className="py-3 px-4 font-medium text-slate-600 dark:text-slate-300">
+                          <td className="py-3 px-4 font-medium text-slate-600 dark:text-slate-400 dark:text-slate-300">
                             {Math.round((b.targetValue || 0) / 60 * 10) / 10} hours
                           </td>
                           <td className="py-3 px-4 font-bold text-red-600 dark:text-red-400">
                             +{Math.round((b.variance || 0) / 60 * 10) / 10}h ({b.variance ?? 0}m)
                           </td>
-                          <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">
+                          <td className="py-3 px-4 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                             {b.detectedAt ? new Date(b.detectedAt).toLocaleString() : 'N/A'}
                           </td>
                         </tr>

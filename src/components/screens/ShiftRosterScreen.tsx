@@ -17,7 +17,7 @@ export const ShiftRosterScreen: React.FC<Props> = ({ userSession, activeCompany,
   const [activeTab, setActiveTab] = useState<'SCHEDULER' | 'SHIFTS' | 'CAPACITY' | 'CONFLICTS'>('SCHEDULER');
 
   return (
-    <div className="flex-1 flex flex-col w-full h-full overflow-hidden bg-slate-50 dark:bg-slate-950">
+    <div className="flex-1 flex flex-col w-full h-full overflow-hidden bg-white dark:bg-slate-950">
       {/* Tab Navigation */}
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 shrink-0">
         <div className="max-w-7xl mx-auto flex items-center gap-8 overflow-x-auto">
@@ -26,7 +26,7 @@ export const ShiftRosterScreen: React.FC<Props> = ({ userSession, activeCompany,
             className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 whitespace-nowrap transition-all ${
               activeTab === 'SCHEDULER'
                 ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                : 'border-transparent text-slate-500 hover:text-black dark:hover:text-slate-300'
             }`}
           >
             <CalendarDays className="w-4 h-4" />
@@ -37,7 +37,7 @@ export const ShiftRosterScreen: React.FC<Props> = ({ userSession, activeCompany,
             className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 whitespace-nowrap transition-all ${
               activeTab === 'SHIFTS'
                 ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                : 'border-transparent text-slate-500 hover:text-black dark:hover:text-slate-300'
             }`}
           >
             <Clock className="w-4 h-4" />
@@ -48,7 +48,7 @@ export const ShiftRosterScreen: React.FC<Props> = ({ userSession, activeCompany,
             className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 whitespace-nowrap transition-all ${
               activeTab === 'CAPACITY'
                 ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                : 'border-transparent text-slate-500 hover:text-black dark:hover:text-slate-300'
             }`}
           >
             <Network className="w-4 h-4" />
@@ -59,7 +59,7 @@ export const ShiftRosterScreen: React.FC<Props> = ({ userSession, activeCompany,
             className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 whitespace-nowrap transition-all ${
               activeTab === 'CONFLICTS'
                 ? 'border-rose-600 text-rose-600 dark:text-rose-400'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                : 'border-transparent text-slate-500 hover:text-black dark:hover:text-slate-300'
             }`}
           >
             <ShieldAlert className="w-4 h-4 text-rose-500" />

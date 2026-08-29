@@ -1,0 +1,4 @@
+export interface MaintenancePlan { [key: string]: any; }
+export interface MaintenanceOccurrence { [key: string]: any; }
+export type PatrolGeofenceStatus = string;
+export interface InventoryItemRecord { [key: string]: any; }

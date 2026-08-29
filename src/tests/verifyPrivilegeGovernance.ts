@@ -34,6 +34,10 @@ export async function runPrivilegeGovernanceVerification(): Promise<{
     loginMode: 'PASSWORD',
     authorityLevel: 'A9_SUPPORT',
     dataScope: 'SELF',
+    accountStatus: 'ACTIVE',
+    emailVerified: true,
+    companyAdminApproval: 'APPROVED',
+    hrApproval: 'APPROVED',
     ...partial
   });
 

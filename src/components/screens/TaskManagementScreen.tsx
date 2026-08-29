@@ -117,7 +117,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
   // SLA Evaluation Helper
   const getSlaStatus = (slaDeadline?: string, status?: TaskRecord['status']) => {
     if (!slaDeadline || status === 'COMPLETED' || status === 'RESOLVED' || status === 'CANCELLED') {
-      return { label: status === 'COMPLETED' ? 'Completed' : 'No SLA', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300', isBreached: false };
+      return { label: status === 'COMPLETED' ? 'Completed' : 'No SLA', color: 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-300', isBreached: false };
     }
     const deadlineMs = new Date(slaDeadline).getTime();
     const diffHours = (deadlineMs - Date.now()) / (1000 * 60 * 60);
@@ -209,7 +209,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
         description: newTask.description.trim(),
         priority: newTask.priority,
         slaDeadline: newTask.slaDeadline ? new Date(newTask.slaDeadline).toISOString() : undefined,
-        checklist: newTask.checklistItems.filter(i => i.trim().length > 0).map((item, idx) => ({
+        checklist: newTask.checklistItems.filter((i: any) => i.trim().length > 0).map((item: any, idx: number) => ({
           id: `item-${idx}`,
           text: item.trim(),
           done: false
@@ -340,14 +340,14 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-3">
           <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-medium text-slate-500">Loading Task Operations Hub...</p>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Loading Task Operations Hub...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`p-6 max-w-7xl mx-auto space-y-6 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className={`p-6 max-w-7xl mx-auto space-y-6 ${isDark ? 'text-slate-100' : 'text-black'}`}>
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5">
         <div>
@@ -357,7 +357,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Task Allocation & Verification</h1>
-              <p className="text-xs text-slate-500">A6 Operational Work Orders, SLA Enforcement & Photo Proof Audit</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">A6 Operational Work Orders, SLA Enforcement & Photo Proof Audit</p>
             </div>
           </div>
         </div>
@@ -366,7 +366,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
           <button
             onClick={handleExportCsv}
             className={`px-3 py-2 text-xs font-semibold rounded-lg border flex items-center gap-2 transition-colors ${
-              isDark ? 'border-slate-700 bg-slate-800 hover:bg-slate-700' : 'border-slate-200 bg-white hover:bg-slate-50'
+              isDark ? 'border-slate-700 bg-slate-800 hover:bg-slate-700' : 'border-slate-200 bg-white hover:bg-white'
             }`}
           >
             <Download className="w-4 h-4" /> Export CSV
@@ -391,7 +391,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
             activeTab === 'ALL' ? 'ring-2 ring-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30' : isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200'
           }`}
         >
-          <div className="text-xs font-medium text-slate-500">Total Work Orders</div>
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Work Orders</div>
           <div className="text-2xl font-black mt-1 text-indigo-600">{kpis.total}</div>
           <div className="text-[11px] text-slate-400 mt-1">Across all sites</div>
         </div>
@@ -402,7 +402,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
             activeTab === 'IN_PROGRESS' ? 'ring-2 ring-blue-500 bg-blue-50/40 dark:bg-blue-950/30' : isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200'
           }`}
         >
-          <div className="text-xs font-medium text-slate-500">Active / In Progress</div>
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Active / In Progress</div>
           <div className="text-2xl font-black mt-1 text-blue-600">{kpis.inProgress}</div>
           <div className="text-[11px] text-slate-400 mt-1">Ongoing field action</div>
         </div>
@@ -414,7 +414,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
           }`}
         >
           <div className="flex items-center justify-between">
-            <div className="text-xs font-medium text-slate-500">Pending Proof Review</div>
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Pending Proof Review</div>
             {kpis.pendingReview > 0 && <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />}
           </div>
           <div className="text-2xl font-black mt-1 text-amber-600">{kpis.pendingReview}</div>
@@ -427,7 +427,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
             activeTab === 'COMPLETED' ? 'ring-2 ring-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/30' : isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200'
           }`}
         >
-          <div className="text-xs font-medium text-slate-500">Completed</div>
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Completed</div>
           <div className="text-2xl font-black mt-1 text-emerald-600">{kpis.completed}</div>
           <div className="text-[11px] text-slate-400 mt-1">Approved & closed</div>
         </div>
@@ -438,7 +438,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
             activeTab === 'OVERDUE' ? 'ring-2 ring-rose-500 bg-rose-50/40 dark:bg-rose-950/30' : isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200'
           }`}
         >
-          <div className="text-xs font-medium text-slate-500">SLA Breached / Overdue</div>
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">SLA Breached / Overdue</div>
           <div className="text-2xl font-black mt-1 text-rose-600">{kpis.overdue}</div>
           <div className="text-[11px] text-rose-600 dark:text-rose-400 mt-1 font-semibold">Escalation critical</div>
         </div>
@@ -456,7 +456,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className={`w-full pl-9 pr-3 py-2 text-xs rounded-lg border outline-none ${
-              isDark ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200'
+              isDark ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-200'
             }`}
           />
         </div>
@@ -467,7 +467,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
             value={siteFilter}
             onChange={e => setSiteFilter(e.target.value)}
             className={`px-3 py-2 text-xs rounded-lg border outline-none ${
-              isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'
             }`}
           >
             <option value="ALL">All Sites</option>
@@ -481,7 +481,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
             value={priorityFilter}
             onChange={e => setPriorityFilter(e.target.value)}
             className={`px-3 py-2 text-xs rounded-lg border outline-none ${
-              isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'
             }`}
           >
             <option value="ALL">All Priorities</option>
@@ -496,7 +496,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
             value={assigneeFilter}
             onChange={e => setAssigneeFilter(e.target.value)}
             className={`px-3 py-2 text-xs rounded-lg border outline-none max-w-[160px] truncate ${
-              isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-900'
             }`}
           >
             <option value="ALL">All Assignees</option>
@@ -542,7 +542,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                       task.status === 'COMPLETED' || task.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' :
                       task.status === 'PENDING_VERIFICATION' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 font-bold' :
                       task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' :
-                      'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                      'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-300'
                     }`}>
                       {task.status}
                     </span>
@@ -561,15 +561,15 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
 
                 {/* Metadata Row */}
                 <div className="space-y-1.5 pt-2 border-t text-xs">
-                  <div className="flex items-center justify-between text-slate-500">
+                  <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
                     <span className="flex items-center gap-1.5">
                       <UserCheck className="w-3.5 h-3.5 text-slate-400" />
                       Assignee:
                     </span>
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">{assigneeName}</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-300">{assigneeName}</span>
                   </div>
 
-                  <div className="flex items-center justify-between text-slate-500">
+                  <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
                     <span className="flex items-center gap-1.5">
                       <Building2 className="w-3.5 h-3.5 text-slate-400" />
                       Site:
@@ -579,7 +579,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
 
                   {/* SLA Badge */}
                   <div className="flex items-center justify-between pt-1">
-                    <span className="flex items-center gap-1.5 text-slate-500">
+                    <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                       <Clock className="w-3.5 h-3.5 text-slate-400" />
                       SLA:
                     </span>
@@ -593,7 +593,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                     <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
                       <span>Checklist:</span>
                       <span>
-                        {task.checklist.filter(c => c.done).length} / {task.checklist.length} done
+                        {task.checklist.filter((c: any) => c.done).length} / {task.checklist.length} done
                       </span>
                     </div>
                   )}
@@ -646,7 +646,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                         setSelectedTaskForReview(task);
                         setReviewNotes('');
                       }}
-                      className="py-1.5 px-2 text-xs font-medium rounded border hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
+                      className="py-1.5 px-2 text-xs font-medium rounded border hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 dark:text-slate-300"
                       title="View Details"
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -661,7 +661,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
 
       {filteredTasks.length === 0 && (
         <div className={`text-center py-16 px-4 rounded-xl border border-dashed ${
-          isDark ? 'bg-slate-800/40 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-300 text-slate-500'
+          isDark ? 'bg-slate-800/40 border-slate-700 text-slate-400' : 'bg-white border-slate-300 text-slate-500'
         }`}>
           <ListChecks className="w-12 h-12 mx-auto text-slate-400 mb-3 opacity-60" />
           <h3 className="text-base font-bold">No Work Orders Found</h3>
@@ -675,7 +675,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className={`w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-2xl border ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
             <div className="flex items-center justify-between pb-4 border-b">
               <div className="flex items-center gap-2.5">
@@ -684,7 +684,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">Dispatch Operational Task</h3>
-                  <p className="text-xs text-slate-500">Allocate work order with SLA deadline & inspection checklist</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Allocate work order with SLA deadline & inspection checklist</p>
                 </div>
               </div>
               <button 
@@ -705,7 +705,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                   value={newTask.title}
                   onChange={e => setNewTask({ ...newTask, title: e.target.value })}
                   className={`w-full p-2.5 rounded-lg border outline-none ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -718,7 +718,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                   value={newTask.description}
                   onChange={e => setNewTask({ ...newTask, description: e.target.value })}
                   className={`w-full p-2.5 rounded-lg border outline-none ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -731,7 +731,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                     value={newTask.assignedTo}
                     onChange={e => setNewTask({ ...newTask, assignedTo: e.target.value })}
                     className={`w-full p-2.5 rounded-lg border outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                     }`}
                   >
                     <option value="">-- Select Field Employee --</option>
@@ -749,7 +749,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                     value={newTask.siteId}
                     onChange={e => setNewTask({ ...newTask, siteId: e.target.value })}
                     className={`w-full p-2.5 rounded-lg border outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                     }`}
                   >
                     <option value="">-- Select Site --</option>
@@ -767,7 +767,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                     value={newTask.priority}
                     onChange={e => setNewTask({ ...newTask, priority: e.target.value as any })}
                     className={`w-full p-2.5 rounded-lg border outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                     }`}
                   >
                     <option value="LOW">Low</option>
@@ -784,7 +784,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                     value={newTask.slaDeadline}
                     onChange={e => setNewTask({ ...newTask, slaDeadline: e.target.value })}
                     className={`w-full p-2.5 rounded-lg border outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                     }`}
                   />
                 </div>
@@ -803,7 +803,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                   </button>
                 </div>
                 <div className="space-y-2">
-                  {newTask.checklistItems.map((item, idx) => (
+                  {newTask.checklistItems.map((item: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-2">
                       <span className="text-slate-400 font-mono text-xs">{idx + 1}.</span>
                       <input
@@ -816,7 +816,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                           setNewTask({ ...newTask, checklistItems: updated });
                         }}
                         className={`flex-1 p-2 rounded border outline-none ${
-                          isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                          isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                         }`}
                       />
                       {newTask.checklistItems.length > 1 && (
@@ -861,7 +861,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
       {selectedTaskForReview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className={`w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-2xl border ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
             <div className="flex items-center justify-between pb-4 border-b">
               <div className="flex items-center gap-2.5">
@@ -870,7 +870,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">Task Audit & Sign-Off</h3>
-                  <p className="text-xs text-slate-500">Review field completion proof and approve work order</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Review field completion proof and approve work order</p>
                 </div>
               </div>
               <button 
@@ -884,7 +884,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
             <div className="space-y-4 pt-4 text-xs">
               {/* Task Summary Card */}
               <div className={`p-4 rounded-xl border space-y-2 ${
-                isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'
+                isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'
               }`}>
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-sm text-indigo-600 dark:text-indigo-400">{selectedTaskForReview.title}</span>
@@ -893,7 +893,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                   </span>
                 </div>
                 <p className="text-slate-600 dark:text-slate-400">{selectedTaskForReview.description}</p>
-                <div className="grid grid-cols-2 gap-2 text-slate-500 pt-2 border-t">
+                <div className="grid grid-cols-2 gap-2 text-slate-500 dark:text-slate-400 pt-2 border-t">
                   <div><strong>Assignee:</strong> {selectedTaskForReview.assignedToName || selectedTaskForReview.assignedTo}</div>
                   <div><strong>Site:</strong> {selectedTaskForReview.siteName || selectedTaskForReview.siteId || 'HQ'}</div>
                 </div>
@@ -924,7 +924,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                 <div>
                   <label className="block font-bold mb-1">Field Guard Remarks & Log:</label>
                   <div className={`p-3 rounded-lg border whitespace-pre-wrap ${
-                    isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
                   }`}>
                     {selectedTaskForReview.completionNotes}
                   </div>
@@ -936,10 +936,10 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                 <div>
                   <label className="block font-bold mb-2">Checklist Verification Status:</label>
                   <div className="space-y-1.5">
-                    {selectedTaskForReview.checklist.map((item, idx) => (
+                    {selectedTaskForReview.checklist.map((item: any, idx: number) => (
                       <div key={idx} className="flex items-center gap-2 text-xs">
                         <CheckCircle2 className={`w-4 h-4 ${item.done ? 'text-emerald-500' : 'text-slate-300'}`} />
-                        <span className={item.done ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'}>
+                        <span className={item.done ? 'line-through text-slate-400' : 'text-slate-900 dark:text-slate-300'}>
                           {item.text}
                         </span>
                       </div>
@@ -957,7 +957,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                   value={reviewNotes}
                   onChange={e => setReviewNotes(e.target.value)}
                   className={`w-full p-2.5 rounded-lg border outline-none ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>

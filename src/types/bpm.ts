@@ -287,7 +287,7 @@ export interface ProxyDelegationScope {
 
 export interface ProxyDelegation {
   id: string; // Document ID / deterministic key: DEL_{companyId}_{timestamp}_{rand}
-  delegationId: string;
+  delegationId?: string;
   companyId: string;
   delegatorUserId: string;
   delegatorName?: string;

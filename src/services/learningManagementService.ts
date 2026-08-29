@@ -56,7 +56,7 @@ export class LearningManagementService {
         validityMonths: data.validityMonths || 12,
         durationHours: data.durationHours || 1,
         passScorePercentage: data.passScorePercentage || 0,
-        trainerName: data.trainerName || 'TBD',
+        trainerName: data.trainerName || 'Not Assigned',
         location: data.location || 'Online',
         status: data.status || 'ACTIVE',
         createdAt: new Date().toISOString(),
@@ -111,7 +111,7 @@ export class LearningManagementService {
         programId,
         true,
         'LOW',
-        `Training program updated`
+        `Training program updated`, {}
       );
 
       return { success: true };
@@ -135,7 +135,7 @@ export class LearningManagementService {
         id: sessionId,
         companyId,
         programId: data.programId!,
-        trainerName: data.trainerName || 'TBD',
+        trainerName: data.trainerName || 'Not Assigned',
         scheduledDate: data.scheduledDate || new Date().toISOString().split('T')[0],
         startTime: data.startTime || '09:00',
         endTime: data.endTime || '10:00',
@@ -325,6 +325,109 @@ export class LearningManagementService {
   }
 
   // ============================================================================
+  // ANTI-CHEAT & ENGAGEMENT CONTROLS
+  // ============================================================================
+
+  static async recordVideoWatchProgress(
+    session: UserSession,
+    enrollmentId: string,
+    watchPercentage: number,
+    antiCheatViolationCount: number = 0
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const companyId = session.companyId;
+      const enrRef = doc(db, 'companies', companyId, 'trainingEnrollments', enrollmentId);
+      const enrSnap = await getDoc(enrRef);
+      if (!enrSnap.exists()) throw new Error('Enrollment not found');
+
+      const clampedPercentage = Math.max(0, Math.min(100, watchPercentage));
+      const isCompleted = clampedPercentage >= 100;
+
+      await updateDoc(enrRef, {
+        videoWatchPercentage: clampedPercentage,
+        antiCheatViolationCount: antiCheatViolationCount,
+        lastWatchedAt: new Date().toISOString(),
+        videoCompleted: isCompleted,
+        updatedAt: new Date().toISOString()
+      });
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('[LMS] recordVideoWatchProgress error:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  static async submitOnlineQuizAndAssessment(
+    session: UserSession,
+    enrollmentId: string,
+    score: number,
+    antiCheatFlags: number = 0
+  ): Promise<{ success: boolean; passed: boolean; score: number; error?: string }> {
+    try {
+      const companyId = session.companyId;
+      const enrRef = doc(db, 'companies', companyId, 'trainingEnrollments', enrollmentId);
+      const enrSnap = await getDoc(enrRef);
+      if (!enrSnap.exists()) throw new Error('Enrollment not found');
+      const enrollment = enrSnap.data() as TrainingEnrollmentRecord;
+
+      // Anti-cheat check: if too many tab switches / violations, force fail or flag
+      if (antiCheatFlags >= 3) {
+        await updateDoc(enrRef, {
+          resultStatus: 'FAILED',
+          antiCheatViolationCount: antiCheatFlags,
+          failureReason: 'Anti-cheat violation: excessive tab switching / focus loss detected during training.',
+          updatedAt: new Date().toISOString()
+        });
+        return { success: true, passed: false, score, error: 'Training failed due to anti-cheat security violations (focus loss).' };
+      }
+
+      const programSnap = await getDoc(doc(db, 'companies', companyId, 'trainingPrograms', enrollment.programId));
+      if (!programSnap.exists()) throw new Error('Program not found');
+      const program = programSnap.data() as TrainingProgramRecord;
+
+      const passScore = program.passScorePercentage || 70;
+      const passed = score >= passScore && (enrollment.videoWatchPercentage || 0) >= 100;
+      const resultStatus = passed ? 'PASSED' : 'FAILED';
+
+      const updates: Partial<TrainingEnrollmentRecord> = {
+        scoreObtained: score,
+        attendanceStatus: 'PRESENT',
+        resultStatus,
+        antiCheatViolationCount: antiCheatFlags,
+        certificateIssuedDate: passed ? new Date().toISOString() : undefined,
+        evaluatedByUserId: session.userId,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (passed && program.validityMonths > 0) {
+        const expiry = new Date();
+        expiry.setMonth(expiry.getMonth() + program.validityMonths);
+        updates.certificateExpiryDate = expiry.toISOString();
+      }
+
+      await updateDoc(enrRef, updates);
+
+      await AuditTrailService.logAction(
+        session,
+        'LEARNING_MANAGEMENT',
+        'ONLINE_QUIZ_SUBMITTED',
+        'TRAINING_ENROLLMENT',
+        enrollmentId,
+        true,
+        'MEDIUM',
+        `Online quiz submitted for ${enrollment.employeeName}. Score: ${score}%. Result: ${resultStatus}`,
+        { score, resultStatus, antiCheatFlags }
+      );
+
+      return { success: true, passed, score };
+    } catch (err: any) {
+      console.error('[LMS] submitOnlineQuizAndAssessment error:', err);
+      return { success: false, passed: false, score: 0, error: err.message };
+    }
+  }
+
+  // ============================================================================
   // ATTENDANCE & ASSESSMENT
   // ============================================================================
 
@@ -414,6 +517,124 @@ export class LearningManagementService {
       return { success: true };
     } catch (err: any) {
       console.error('[LMS] markAttendanceAndAssessment error:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  static async verifyCertificate(companyId: string, enrollmentId: string): Promise<{
+    isValid: boolean;
+    status: 'VALID' | 'EXPIRED' | 'REVOKED' | 'INVALID';
+    enrollment?: TrainingEnrollmentRecord;
+    error?: string;
+  }> {
+    try {
+      const enrRef = doc(db, 'companies', companyId, 'trainingEnrollments', enrollmentId);
+      const enrSnap = await getDoc(enrRef);
+      if (!enrSnap.exists()) {
+        return { isValid: false, status: 'INVALID', error: 'Certificate ID / Enrollment record not found' };
+      }
+
+      const enr = enrSnap.data() as TrainingEnrollmentRecord;
+      if (enr.resultStatus !== 'PASSED') {
+        return { isValid: false, status: 'INVALID', enrollment: enr, error: 'Training was not passed' };
+      }
+
+      if (enr.isRevoked) {
+        return { isValid: false, status: 'REVOKED', enrollment: enr, error: 'Certificate has been revoked by authority' };
+      }
+
+      if (enr.certificateExpiryDate) {
+        const expiryDate = new Date(enr.certificateExpiryDate);
+        if (expiryDate < new Date()) {
+          return { isValid: false, status: 'EXPIRED', enrollment: enr, error: 'Certificate has expired' };
+        }
+      }
+
+      return { isValid: true, status: 'VALID', enrollment: enr };
+    } catch (err: any) {
+      console.error('[LMS] verifyCertificate error:', err);
+      return { isValid: false, status: 'INVALID', error: err.message };
+    }
+  }
+
+  static async updateAntiCheatRiskStatus(
+    session: UserSession,
+    enrollmentId: string,
+    riskStatus: 'VERIFIED' | 'REVIEW_REQUIRED' | 'SUSPICIOUS' | 'INVALIDATED',
+    reason: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const companyId = session.companyId;
+      const enrRef = doc(db, 'companies', companyId, 'trainingEnrollments', enrollmentId);
+      const enrSnap = await getDoc(enrRef);
+      if (!enrSnap.exists()) throw new Error('Enrollment not found');
+
+      const updates: any = {
+        riskStatus,
+        riskReason: reason,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (riskStatus === 'INVALIDATED' || riskStatus === 'SUSPICIOUS') {
+        updates.resultStatus = 'FAILED';
+        updates.isRevoked = true;
+      }
+
+      await updateDoc(enrRef, updates);
+
+      await AuditTrailService.logAction(
+        session,
+        'LEARNING_MANAGEMENT',
+        'ANTI_CHEAT_RISK_UPDATE',
+        'TRAINING_ENROLLMENT',
+        enrollmentId,
+        true,
+        'HIGH',
+        `Risk status updated to ${riskStatus} for enrollment ${enrollmentId}: ${reason}`,
+        { riskStatus, reason }
+      );
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('[LMS] updateAntiCheatRiskStatus error:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  static async revokeCertificate(
+    session: UserSession,
+    enrollmentId: string,
+    reason: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const companyId = session.companyId;
+      const enrRef = doc(db, 'companies', companyId, 'trainingEnrollments', enrollmentId);
+      const enrSnap = await getDoc(enrRef);
+      if (!enrSnap.exists()) throw new Error('Enrollment not found');
+
+      await updateDoc(enrRef, {
+        isRevoked: true,
+        revocationReason: reason,
+        revokedAt: new Date().toISOString(),
+        resultStatus: 'FAILED',
+        updatedAt: new Date().toISOString()
+      });
+
+      await AuditTrailService.logAction(
+        session,
+        'LEARNING_MANAGEMENT',
+        'CERTIFICATE_REVOKED',
+        'TRAINING_ENROLLMENT',
+        enrollmentId,
+        true,
+        'HIGH',
+        `Certificate revoked for enrollment ${enrollmentId}: ${reason}`,
+        { reason }
+      );
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('[LMS] revokeCertificate error:', err);
       return { success: false, error: err.message };
     }
   }

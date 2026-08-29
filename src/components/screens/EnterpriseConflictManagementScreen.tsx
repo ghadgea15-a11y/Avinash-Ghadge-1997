@@ -155,7 +155,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
             <ShieldAlert className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-black dark:text-white flex items-center gap-2">
               Enterprise Conflict Detection & Resolution
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -168,7 +168,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
           <button
             onClick={refreshAuditData}
             disabled={isAuditing}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-300 dark:text-slate-200 text-xs font-semibold rounded-xl transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${isAuditing ? 'animate-spin text-rose-500' : ''}`} />
             {isAuditing ? 'Auditing Enterprise...' : 'Run Organization Audit'}
@@ -179,18 +179,18 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex justify-between items-center text-slate-500 text-xs font-medium uppercase tracking-wider">
+          <div className="flex justify-between items-center text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">
             <span>Audited Transactions</span>
             <Layers className="w-4 h-4 text-indigo-500" />
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2">
+          <p className="text-2xl font-bold text-black dark:text-white mt-2">
             {metrics?.totalAuditedTransactions ?? 0}
           </p>
           <span className="text-xs text-slate-400 mt-1 block">Active personnel & roster records</span>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex justify-between items-center text-slate-500 text-xs font-medium uppercase tracking-wider">
+          <div className="flex justify-between items-center text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">
             <span>Critical Blockers</span>
             <XCircle className="w-4 h-4 text-rose-500" />
           </div>
@@ -201,7 +201,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex justify-between items-center text-slate-500 text-xs font-medium uppercase tracking-wider">
+          <div className="flex justify-between items-center text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">
             <span>Controlled Overrides</span>
             <ShieldCheck className="w-4 h-4 text-amber-500" />
           </div>
@@ -212,7 +212,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex justify-between items-center text-slate-500 text-xs font-medium uppercase tracking-wider">
+          <div className="flex justify-between items-center text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">
             <span>Enforcement Engine</span>
             <Lock className="w-4 h-4 text-emerald-500" />
           </div>
@@ -230,7 +230,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
           className={`pb-3 px-2 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors ${
             activeTab === 'INCIDENTS'
               ? 'border-rose-600 text-rose-600 dark:text-rose-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+              : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400'
           }`}
         >
           <AlertTriangle className="w-4 h-4" />
@@ -247,7 +247,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
           className={`pb-3 px-2 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors ${
             activeTab === 'TEST_SUITE'
               ? 'border-rose-600 text-rose-600 dark:text-rose-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+              : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400'
           }`}
         >
           <Play className="w-4 h-4" />
@@ -259,7 +259,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
           className={`pb-3 px-2 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors ${
             activeTab === 'OVERRIDES'
               ? 'border-rose-600 text-rose-600 dark:text-rose-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+              : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400'
           }`}
         >
           <FileText className="w-4 h-4" />
@@ -271,7 +271,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
           className={`pb-3 px-2 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors ${
             activeTab === 'RULES'
               ? 'border-rose-600 text-rose-600 dark:text-rose-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+              : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400'
           }`}
         >
           <Info className="w-4 h-4" />
@@ -287,7 +287,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
               <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mx-auto mb-4">
                 <CheckCircle className="w-8 h-8" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Zero Active Operational Conflicts</h3>
+              <h3 className="text-lg font-bold text-black dark:text-white">Zero Active Operational Conflicts</h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1">
                 All personnel assignments, shift rosters, transfer requests, and Segregation of Duties matrices are currently 100% compliant.
               </p>
@@ -312,7 +312,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                       <span className="text-xs font-mono text-slate-400">
                         {conflict.ruleCode}
                       </span>
-                      <span className="text-xs font-medium text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                         {conflict.category.replace(/_/g, ' ')}
                       </span>
                     </div>
@@ -323,35 +323,35 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                   </div>
 
                   <div>
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    <h3 className="text-base font-bold text-black dark:text-white">
                       {conflict.title}
                     </h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-300 mt-1">
                       {conflict.reason}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800 font-mono">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 bg-white dark:bg-slate-950 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800 font-mono">
                       {conflict.detailedExplanation}
                     </p>
                   </div>
 
                   {/* Conflicting Context Details */}
                   {conflict.conflictingContext && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white dark:bg-slate-950 dark:bg-slate-800/40 p-4 rounded-xl text-xs">
                       {conflict.conflictingContext.siteA && (
                         <div>
-                          <span className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Assignment A:</span>
-                          <span className="text-slate-500">Site: {conflict.conflictingContext.siteA.name}</span>
+                          <span className="font-semibold text-slate-900 dark:text-slate-300 block mb-1">Assignment A:</span>
+                          <span className="text-slate-500 dark:text-slate-400">Site: {conflict.conflictingContext.siteA.name}</span>
                           {conflict.conflictingContext.shiftA && (
-                            <span className="block text-slate-500">Shift: {conflict.conflictingContext.shiftA.name} ({conflict.conflictingContext.shiftA.timeWindow})</span>
+                            <span className="block text-slate-500 dark:text-slate-400">Shift: {conflict.conflictingContext.shiftA.name} ({conflict.conflictingContext.shiftA.timeWindow})</span>
                           )}
                         </div>
                       )}
                       {conflict.conflictingContext.siteB && (
                         <div>
-                          <span className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Conflicting Counterpart:</span>
-                          <span className="text-slate-500">Site: {conflict.conflictingContext.siteB.name}</span>
+                          <span className="font-semibold text-slate-900 dark:text-slate-300 block mb-1">Conflicting Counterpart:</span>
+                          <span className="text-slate-500 dark:text-slate-400">Site: {conflict.conflictingContext.siteB.name}</span>
                           {conflict.conflictingContext.shiftB && (
-                            <span className="block text-slate-500">Shift: {conflict.conflictingContext.shiftB.name} ({conflict.conflictingContext.shiftB.timeWindow})</span>
+                            <span className="block text-slate-500 dark:text-slate-400">Shift: {conflict.conflictingContext.shiftB.name} ({conflict.conflictingContext.shiftB.timeWindow})</span>
                           )}
                         </div>
                       )}
@@ -360,8 +360,8 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
 
                   {/* Resolution and Actions */}
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <div className="text-xs text-slate-500">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">Target Personnel: </span>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      <span className="font-semibold text-slate-900 dark:text-slate-300">Target Personnel: </span>
                       {conflict.employeeName} ({conflict.employeeId})
                     </div>
 
@@ -421,7 +421,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                       <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded">
                         {scenario.category}
                       </span>
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      <h3 className="text-base font-bold text-black dark:text-white">
                         {scenario.title}
                       </h3>
                     </div>
@@ -447,7 +447,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                     <button
                       onClick={() => handleRunScenario(scenario.id)}
                       disabled={runningScenarioId === scenario.id || isBatchRunning}
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-300 dark:text-slate-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
                     >
                       <Play className="w-3.5 h-3.5 text-rose-500" />
                       Run Scenario
@@ -456,7 +456,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                 </div>
 
                 {/* Steps Execution Stepper */}
-                <div className="p-5 space-y-4 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="p-5 space-y-4 bg-white dark:bg-slate-950/50 dark:bg-slate-900/50">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {scenario.steps.map(step => (
                       <div 
@@ -470,7 +470,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                         }`}
                       >
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs font-bold text-slate-500">
+                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                             STEP {step.stepNumber}
                           </span>
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -482,14 +482,14 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                           </span>
                         </div>
 
-                        <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1">
+                        <h4 className="text-xs font-bold text-black dark:text-white mb-1">
                           {step.name}
                         </h4>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
                           {step.actionDescription}
                         </p>
 
-                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 text-[10px] font-mono text-slate-600 dark:text-slate-300">
+                        <div className="p-2.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 text-[10px] font-mono text-slate-600 dark:text-slate-400 dark:text-slate-300">
                           {step.executionLog}
                         </div>
                       </div>
@@ -513,7 +513,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
       {activeTab === 'OVERRIDES' && (
         <div className="space-y-4">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-base font-bold text-black dark:text-white flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-amber-500" />
               Controlled Operational Overrides Audit Ledger
             </h3>
@@ -524,8 +524,8 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
 
           {overrides.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 p-10 rounded-2xl border border-slate-200 dark:border-slate-800 text-center">
-              <Key className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-              <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">No Overrides Granted</h4>
+              <Key className="w-10 h-10 text-slate-300 dark:text-slate-600 dark:text-slate-400 mx-auto mb-3" />
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-300">No Overrides Granted</h4>
               <p className="text-xs text-slate-400 mt-1">Zero bypass exceptions have been authorized.</p>
             </div>
           ) : (
@@ -540,7 +540,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                       <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 font-mono text-xs font-bold rounded">
                         {rec.override.reasonCategory}
                       </span>
-                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                      <span className="text-xs font-bold text-black dark:text-white">
                         {rec.conflict.title}
                       </span>
                     </div>
@@ -550,19 +550,19 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                     </span>
                   </div>
 
-                  <div className="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <strong className="text-slate-700 dark:text-slate-200">Justification: </strong>
+                  <div className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300 bg-white dark:bg-slate-950 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <strong className="text-slate-900 dark:text-slate-300 dark:text-slate-200">Justification: </strong>
                     {rec.override.justification}
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <div>
                       <span>Authorizer: </span>
-                      <strong className="text-slate-700 dark:text-slate-300">{rec.override.approverName}</strong> ({rec.override.approverRole})
+                      <strong className="text-slate-900 dark:text-slate-300">{rec.override.approverName}</strong> ({rec.override.approverRole})
                     </div>
                     <div>
                       <span>Target Personnel: </span>
-                      <strong className="text-slate-700 dark:text-slate-300">{rec.conflict.employeeName}</strong>
+                      <strong className="text-slate-900 dark:text-slate-300">{rec.conflict.employeeName}</strong>
                     </div>
                   </div>
                 </div>
@@ -576,7 +576,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
       {activeTab === 'RULES' && (
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-6">
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+            <h3 className="text-lg font-bold text-black dark:text-white">
               Enterprise Conflict Governance Rules
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -585,58 +585,58 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 dark:bg-slate-800/40 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-rose-600 dark:text-rose-400">CONF-ROSTER-001</span>
                 <span className="text-[10px] font-bold px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 rounded">CRITICAL BLOCKING</span>
               </div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">Overlapping Shifts Time Collision</h4>
-              <p className="text-xs text-slate-500">Calculates exact time window intersection [S1, E1] ∩ [S2, E2]. Blocks if overlap &gt; 0 mins.</p>
+              <h4 className="text-sm font-bold text-black dark:text-white">Overlapping Shifts Time Collision</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Calculates exact time window intersection [S1, E1] ∩ [S2, E2]. Blocks if overlap &gt; 0 mins.</p>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 dark:bg-slate-800/40 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-rose-600 dark:text-rose-400">CONF-SITE-001</span>
                 <span className="text-[10px] font-bold px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 rounded">CRITICAL BLOCKING</span>
               </div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">Impossible Multi-Site Transit Window</h4>
-              <p className="text-xs text-slate-500">Prevents assigning same employee to geographically distinct sites without mandatory 30-min transit buffer.</p>
+              <h4 className="text-sm font-bold text-black dark:text-white">Impossible Multi-Site Transit Window</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Prevents assigning same employee to geographically distinct sites without mandatory 30-min transit buffer.</p>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 dark:bg-slate-800/40 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-rose-600 dark:text-rose-400">CONF-SOD-001</span>
                 <span className="text-[10px] font-bold px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 rounded">CRITICAL BLOCKING</span>
               </div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">Segregation of Duties (SoD) Maker-Checker</h4>
-              <p className="text-xs text-slate-500">Forbids granting both Muster Logging (Maker) and Payroll Certification (Checker) to same individual.</p>
+              <h4 className="text-sm font-bold text-black dark:text-white">Segregation of Duties (SoD) Maker-Checker</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Forbids granting both Muster Logging (Maker) and Payroll Certification (Checker) to same individual.</p>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 dark:bg-slate-800/40 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-rose-600 dark:text-rose-400">CONF-SUP-002</span>
                 <span className="text-[10px] font-bold px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 rounded">CRITICAL BLOCKING</span>
               </div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">Circular Supervisor Hierarchy Loop</h4>
-              <p className="text-xs text-slate-500">Detects cyclic reporting chains (A ➔ B ➔ A) preventing deadlock in approvals and appraisal routing.</p>
+              <h4 className="text-sm font-bold text-black dark:text-white">Circular Supervisor Hierarchy Loop</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Detects cyclic reporting chains (A ➔ B ➔ A) preventing deadlock in approvals and appraisal routing.</p>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 dark:bg-slate-800/40 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-rose-600 dark:text-rose-400">CONF-XFER-001</span>
                 <span className="text-[10px] font-bold px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 rounded">CRITICAL BLOCKING</span>
               </div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">Pre-Hire Transfer Date Violation</h4>
-              <p className="text-xs text-slate-500">Blocks transfers with effective dates preceding the official statutory joining date.</p>
+              <h4 className="text-sm font-bold text-black dark:text-white">Pre-Hire Transfer Date Violation</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Blocks transfers with effective dates preceding the official statutory joining date.</p>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 dark:bg-slate-800/40 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-rose-600 dark:text-rose-400">CONF-EMP-001</span>
                 <span className="text-[10px] font-bold px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400 rounded">CRITICAL BLOCKING</span>
               </div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">Duplicate Active National ID Credentials</h4>
-              <p className="text-xs text-slate-500">Prevents creating duplicate active personnel records sharing Aadhaar / PAN identity numbers.</p>
+              <h4 className="text-sm font-bold text-black dark:text-white">Duplicate Active National ID Credentials</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Prevents creating duplicate active personnel records sharing Aadhaar / PAN identity numbers.</p>
             </div>
           </div>
         </div>
@@ -660,13 +660,13 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
               <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                 <div className="flex items-center gap-2.5">
                   <ShieldCheck className="w-6 h-6 text-amber-500" />
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-lg font-bold text-black dark:text-white">
                     Authorize Controlled Conflict Override
                   </h3>
                 </div>
                 <button
                   onClick={() => setSelectedConflictForOverride(null)}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-slate-400 hover:text-slate-600 dark:text-slate-400"
                 >
                   ✕
                 </button>
@@ -678,13 +678,13 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">
                     Reason Category
                   </label>
                   <select
                     value={overrideReasonCategory}
                     onChange={(e) => setOverrideReasonCategory(e.target.value as OverrideReasonCode)}
-                    className="w-full text-xs font-semibold px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white outline-none"
+                    className="w-full text-xs font-semibold px-3 py-2 rounded-xl bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-black dark:text-white outline-none"
                   >
                     <option value="BUSINESS_CRITICAL_RELIEF">Business Critical Relief Deployment</option>
                     <option value="EMERGENCY_DISASTER_RECOVERY">Emergency Disaster Recovery Handover</option>
@@ -695,7 +695,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">
                     Operational Justification (Mandatory ≥ 20 chars)
                   </label>
                   <textarea
@@ -703,7 +703,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                     value={overrideJustification}
                     onChange={(e) => setOverrideJustification(e.target.value)}
                     placeholder="Provide specific operational reason and authorization reference..."
-                    className="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white outline-none resize-none"
+                    className="w-full text-xs px-3 py-2 rounded-xl bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-black dark:text-white outline-none resize-none"
                   />
                   <span className="text-[10px] text-slate-400">
                     Characters: {overrideJustification.length} / 20 required
@@ -723,10 +723,10 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
                 )}
               </div>
 
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+              <div className="p-4 bg-white dark:bg-slate-950 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
                 <button
                   onClick={() => setSelectedConflictForOverride(null)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 dark:text-slate-300"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-black dark:text-slate-200 dark:text-slate-300"
                 >
                   Cancel
                 </button>

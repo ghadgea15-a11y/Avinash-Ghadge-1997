@@ -976,6 +976,24 @@
         { "fieldPath": "timestamp", "order": "DESCENDING" },
         { "fieldPath": "severity", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "predictions",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "predictionType", "order": "ASCENDING" },
+        { "fieldPath": "predictionDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "incident_reports",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

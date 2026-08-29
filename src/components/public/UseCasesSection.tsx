@@ -127,7 +127,7 @@ export const UseCasesSection: React.FC = () => {
   const ActiveIcon = activeCategory.icon;
 
   return (
-    <section id="solutions" className="py-24 lg:py-32 bg-[#FBFBFA] border-b border-[#E8E7E3]">
+    <section id="solutions" className="py-24 lg:py-32 bg-white border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
         
         {/* Section Header */}
@@ -135,10 +135,10 @@ export const UseCasesSection: React.FC = () => {
           <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600">
             Tailored Workflows
           </span>
-          <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-[#0A0D14] tracking-tight">
+          <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-black tracking-tight">
             INDUSTRY SOLUTIONS
           </h2>
-          <p className="font-body text-sm sm:text-base text-[#52525B] leading-relaxed">
+          <p className="font-body text-sm sm:text-base text-black leading-relaxed">
             Purpose-configured operational blueprints engineered for specialized physical environments.
           </p>
         </div>
@@ -147,7 +147,7 @@ export const UseCasesSection: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left: Category Navigation List */}
-          <div className="lg:col-span-4 bg-white rounded-3xl border border-[#E7E6E1] p-3 sm:p-4 shadow-sm space-y-1">
+          <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 p-3 sm:p-4 shadow-sm space-y-1">
             {categories.map((cat, idx) => {
               const isSelected = activeCategoryIndex === idx;
               return (
@@ -156,8 +156,8 @@ export const UseCasesSection: React.FC = () => {
                   onClick={() => setActiveCategoryIndex(idx)}
                   className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-150 flex items-center justify-between cursor-pointer ${
                     isSelected
-                      ? 'bg-[#0A0D14] text-white shadow-xs'
-                      : 'text-[#52525B] hover:bg-[#F4F3EF] hover:text-[#0A0D14]'
+                      ? 'bg-black text-white shadow-xs'
+                      : 'text-black hover:bg-white hover:text-black'
                   }`}
                 >
                   <span className="font-display text-xs sm:text-sm font-bold tracking-tight">
@@ -170,20 +170,20 @@ export const UseCasesSection: React.FC = () => {
           </div>
 
           {/* Right: Rich Workflow Showcase */}
-          <div className="lg:col-span-8 bg-white rounded-3xl border border-[#E7E6E1] p-8 sm:p-12 shadow-sm space-y-8">
+          <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 p-8 sm:p-12 shadow-sm space-y-8">
             
-            <div className="flex items-center gap-4 pb-6 border-b border-[#E8E7E3]">
-              <div className="w-12 h-12 rounded-2xl bg-[#0A0D14] text-emerald-400 flex items-center justify-center">
+            <div className="flex items-center gap-4 pb-6 border-b border-slate-200">
+              <div className="w-12 h-12 rounded-2xl bg-black text-emerald-400 flex items-center justify-center">
                 <ActiveIcon className="w-6 h-6" />
               </div>
               <div>
                 <span className="font-mono text-xs font-bold text-emerald-600 uppercase">
                   OPERATIONAL BLUEPRINT
                 </span>
-                <h3 className="font-display text-2xl font-extrabold text-[#0A0D14]">
+                <h3 className="font-display text-2xl font-extrabold text-black">
                   {activeCategory.title}
                 </h3>
-                <span className="font-body text-xs text-[#71717A] mt-0.5 block">
+                <span className="font-body text-xs text-slate-600 mt-0.5 block">
                   {activeCategory.subtitle}
                 </span>
               </div>
@@ -191,30 +191,30 @@ export const UseCasesSection: React.FC = () => {
 
             <div className="space-y-6 font-body">
               <div>
-                <strong className="font-mono text-xs uppercase text-[#71717A] block">
+                <strong className="font-mono text-xs uppercase text-slate-600 block">
                   OPERATIONAL CHALLENGE
                 </strong>
-                <p className="text-sm text-[#27272A] mt-1 leading-relaxed">
+                <p className="text-sm text-black mt-1 leading-relaxed">
                   {activeCategory.problem}
                 </p>
               </div>
 
               <div>
-                <strong className="font-mono text-xs uppercase text-[#71717A] block">
+                <strong className="font-mono text-xs uppercase text-slate-600 block">
                   LOG SHEET MUSTER SOLUTION
                 </strong>
-                <p className="text-sm text-[#27272A] mt-1 leading-relaxed">
+                <p className="text-sm text-black mt-1 leading-relaxed">
                   {activeCategory.solution}
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-[#FBFBFA] border border-[#E8E7E3] space-y-3">
-                <strong className="font-mono text-xs uppercase text-[#0A0D14] block">
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 space-y-3">
+                <strong className="font-mono text-xs uppercase text-black block">
                   PROVEN BUSINESS OUTCOMES:
                 </strong>
                 <div className="space-y-2">
                   {activeCategory.outcomes.map((out, i) => (
-                    <div key={i} className="flex items-center gap-2.5 text-xs text-[#27272A]">
+                    <div key={i} className="flex items-center gap-2.5 text-xs text-black">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                       <span>{out}</span>
                     </div>

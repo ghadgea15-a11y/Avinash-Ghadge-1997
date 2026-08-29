@@ -179,18 +179,18 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
       <div 
         id="service-desk-resolution-modal"
         className={`w-full max-w-2xl rounded-2xl shadow-2xl border flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 ${
-          isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+          isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-black'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 dark:bg-slate-850/60">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                <h3 className="font-bold text-sm text-black dark:text-white dark:text-slate-100">
                   Submit Ticket Resolution
                 </h3>
                 <span className="px-2 py-0.5 text-[11px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-md border border-indigo-200 dark:border-indigo-800">
@@ -204,7 +204,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             disabled={loading}
           >
             <X className="w-5 h-5" />
@@ -215,9 +215,9 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
           
           {/* Ticket Context Pill */}
-          <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/80 dark:bg-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="space-y-1">
-              <div className="font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">{ticket.title}</div>
+              <div className="font-semibold text-black dark:text-slate-200 line-clamp-1">{ticket.title}</div>
               <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 flex-wrap">
                 {ticket.siteName && (
                   <span className="flex items-center gap-1">
@@ -258,13 +258,13 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
 
           {/* 1. Resolution Category */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
               Resolution Category <span className="text-rose-500">*</span>
             </label>
             <select
               value={resolutionCategory}
               onChange={(e) => setResolutionCategory(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
               required
             >
               <option value="TECHNICAL_FIX">Technical Fix / System Remediation</option>
@@ -279,7 +279,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
 
           {/* 2. Root Cause Analysis (RCA) */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1 flex items-center justify-between">
               <span>Root Cause Analysis (RCA) <span className="text-rose-500">*</span></span>
               <span className="text-[10px] text-slate-400 font-normal">Identify origin/cause of fault</span>
             </label>
@@ -288,14 +288,14 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
               value={rootCause}
               onChange={(e) => setRootCause(e.target.value)}
               placeholder="Detail what triggered this fault (e.g., Damaged fiber patch cord at Rack 4, Firmware crash after power surge)..."
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
               required
             />
           </div>
 
           {/* 3. Corrective & Preventive Action (CAPA) */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1 flex items-center justify-between">
               <span>Corrective & Preventive Action (CAPA) <span className="text-rose-500">*</span></span>
               <span className="text-[10px] text-slate-400 font-normal">Actions to fix & prevent recurrence</span>
             </label>
@@ -304,14 +304,14 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
               value={correctiveAction}
               onChange={(e) => setCorrectiveAction(e.target.value)}
               placeholder="Detail immediate remediation and preventive steps (e.g., Replaced patch cord, tested link attenuation, updated switch firmware)..."
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
               required
             />
           </div>
 
           {/* 4. Resolution Summary */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1 flex items-center justify-between">
               <span>Executive Resolution Summary <span className="text-rose-500">*</span></span>
               <span className="text-[10px] text-slate-400 font-normal">Summary of completed work</span>
             </label>
@@ -320,20 +320,20 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
               value={resolutionSummary}
               onChange={(e) => setResolutionSummary(e.target.value)}
               placeholder="Describe the final resolution outcome and confirmation that service has returned to normal operations..."
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
               required
             />
           </div>
 
           {/* 5. Evidence & Attachments Linking */}
           <div className="space-y-2 pt-1 border-t border-slate-200 dark:border-slate-800">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300">
               Evidence Attachments (Photos, Diagnostics, Reports)
             </label>
             
             {/* Existing Vault Evidence selector */}
             {existingEvidence.length > 0 && (
-              <div className="space-y-1.5 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="space-y-1.5 bg-white dark:bg-slate-950 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
                 <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
                   Select existing evidence from Ticket Vault:
                 </p>
@@ -348,7 +348,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
                         className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition text-left ${
                           isSelected
                             ? 'bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-300 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300'
-                            : 'hover:bg-slate-200/60 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-300'
+                            : 'hover:bg-slate-200/60 dark:hover:bg-slate-700/60 text-slate-900 dark:text-slate-300'
                         }`}
                       >
                         <div className="flex items-center gap-2 truncate">
@@ -368,7 +368,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
 
             {/* Upload New Files */}
             <div>
-              <label className="flex items-center gap-2 px-3 py-2 border border-dashed rounded-lg border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer text-xs text-slate-600 dark:text-slate-400 transition">
+              <label className="flex items-center gap-2 px-3 py-2 border border-dashed rounded-lg border-slate-300 dark:border-slate-700 hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-800/60 cursor-pointer text-xs text-slate-600 dark:text-slate-400 transition">
                 <Upload className="w-4 h-4 text-indigo-500" />
                 <span>Upload new resolution evidence file(s)...</span>
                 <input
@@ -391,7 +391,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {isClientVisible ? <Unlock className="w-4 h-4 text-emerald-500" /> : <Lock className="w-4 h-4 text-amber-500" />}
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <span className="text-xs font-semibold text-slate-900 dark:text-slate-300">
                   Client Visibility
                 </span>
               </div>
@@ -402,12 +402,12 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
                   onChange={(e) => setIsClientVisible(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-600"></div>
+                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:bg-slate-900 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-600"></div>
               </label>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                 Internal Staff Notes (Optional)
               </label>
               <textarea
@@ -415,7 +415,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
                 value={internalNotes}
                 onChange={(e) => setInternalNotes(e.target.value)}
                 placeholder="Confidential notes visible only to internal support staff and management..."
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
               />
             </div>
           </div>
@@ -425,7 +425,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+              className="px-4 py-2 text-xs font-semibold text-slate-900 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
               disabled={loading || isUploading}
             >
               Cancel

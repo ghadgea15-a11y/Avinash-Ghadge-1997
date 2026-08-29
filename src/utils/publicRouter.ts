@@ -1,15 +1,21 @@
-export function getCurrentPathname(): string {
+import { PhaseAScreen } from '../types';
+
+export const getCurrentPathname = () => {
+  if (typeof window === 'undefined') return '/';
   return window.location.pathname;
-}
+};
 
-export function navigateToUrl(url: string) {
-  window.history.pushState({}, '', url);
-  window.dispatchEvent(new Event('app-route-change'));
-}
-
-export const ROUTE_PATH_MAP: Record<string, { screen: any }> = {
+export const ROUTE_PATH_MAP: Record<string, { screen: PhaseAScreen }> = {
+  '/': { screen: 'LANDING' },
   '/login': { screen: 'LOGIN' },
   '/signup': { screen: 'SIGN_UP' },
   '/forgot-password': { screen: 'FORGOT_PASSWORD' },
-  '/hrms': { screen: 'LANDING' },
+  '/company-code': { screen: 'COMPANY_CODE' },
+  '/legal': { screen: 'LEGAL_POLICIES' }
+};
+
+export const navigateToUrl = (url: string) => {
+  if (typeof window === 'undefined') return;
+  window.history.pushState({}, '', url);
+  window.dispatchEvent(new PopStateEvent('popstate'));
 };

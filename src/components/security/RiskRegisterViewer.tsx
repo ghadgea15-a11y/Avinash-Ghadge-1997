@@ -80,23 +80,23 @@ export function RiskRegisterViewer({ userSession }: { userSession: any }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-gray-100">
           <div className="text-sm font-medium text-gray-500">Total Risks</div>
           <div className="mt-2 text-3xl font-bold text-gray-900">{risks.length}</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 border border-red-100">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-red-100">
           <div className="text-sm font-medium text-red-600">Critical / High</div>
           <div className="mt-2 text-3xl font-bold text-red-700">
             {risks.filter(r => !['CLOSED', 'ACCEPTED'].includes(r.status) && (r.severity === 'CRITICAL' || r.severity === 'HIGH')).length}
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 border border-blue-100">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-blue-100">
           <div className="text-sm font-medium text-blue-600">Treatment In Progress</div>
           <div className="mt-2 text-3xl font-bold text-blue-700">
             {risks.filter(r => r.status === 'MITIGATION_IN_PROGRESS' || r.status === 'TREATMENT_PLANNED').length}
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 border border-green-100">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-green-100">
           <div className="text-sm font-medium text-green-600">Accepted / Closed</div>
           <div className="mt-2 text-3xl font-bold text-green-700">
             {risks.filter(r => ['CLOSED', 'ACCEPTED'].includes(r.status)).length}
@@ -104,7 +104,7 @@ export function RiskRegisterViewer({ userSession }: { userSession: any }) {
         </div>
       </div>
 
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 shadow rounded-lg overflow-hidden">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
           <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
             <Shield className="w-5 h-5 text-gray-500" />
@@ -142,7 +142,7 @@ export function RiskRegisterViewer({ userSession }: { userSession: any }) {
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200">
                 {filteredRisks.map(risk => (
                   <tr key={risk.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
@@ -200,7 +200,7 @@ export function RiskRegisterViewer({ userSession }: { userSession: any }) {
               initial={{ scale: 0.95 }} 
               animate={{ scale: 1 }} 
               exit={{ scale: 0.95 }} 
-              className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden"
+              className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-start">
                 <div>
@@ -258,7 +258,7 @@ export function RiskRegisterViewer({ userSession }: { userSession: any }) {
               <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
                 <button 
                   onClick={() => setSelectedRisk(null)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-slate-900 border border-gray-300 rounded-md hover:bg-gray-50"
                 >
                   Close
                 </button>

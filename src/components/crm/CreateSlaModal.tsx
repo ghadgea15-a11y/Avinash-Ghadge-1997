@@ -83,25 +83,25 @@ export const CreateSlaModal: React.FC<Props> = ({ session, company, onClose, onS
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-slate-200">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <Target className="w-5 h-5 text-indigo-600" />
             Create SLA Definition
           </h2>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full">
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-full">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {loading ? (
-          <div className="p-6 text-center text-slate-500">Loading contracts...</div>
+          <div className="p-6 text-center text-slate-500 dark:text-slate-400">Loading contracts...</div>
         ) : contracts.length === 0 ? (
            <div className="p-6 text-center text-red-500">No active contracts found. Please create a contract first.</div>
         ) : (
           <div className="p-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Contract</label>
+              <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Contract</label>
               <select
                 value={formData.contractId}
                 onChange={e => setFormData({ ...formData, contractId: e.target.value })}
@@ -115,7 +115,7 @@ export const CreateSlaModal: React.FC<Props> = ({ session, company, onClose, onS
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">SLA Code</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">SLA Code</label>
                 <input
                   type="text"
                   placeholder="e.g. SLA-RES-01"
@@ -125,7 +125,7 @@ export const CreateSlaModal: React.FC<Props> = ({ session, company, onClose, onS
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">SLA Name</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">SLA Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Critical Issue Resolution"
@@ -137,7 +137,7 @@ export const CreateSlaModal: React.FC<Props> = ({ session, company, onClose, onS
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+              <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Description</label>
               <textarea
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -148,7 +148,7 @@ export const CreateSlaModal: React.FC<Props> = ({ session, company, onClose, onS
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Measurement Type</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Measurement Type</label>
                 <select
                   value={formData.measurementType}
                   onChange={e => setFormData({ ...formData, measurementType: e.target.value as SlaMeasurementType })}
@@ -162,7 +162,7 @@ export const CreateSlaModal: React.FC<Props> = ({ session, company, onClose, onS
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Severity</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Severity</label>
                 <select
                   value={formData.severity}
                   onChange={e => setFormData({ ...formData, severity: e.target.value as SlaSeverity })}
@@ -178,7 +178,7 @@ export const CreateSlaModal: React.FC<Props> = ({ session, company, onClose, onS
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Target Value</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Target Value</label>
                 <input
                   type="number"
                   min="0"
@@ -189,7 +189,7 @@ export const CreateSlaModal: React.FC<Props> = ({ session, company, onClose, onS
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Target Unit</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Target Unit</label>
                 <select
                   value={formData.targetUnit}
                   onChange={e => setFormData({ ...formData, targetUnit: e.target.value as any })}
@@ -204,7 +204,7 @@ export const CreateSlaModal: React.FC<Props> = ({ session, company, onClose, onS
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Effective From</label>
+              <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Effective From</label>
               <input
                 type="date"
                 value={formData.effectiveFrom}
@@ -215,7 +215,7 @@ export const CreateSlaModal: React.FC<Props> = ({ session, company, onClose, onS
           </div>
         )}
 
-        <div className="p-6 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
+        <div className="p-6 border-t border-slate-200 flex justify-end gap-3 bg-white dark:bg-slate-950">
           <button onClick={onClose} className="btn-secondary">Cancel</button>
           <button 
             onClick={handleSave} 

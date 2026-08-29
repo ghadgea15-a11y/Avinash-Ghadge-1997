@@ -108,11 +108,11 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate }) => {
           ENTERPRISE PLATFORM CAPABILITIES
         </div>
 
-        <h1 id="features-hero-heading" className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-[#0A0D14] tracking-tight leading-tight">
+        <h1 id="features-hero-heading" className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-black tracking-tight leading-tight">
           Comprehensive Platform Features & Architectural Disciplines
         </h1>
 
-        <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
+        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
           Log Sheet Muster connects distributed workforce management, physical security guard tours, facility maintenance logbooks, and statutory Indian labor compliance into one cohesive cloud architecture.
         </p>
 
@@ -120,7 +120,7 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate }) => {
           <a
             href="/contact"
             onClick={(e) => handleLinkClick(e, '/contact')}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#0A0D14] hover:bg-slate-800 text-white text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-black hover:bg-slate-800 text-white text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2"
           >
             Schedule Full Feature Demo
             <ArrowRight className="w-4 h-4" />
@@ -128,7 +128,7 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate }) => {
           <a
             href="/pricing"
             onClick={(e) => handleLinkClick(e, '/pricing')}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white text-slate-800 hover:bg-slate-50 text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-xs"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white dark:bg-slate-900 text-black dark:text-slate-200 hover:bg-white dark:bg-slate-950 text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-xs"
           >
             View Pricing Plans &rarr;
           </a>
@@ -142,17 +142,17 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate }) => {
           return (
             <div 
               key={cluster.title}
-              className="bg-white border border-[#E8E7E3] rounded-3xl p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-6"
+              className="bg-white dark:bg-slate-900 border border-slate-200 rounded-3xl p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-6"
             >
               <div className="space-y-4">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
                   <Icon className="w-6 h-6" />
                 </div>
-                <h2 className="text-lg font-display font-bold text-[#0A0D14]">{cluster.title}</h2>
+                <h2 className="text-lg font-display font-bold text-black">{cluster.title}</h2>
                 
                 <ul className="space-y-2.5 pt-2 border-t border-slate-100">
                   {cluster.items.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs text-slate-700 leading-relaxed">
+                    <li key={idx} className="flex items-start gap-2 text-xs text-slate-900 dark:text-slate-300 leading-relaxed">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                       <span>{item}</span>
                     </li>

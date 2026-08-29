@@ -895,7 +895,7 @@ export class TalentAcquisitionService {
     // 1. Qualification Check
     if (requisition.requiredQualifications && requisition.requiredQualifications.length > 0) {
       const candQual = candidate.highestEducation?.toLowerCase() || '';
-      const isMet = requisition.requiredQualifications.some(q => candQual.includes(q.toLowerCase()));
+      const isMet = requisition.requiredQualifications.some((q: any) => candQual.includes(q.toLowerCase()));
       results.push({
         type: 'QUALIFICATION',
         requirement: `Required Qualifications: ${requisition.requiredQualifications.join(', ')}`,
@@ -916,8 +916,8 @@ export class TalentAcquisitionService {
 
     // 3. Skills Check
     if (requisition.requiredSkills && requisition.requiredSkills.length > 0) {
-      const candSkills = candidate.skills?.map(s => s.toLowerCase()) || [];
-      const matchedSkills = requisition.requiredSkills.filter(rs => candSkills.includes(rs.toLowerCase()));
+      const candSkills = candidate.skills?.map((s: any) => s.toLowerCase()) || [];
+      const matchedSkills = requisition.requiredSkills.filter((rs: any) => candSkills.includes(rs.toLowerCase()));
       const isMet = matchedSkills.length >= Math.ceil(requisition.requiredSkills.length * 0.5); // 50% match threshold
       
       results.push({
@@ -2198,7 +2198,7 @@ export class TalentAcquisitionService {
         return { success: false, error: 'Candidate is already converted to an employee.' };
       }
 
-      const hasSelectedStage = candidate.statusHistory?.some(h => h.stage === 'SELECTED') || candidate.stage === 'READY_FOR_ONBOARDING' || candidate.stage === 'DOCUMENT_VERIFICATION' || candidate.stage === 'BACKGROUND_VERIFICATION';
+      const hasSelectedStage = candidate.statusHistory?.some((h: any) => h.stage === 'SELECTED') || candidate.stage === 'READY_FOR_ONBOARDING' || candidate.stage === 'DOCUMENT_VERIFICATION' || candidate.stage === 'BACKGROUND_VERIFICATION';
 
       const bgQuery = query(collection(db, 'companies', companyId, 'backgroundVerifications'), where('candidateId', '==', candidateId));
       const bgSnap = await getDocs(bgQuery);

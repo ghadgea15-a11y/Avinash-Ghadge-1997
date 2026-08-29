@@ -1,19 +1,37 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
+import fs from 'fs';
+
+// Environment constants
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const isProduction = NODE_ENV === 'production';
+
 import { initializeFirebaseAdmin, hasAdminCredentials } from './src/server/firebaseAdmin';
-import { authRoutes } from './src/server/authRoutes';
+import { authRoutes, verifySuperAdminMiddleware } from './src/server/authRoutes';
 import { BpmEscalationAdminService } from './src/server/bpmEscalationAdminService';
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  const distPath = path.join(process.cwd(), 'dist');
+  const hasBuiltAssets = fs.existsSync(path.join(distPath, 'index.html'));
+  
+  // Resilient mode detection: 
+  // We use production mode if explicitly set, OR if we have built assets and ARE NOT explicitly in development mode.
+  const effectiveProd = isProduction || (hasBuiltAssets && NODE_ENV !== 'development');
+
+  console.log(`[LSM Server] Initializing (NODE_ENV=${NODE_ENV}, hasAssets=${hasBuiltAssets}) -> Effective Mode: ${effectiveProd ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
   // Initialize Firebase Admin SDK for privileged background operations
-  initializeFirebaseAdmin();
+  try {
+    initializeFirebaseAdmin();
+  } catch (err) {
+    console.error('[LSM Server] Firebase Admin init failed:', err);
+  }
 
   app.use('/api', authRoutes);
 
@@ -24,7 +42,8 @@ async function startServer() {
     res.json({
       status: 'ok',
       service: 'Log Sheet Muster Backend Service',
-      environment: process.env.NODE_ENV || 'development',
+      environment: NODE_ENV,
+      effectiveMode: effectiveProd ? 'PRODUCTION' : 'DEVELOPMENT',
       timestamp: new Date().toISOString()
     });
   });
@@ -38,7 +57,7 @@ async function startServer() {
     try {
       // In production, add authorization check here (e.g. verify Cloud Scheduler OIDC token)
       const authHeader = req.headers.authorization;
-      if (process.env.NODE_ENV === 'production' && !authHeader?.includes('Bearer')) {
+      if (isProduction && !authHeader?.includes('Bearer')) {
         // Warning: Secure this route in actual production
       }
 
@@ -61,7 +80,7 @@ async function startServer() {
   });
 
   // Dedicated endpoint for authorized manual evaluation from the client (e.g. testing)
-  app.post('/api/bpm/escalation/process', async (req: Request, res: Response) => {
+  app.post('/api/bpm/escalation/process', verifySuperAdminMiddleware, async (req: Request, res: Response) => {
     try {
       const { companyId } = req.body;
       const authoritativeTime = new Date();
@@ -89,14 +108,28 @@ async function startServer() {
   // ============================================================
   // VITE & FRONTEND STATIC SERVING
   // ============================================================
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
+  if (!effectiveProd) {
+    try {
+      console.log('[LSM Server] Mounting Vite middleware for development...');
+      const { createServer: createViteServer } = await import('vite');
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    } catch (viteErr) {
+      console.warn('[LSM Server] Failed to load Vite even in development mode, falling back to static serving if possible:', viteErr);
+      if (hasBuiltAssets) {
+        app.use(express.static(distPath));
+        app.get('*', (_req: Request, res: Response) => {
+          res.sendFile(path.join(distPath, 'index.html'));
+        });
+      } else {
+        app.get('*', (_req, res) => res.status(500).send('Development server failed to start and no production assets found.'));
+      }
+    }
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    console.log('[LSM Server] Serving static assets from /dist');
     app.use(express.static(distPath));
     app.get('*', (_req: Request, res: Response) => {
       res.sendFile(path.join(distPath, 'index.html'));
@@ -124,4 +157,5 @@ async function startServer() {
 
 startServer().catch(err => {
   console.error('[LSM Server] Fatal startup error:', err);
+  process.exit(1);
 });

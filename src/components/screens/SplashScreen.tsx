@@ -110,23 +110,23 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
   }, []);
 
   return (
-    <div className="flex-1 bg-gradient-to-b from-slate-50 via-white to-slate-50 text-slate-900 flex flex-col justify-between p-6 relative overflow-hidden select-none">
+    <div className="flex-1 bg-gradient-to-b from-slate-50 via-white to-slate-50 text-black dark:text-white flex flex-col justify-between p-6 relative overflow-hidden select-none">
       {/* Background Subtle Glows */}
       <div className="absolute -top-24 -left-24 w-72 h-72 bg-indigo-100/50 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-blue-100/50 rounded-full blur-3xl pointer-events-none"></div>
 
       {/* Top Section: App Brand & Logo */}
       <div className="flex flex-col items-center text-center pt-8 space-y-3">
-        <AppLogo size="xl" showSubtitle={true} />
-        <span className="inline-block px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-mono text-indigo-700 shadow-sm">
+        <AppLogo size="xl" showSubtitle={true} company={activeCompany} />
+        <span className="inline-block px-3 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200 text-[11px] font-mono text-indigo-700 shadow-sm">
           Android Native Edition v1.0.0
         </span>
       </div>
 
       {/* Middle Section: Startup Diagnostics Queue */}
-      <div className="bg-white/90 border border-slate-200 rounded-2xl p-4 my-6 shadow-xl shadow-slate-200/50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-900/90 border border-slate-200 rounded-2xl p-4 my-6 shadow-xl shadow-slate-200/50 backdrop-blur-sm">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-300 flex items-center gap-1.5">
             <Loader2 className="w-3.5 h-3.5 text-indigo-600 animate-spin" />
             Initialization Sequence
           </span>
@@ -152,13 +152,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
               <div className="flex-1 min-w-0">
                 <p className={`font-medium truncate ${
-                  step.status === 'COMPLETED' ? 'text-slate-800' :
+                  step.status === 'COMPLETED' ? 'text-black' :
                   step.status === 'RUNNING' ? 'text-indigo-700 font-semibold' : 'text-slate-500'
                 }`}>
                   {step.label}
                 </p>
                 {step.detail && (
-                  <p className="text-[10px] font-mono text-slate-500 mt-0.5 truncate">
+                  <p className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                     {step.detail}
                   </p>
                 )}
@@ -171,7 +171,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       {/* Bottom Footer Details */}
       <div className="text-center text-[10px] text-slate-400 font-mono space-y-1 pb-2">
         <p>Google Play Store Target SDK 34 • Material Design 3</p>
-        <p className="text-slate-500">Built with Jetpack Compose & Firebase Multi-Tenant Architecture</p>
+        <p className="text-slate-500 dark:text-slate-400">Built with Jetpack Compose & Firebase Multi-Tenant Architecture</p>
       </div>
     </div>
   );

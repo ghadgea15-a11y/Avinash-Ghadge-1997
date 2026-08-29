@@ -143,7 +143,7 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'DRAFT': return 'bg-slate-100 text-slate-800';
+      case 'DRAFT': return 'bg-slate-100 text-black';
       case 'PENDING_APPROVAL': return 'bg-amber-100 text-amber-800';
       case 'APPROVED': return 'bg-green-100 text-green-800';
       case 'ISSUED_TO_VENDOR': return 'bg-blue-100 text-blue-800';
@@ -176,12 +176,12 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
   };
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen">
+    <div className="p-6 bg-white dark:bg-slate-950 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Purchase Orders</h1>
-            <p className="text-sm text-slate-500">Manage PO lifecycle and approvals</p>
+            <h1 className="text-2xl font-bold text-black dark:text-white">Purchase Orders</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Manage PO lifecycle and approvals</p>
           </div>
           <div className="flex gap-3">
             <button
@@ -198,11 +198,11 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
         {/* Creation Form */}
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-             <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10">
+             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10">
                    <div>
-                     <h2 className="text-xl font-bold text-slate-900">Create Purchase Order</h2>
-                     <p className="text-sm text-slate-500">Draft a new PO or import from RFQ</p>
+                     <h2 className="text-xl font-bold text-black dark:text-white">Create Purchase Order</h2>
+                     <p className="text-sm text-slate-500 dark:text-slate-400">Draft a new PO or import from RFQ</p>
                    </div>
                    <button onClick={() => setShowForm(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full">
                      <X className="w-5 h-5" />
@@ -214,7 +214,7 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
                       <div>
                          <h3 className="text-sm font-semibold text-blue-900">Import from RFQ</h3>
                          <p className="text-xs text-blue-700 mt-1">Select an awarded RFQ to automatically populate vendor, items, and negotiated prices.</p>
-                         <button className="mt-3 text-xs font-semibold bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
+                         <button className="mt-3 text-xs font-semibold bg-white dark:bg-slate-900 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
                             Select Awarded RFQ
                          </button>
                       </div>
@@ -222,11 +222,11 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
 
                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                         <label className="block text-sm font-medium text-slate-700 mb-1">Vendor Name</label>
+                         <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Vendor Name</label>
                          <input type="text" className="w-full border border-slate-300 rounded-lg p-2.5 text-sm" placeholder="e.g. Acme Corp" />
                       </div>
                       <div>
-                         <label className="block text-sm font-medium text-slate-700 mb-1">Delivery Site</label>
+                         <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Delivery Site</label>
                          <select className="w-full border border-slate-300 rounded-lg p-2.5 text-sm">
                             <option>Main HQ (Mumbai)</option>
                             <option>Pune Facility</option>
@@ -236,28 +236,28 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
 
                    <div>
                       <div className="flex items-center justify-between mb-2">
-                         <label className="block text-sm font-medium text-slate-700">Line Items</label>
+                         <label className="block text-sm font-medium text-slate-900 dark:text-slate-300">Line Items</label>
                          <button className="text-xs text-indigo-600 font-medium hover:text-indigo-800 flex items-center">
                             <Plus className="w-3 h-3 mr-1" /> Add Item
                          </button>
                       </div>
-                      <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 text-center">
-                         <p className="text-sm text-slate-500">No items added yet. Import an RFQ or add items manually.</p>
+                      <div className="border border-slate-200 rounded-lg p-4 bg-white dark:bg-slate-950 text-center">
+                         <p className="text-sm text-slate-500 dark:text-slate-400">No items added yet. Import an RFQ or add items manually.</p>
                       </div>
                    </div>
 
                    <div className="flex items-center justify-between bg-slate-100 p-4 rounded-lg">
-                      <div className="text-sm text-slate-600">
+                      <div className="text-sm text-slate-600 dark:text-slate-400">
                          Budget Headroom: <span className="font-semibold text-green-600">₹4,50,000</span>
                       </div>
                       <div className="text-right">
-                         <div className="text-xs text-slate-500">Grand Total</div>
-                         <div className="text-xl font-bold text-slate-900">₹0.00</div>
+                         <div className="text-xs text-slate-500 dark:text-slate-400">Grand Total</div>
+                         <div className="text-xl font-bold text-black dark:text-white">₹0.00</div>
                       </div>
                    </div>
                 </div>
-                <div className="p-6 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
-                   <button onClick={() => setShowForm(false)} className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50">
+                <div className="p-6 border-t border-slate-200 flex justify-end gap-3 bg-white dark:bg-slate-950">
+                   <button onClick={() => setShowForm(false)} className="px-4 py-2 border border-slate-300 text-slate-900 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-white dark:bg-slate-950">
                       Cancel
                    </button>
                    <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center">
@@ -271,8 +271,8 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
 
 
         {/* Filters */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex items-center bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 flex-1 max-w-md">
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex items-center bg-white dark:bg-slate-950 rounded-lg px-3 py-2 border border-slate-200 flex-1 max-w-md">
             <Search className="w-4 h-4 text-slate-400 mr-2" />
             <input
               type="text"
@@ -285,7 +285,7 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="bg-white dark:bg-slate-950 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500/20"
           >
             <option value="ALL">All Statuses</option>
             <option value="DRAFT">Draft</option>
@@ -297,40 +297,40 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
         </div>
 
         {/* PO List */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">PO Number</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Vendor</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Amount</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Date</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase text-right">Actions</th>
+                <tr className="bg-white dark:bg-slate-950 border-b border-slate-200">
+                  <th className="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">PO Number</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Vendor</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Amount</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Status</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Date</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {filteredPOs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                       No Purchase Orders found.
                     </td>
                   </tr>
                 ) : (
                   filteredPOs.map((po) => (
-                    <tr key={po.id} className="hover:bg-slate-50 transition-colors">
+                    <tr key={po.id} className="hover:bg-white dark:bg-slate-950 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <FileText className="w-4 h-4 text-slate-400" />
-                          <span className="text-sm font-medium text-slate-900">{po.poNumber}</span>
+                          <span className="text-sm font-medium text-black dark:text-white">{po.poNumber}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-slate-600">{po.vendorName}</span>
+                        <span className="text-sm text-slate-600 dark:text-slate-400">{po.vendorName}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm font-medium text-slate-900">
+                        <span className="text-sm font-medium text-black dark:text-white">
                           ₹{po.grandTotal.toLocaleString()}
                         </span>
                       </td>
@@ -339,7 +339,7 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
                           {po.status.replace(/_/g, ' ')}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-500">
+                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                         {new Date(po.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-right space-x-2">
@@ -353,7 +353,7 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
                         )}
                         <button
                           onClick={() => setSelectedPO(po)}
-                          className="text-slate-600 hover:text-slate-900 text-sm font-medium"
+                          className="text-slate-600 dark:text-slate-400 hover:text-black dark:text-white text-sm font-medium"
                         >
                           View
                         </button>
@@ -369,11 +369,11 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
         {/* PO Details Modal */}
         {selectedPO && !showApprovalDrawer && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">{selectedPO.poNumber}</h2>
-                  <p className="text-sm text-slate-500">Vendor: {selectedPO.vendorName}</p>
+                  <h2 className="text-xl font-bold text-black dark:text-white">{selectedPO.poNumber}</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Vendor: {selectedPO.vendorName}</p>
                 </div>
                 <button onClick={() => setSelectedPO(null)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full">
                   <X className="w-5 h-5" />
@@ -382,40 +382,40 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
 
               <div className="p-6 space-y-8">
                 {/* Stepper */}
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                <div className="bg-white dark:bg-slate-950 p-6 rounded-xl border border-slate-200">
                    {renderStepper(selectedPO.status)}
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                    <div>
-                     <h3 className="text-sm font-semibold text-slate-900 mb-2">Billing Address</h3>
-                     <p className="text-sm text-slate-600 whitespace-pre-line">{selectedPO.billingAddress}</p>
+                     <h3 className="text-sm font-semibold text-black dark:text-white mb-2">Billing Address</h3>
+                     <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line">{selectedPO.billingAddress}</p>
                    </div>
                    <div>
-                     <h3 className="text-sm font-semibold text-slate-900 mb-2">Delivery Address</h3>
-                     <p className="text-sm text-slate-600 whitespace-pre-line">{selectedPO.deliveryAddress}</p>
+                     <h3 className="text-sm font-semibold text-black dark:text-white mb-2">Delivery Address</h3>
+                     <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line">{selectedPO.deliveryAddress}</p>
                    </div>
                 </div>
 
                 <div>
-                   <h3 className="text-sm font-semibold text-slate-900 mb-4">Line Items</h3>
+                   <h3 className="text-sm font-semibold text-black dark:text-white mb-4">Line Items</h3>
                    <div className="border border-slate-200 rounded-lg overflow-hidden">
                      <table className="w-full text-left text-sm">
-                       <thead className="bg-slate-50 border-b border-slate-200">
+                       <thead className="bg-white dark:bg-slate-950 border-b border-slate-200">
                          <tr>
-                           <th className="px-4 py-3 font-semibold text-slate-600">Item</th>
-                           <th className="px-4 py-3 font-semibold text-slate-600 text-right">Qty</th>
-                           <th className="px-4 py-3 font-semibold text-slate-600 text-right">Price</th>
-                           <th className="px-4 py-3 font-semibold text-slate-600 text-right">Tax %</th>
-                           <th className="px-4 py-3 font-semibold text-slate-600 text-right">Total</th>
+                           <th className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-400">Item</th>
+                           <th className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-400 text-right">Qty</th>
+                           <th className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-400 text-right">Price</th>
+                           <th className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-400 text-right">Tax %</th>
+                           <th className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-400 text-right">Total</th>
                          </tr>
                        </thead>
                        <tbody className="divide-y divide-slate-200">
-                         {selectedPO.lineItems?.map((item, idx) => (
+                         {selectedPO.lineItems?.map((item: any, idx: number) => (
                            <tr key={idx}>
                              <td className="px-4 py-3">
-                               <div className="font-medium text-slate-900">{item.itemName}</div>
-                               <div className="text-xs text-slate-500">{item.description}</div>
+                               <div className="font-medium text-black dark:text-white">{item.itemName}</div>
+                               <div className="text-xs text-slate-500 dark:text-slate-400">{item.description}</div>
                              </td>
                              <td className="px-4 py-3 text-right">{item.quantity} {item.uom}</td>
                              <td className="px-4 py-3 text-right">₹{item.unitPrice.toLocaleString()}</td>
@@ -424,17 +424,17 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
                            </tr>
                          ))}
                        </tbody>
-                       <tfoot className="bg-slate-50 border-t border-slate-200 font-medium">
+                       <tfoot className="bg-white dark:bg-slate-950 border-t border-slate-200 font-medium">
                          <tr>
-                           <td colSpan={4} className="px-4 py-3 text-right text-slate-600">Subtotal</td>
+                           <td colSpan={4} className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">Subtotal</td>
                            <td className="px-4 py-3 text-right">₹{(selectedPO.subTotal ?? selectedPO.subtotal ?? 0).toLocaleString()}</td>
                          </tr>
                          <tr>
-                           <td colSpan={4} className="px-4 py-3 text-right text-slate-600">Tax</td>
+                           <td colSpan={4} className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">Tax</td>
                            <td className="px-4 py-3 text-right">₹{(selectedPO.totalTax ?? selectedPO.taxAmount ?? 0).toLocaleString()}</td>
                          </tr>
                          <tr>
-                           <td colSpan={4} className="px-4 py-3 text-right text-slate-900 font-bold">Grand Total</td>
+                           <td colSpan={4} className="px-4 py-3 text-right text-black dark:text-white font-bold">Grand Total</td>
                            <td className="px-4 py-3 text-right text-indigo-700 font-bold">₹{selectedPO.grandTotal.toLocaleString()}</td>
                          </tr>
                        </tfoot>
@@ -456,7 +456,7 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
                    {selectedPO.pdfUrl && (
                       <a 
                          href={selectedPO.pdfUrl} target="_blank" rel="noopener noreferrer"
-                         className="flex items-center px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50"
+                         className="flex items-center px-4 py-2 border border-slate-300 text-slate-900 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-white dark:bg-slate-950"
                       >
                          <FileOutput className="w-4 h-4 mr-2" />
                          View PDF
@@ -479,11 +479,11 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
 
         {/* Approval Drawer */}
         {showApprovalDrawer && selectedPO && (
-          <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 border-l border-slate-200 flex flex-col transform transition-transform">
+          <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white dark:bg-slate-900 shadow-2xl z-50 border-l border-slate-200 flex flex-col transform transition-transform">
              <div className="flex items-center justify-between p-6 border-b border-slate-200">
                <div>
-                 <h2 className="text-lg font-bold text-slate-900">Approve PO</h2>
-                 <p className="text-sm text-slate-500">{selectedPO.poNumber}</p>
+                 <h2 className="text-lg font-bold text-black dark:text-white">Approve PO</h2>
+                 <p className="text-sm text-slate-500 dark:text-slate-400">{selectedPO.poNumber}</p>
                </div>
                <button onClick={() => {setShowApprovalDrawer(false); setSelectedPO(null);}} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full">
                  <X className="w-5 h-5" />
@@ -500,15 +500,15 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
                 </div>
 
                 <div>
-                   <h3 className="text-sm font-semibold text-slate-900 mb-3">Vendor Details</h3>
-                   <div className="text-sm text-slate-600">
+                   <h3 className="text-sm font-semibold text-black dark:text-white mb-3">Vendor Details</h3>
+                   <div className="text-sm text-slate-600 dark:text-slate-400">
                       <p><strong>Name:</strong> {selectedPO.vendorName}</p>
                       <p><strong>GST:</strong> {selectedPO.vendorGst}</p>
                    </div>
                 </div>
 
                 <div>
-                   <label className="block text-sm font-semibold text-slate-900 mb-2">Comments (Optional)</label>
+                   <label className="block text-sm font-semibold text-black dark:text-white mb-2">Comments (Optional)</label>
                    <textarea
                       value={approvalComment}
                       onChange={(e) => setApprovalComment(e.target.value)}
@@ -519,7 +519,7 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
                 </div>
              </div>
 
-             <div className="p-6 border-t border-slate-200 flex gap-3 bg-slate-50">
+             <div className="p-6 border-t border-slate-200 flex gap-3 bg-white dark:bg-slate-950">
                 <button 
                   onClick={() => handleApprovePO(selectedPO, 'REJECTED')}
                   className="flex-1 px-4 py-2 border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium"

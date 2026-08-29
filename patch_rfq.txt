@@ -1,0 +1,8 @@
+
+  public static async getRfqs(companyId: string) {
+    return [];
+  }
+
+  public static async getRfqBids(companyId: string) {
+    return [];
+  }

@@ -86,7 +86,8 @@ export class OperationalIntelligenceEngine {
       purchaseOrdersSnap,
       incidentsSnap,
       contractsSnap,
-      inventorySnap
+      inventorySnap,
+      patrolAnomaliesSnap
     ] = await Promise.all([
       getDocs(collection(db, `companies/${companyId}/salary_slips`)),
       getDocs(collection(db, `companies/${companyId}/attendance`)),
@@ -96,7 +97,8 @@ export class OperationalIntelligenceEngine {
       getDocs(collection(db, `companies/${companyId}/purchase_orders`)),
       getDocs(collection(db, `companies/${companyId}/incident_reports`)),
       getDocs(collection(db, `companies/${companyId}/contracts`)),
-      getDocs(collection(db, `companies/${companyId}/inventory_items`))
+      getDocs(collection(db, `companies/${companyId}/inventory_items`)),
+      getDocs(collection(db, `companies/${companyId}/suspicious_patrol_scans`))
     ]);
 
     const salarySlips: SalarySlipRecord[] = salarySlipsSnap.docs.map(d => ({ id: d.id, ...d.data() } as SalarySlipRecord));
@@ -108,6 +110,7 @@ export class OperationalIntelligenceEngine {
     const incidents: IncidentReportRecord[] = incidentsSnap.docs.map(d => ({ id: d.id, ...d.data() } as IncidentReportRecord));
     const contracts: ContractRecord[] = contractsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ContractRecord));
     const inventoryItems: InventoryItemRecord[] = inventorySnap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItemRecord));
+    const patrolAnomalies: any[] = patrolAnomaliesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
     // 3. Create index lookups for fast attribution
     const employeeMap = new Map<string, EmployeeRecord>();
@@ -671,6 +674,49 @@ export class OperationalIntelligenceEngine {
           timestamp: now.toISOString()
         });
       }
+
+      // 7. SECURITY / PATROL ANOMALY DETECTOR (From SuspiciousPatrolService)
+      const unitPatrolAnoms = patrolAnomalies.filter(a => 
+        (node.level === 'SITE' && a.siteId === node.id) ||
+        (node.level === 'COMPANY') ||
+        (node.level === 'REGION' && regionSites.some(s => s.id === a.siteId)) ||
+        (node.level === 'BRANCH' && branchSites.some(s => s.id === a.siteId))
+      );
+
+      unitPatrolAnoms.forEach(pa => {
+        nodeAnomalies.push({
+          id: pa.id,
+          type: 'SECURITY_ANOMALY',
+          severity: pa.severity,
+          title: `Patrol Anomaly: ${pa.anomalyType}`,
+          description: pa.evidence,
+          entityLevel: node.level,
+          entityId: node.id,
+          entityName: node.name,
+          metricName: 'Checkpoint Integrity',
+          currentValue: pa.riskScore,
+          baselineValue: 0,
+          deviationPercent: pa.riskScore,
+          financialImpact: 0,
+          rootCause: `Suspected QR tampering or duplicate device usage by ${pa.employeeName}.`,
+          recommendedAction: 'Verify physical checkpoint security and interview assigned personnel.',
+          sourceTransactionCount: 1,
+          sourceTransactions: [{
+            id: pa.tourId,
+            module: 'PATROL',
+            referenceNumber: pa.id,
+            date: pa.scannedAt,
+            title: `Patrol Anomaly Event`,
+            entityLevel: 'SITE',
+            entityId: pa.siteId,
+            entityName: node.name,
+            status: pa.status,
+            description: pa.evidence,
+            details: pa
+          }],
+          timestamp: pa.detectedAt
+        });
+      });
 
       // Attach anomalies to node
       node.metrics.anomalies = nodeAnomalies;

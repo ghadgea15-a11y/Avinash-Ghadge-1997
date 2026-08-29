@@ -1,0 +1,1 @@
+  const completedCount = (tour.checkpointScans || []).filter((s: any) => s.status === 'COMPLETED').length;

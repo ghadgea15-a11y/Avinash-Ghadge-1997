@@ -186,11 +186,11 @@ export const CertificationTrackingScreen: React.FC<{
 
 
   if (loading && certifications.length === 0) {
-    return <div className="p-8 text-center text-slate-500">Loading certifications...</div>;
+    return <div className="p-8 text-center text-slate-500 dark:text-slate-400">Loading certifications...</div>;
   }
 
   return (
-    <div className={`p-4 md:p-6 lg:p-8 space-y-6 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className={`p-4 md:p-6 lg:p-8 space-y-6 ${isDark ? 'text-slate-100' : 'text-black'}`}>
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -213,7 +213,7 @@ export const CertificationTrackingScreen: React.FC<{
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className={`p-5 rounded-2xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-semibold text-slate-500">Total Tracked</h3>
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Total Tracked</h3>
             <div className={`p-2 rounded-lg ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
               <FileText className="w-5 h-5" />
             </div>
@@ -224,7 +224,7 @@ export const CertificationTrackingScreen: React.FC<{
         <div className={`p-5 rounded-2xl border ${isDark ? 'bg-slate-900 border-emerald-500/30' : 'bg-white border-emerald-200'} shadow-sm relative overflow-hidden`}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-semibold text-slate-500">Active & Compliant</h3>
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Active & Compliant</h3>
             <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
               <CheckCircle2 className="w-5 h-5" />
             </div>
@@ -235,7 +235,7 @@ export const CertificationTrackingScreen: React.FC<{
         <div className={`p-5 rounded-2xl border ${isDark ? 'bg-slate-900 border-amber-500/30' : 'bg-white border-amber-200'} shadow-sm relative overflow-hidden`}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-semibold text-slate-500">Expiring Soon (90d)</h3>
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Expiring Soon (90d)</h3>
             <div className="p-2 rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
               <AlertTriangle className="w-5 h-5" />
             </div>
@@ -246,7 +246,7 @@ export const CertificationTrackingScreen: React.FC<{
         <div className={`p-5 rounded-2xl border ${isDark ? 'bg-slate-900 border-rose-500/30' : 'bg-white border-rose-200'} shadow-sm relative overflow-hidden`}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-semibold text-slate-500">Expired (Action Required)</h3>
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Expired (Action Required)</h3>
             <div className="p-2 rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400">
               <XCircle className="w-5 h-5" />
             </div>
@@ -266,7 +266,7 @@ export const CertificationTrackingScreen: React.FC<{
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`w-full pl-9 pr-4 py-2 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none transition-all ${
-                  isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                  isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200 text-black'
                 }`}
               />
             </div>
@@ -278,7 +278,7 @@ export const CertificationTrackingScreen: React.FC<{
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className={`text-xs uppercase font-semibold ${isDark ? 'bg-zinc-800/50 text-slate-400' : 'bg-slate-50 text-slate-500'}`}>
+            <thead className={`text-xs uppercase font-semibold ${isDark ? 'bg-zinc-800/50 text-slate-400' : 'bg-white text-slate-500'}`}>
               <tr>
                 <th className="px-4 py-3">Employee</th>
                 <th className="px-4 py-3">Certification</th>
@@ -290,20 +290,20 @@ export const CertificationTrackingScreen: React.FC<{
             </thead>
             <tbody className={`divide-y ${isDark ? 'divide-zinc-800' : 'divide-slate-200'}`}>
               {paginatedCerts.map((cert) => (
-                <tr key={cert.id} className={`hover:${isDark ? 'bg-zinc-800/50' : 'bg-slate-50/50'} transition-colors`}>
+                <tr key={cert.id} className={`hover:${isDark ? 'bg-zinc-800/50' : 'bg-white/50'} transition-colors`}>
                   <td className="px-4 py-3">
                     <div className="font-semibold">{cert.employeeName}</div>
-                    <div className="text-xs text-slate-500">{cert.certificationType}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{cert.certificationType}</div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="font-medium text-emerald-600 dark:text-emerald-400">{cert.certificationName}</div>
-                    <div className="text-xs text-slate-500 flex items-center gap-1">
+                    <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                       {cert.certificateNumber}
                       {cert.documentUrl && <a href={cert.documentUrl} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline"><Eye className="w-3 h-3 inline"/></a>}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{format(parseISO(cert.issueDate), 'MMM dd, yyyy')}</td>
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{format(parseISO(cert.issueDate), 'MMM dd, yyyy')}</td>
+                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
                     {cert.expiryDate ? format(parseISO(cert.expiryDate), 'MMM dd, yyyy') : 'No Expiry'}
                   </td>
                   <td className="px-4 py-3">
@@ -333,7 +333,7 @@ export const CertificationTrackingScreen: React.FC<{
               ))}
               {paginatedCerts.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                     No certifications found.
                   </td>
                 </tr>
@@ -359,15 +359,15 @@ export const CertificationTrackingScreen: React.FC<{
               <h3 className="text-lg font-bold font-display flex items-center gap-2">
                 <Award className="w-5 h-5 text-emerald-500" /> Assign Certification
               </h3>
-              <button onClick={() => setIsAssignModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+              <button onClick={() => setIsAssignModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Employee</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Employee</label>
                 <select 
                   value={selectedEmployeeId}
                   onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                  className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                  className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200'}`}
                 >
                   <option value="">Select Employee...</option>
                   {employees.map(emp => (
@@ -378,21 +378,21 @@ export const CertificationTrackingScreen: React.FC<{
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Certification Name</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Certification Name</label>
                   <input 
                     type="text" 
                     value={newCert.certificationName}
                     onChange={(e) => setNewCert({...newCert, certificationName: e.target.value})}
                     placeholder="e.g. First Aid Level 1"
-                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200'}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Type</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Type</label>
                   <select 
                     value={newCert.certificationType}
                     onChange={(e) => setNewCert({...newCert, certificationType: e.target.value})}
-                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200'}`}
                   >
                     <option value="PSARA">PSARA Compliance</option>
                     <option value="FIRE_SAFETY">Fire Safety</option>
@@ -405,55 +405,55 @@ export const CertificationTrackingScreen: React.FC<{
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Certificate Number</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Certificate Number</label>
                   <input 
                     type="text" 
                     value={newCert.certificateNumber}
                     onChange={(e) => setNewCert({...newCert, certificateNumber: e.target.value})}
                     placeholder="Cert No."
-                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200'}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Issuing Authority</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Issuing Authority</label>
                   <input 
                     type="text" 
                     value={newCert.issuingAuthority}
                     onChange={(e) => setNewCert({...newCert, issuingAuthority: e.target.value})}
                     placeholder="e.g. Red Cross"
-                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200'}`}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Issue Date</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Issue Date</label>
                   <input 
                     type="date" 
                     value={newCert.issueDate}
                     onChange={(e) => setNewCert({...newCert, issueDate: e.target.value})}
-                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200'}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">Expiry Date (Optional)</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Expiry Date (Optional)</label>
                   <input 
                     type="date" 
                     value={newCert.expiryDate || ''}
                     onChange={(e) => setNewCert({...newCert, expiryDate: e.target.value})}
-                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-emerald-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200'}`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Certificate Document</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Certificate Document</label>
                 <div className={`p-4 border-2 border-dashed rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors ${
-                  isDark ? 'border-zinc-700 hover:border-emerald-500 bg-zinc-950' : 'border-slate-300 hover:border-emerald-500 bg-slate-50'
+                  isDark ? 'border-zinc-700 hover:border-emerald-500 bg-zinc-950' : 'border-slate-300 hover:border-emerald-500 bg-white'
                 }`}>
                   <input type="file" className="hidden" id="cert-upload" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
-                  <label htmlFor="cert-upload" className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-500">
+                  <label htmlFor="cert-upload" className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-500 dark:text-slate-400">
                     <Upload className="w-4 h-4" /> 
                     {selectedFile ? selectedFile.name : 'Upload PDF/Image'}
                   </label>
@@ -470,7 +470,7 @@ export const CertificationTrackingScreen: React.FC<{
                 <span className="text-sm font-medium">Mandatory for role/site compliance</span>
               </div>
             </div>
-            <div className={`px-6 py-4 border-t flex justify-end gap-3 ${isDark ? 'border-zinc-800 bg-zinc-900/50' : 'border-slate-100 bg-slate-50'}`}>
+            <div className={`px-6 py-4 border-t flex justify-end gap-3 ${isDark ? 'border-zinc-800 bg-zinc-900/50' : 'border-slate-100 bg-white'}`}>
               <button onClick={() => setIsAssignModalOpen(false)} className={`px-4 py-2 text-sm font-bold rounded-xl ${isDark ? 'text-slate-300 hover:bg-zinc-800' : 'text-slate-600 hover:bg-slate-200'}`}>Cancel</button>
               <button onClick={handleAssignCertification} disabled={loading} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-sm">
                 {loading ? 'Saving...' : 'Save Certification'}
@@ -488,53 +488,53 @@ export const CertificationTrackingScreen: React.FC<{
               <h3 className="text-lg font-bold font-display flex items-center gap-2">
                 <RefreshCw className="w-5 h-5 text-indigo-500" /> Renew Certification
               </h3>
-              <button onClick={() => setIsRenewModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+              <button onClick={() => setIsRenewModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
-              <div className={`p-4 rounded-xl ${isDark ? 'bg-zinc-800 text-slate-300' : 'bg-slate-100 text-slate-700'} text-sm`}>
+              <div className={`p-4 rounded-xl ${isDark ? 'bg-zinc-800 text-slate-300' : 'bg-slate-100 text-slate-900'} text-sm`}>
                 <div className="font-bold mb-1">Renewing: {selectedCert.certificationName}</div>
                 <div>Employee: {selectedCert.employeeName}</div>
                 <div>Previous Expiry: {selectedCert.expiryDate}</div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">New Certificate Number</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">New Certificate Number</label>
                 <input 
                   type="text" 
                   value={newCert.certificateNumber}
                   onChange={(e) => setNewCert({...newCert, certificateNumber: e.target.value})}
-                  className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-indigo-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                  className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-indigo-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200'}`}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">New Issue Date</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">New Issue Date</label>
                   <input 
                     type="date" 
                     value={newCert.issueDate}
                     onChange={(e) => setNewCert({...newCert, issueDate: e.target.value})}
-                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-indigo-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-indigo-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200'}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1">New Expiry Date</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">New Expiry Date</label>
                   <input 
                     type="date" 
                     value={newCert.expiryDate || ''}
                     onChange={(e) => setNewCert({...newCert, expiryDate: e.target.value})}
-                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-indigo-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                    className={`w-full p-3 rounded-xl text-sm border focus:ring-2 focus:ring-indigo-500 outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200'}`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">New Certificate Document</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">New Certificate Document</label>
                 <div className={`p-4 border-2 border-dashed rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors ${
-                  isDark ? 'border-zinc-700 hover:border-indigo-500 bg-zinc-950' : 'border-slate-300 hover:border-indigo-500 bg-slate-50'
+                  isDark ? 'border-zinc-700 hover:border-indigo-500 bg-zinc-950' : 'border-slate-300 hover:border-indigo-500 bg-white'
                 }`}>
                   <input type="file" className="hidden" id="cert-renew-upload" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
-                  <label htmlFor="cert-renew-upload" className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-500">
+                  <label htmlFor="cert-renew-upload" className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-500 dark:text-slate-400">
                     <Upload className="w-4 h-4" /> 
                     {selectedFile ? selectedFile.name : 'Upload PDF/Image'}
                   </label>
@@ -542,7 +542,7 @@ export const CertificationTrackingScreen: React.FC<{
               </div>
 
             </div>
-            <div className={`px-6 py-4 border-t flex justify-end gap-3 ${isDark ? 'border-zinc-800 bg-zinc-900/50' : 'border-slate-100 bg-slate-50'}`}>
+            <div className={`px-6 py-4 border-t flex justify-end gap-3 ${isDark ? 'border-zinc-800 bg-zinc-900/50' : 'border-slate-100 bg-white'}`}>
               <button onClick={() => setIsRenewModalOpen(false)} className={`px-4 py-2 text-sm font-bold rounded-xl ${isDark ? 'text-slate-300 hover:bg-zinc-800' : 'text-slate-600 hover:bg-slate-200'}`}>Cancel</button>
               <button onClick={handleRenewCertification} disabled={loading} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-sm">
                 {loading ? 'Processing...' : 'Confirm Renewal'}

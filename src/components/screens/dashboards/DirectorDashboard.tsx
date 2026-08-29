@@ -56,33 +56,33 @@ export const DirectorDashboard: React.FC<DashboardProps> = ({ userSession, compa
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-slate-900">Executive Dashboard</h2>
+        <h2 className="text-2xl font-bold text-black dark:text-white">Executive Dashboard</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-500">Active Employees</p>
-            <p className="text-3xl font-black text-slate-900">{totalEmployees}</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Active Employees</p>
+            <p className="text-3xl font-black text-black dark:text-white">{totalEmployees}</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
             <Users className="w-6 h-6 text-blue-600" />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-500">Open Incidents</p>
-            <p className="text-3xl font-black text-slate-900">{openIncidents}</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Open Incidents</p>
+            <p className="text-3xl font-black text-black dark:text-white">{openIncidents}</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center">
             <AlertTriangle className="w-6 h-6 text-orange-600" />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-500">SLA Breaches</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">SLA Breaches</p>
             <p className="text-3xl font-black text-rose-600">{slaBreaches}</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center">
@@ -90,9 +90,9 @@ export const DirectorDashboard: React.FC<DashboardProps> = ({ userSession, compa
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-500">Active Sites</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Active Sites</p>
             <p className="text-3xl font-black text-emerald-600">{activeSites}</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center">

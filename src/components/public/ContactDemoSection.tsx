@@ -183,7 +183,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                       placeholder="e.g. Rajesh Sharma"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#080D0B] border border-[#1B2923] text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#080D0B] border border-[#1B2923] text-white text-xs placeholder:text-slate-600 dark:text-slate-400 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
 
@@ -195,7 +195,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
                       value={formData.workEmail}
                       onChange={(e) => setFormData({ ...formData, workEmail: e.target.value })}
                       placeholder="e.g. rajesh@enterprise.com"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#080D0B] border border-[#1B2923] text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#080D0B] border border-[#1B2923] text-white text-xs placeholder:text-slate-600 dark:text-slate-400 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
                 </div>
@@ -209,7 +209,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="+91 98765 43210"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#080D0B] border border-[#1B2923] text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#080D0B] border border-[#1B2923] text-white text-xs placeholder:text-slate-600 dark:text-slate-400 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
 
@@ -221,7 +221,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
                       value={formData.companyName}
                       onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                       placeholder="e.g. Vertex Facilities Ltd."
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#080D0B] border border-[#1B2923] text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#080D0B] border border-[#1B2923] text-white text-xs placeholder:text-slate-600 dark:text-slate-400 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
                 </div>
@@ -264,7 +264,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     placeholder="Describe your current site setup, workforce strength, or integration requirements..."
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#080D0B] border border-[#1B2923] text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#080D0B] border border-[#1B2923] text-white text-xs placeholder:text-slate-600 dark:text-slate-400 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
 

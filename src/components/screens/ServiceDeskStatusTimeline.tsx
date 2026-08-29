@@ -104,9 +104,9 @@ export const ServiceDeskStatusTimeline: React.FC<ServiceDeskStatusTimelineProps>
     <div className="space-y-6 pt-2">
       
       {/* Visual Lifecycle Stepper */}
-      <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60">
+      <div className="p-4 bg-white dark:bg-slate-950 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-300 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
             <GitCommit className="w-4 h-4 text-indigo-500" />
             <span>Ticket Lifecycle Progression</span>
           </h4>
@@ -158,7 +158,7 @@ export const ServiceDeskStatusTimeline: React.FC<ServiceDeskStatusTimelineProps>
                   state === 'current' || state === 'paused'
                     ? 'text-indigo-600 dark:text-indigo-400 font-bold'
                     : state === 'completed'
-                    ? 'text-slate-800 dark:text-slate-200'
+                    ? 'text-black dark:text-slate-200'
                     : 'text-slate-400 dark:text-slate-500'
                 }`}>
                   {step.label}
@@ -172,25 +172,25 @@ export const ServiceDeskStatusTimeline: React.FC<ServiceDeskStatusTimelineProps>
       {/* Chronological Status Audit Timeline */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
             <Clock className="w-4 h-4 text-indigo-500" />
             <span>Status Transition Audit Trail</span>
           </h4>
-          <span className="text-[11px] text-slate-500">
+          <span className="text-[11px] text-slate-500 dark:text-slate-400">
             {history.length} {history.length === 1 ? 'transition' : 'transitions'} recorded
           </span>
         </div>
 
         {loading ? (
-          <div className="py-8 text-center text-xs text-slate-500 flex flex-col items-center gap-2">
+          <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col items-center gap-2">
             <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
             <span>Loading status transition history...</span>
           </div>
         ) : history.length === 0 ? (
-          <div className="py-8 px-4 text-center rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs text-slate-500">
+          <div className="py-8 px-4 text-center rounded-xl bg-white dark:bg-slate-950 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
             <Clock className="w-8 h-8 mx-auto mb-2 text-slate-400 opacity-60" />
-            <p className="font-semibold text-slate-700 dark:text-slate-300">Initial State: {ticket.status}</p>
-            <p className="text-slate-500 mt-0.5">Created on {new Date(ticket.createdAt).toLocaleString()} by {ticket.reportedByName || 'User'}</p>
+            <p className="font-semibold text-slate-900 dark:text-slate-300">Initial State: {ticket.status}</p>
+            <p className="text-slate-500 dark:text-slate-400 mt-0.5">Created on {new Date(ticket.createdAt).toLocaleString()} by {ticket.reportedByName || 'User'}</p>
           </div>
         ) : (
           <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
@@ -207,7 +207,7 @@ export const ServiceDeskStatusTimeline: React.FC<ServiceDeskStatusTimelineProps>
                 {/* Transition Header */}
                 <div className="flex items-start justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-bold text-slate-500 line-through">
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 line-through">
                       {record.fromStatus}
                     </span>
                     <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
@@ -220,7 +220,7 @@ export const ServiceDeskStatusTimeline: React.FC<ServiceDeskStatusTimelineProps>
                 </div>
 
                 {/* Actor */}
-                <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300">
                   <User className="w-3.5 h-3.5 text-slate-400" />
                   <span className="font-semibold">{record.changedByName || 'System'}</span>
                   {record.changedByRole && (
@@ -232,8 +232,8 @@ export const ServiceDeskStatusTimeline: React.FC<ServiceDeskStatusTimelineProps>
 
                 {/* Details / Notes / Reason */}
                 {(record.reason || record.notes) && (
-                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300">
-                    <p className="font-semibold text-slate-900 dark:text-slate-100 mb-0.5">Reason / Justification:</p>
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-slate-950 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-300">
+                    <p className="font-semibold text-black dark:text-white dark:text-slate-100 mb-0.5">Reason / Justification:</p>
                     <p>{record.reason || record.notes}</p>
                   </div>
                 )}
@@ -259,7 +259,7 @@ export const ServiceDeskStatusTimeline: React.FC<ServiceDeskStatusTimelineProps>
                         </span>
                       )}
                     </div>
-                    <p className="text-slate-700 dark:text-slate-300">{record.resolutionSummary}</p>
+                    <p className="text-slate-900 dark:text-slate-300">{record.resolutionSummary}</p>
                     {record.rootCause && (
                       <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
                         Root Cause: {record.rootCause}
@@ -278,12 +278,12 @@ export const ServiceDeskStatusTimeline: React.FC<ServiceDeskStatusTimelineProps>
                           <Star key={s} className={`w-3.5 h-3.5 ${s <= (record.clientRating || 5) ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} />
                         ))}
                       </div>
-                      <span className="font-bold text-slate-800 dark:text-slate-200 ml-1">
+                      <span className="font-bold text-black dark:text-slate-200 ml-1">
                         ({record.clientRating}/5)
                       </span>
                     </div>
                     {record.clientFeedbackNotes && (
-                      <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+                      <p className="text-slate-600 dark:text-slate-400 dark:text-slate-300 text-[11px]">
                         Feedback: &quot;{record.clientFeedbackNotes}&quot;
                       </p>
                     )}

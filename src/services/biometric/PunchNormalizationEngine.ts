@@ -175,7 +175,7 @@ export class PunchNormalizationEngine {
           continue;
         }
 
-        const rosterId = employeeRoster.id;
+        const rosterId = employeeRoster.id || `ROSTER-${mapping.employeeId}-${punchDate}`;
         const attendanceId = `ATT-${rosterId}`;
         const shift = shifts.find(s => s.id === employeeRoster.shiftId) || defaultShift;
 

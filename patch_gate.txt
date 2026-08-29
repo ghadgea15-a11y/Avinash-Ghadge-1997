@@ -1,0 +1,8 @@
+
+  public static async getGatePasses(companyId: string) { return []; }
+  public static async approveGatePass(companyId: string, passId: string) { return { success: true }; }
+  public static async dispatchGatePass(companyId: string, passId: string) { return { success: true }; }
+  public static async receiveGatePass(companyId: string, passId: string) { return { success: true }; }
+  public static async returnGatePassMaterials(companyId: string, passId: string, data: any) { return { success: true }; }
+  public static async submitGatePass(companyId: string, data: any) { return { success: true }; }
+  public static async verifyGatePass(companyId: string, passId: string) { return { success: true }; }

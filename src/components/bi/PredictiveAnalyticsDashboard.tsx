@@ -19,7 +19,7 @@ export const PredictiveAnalyticsDashboard: React.FC<PredictiveAnalyticsDashboard
   const [generating, setGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<PredictionType>('ATTRITION');
 
-  const authorityLevel = RbacService.getAuthorityLevel(session);
+  const authorityLevel = RbacService.getAuthorityLevel(session) || '';
   const canView = ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_HR_HEAD'].includes(authorityLevel);
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export const PredictiveAnalyticsDashboard: React.FC<PredictiveAnalyticsDashboard
       case 'HIGH': return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">HIGH</span>;
       case 'MEDIUM': return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">MEDIUM</span>;
       case 'LOW': return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">LOW</span>;
-      case 'INSUFFICIENT_DATA': return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400">INSUFFICIENT DATA</span>;
+      case 'INSUFFICIENT_DATA': return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-black dark:text-slate-200 dark:bg-slate-800 dark:text-slate-400">INSUFFICIENT DATA</span>;
     }
   };
 
@@ -99,7 +99,7 @@ export const PredictiveAnalyticsDashboard: React.FC<PredictiveAnalyticsDashboard
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-black dark:text-white tracking-tight flex items-center gap-2">
             Predictive Analytics
             <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full uppercase tracking-wider ml-2">Beta</span>
           </h2>
@@ -121,19 +121,19 @@ export const PredictiveAnalyticsDashboard: React.FC<PredictiveAnalyticsDashboard
       <div className="flex border-b border-slate-200 dark:border-slate-800">
         <button
           onClick={() => setActiveTab('ATTRITION')}
-          className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'ATTRITION' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
+          className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'ATTRITION' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300'}`}
         >
           <Users className="w-4 h-4" /> Attrition Risk
         </button>
         <button
           onClick={() => setActiveTab('PROFITABILITY')}
-          className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'PROFITABILITY' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
+          className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'PROFITABILITY' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300'}`}
         >
           <DollarSign className="w-4 h-4" /> Profitability Risk
         </button>
         <button
           onClick={() => setActiveTab('SLA_BREACH')}
-          className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'SLA_BREACH' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
+          className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'SLA_BREACH' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300'}`}
         >
           <Clock className="w-4 h-4" /> SLA Breach Risk
         </button>
@@ -148,15 +148,15 @@ export const PredictiveAnalyticsDashboard: React.FC<PredictiveAnalyticsDashboard
         ) : predictions.length === 0 ? (
           <div className="text-center p-12">
             <Info className="w-12 h-12 text-slate-400 mx-auto mb-4 opacity-50" />
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No Predictions Available</h3>
-            <p className="text-slate-500 max-w-md mx-auto">
+            <h3 className="text-lg font-bold text-black dark:text-white mb-2">No Predictions Available</h3>
+            <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
               Run an analysis to generate risk forecasts based on current system data.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+              <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="px-6 py-4 font-medium uppercase tracking-wider">Subject</th>
                   <th className="px-6 py-4 font-medium uppercase tracking-wider">Risk Level</th>
@@ -167,17 +167,17 @@ export const PredictiveAnalyticsDashboard: React.FC<PredictiveAnalyticsDashboard
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                 {predictions.map(pred => (
-                  <tr key={pred.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                  <tr key={pred.id} className="hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-black dark:text-white">
                       {pred.subjectName || pred.subjectId}
-                      <div className="text-xs text-slate-500 font-normal mt-1 text-slate-400">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-1 text-slate-400">
                         Analyzed {format(new Date(pred.generatedAt), 'PP')}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       {renderRiskBadge(pred.riskLevel)}
                     </td>
-                    <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">
+                    <td className="px-6 py-4 font-bold text-slate-900 dark:text-slate-300">
                       {pred.riskScore !== null ? `${pred.riskScore}/100` : '-'}
                     </td>
                     <td className="px-6 py-4">

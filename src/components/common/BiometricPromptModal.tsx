@@ -22,26 +22,40 @@ export const BiometricPromptModal: React.FC<BiometricPromptModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleTouchSensor = () => {
+  const handleTouchSensor = async () => {
     if (scanning) return;
     setScanning(true);
     setStatus('SCANNING');
 
-    setTimeout(() => {
-      // 90% success rate simulation
-      if (Math.random() > 0.1) {
+    if (window.PublicKeyCredential) {
+      try {
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+
+        await navigator.credentials.get({
+          publicKey: {
+            challenge,
+            userVerification: 'required',
+            timeout: 60000,
+          }
+        });
+
         setStatus('SUCCESS');
         setTimeout(() => {
           setScanning(false);
           setStatus('IDLE');
           onSuccess();
         }, 800);
-      } else {
+      } catch (err: any) {
         setStatus('ERROR');
-        setErrorMessage('Fingerprint not recognized. Please try again.');
+        setErrorMessage(err.name === 'NotAllowedError' ? 'Authentication cancelled.' : 'Fingerprint not recognized.');
         setScanning(false);
       }
-    }, 1200);
+    } else {
+      setStatus('ERROR');
+      setErrorMessage('Biometrics not supported on this device.');
+      setScanning(false);
+    }
   };
 
   return (

@@ -30,7 +30,7 @@ export function ItemMasterTab({ session, company }: { session: UserSession, comp
   return (
     <div className="flex h-full flex-col space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-slate-900">Item Master</h3>
+        <h3 className="text-lg font-medium text-black dark:text-white">Item Master</h3>
         <button 
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
@@ -39,7 +39,7 @@ export function ItemMasterTab({ session, company }: { session: UserSession, comp
         </button>
       </div>
 
-      <div className="flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2">
+      <div className="flex items-center gap-2 rounded-md border border-slate-300 bg-white dark:bg-slate-900 px-3 py-2">
         <Search className="h-4 w-4 text-slate-400" />
         <input 
           value={search} onChange={e => setSearch(e.target.value)}
@@ -48,9 +48,9 @@ export function ItemMasterTab({ session, company }: { session: UserSession, comp
         />
       </div>
 
-      <div className="flex-1 rounded-md border border-slate-200 bg-white shadow-sm overflow-auto">
+      <div className="flex-1 rounded-md border border-slate-200 bg-white dark:bg-slate-900 shadow-sm overflow-auto">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-600 sticky top-0">
+          <thead className="bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 sticky top-0">
             <tr>
               <th className="px-4 py-3 font-medium">Item Code</th>
               <th className="px-4 py-3 font-medium">Name</th>
@@ -63,8 +63,8 @@ export function ItemMasterTab({ session, company }: { session: UserSession, comp
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.map(item => (
-              <tr key={item.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-medium text-slate-900">{item.itemCode}</td>
+              <tr key={item.id} className="hover:bg-white dark:bg-slate-950">
+                <td className="px-4 py-3 font-medium text-black dark:text-white">{item.itemCode}</td>
                 <td className="px-4 py-3">{item.itemName}</td>
                 <td className="px-4 py-3">{item.category}</td>
                 <td className="px-4 py-3">{item.unit}</td>
@@ -75,14 +75,14 @@ export function ItemMasterTab({ session, company }: { session: UserSession, comp
                 </td>
                 <td className="px-4 py-3 font-medium">{item.currentStock}</td>
                 <td className="px-4 py-3">
-                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${item.status === 'IN_STOCK' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}`}>
+                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${item.status === 'IN_STOCK' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-900'}`}>
                     {item.status}
                   </span>
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && !loading && (
-              <tr><td colSpan={7} className="text-center py-8 text-slate-500">No items found</td></tr>
+              <tr><td colSpan={7} className="text-center py-8 text-slate-500 dark:text-slate-400">No items found</td></tr>
             )}
           </tbody>
         </table>
@@ -127,30 +127,30 @@ function ItemModal({ company, session, onClose, onSuccess }: any) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
+      <div className="w-full max-w-lg rounded-xl bg-white dark:bg-slate-900 shadow-xl">
         <form onSubmit={handleSubmit}>
           <div className="border-b border-slate-200 px-6 py-4">
-            <h3 className="text-lg font-semibold text-slate-900">Create New Item</h3>
+            <h3 className="text-lg font-semibold text-black dark:text-white">Create New Item</h3>
           </div>
           <div className="space-y-4 p-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Item Code</label>
+                <label className="mb-1 block text-sm font-medium text-slate-900 dark:text-slate-300">Item Code</label>
                 <input required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={formData.itemCode} onChange={e => setFormData({...formData, itemCode: e.target.value})} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Item Name</label>
+                <label className="mb-1 block text-sm font-medium text-slate-900 dark:text-slate-300">Item Name</label>
                 <input required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={formData.itemName} onChange={e => setFormData({...formData, itemName: e.target.value})} />
               </div>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Category</label>
+                <label className="mb-1 block text-sm font-medium text-slate-900 dark:text-slate-300">Category</label>
                 <input required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Unit of Measure</label>
+                <label className="mb-1 block text-sm font-medium text-slate-900 dark:text-slate-300">Unit of Measure</label>
                 <select required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})}>
                   <option value="PCS">Pieces (PCS)</option>
                   <option value="KG">Kilograms (KG)</option>
@@ -162,11 +162,11 @@ function ItemModal({ company, session, onClose, onSuccess }: any) {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <label className="flex items-center gap-2 text-sm text-slate-700">
+              <label className="flex items-center gap-2 text-sm text-slate-900 dark:text-slate-300">
                 <input type="checkbox" checked={formData.serialTracking} onChange={e => setFormData({...formData, serialTracking: e.target.checked})} className="rounded border-slate-300" />
                 Serial Number Tracking
               </label>
-              <label className="flex items-center gap-2 text-sm text-slate-700">
+              <label className="flex items-center gap-2 text-sm text-slate-900 dark:text-slate-300">
                 <input type="checkbox" checked={formData.batchTracking} onChange={e => setFormData({...formData, batchTracking: e.target.checked})} className="rounded border-slate-300" />
                 Batch Tracking
               </label>
@@ -175,33 +175,33 @@ function ItemModal({ company, session, onClose, onSuccess }: any) {
             <div className="border-t border-slate-200 pt-4 mt-4">
               <h4 className="text-sm font-semibold mb-2">Threshold & Notifications</h4>
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <label className="flex items-center gap-2 text-sm text-slate-700">
+                <label className="flex items-center gap-2 text-sm text-slate-900 dark:text-slate-300">
                   <input type="checkbox" checked={formData.thresholdEnabled} onChange={e => setFormData({...formData, thresholdEnabled: e.target.checked})} className="rounded border-slate-300" />
                   Enable Stock Thresholds
                 </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700">
+                <label className="flex items-center gap-2 text-sm text-slate-900 dark:text-slate-300">
                   <input type="checkbox" checked={formData.notificationEnabled} onChange={e => setFormData({...formData, notificationEnabled: e.target.checked})} className="rounded border-slate-300" />
                   Enable Auto Notifications
                 </label>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Reorder Level (Low)</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-900 dark:text-slate-300">Reorder Level (Low)</label>
                   <input type="number" required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={formData.reorderLevel} onChange={e => setFormData({...formData, reorderLevel: parseInt(e.target.value)})} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Min Threshold</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-900 dark:text-slate-300">Min Threshold</label>
                   <input type="number" required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={formData.minStockThreshold} onChange={e => setFormData({...formData, minStockThreshold: parseInt(e.target.value)})} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Critical Level</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-900 dark:text-slate-300">Critical Level</label>
                   <input type="number" required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={formData.criticalStockLevel} onChange={e => setFormData({...formData, criticalStockLevel: parseInt(e.target.value)})} />
                 </div>
               </div>
             </div>
           </div>
-          <div className="flex justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 rounded-b-xl">
-            <button type="button" onClick={onClose} className="rounded-md px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">Cancel</button>
+          <div className="flex justify-end gap-3 border-t border-slate-200 bg-white dark:bg-slate-950 px-6 py-4 rounded-b-xl">
+            <button type="button" onClick={onClose} className="rounded-md px-4 py-2 text-sm font-medium text-slate-900 dark:text-slate-300 hover:bg-slate-200">Cancel</button>
             <button type="submit" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Save Item</button>
           </div>
         </form>

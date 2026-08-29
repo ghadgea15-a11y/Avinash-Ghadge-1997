@@ -202,7 +202,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
   };
 
   return (
-    <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} p-4 md:p-6 space-y-6 max-w-5xl mx-auto w-full`}>
+    <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'} p-4 md:p-6 space-y-6 max-w-5xl mx-auto w-full`}>
       
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -301,7 +301,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   onChange={(e) => setCompanyCode(e.target.value.toUpperCase())}
                   placeholder="e.g. APEX-SEC-101"
                   className={`w-full px-3 py-2 text-xs font-mono rounded-xl border ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-amber-400' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    isDark ? 'bg-slate-950 border-slate-800 text-amber-400' : 'bg-white border-slate-200 text-black'
                   } focus:outline-none focus:border-amber-500 uppercase font-bold`}
                 />
               </div>
@@ -314,7 +314,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   onChange={(e) => setBrandName(e.target.value)}
                   placeholder="e.g. Apex Security Services"
                   className={`w-full px-3 py-2 text-xs rounded-xl border ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                   } focus:outline-none focus:border-amber-500`}
                 />
               </div>
@@ -327,7 +327,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   onChange={(e) => setLegalName(e.target.value)}
                   placeholder="e.g. Apex Security Services Pvt Ltd"
                   className={`w-full px-3 py-2 text-xs rounded-xl border ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                   } focus:outline-none focus:border-amber-500`}
                 />
               </div>
@@ -340,7 +340,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   value={licenseTier}
                   onChange={(e) => setLicenseTier(e.target.value as any)}
                   className={`w-full px-3 py-2 text-xs rounded-xl border ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                   } focus:outline-none focus:border-amber-500`}
                 >
                   <option value="STARTER">Starter Tier</option>
@@ -356,7 +356,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   value={maxEmployees}
                   onChange={(e) => setMaxEmployees(e.target.value)}
                   className={`w-full px-3 py-2 text-xs rounded-xl border ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                   } focus:outline-none focus:border-amber-500 font-mono`}
                 />
               </div>
@@ -368,7 +368,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   value={maxSites}
                   onChange={(e) => setMaxSites(e.target.value)}
                   className={`w-full px-3 py-2 text-xs rounded-xl border ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                   } focus:outline-none focus:border-amber-500 font-mono`}
                 />
               </div>
@@ -387,7 +387,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                     value={primaryColor}
                     onChange={(e) => setPrimaryColor(e.target.value)}
                     className={`flex-1 px-3 py-1.5 text-xs font-mono rounded-xl border ${
-                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                     }`}
                   />
                 </div>
@@ -419,7 +419,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                     onChange={(e) => setLogoUrl(e.target.value)}
                     placeholder="https://example.com/logo.png"
                     className={`flex-1 px-3 py-2 text-xs rounded-xl border ${
-                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                     } focus:outline-none focus:border-amber-500 font-mono`}
                   />
                 </div>
@@ -435,7 +435,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                     onChange={(e) => setWebsiteUrl(e.target.value)}
                     placeholder="https://www.apexsecurity.com"
                     className={`w-full pl-9 pr-3 py-2 text-xs rounded-xl border ${
-                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                     } focus:outline-none focus:border-amber-500 font-mono`}
                   />
                 </div>
@@ -450,7 +450,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                     onChange={(e) => setPortalSubdomain(e.target.value.replace(/[^a-zA-Z0-9-]/g, '').toLowerCase())}
                     placeholder="apex"
                     className={`w-full pr-32 pl-3 py-2 text-xs rounded-xl border ${
-                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                     } focus:outline-none focus:border-amber-500 font-mono`}
                   />
                   <span className="absolute right-3 text-[10px] text-slate-400 pointer-events-none">
@@ -477,7 +477,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   onChange={(e) => setAdminFullName(e.target.value)}
                   placeholder="e.g. Ramesh Sharma"
                   className={`w-full px-3 py-2 text-xs rounded-xl border ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                   } focus:outline-none focus:border-amber-500`}
                 />
               </div>
@@ -490,7 +490,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   onChange={(e) => setAdminEmail(e.target.value)}
                   placeholder="e.g. admin@apexsecurity.com"
                   className={`w-full px-3 py-2 text-xs rounded-xl border ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                   } focus:outline-none focus:border-amber-500 font-mono`}
                 />
               </div>
@@ -503,7 +503,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   onChange={(e) => setAdminPassword(e.target.value)}
                   placeholder="e.g. TempP@ssw0rd123!"
                   className={`w-full px-3 py-2 text-xs rounded-xl border ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                   } focus:outline-none focus:border-amber-500 font-mono`}
                 />
               </div>
@@ -516,7 +516,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   onChange={(e) => setAdminPhone(e.target.value)}
                   placeholder="e.g. +91 98765 43210"
                   className={`w-full px-3 py-2 text-xs rounded-xl border ${
-                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                   } focus:outline-none focus:border-amber-500 font-mono`}
                 />
               </div>
@@ -567,14 +567,14 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                           : 'bg-amber-50 border-amber-300 text-amber-950 shadow-sm'
                         : isDark
                           ? 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700'
-                          : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                          : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                     }`}
                   >
                     <div className="mt-0.5">
                       {isChecked ? (
                         <CheckSquare className="w-4 h-4 text-amber-400 shrink-0" />
                       ) : (
-                        <Square className="w-4 h-4 text-slate-600 shrink-0" />
+                        <Square className="w-4 h-4 text-slate-600 dark:text-slate-400 shrink-0" />
                       )}
                     </div>
                     <div>

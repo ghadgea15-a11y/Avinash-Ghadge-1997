@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { SalarySlipRecord, CompanyRecord } from '../types';
+import { DataProtectionService } from './dataProtectionService';
 
 /**
  * Enterprise Payslip Service
@@ -22,7 +23,7 @@ export class PayslipService {
   /**
    * Generate a unique cryptographic-style verification hash for tamper verification
    */
-  static generateVerificationCode(slip: SalarySlipRecord): string {
+  static generateVerificationCode(slip: SalarySlipRecord, companyCodePrefix?: string): string {
     const raw = `${slip.companyId}_${slip.payrollCycleId}_${slip.employeeId}_${slip.netPay}_${slip.generatedAt || 'GEN'}`;
     let hash = 0;
     for (let i = 0; i < raw.length; i++) {
@@ -31,7 +32,8 @@ export class PayslipService {
       hash |= 0; // Convert to 32bit integer
     }
     const hex = Math.abs(hash).toString(16).toUpperCase().padStart(8, '0');
-    return `LSM-PAY-${slip.year}${String(slip.month).padStart(2, '0')}-${hex}`;
+    const prefix = (companyCodePrefix || 'PAY').toUpperCase().slice(0, 4);
+    return `${prefix}-PAY-${slip.year}${String(slip.month).padStart(2, '0')}-${hex}`;
   }
 
   /**
@@ -56,10 +58,16 @@ export class PayslipService {
     const monthName = monthNames[(slip.month || 1) - 1] || 'Month';
     const periodStr = `${monthName} ${slip.year}`;
 
-    const companyName = (company?.name || company?.legalName || company?.companyLegalName || 'LOG SHEET MUSTER ENTERPRISE').toUpperCase();
-    const companyAddress = company?.address || (company as any)?.registeredAddress || 'Industrial Security & Facility Management Services';
-    const companyCin = company?.cinNumber || (company as any)?.registrationNumber || 'U74999MH2023PTC123456';
-    const companyGstin = company?.gstNumber || (company as any)?.gstin || '27AAAAA0000A1Z5';
+    const companyName = (company?.name || (company as any)?.brandName || company?.legalName || (company as any)?.companyLegalName || 'AUTHORIZED CORPORATE ENTITY').toUpperCase();
+    const companyAddress = company?.address || (company as any)?.registeredAddress || '';
+    const companyCin = company?.cinNumber || (company as any)?.registrationNumber;
+    const companyGstin = company?.gstNumber || (company as any)?.gstin;
+
+    const subDetails: string[] = [];
+    if (companyAddress) subDetails.push(companyAddress);
+    if (companyCin) subDetails.push(`CIN: ${companyCin}`);
+    if (companyGstin) subDetails.push(`GSTIN: ${companyGstin}`);
+    const subText = subDetails.join(' | ');
 
     // 1. Outer Border & Header Banner
     doc.setDrawColor(203, 213, 225); // slate-300
@@ -77,10 +85,12 @@ export class PayslipService {
     doc.text(companyName, pageWidth / 2, margin + 8, { align: 'center' });
 
     // Company Subtext / Address
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(203, 213, 225);
-    doc.text(`${companyAddress} | CIN: ${companyCin} | GSTIN: ${companyGstin}`, pageWidth / 2, margin + 14, { align: 'center' });
+    if (subText) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(203, 213, 225);
+      doc.text(subText.length > 85 ? subText.slice(0, 82) + '...' : subText, pageWidth / 2, margin + 14, { align: 'center' });
+    }
 
     // Document Title Banner
     doc.setFillColor(241, 245, 249); // slate-100
@@ -153,7 +163,8 @@ export class PayslipService {
     doc.text('Bank Account No:', col2X, empY);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(15, 23, 42);
-    doc.text(slip.accountNumber || 'N/A', col2ValX, empY);
+    const displayAccount = slip.accountNumber ? DataProtectionService.maskBankAccount(slip.accountNumber) : 'N/A';
+    doc.text(displayAccount, col2ValX, empY);
 
     // Row 4
     empY += rowSpacing;
@@ -169,7 +180,8 @@ export class PayslipService {
     doc.text('PAN Number:', col2X, empY);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(15, 23, 42);
-    doc.text(slip.panNumber || 'N/A', col2ValX, empY);
+    const displayPan = slip.panNumber ? DataProtectionService.maskPan(slip.panNumber) : 'N/A';
+    doc.text(displayPan, col2ValX, empY);
 
     // Row 5
     empY += rowSpacing;
@@ -178,7 +190,9 @@ export class PayslipService {
     doc.text('UAN / PF No:', col1X, empY);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(15, 23, 42);
-    doc.text(slip.uanNumber || slip.pfNumber || 'N/A', col1ValX, empY);
+    const rawUan = slip.uanNumber || slip.pfNumber;
+    const displayUan = rawUan ? (rawUan.length > 4 ? `••••••••${rawUan.slice(-4)}` : rawUan) : 'N/A';
+    doc.text(displayUan, col1ValX, empY);
 
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(71, 85, 105);
@@ -403,7 +417,7 @@ export class PayslipService {
     // Footer Watermark
     doc.setFontSize(6.5);
     doc.setTextColor(148, 163, 184);
-    doc.text('Powered by Log Sheet Muster ERP — Enterprise SaaS by Shourya Enterprises Pvt. Ltd.', pageWidth / 2, pageHeight - margin + 3, { align: 'center' });
+    doc.text(`Confidential Payroll Record • Digitally processed for ${companyName.slice(0, 40)}`, pageWidth / 2, pageHeight - margin + 3, { align: 'center' });
 
     return doc;
   }

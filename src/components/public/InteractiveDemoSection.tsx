@@ -90,30 +90,30 @@ export const InteractiveDemoSection: React.FC = () => {
   ];
 
   return (
-    <section id="demo" className="py-24 lg:py-32 bg-[#F4F3EF] border-b border-[#E8E7E3]">
+    <section id="demo" className="py-24 lg:py-32 bg-white border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D4D4D8] bg-white text-[11px] font-mono font-bold tracking-widest text-[#0A0D14] uppercase">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D4D4D8] bg-white dark:bg-slate-900 text-[11px] font-mono font-bold tracking-widest text-black uppercase">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
             <span>Interactive Application Sandbox</span>
           </div>
 
-          <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-[#0A0D14] tracking-tight">
+          <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-black tracking-tight">
             SEE THE PLATFORM IN ACTION.
           </h2>
 
-          <p className="font-body text-sm sm:text-base text-[#52525B] leading-relaxed">
+          <p className="font-body text-sm sm:text-base text-black leading-relaxed">
             Test live operational workflows directly in this interactive preview. Experience real-time shift muster roll-calls, guard patrol routing, and telemetry logging.
           </p>
         </div>
 
         {/* Demo Stage Container */}
-        <div className="bg-white rounded-3xl border border-[#E7E6E1] shadow-lg overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 shadow-lg overflow-hidden">
           
           {/* Top Control Bar: Tab Navigation & Demo Status */}
-          <div className="bg-[#0A0D14] text-white p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4 border-b border-[#27272A]">
+          <div className="bg-black text-white p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4 border-b border-[#27272A]">
             
             {/* Demo Navigation Tabs */}
             <div className="flex flex-wrap items-center gap-2">
@@ -159,12 +159,12 @@ export const InteractiveDemoSection: React.FC = () => {
             {/* 1. WORKFORCE MUSTER DEMO */}
             {activeTab === 'workforce' && (
               <div className="space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E8E7E3]">
+                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
                   <div>
-                    <h3 className="font-display text-lg font-bold text-[#0A0D14]">
+                    <h3 className="font-display text-lg font-bold text-black">
                       Morning Shift Muster Roll-Call &bull; Site Alpha
                     </h3>
-                    <p className="text-xs text-[#71717A] mt-0.5">
+                    <p className="text-xs text-slate-600 mt-0.5">
                       Click any status badge to toggle between Present, Late, and Absent.
                     </p>
                   </div>
@@ -172,7 +172,7 @@ export const InteractiveDemoSection: React.FC = () => {
                     <span className="text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
                       GEOFENCE: 150m (ACTIVE)
                     </span>
-                    <span className="text-[#0A0D14] bg-[#F4F3EF] px-2.5 py-1 rounded">
+                    <span className="text-black bg-white px-2.5 py-1 rounded">
                       PRESENT: {musterStaff.filter(s => s.status === 'Present').length} / {musterStaff.length}
                     </span>
                   </div>
@@ -182,7 +182,7 @@ export const InteractiveDemoSection: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="border-b border-[#E8E7E3] text-[#71717A] font-mono uppercase text-[10px]">
+                      <tr className="border-b border-slate-200 text-slate-600 font-mono uppercase text-[10px]">
                         <th className="py-2.5 px-3">Employee Name</th>
                         <th className="py-2.5 px-3">Designation</th>
                         <th className="py-2.5 px-3">Scan Time</th>
@@ -192,10 +192,10 @@ export const InteractiveDemoSection: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-[#F0EFEB]">
                       {musterStaff.map(staff => (
-                        <tr key={staff.id} className="hover:bg-[#FBFBFA]">
-                          <td className="py-3 px-3 font-semibold text-[#0A0D14]">{staff.name}</td>
-                          <td className="py-3 px-3 text-[#52525B]">{staff.role}</td>
-                          <td className="py-3 px-3 font-mono text-[#71717A]">{staff.time}</td>
+                        <tr key={staff.id} className="hover:bg-white">
+                          <td className="py-3 px-3 font-semibold text-black">{staff.name}</td>
+                          <td className="py-3 px-3 text-black">{staff.role}</td>
+                          <td className="py-3 px-3 font-mono text-slate-600">{staff.time}</td>
                           <td className="py-3 px-3 text-emerald-700 font-mono text-[11px]">{staff.geo}</td>
                           <td className="py-3 px-3 text-right">
                             <button
@@ -217,8 +217,8 @@ export const InteractiveDemoSection: React.FC = () => {
                   </table>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] flex flex-wrap items-center justify-between gap-4 text-xs">
-                  <span className="text-[#52525B]">
+                <div className="p-4 rounded-xl bg-white border border-slate-200 flex flex-wrap items-center justify-between gap-4 text-xs">
+                  <span className="text-black">
                     Validated muster roll-calls feed directly into automated payroll ledgers and statutory Form II registers.
                   </span>
                   <span className="font-mono font-bold text-emerald-700">
@@ -231,12 +231,12 @@ export const InteractiveDemoSection: React.FC = () => {
             {/* 2. OPERATIONS EQUIPMENT LOG DEMO */}
             {activeTab === 'operations' && (
               <div className="space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E8E7E3]">
+                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
                   <div>
-                    <h3 className="font-display text-lg font-bold text-[#0A0D14]">
+                    <h3 className="font-display text-lg font-bold text-black">
                       DG Set #01 Telemetry Log Sheet (500 KVA)
                     </h3>
-                    <p className="text-xs text-[#71717A] mt-0.5">
+                    <p className="text-xs text-slate-600 mt-0.5">
                       Simulate duty technician submitting hourly equipment readings.
                     </p>
                   </div>
@@ -246,45 +246,45 @@ export const InteractiveDemoSection: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 rounded-2xl bg-[#FBFBFA] border border-[#E8E7E3] space-y-2">
-                    <span className="font-mono text-[10px] text-[#71717A] uppercase block">Running Hours</span>
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
+                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Running Hours</span>
                     <input
                       type="text"
                       value={dgRunningHours}
                       onChange={(e) => setDgRunningHours(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg border border-[#D4D4D8] font-mono text-sm font-bold text-[#0A0D14]"
+                      className="w-full px-3 py-1.5 rounded-lg border border-[#D4D4D8] font-mono text-sm font-bold text-black"
                     />
-                    <span className="text-[10px] text-[#71717A] block">Cumulative meter reading</span>
+                    <span className="text-[10px] text-slate-600 block">Cumulative meter reading</span>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-[#FBFBFA] border border-[#E8E7E3] space-y-2">
-                    <span className="font-mono text-[10px] text-[#71717A] uppercase block">Diesel Tank Level (L)</span>
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
+                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Diesel Tank Level (L)</span>
                     <input
                       type="text"
                       value={dgDiesel}
                       onChange={(e) => setDgDiesel(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg border border-[#D4D4D8] font-mono text-sm font-bold text-[#0A0D14]"
+                      className="w-full px-3 py-1.5 rounded-lg border border-[#D4D4D8] font-mono text-sm font-bold text-black"
                     />
-                    <span className="text-[10px] text-[#71717A] block">Current diesel volume</span>
+                    <span className="text-[10px] text-slate-600 block">Current diesel volume</span>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-[#FBFBFA] border border-[#E8E7E3] space-y-2">
-                    <span className="font-mono text-[10px] text-[#71717A] uppercase block">Lube Oil Pressure</span>
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
+                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Lube Oil Pressure</span>
                     <div className="text-sm font-bold font-mono text-emerald-700 pt-1">4.2 bar (Normal)</div>
-                    <span className="text-[10px] text-[#71717A] block">Tolerance: 3.5 - 5.0 bar</span>
+                    <span className="text-[10px] text-slate-600 block">Tolerance: 3.5 - 5.0 bar</span>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-[#FBFBFA] border border-[#E8E7E3] space-y-2">
-                    <span className="font-mono text-[10px] text-[#71717A] uppercase block">Coolant Temp</span>
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
+                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Coolant Temp</span>
                     <div className="text-sm font-bold font-mono text-emerald-700 pt-1">82°C (Normal)</div>
-                    <span className="text-[10px] text-[#71717A] block">Tolerance: 75 - 95°C</span>
+                    <span className="text-[10px] text-slate-600 block">Tolerance: 75 - 95°C</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
                   <button
                     onClick={() => setDgStatus('logged')}
-                    className="px-6 py-2.5 rounded-xl bg-[#0A0D14] hover:bg-[#18221E] text-white text-xs font-bold font-body transition-colors cursor-pointer flex items-center gap-2"
+                    className="px-6 py-2.5 rounded-xl bg-black hover:bg-[#18221E] text-white text-xs font-bold font-body transition-colors cursor-pointer flex items-center gap-2"
                   >
                     <span>{dgStatus === 'logged' ? 'Log Entry Saved & Synced' : 'Submit Hourly Log Entry'}</span>
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -301,12 +301,12 @@ export const InteractiveDemoSection: React.FC = () => {
             {/* 3. SECURITY PATROL DEMO */}
             {activeTab === 'security' && (
               <div className="space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E8E7E3]">
+                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
                   <div>
-                    <h3 className="font-display text-lg font-bold text-[#0A0D14]">
+                    <h3 className="font-display text-lg font-bold text-black">
                       Guard Patrol Tour Sequence &bull; Route Alpha
                     </h3>
-                    <p className="text-xs text-[#71717A] mt-0.5">
+                    <p className="text-xs text-slate-600 mt-0.5">
                       Simulate security guard scanning QR checkpoints along the perimeter route.
                     </p>
                   </div>
@@ -326,11 +326,11 @@ export const InteractiveDemoSection: React.FC = () => {
                       className={`p-4 rounded-2xl border transition-all ${
                         cp.scanned
                           ? 'bg-emerald-50/70 border-emerald-200'
-                          : 'bg-[#FBFBFA] border-[#E8E7E3]'
+                          : 'bg-white border-slate-200'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-mono text-[11px] font-bold text-[#0A0D14]">
+                        <span className="font-mono text-[11px] font-bold text-black">
                           {cp.id}
                         </span>
                         {cp.scanned ? (
@@ -339,17 +339,17 @@ export const InteractiveDemoSection: React.FC = () => {
                           <span className="w-2 h-2 rounded-full bg-[#A1A1AA]" />
                         )}
                       </div>
-                      <strong className="text-xs font-bold text-[#0A0D14] block">
+                      <strong className="text-xs font-bold text-black block">
                         {cp.name}
                       </strong>
-                      <span className="font-mono text-[11px] text-[#71717A] block mt-1">
+                      <span className="font-mono text-[11px] text-slate-600 block mt-1">
                         {cp.scanned ? `Scanned: ${cp.time}` : 'Pending Scan'}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] text-xs text-[#52525B]">
+                <div className="p-4 rounded-xl bg-white border border-slate-200 text-xs text-black">
                   Missed checkpoints or out-of-sequence scans automatically alert the site security manager within 15 minutes.
                 </div>
               </div>
@@ -358,12 +358,12 @@ export const InteractiveDemoSection: React.FC = () => {
             {/* 4. ASSETS DEMO */}
             {activeTab === 'assets' && (
               <div className="space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E8E7E3]">
+                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
                   <div>
-                    <h3 className="font-display text-lg font-bold text-[#0A0D14]">
+                    <h3 className="font-display text-lg font-bold text-black">
                       Enterprise Asset QR Registry &bull; Water Chiller #02
                     </h3>
-                    <p className="text-xs text-[#71717A] mt-0.5">
+                    <p className="text-xs text-slate-600 mt-0.5">
                       Scan waterproof QR code to inspect service records and warranty.
                     </p>
                   </div>
@@ -372,19 +372,19 @@ export const InteractiveDemoSection: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="p-6 rounded-2xl bg-[#FBFBFA] border border-[#E8E7E3] grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="p-6 rounded-2xl bg-white border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <span className="font-mono text-[10px] text-[#71717A] uppercase block">Asset Tag</span>
-                    <strong className="font-display text-sm font-bold text-[#0A0D14] block mt-0.5">LSM-AST-HVAC-009</strong>
-                    <span className="text-xs text-[#52525B] block mt-1">Carrier 150 Ton Water Cooled Chiller</span>
+                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Asset Tag</span>
+                    <strong className="font-display text-sm font-bold text-black block mt-0.5">LSM-AST-HVAC-009</strong>
+                    <span className="text-xs text-black block mt-1">Carrier 150 Ton Water Cooled Chiller</span>
                   </div>
                   <div>
-                    <span className="font-mono text-[10px] text-[#71717A] uppercase block">Assigned Custody</span>
-                    <strong className="text-sm font-bold text-[#0A0D14] block mt-0.5">Facility Engineering Dept</strong>
-                    <span className="text-xs text-[#52525B] block mt-1">Building B &bull; Basement 2</span>
+                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Assigned Custody</span>
+                    <strong className="text-sm font-bold text-black block mt-0.5">Facility Engineering Dept</strong>
+                    <span className="text-xs text-black block mt-1">Building B &bull; Basement 2</span>
                   </div>
                   <div>
-                    <span className="font-mono text-[10px] text-[#71717A] uppercase block">Next PM Service</span>
+                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Next PM Service</span>
                     <strong className="font-mono text-sm font-bold text-emerald-700 block mt-0.5">18 August 2026</strong>
                     <span className="text-xs text-emerald-700 block mt-1">Scheduled: Lubrication & Coil Cleaning</span>
                   </div>
@@ -395,12 +395,12 @@ export const InteractiveDemoSection: React.FC = () => {
             {/* 5. INVENTORY DEMO */}
             {activeTab === 'inventory' && (
               <div className="space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E8E7E3]">
+                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
                   <div>
-                    <h3 className="font-display text-lg font-bold text-[#0A0D14]">
+                    <h3 className="font-display text-lg font-bold text-black">
                       Consumables & Store Inventory &bull; Site Alpha Store
                     </h3>
-                    <p className="text-xs text-[#71717A] mt-0.5">
+                    <p className="text-xs text-slate-600 mt-0.5">
                       Real-time stock balance with automated reorder trigger.
                     </p>
                   </div>
@@ -410,20 +410,20 @@ export const InteractiveDemoSection: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-2xl bg-[#FBFBFA] border border-[#E8E7E3]">
-                    <span className="font-mono text-[10px] text-[#71717A] uppercase block">Diesel Stock</span>
-                    <strong className="font-display text-lg font-bold text-[#0A0D14]">1,850 Liters</strong>
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200">
+                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Diesel Stock</span>
+                    <strong className="font-display text-lg font-bold text-black">1,850 Liters</strong>
                     <span className="text-[10px] text-emerald-700 block mt-1">Reorder threshold: 500 L</span>
                   </div>
-                  <div className="p-4 rounded-2xl bg-[#FBFBFA] border border-[#E8E7E3]">
-                    <span className="font-mono text-[10px] text-[#71717A] uppercase block">Security Badges</span>
-                    <strong className="font-display text-lg font-bold text-[#0A0D14]">340 Units</strong>
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200">
+                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Security Badges</span>
+                    <strong className="font-display text-lg font-bold text-black">340 Units</strong>
                     <span className="text-[10px] text-emerald-700 block mt-1">Reorder threshold: 100 Units</span>
                   </div>
-                  <div className="p-4 rounded-2xl bg-[#FBFBFA] border border-[#E8E7E3]">
-                    <span className="font-mono text-[10px] text-[#71717A] uppercase block">Purchase Order #084</span>
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200">
+                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Purchase Order #084</span>
                     <strong className="font-display text-lg font-bold text-emerald-700">GRN Inward Complete</strong>
-                    <span className="text-[10px] text-[#52525B] block mt-1">Approved by Operations Head</span>
+                    <span className="text-[10px] text-black block mt-1">Approved by Operations Head</span>
                   </div>
                 </div>
               </div>
@@ -432,44 +432,44 @@ export const InteractiveDemoSection: React.FC = () => {
             {/* 6. ANALYTICS DEMO */}
             {activeTab === 'analytics' && (
               <div className="space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E8E7E3]">
+                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
                   <div>
-                    <h3 className="font-display text-lg font-bold text-[#0A0D14]">
+                    <h3 className="font-display text-lg font-bold text-black">
                       Statutory Compliance & Form II Muster Ledger
                     </h3>
-                    <p className="text-xs text-[#71717A] mt-0.5">
+                    <p className="text-xs text-slate-600 mt-0.5">
                       One-click statutory export generation for labor compliance audits.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="px-3 py-1.5 rounded-lg bg-[#0A0D14] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                    <button className="px-3 py-1.5 rounded-lg bg-black text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
                       <Download className="w-3.5 h-3.5 text-emerald-400" />
                       <span>Export Form II (PDF/CSV)</span>
                     </button>
                   </div>
                 </div>
 
-                <div className="p-6 rounded-2xl bg-[#FBFBFA] border border-[#E8E7E3] space-y-4">
-                  <div className="flex justify-between items-center text-xs font-mono pb-2 border-b border-[#E8E7E3]">
+                <div className="p-6 rounded-2xl bg-white border border-slate-200 space-y-4">
+                  <div className="flex justify-between items-center text-xs font-mono pb-2 border-b border-slate-200">
                     <span>FORM II REGISTER OF ATTENDANCE &bull; SECTION 62</span>
                     <span className="text-emerald-700 font-bold">100% AUDIT READY</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                     <div>
-                      <span className="text-[#71717A] block">Total Roster Strength:</span>
-                      <strong className="font-bold text-[#0A0D14]">148 Personnel</strong>
+                      <span className="text-slate-600 block">Total Roster Strength:</span>
+                      <strong className="font-bold text-black">148 Personnel</strong>
                     </div>
                     <div>
-                      <span className="text-[#71717A] block">Muster Accuracy:</span>
+                      <span className="text-slate-600 block">Muster Accuracy:</span>
                       <strong className="font-bold text-emerald-700">99.8% Geo-Verified</strong>
                     </div>
                     <div>
-                      <span className="text-[#71717A] block">Patrol SLA Compliance:</span>
+                      <span className="text-slate-600 block">Patrol SLA Compliance:</span>
                       <strong className="font-bold text-emerald-700">98.9% Route Score</strong>
                     </div>
                     <div>
-                      <span className="text-[#71717A] block">Pending Incidents:</span>
-                      <strong className="font-bold text-[#0A0D14]">0 Critical</strong>
+                      <span className="text-slate-600 block">Pending Incidents:</span>
+                      <strong className="font-bold text-black">0 Critical</strong>
                     </div>
                   </div>
                 </div>

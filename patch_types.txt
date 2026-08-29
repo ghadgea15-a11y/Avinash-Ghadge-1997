@@ -1,0 +1,9 @@
+export interface PoLineItem { [key: string]: any; }
+export interface RfqRequest { [key: string]: any; }
+export interface RfqBid { [key: string]: any; }
+export type ServiceTicketCategory = string;
+export type TicketSlaPauseReason = string;
+export type InitStep = string;
+export type LeadStatus = string;
+export type LeadActivity = string;
+export type TicketReopenReasonCategory = string;

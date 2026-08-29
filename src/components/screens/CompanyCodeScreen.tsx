@@ -3,6 +3,7 @@ import { Building2, QrCode, CheckCircle2, AlertCircle, Loader2, ArrowRight, Shie
 import { CompanyTenant, PhaseAScreen } from '../../types';
 import { FirebaseAuthService } from '../../services/firebaseAuthService';
 import { SessionManager } from '../../services/sessionManager';
+import { AppLogo } from '../common/AppLogo';
 import { useTheme } from '../../context/ThemeContext';
 
 interface CompanyCodeScreenProps {
@@ -57,14 +58,14 @@ export const CompanyCodeScreen: React.FC<CompanyCodeScreenProps> = ({
   };
 
   return (
-    <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} flex flex-col justify-between p-6`}>
+    <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'} flex flex-col justify-between p-6`}>
       <div className="space-y-6">
         {/* Header */}
         <div className="pt-2 text-center">
           <div className={`w-14 h-14 rounded-2xl ${isDark ? 'bg-indigo-950 border-indigo-800 text-indigo-400' : 'bg-indigo-50 border-indigo-200 text-indigo-600'} border flex items-center justify-center mx-auto mb-3 shadow-lg`}>
             <Building2 className="w-7 h-7" />
           </div>
-          <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Enter Company Code</h2>
+          <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-black'}`}>Enter Company Code</h2>
           <p className="text-xs text-slate-400 mt-1">
             Connect Log Sheet Muster to your agency's tenant workspace
           </p>
@@ -88,7 +89,7 @@ export const CompanyCodeScreen: React.FC<CompanyCodeScreenProps> = ({
               className={`w-full transition-colors duration-300 ${
                 isDark 
                   ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500' 
-                  : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'
+                  : 'bg-white border-slate-200 text-black placeholder-slate-400 focus:border-indigo-600 shadow-sm'
               } rounded-xl px-4 py-3 text-sm font-mono focus:outline-none uppercase tracking-wider`}
             />
           </div>
@@ -116,15 +117,14 @@ export const CompanyCodeScreen: React.FC<CompanyCodeScreenProps> = ({
               </span>
             </div>
 
-            <div>
-              <h3 className="text-sm font-bold text-white">{verifiedCompany.companyLegalName}</h3>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">ID: {verifiedCompany.companyId}</p>
+            <div className="py-2 flex items-center justify-center">
+              <AppLogo size="lg" company={verifiedCompany} layout="vertical" />
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-[11px] pt-2 border-t border-indigo-900/60">
               <div>
-                <span className="text-slate-400">Branches Allowed:</span>
-                <p className="text-slate-200 font-medium">{verifiedCompany.allowedBranches.length} Regions</p>
+                <span className="text-slate-400">Tenant Code:</span>
+                <p className="text-slate-200 font-mono font-medium">{verifiedCompany.companyId}</p>
               </div>
               <div>
                 <span className="text-slate-400">Guard Capacity:</span>

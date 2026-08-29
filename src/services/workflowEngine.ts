@@ -54,6 +54,9 @@ export class WorkflowEngine {
     }
 
     const authority = RbacService.getAuthorityLevel(session);
+    if (!authority) {
+      return { canApprove: false, reason: 'Unrecognized authority level. Cannot process approval.' };
+    }
 
     // 3. Geographic / Jurisdiction Boundary Check
     if (authority === 'A5_SITE_IN_CHARGE' || authority === 'A6_SUPERVISOR') {

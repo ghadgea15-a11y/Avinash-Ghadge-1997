@@ -60,7 +60,7 @@ export const HowItWorksSection: React.FC = () => {
   ];
 
   return (
-    <section className="py-24 lg:py-32 bg-[#FBFBFA] border-b border-[#E8E7E3]">
+    <section className="py-24 lg:py-32 bg-white border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
         
         {/* Section Header */}
@@ -68,16 +68,16 @@ export const HowItWorksSection: React.FC = () => {
           <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600">
             Execution Lifecycle
           </span>
-          <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-[#0A0D14] tracking-tight">
+          <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-black tracking-tight">
             HOW OPERATIONS FLOW
           </h2>
-          <p className="font-body text-sm sm:text-base text-[#52525B] leading-relaxed">
+          <p className="font-body text-sm sm:text-base text-black leading-relaxed">
             From the initial field interaction to executive business intelligence, every operational event follows an automated, auditable six-stage lifecycle.
           </p>
         </div>
 
         {/* Horizontal Pipeline on Desktop / Vertical on Mobile */}
-        <div className="p-8 sm:p-12 rounded-3xl border border-[#E7E6E1] bg-white shadow-sm space-y-8">
+        <div className="p-8 sm:p-12 rounded-3xl border border-slate-200 bg-white dark:bg-slate-900 shadow-sm space-y-8">
           
           {/* Horizontal Step Sequence */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -89,8 +89,8 @@ export const HowItWorksSection: React.FC = () => {
                   onClick={() => setActiveStep(idx)}
                   className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
                     isSelected
-                      ? 'bg-[#0A0D14] text-white border-[#0A0D14] shadow-sm'
-                      : 'bg-[#FBFBFA] border-[#E8E7E3] text-[#52525B] hover:border-[#D4D4D8]'
+                      ? 'bg-black text-white border-[#0A0D14] shadow-sm'
+                      : 'bg-white border-slate-200 text-black hover:border-[#D4D4D8]'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -101,10 +101,10 @@ export const HowItWorksSection: React.FC = () => {
                       <ArrowRight className={`w-3 h-3 hidden lg:block ${isSelected ? 'text-slate-400' : 'text-[#A1A1AA]'}`} />
                     )}
                   </div>
-                  <strong className={`font-display text-sm font-bold block ${isSelected ? 'text-white' : 'text-[#0A0D14]'}`}>
+                  <strong className={`font-display text-sm font-bold block ${isSelected ? 'text-white' : 'text-black'}`}>
                     {step.title}
                   </strong>
-                  <span className={`font-body text-[11px] block mt-0.5 ${isSelected ? 'text-slate-300' : 'text-[#71717A]'}`}>
+                  <span className={`font-body text-[11px] block mt-0.5 ${isSelected ? 'text-slate-300' : 'text-slate-600'}`}>
                     {step.role}
                   </span>
                 </button>
@@ -113,21 +113,21 @@ export const HowItWorksSection: React.FC = () => {
           </div>
 
           {/* Active Step Detailed Card */}
-          <div className="p-6 sm:p-8 rounded-2xl bg-[#F4F3EF] border border-[#E2E0D8] space-y-3 font-body">
+          <div className="p-6 sm:p-8 rounded-2xl bg-white border border-slate-300 space-y-3 font-body">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="font-mono text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded">
                   STAGE {pipelineSteps[activeStep].num}
                 </span>
-                <h3 className="font-display text-lg font-bold text-[#0A0D14]">
+                <h3 className="font-display text-lg font-bold text-black">
                   {pipelineSteps[activeStep].title} &bull; {pipelineSteps[activeStep].role}
                 </h3>
               </div>
             </div>
-            <p className="text-sm font-semibold text-[#0A0D14]">
+            <p className="text-sm font-semibold text-black">
               {pipelineSteps[activeStep].desc}
             </p>
-            <p className="text-xs text-[#52525B] leading-relaxed">
+            <p className="text-xs text-black leading-relaxed">
               {pipelineSteps[activeStep].detail}
             </p>
           </div>

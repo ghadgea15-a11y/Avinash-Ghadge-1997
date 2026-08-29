@@ -86,7 +86,7 @@ export const EscalationTimelineModal: React.FC<EscalationTimelineModalProps> = (
       case 'FINAL_ESCALATION':
         return <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-400 border border-red-200 dark:border-red-800">Final Escalation</span>;
       default:
-        return <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300">Event</span>;
+        return <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-slate-100 text-black dark:text-slate-200 dark:bg-slate-800 dark:text-slate-300">Event</span>;
     }
   };
 
@@ -95,19 +95,19 @@ export const EscalationTimelineModal: React.FC<EscalationTimelineModalProps> = (
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
         
         {/* Modal Header */}
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/40">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950/40">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center">
               <Clock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Escalation & Timer History</h3>
-              <p className="text-xs text-slate-500">Instance ID: {instance.id} • {instance.sourceModule}</p>
+              <h3 className="text-lg font-bold text-black dark:text-white">Escalation & Timer History</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Instance ID: {instance.id} • {instance.sourceModule}</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -118,7 +118,7 @@ export const EscalationTimelineModal: React.FC<EscalationTimelineModalProps> = (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-slate-400" />
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Policy:</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-slate-300">Policy:</span>
               <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                 {policy ? `${policy.policyName} (v${instance.policyVersion || policy.version})` : 'Default System Escalation Policy'}
               </span>
@@ -137,22 +137,22 @@ export const EscalationTimelineModal: React.FC<EscalationTimelineModalProps> = (
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 text-xs bg-slate-50 dark:bg-slate-950/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <div className="grid grid-cols-3 gap-3 text-xs bg-white dark:bg-slate-950/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
             <div>
               <p className="text-slate-400">Assigned At</p>
-              <p className="font-semibold text-slate-900 dark:text-white mt-0.5">
+              <p className="font-semibold text-black dark:text-white mt-0.5">
                 {instance.assignedAt ? format(new Date(instance.assignedAt), 'PP p') : 'Pending'}
               </p>
             </div>
             <div>
               <p className="text-slate-400">SLA Due At</p>
-              <p className="font-semibold text-slate-900 dark:text-white mt-0.5">
+              <p className="font-semibold text-black dark:text-white mt-0.5">
                 {instance.dueAt ? format(new Date(instance.dueAt), 'PP p') : 'Not Set'}
               </p>
             </div>
             <div>
               <p className="text-slate-400">Current Approvers</p>
-              <p className="font-semibold text-slate-900 dark:text-white mt-0.5 truncate">
+              <p className="font-semibold text-black dark:text-white mt-0.5 truncate">
                 {instance.currentApprovers.join(', ') || 'None'}
               </p>
             </div>
@@ -167,8 +167,8 @@ export const EscalationTimelineModal: React.FC<EscalationTimelineModalProps> = (
             </div>
           ) : events.length === 0 ? (
             <div className="text-center py-10">
-              <Clock className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No Escalation Events Yet</p>
+              <Clock className="w-10 h-10 text-slate-300 dark:text-slate-900 dark:text-slate-300 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-300">No Escalation Events Yet</p>
               <p className="text-xs text-slate-400 mt-1">This request is progressing within standard SLA thresholds.</p>
             </div>
           ) : (
@@ -180,7 +180,7 @@ export const EscalationTimelineModal: React.FC<EscalationTimelineModalProps> = (
                     <div className="w-2 h-2 rounded-full bg-indigo-600" />
                   </div>
 
-                  <div className="bg-slate-50 dark:bg-slate-950/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div className="bg-white dark:bg-slate-950/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {getEventIcon(evt.eventType)}
@@ -191,7 +191,7 @@ export const EscalationTimelineModal: React.FC<EscalationTimelineModalProps> = (
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-700 dark:text-slate-300">
+                    <p className="text-xs text-slate-900 dark:text-slate-300">
                       {evt.reason}
                     </p>
 
@@ -215,10 +215,10 @@ export const EscalationTimelineModal: React.FC<EscalationTimelineModalProps> = (
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end bg-slate-50 dark:bg-slate-950/40">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end bg-white dark:bg-slate-950/40">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs hover:opacity-90 transition shadow-sm"
+            className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white dark:bg-slate-900 text-white dark:text-black dark:text-white font-bold text-xs hover:opacity-90 transition shadow-sm"
           >
             Close Timeline
           </button>

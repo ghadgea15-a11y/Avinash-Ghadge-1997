@@ -75,28 +75,28 @@ export const ComplianceControlViewer: React.FC<Props> = ({ session }) => {
 
       {metrics && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-gray-100">
             <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-2">Total Controls</h3>
             <div className="flex items-center">
               <FileText className="text-blue-500 mr-3" size={24} />
               <span className="text-3xl font-bold text-gray-900">{metrics.totalControls}</span>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-gray-100">
             <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-2">Effective</h3>
             <div className="flex items-center">
               <CheckCircle className="text-green-500 mr-3" size={24} />
               <span className="text-3xl font-bold text-gray-900">{metrics.effectiveControls}</span>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-gray-100">
             <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-2">Remediation Req.</h3>
             <div className="flex items-center">
               <AlertTriangle className="text-orange-500 mr-3" size={24} />
               <span className="text-3xl font-bold text-gray-900">{metrics.remediationRequiredControls}</span>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow border border-gray-100">
             <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-2">Risk Coverage</h3>
             <div className="flex items-center">
               <Activity className="text-indigo-500 mr-3" size={24} />
@@ -106,7 +106,7 @@ export const ComplianceControlViewer: React.FC<Props> = ({ session }) => {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow border border-gray-200">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow border border-gray-200">
         <div className="border-b border-gray-200">
           <nav className="flex -mb-px px-6" aria-label="Tabs">
           </nav>
@@ -127,7 +127,7 @@ export const ComplianceControlViewer: React.FC<Props> = ({ session }) => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frequency</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200">
                     {controls.map((control) => (
                       <tr key={control.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{control.id}</td>
@@ -170,7 +170,7 @@ export const ComplianceControlViewer: React.FC<Props> = ({ session }) => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200">
                     {exceptions.map((exc) => (
                       <tr key={exc.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{exc.id}</td>

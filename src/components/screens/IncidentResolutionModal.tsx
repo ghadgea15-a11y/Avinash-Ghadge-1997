@@ -116,17 +116,17 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
       <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950 dark:bg-slate-800/50">
           <div>
-            <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="font-bold text-black dark:text-white flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-indigo-600" />
               Incident Control: {incident.incidentNumber || incident.id.slice(-6)}
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Severity: <span className="font-bold">{incident.severity}</span> • Status: <span className="font-bold">{incident.status}</span>
             </p>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 transition">
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-900 dark:text-slate-300 transition">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -135,19 +135,19 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
         <div className="flex border-b border-slate-100 dark:border-slate-800">
           <button 
             onClick={() => setActiveTab('INVESTIGATE')}
-            className={`flex-1 py-3 text-xs font-bold border-b-2 transition ${activeTab === 'INVESTIGATE' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+            className={`flex-1 py-3 text-xs font-bold border-b-2 transition ${activeTab === 'INVESTIGATE' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-black'}`}
           >
             1. Investigation & RCA
           </button>
           <button 
             onClick={() => setActiveTab('ESCALATE')}
-            className={`flex-1 py-3 text-xs font-bold border-b-2 transition ${activeTab === 'ESCALATE' ? 'border-amber-500 text-amber-500' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+            className={`flex-1 py-3 text-xs font-bold border-b-2 transition ${activeTab === 'ESCALATE' ? 'border-amber-500 text-amber-500' : 'border-transparent text-slate-500 hover:text-black'}`}
           >
             2. Escalate
           </button>
           <button 
             onClick={() => setActiveTab('CLOSE')}
-            className={`flex-1 py-3 text-xs font-bold border-b-2 transition ${activeTab === 'CLOSE' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+            className={`flex-1 py-3 text-xs font-bold border-b-2 transition ${activeTab === 'CLOSE' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-black'}`}
           >
             3. Verify & Close
           </button>
@@ -165,41 +165,41 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
           {activeTab === 'INVESTIGATE' && (
             <form id="inv-form" onSubmit={handleInvestigate} className="space-y-4">
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Immediate Action Taken *</label>
+                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Immediate Action Taken *</label>
                 <textarea
                   required
                   value={invForm.immediateAction}
                   onChange={e => setInvForm({...invForm, immediateAction: e.target.value})}
-                  className="w-full rounded-xl border-slate-200 bg-slate-50 p-3 text-sm focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full rounded-xl border-slate-200 bg-white dark:bg-slate-950 p-3 text-sm focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700"
                   rows={2}
                   placeholder="What was done immediately to contain the issue?"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Root Cause Analysis (RCA) *</label>
+                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Root Cause Analysis (RCA) *</label>
                 <textarea
                   required
                   value={invForm.rootCause}
                   onChange={e => setInvForm({...invForm, rootCause: e.target.value})}
-                  className="w-full rounded-xl border-slate-200 bg-slate-50 p-3 text-sm focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full rounded-xl border-slate-200 bg-white dark:bg-slate-950 p-3 text-sm focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700"
                   rows={2}
                   placeholder="Why did this happen?"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Corrective Action *</label>
+                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Corrective Action *</label>
                 <textarea
                   required
                   value={invForm.correctiveAction}
                   onChange={e => setInvForm({...invForm, correctiveAction: e.target.value})}
-                  className="w-full rounded-xl border-slate-200 bg-slate-50 p-3 text-sm focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full rounded-xl border-slate-200 bg-white dark:bg-slate-950 p-3 text-sm focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700"
                   rows={2}
                   placeholder="What is being done to fix it?"
                 />
               </div>
               
               <div className="flex flex-col">
-                 <label className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">
+                 <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">
                     Evidence Document Link {incident.severity === 'CRITICAL' && <span className="text-rose-500">* Required for CRITICAL</span>}
                  </label>
                  <input 
@@ -207,7 +207,7 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
                    placeholder="https://drive.google.com/..."
                    value={invForm.evidenceUrl}
                    onChange={e => setInvForm({...invForm, evidenceUrl: e.target.value})}
-                   className="w-full rounded-xl border-slate-200 bg-slate-50 p-3 text-sm focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700"
+                   className="w-full rounded-xl border-slate-200 bg-white dark:bg-slate-950 p-3 text-sm focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700"
                  />
               </div>
             </form>
@@ -215,15 +215,15 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
 
           {activeTab === 'ESCALATE' && (
             <div className="space-y-4">
-               <p className="text-sm text-slate-600 dark:text-slate-300">
+               <p className="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-300">
                   Escalating this incident will notify management and A3/A4 leadership. It will breach the site-level SLA.
                </p>
                <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Escalation Reason *</label>
+                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Escalation Reason *</label>
                 <textarea
                   value={escReason}
                   onChange={e => setEscReason(e.target.value)}
-                  className="w-full rounded-xl border-slate-200 bg-slate-50 p-3 text-sm focus:ring-2 focus:ring-amber-500 dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full rounded-xl border-slate-200 bg-white dark:bg-slate-950 p-3 text-sm focus:ring-2 focus:ring-amber-500 dark:bg-slate-800 dark:border-slate-700"
                   rows={3}
                   placeholder="Why is this being escalated?"
                 />
@@ -239,15 +239,15 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
                     <p><strong>Restricted:</strong> Critical severity incidents require Administrator level approval for closure. You cannot close this incident.</p>
                   </div>
                )}
-               <p className="text-sm text-slate-600 dark:text-slate-300">
+               <p className="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-300">
                   By closing this incident, you verify that all corrective actions have been implemented and evidence has been reviewed.
                </p>
                <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Verification & Closure Notes *</label>
+                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Verification & Closure Notes *</label>
                 <textarea
                   value={closeNotes}
                   onChange={e => setCloseNotes(e.target.value)}
-                  className="w-full rounded-xl border-slate-200 bg-slate-50 p-3 text-sm focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:border-slate-700"
+                  className="w-full rounded-xl border-slate-200 bg-white dark:bg-slate-950 p-3 text-sm focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:border-slate-700"
                   rows={3}
                   placeholder="Final verification notes..."
                 />
@@ -258,11 +258,11 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 dark:bg-slate-800/50 flex justify-end gap-3">
            <button 
              type="button" 
              onClick={onClose}
-             className="px-5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 transition"
+             className="px-5 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 transition"
            >
              Cancel
            </button>

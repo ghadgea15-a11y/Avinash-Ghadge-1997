@@ -29,7 +29,7 @@ export const HrDashboard: React.FC<DashboardProps> = ({ userSession, company, on
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-slate-500">
+      <div className="flex flex-col items-center justify-center p-8 text-slate-500 dark:text-slate-400">
         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
         <p>Loading HR Metrics...</p>
       </div>
@@ -50,12 +50,12 @@ export const HrDashboard: React.FC<DashboardProps> = ({ userSession, company, on
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+        <div className="bg-white dark:bg-slate-900 dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-500">Total Headcount</h3>
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Total Headcount</h3>
             <Users className="w-5 h-5 text-indigo-500" />
           </div>
-          <p className="text-3xl font-black text-slate-900 dark:text-white">{activeEmployees}</p>
+          <p className="text-3xl font-black text-black dark:text-white">{activeEmployees}</p>
           {RbacService.hasModuleAccess(userSession, 'EMPLOYEES') && (
             <button 
               onClick={() => onNavigate('EMPLOYEES')}
@@ -66,12 +66,12 @@ export const HrDashboard: React.FC<DashboardProps> = ({ userSession, company, on
           )}
         </div>
 
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+        <div className="bg-white dark:bg-slate-900 dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-500">Pending Approvals</h3>
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Pending Approvals</h3>
             <CheckCircle2 className="w-5 h-5 text-amber-500" />
           </div>
-          <p className="text-3xl font-black text-slate-900 dark:text-white">{pendingApprovals}</p>
+          <p className="text-3xl font-black text-black dark:text-white">{pendingApprovals}</p>
           {RbacService.hasModuleAccess(userSession, 'APPROVAL_MANAGEMENT') && (
             <button 
               onClick={() => onNavigate('APPROVAL_MANAGEMENT')}
@@ -82,13 +82,13 @@ export const HrDashboard: React.FC<DashboardProps> = ({ userSession, company, on
           )}
         </div>
 
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+        <div className="bg-white dark:bg-slate-900 dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-500">New Joinees (30 days)</h3>
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">New Joinees (30 days)</h3>
             <Users className="w-5 h-5 text-emerald-500" />
           </div>
-          <p className="text-3xl font-black text-slate-900 dark:text-white">{newJoinees}</p>
-          <p className="text-xs text-slate-500 mt-2 font-medium">Recently onboarded</p>
+          <p className="text-3xl font-black text-black dark:text-white">{newJoinees}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">Recently onboarded</p>
         </div>
       </div>
     </div>

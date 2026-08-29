@@ -1,0 +1,24 @@
+  static async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    try {
+      const colRef = collection(db, 'subscription_plans');
+      const snap = await getDocs(colRef);
+      return snap.docs.map(d => ({ planId: d.id, ...d.data() } as SubscriptionPlan));
+    } catch (err) {
+      console.warn('[Firestore] getSubscriptionPlans error:', err);
+      return [];
+    }
+  }
+
+  static async saveSubscriptionPlan(plan: SubscriptionPlan): Promise<boolean> {
+    try {
+      const ref = doc(db, 'subscription_plans', plan.planId);
+      await setDoc(ref, {
+        ...plan,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `subscription_plans/${plan.planId}`);
+      return false;
+    }
+  }

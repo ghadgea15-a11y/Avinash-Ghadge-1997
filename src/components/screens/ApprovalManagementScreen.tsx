@@ -212,14 +212,14 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
   );
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} p-4 md:p-6 space-y-6 max-w-6xl mx-auto w-full`}>
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'} p-4 md:p-6 space-y-6 max-w-6xl mx-auto w-full`}>
       {/* Top Navigation */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div className="flex items-center gap-3">
           <button
             onClick={onNavigateBack}
             className={`p-2 rounded-xl border transition ${
-              isDark ? 'bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-white border-slate-200 hover:bg-slate-100 text-slate-700'
+              isDark ? 'bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-white border-slate-200 hover:bg-slate-100 text-slate-900'
             }`}
           >
             <ArrowLeft className="w-5 h-5" />
@@ -282,10 +282,10 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search applicant name, email, department..."
             className={`w-full transition-colors duration-300 ${
-              isDark ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-500' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'
+              isDark ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-500' : 'bg-white border-slate-200 text-black placeholder-slate-400'
             } rounded-xl px-4 py-2 text-xs pl-9 focus:outline-none focus:border-indigo-500`}
           />
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
         </div>
       </div>
 
@@ -301,9 +301,9 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
         </div>
       ) : filteredRequests.length === 0 ? (
         <div className="p-12 text-center border border-dashed border-slate-800 rounded-2xl space-y-3">
-          <UserCheck className="w-10 h-10 text-slate-600 mx-auto" />
+          <UserCheck className="w-10 h-10 text-slate-600 dark:text-slate-400 mx-auto" />
           <p className="text-sm font-semibold text-slate-300">No approval requests found</p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {activeTab === 'PENDING'
               ? 'There are currently no pending applicant requests requiring review.'
               : 'No matching records match your filter criteria.'}
@@ -344,17 +344,17 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-400">
                       <div className="flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-slate-500" />
+                        <Mail className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                         <span className="font-mono">{req.email}</span>
                       </div>
                       {req.mobileNumber && (
                         <div className="flex items-center gap-1.5">
-                          <Phone className="w-3.5 h-3.5 text-slate-500" />
+                          <Phone className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                           <span>{req.mobileNumber}</span>
                         </div>
                       )}
                       <div className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-slate-500" />
+                        <Clock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                         <span>Submitted: {new Date(req.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
@@ -377,7 +377,7 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
                           ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/80' 
                           : 'bg-slate-950 text-slate-400 border border-slate-800'
                       }`}>
-                        {isAdminApproved ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Clock className="w-3 h-3 text-slate-500" />}
+                        {isAdminApproved ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Clock className="w-3 h-3 text-slate-500 dark:text-slate-400" />}
                         Admin Review: {isAdminApproved ? 'Approved' : 'Pending'}
                       </span>
 
@@ -387,7 +387,7 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
                           ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/80' 
                           : 'bg-slate-950 text-slate-400 border border-slate-800'
                       }`}>
-                        {isHrApproved ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Clock className="w-3 h-3 text-slate-500" />}
+                        {isHrApproved ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Clock className="w-3 h-3 text-slate-500 dark:text-slate-400" />}
                         HR Review: {isHrApproved ? 'Approved' : 'Pending'}
                       </span>
                     </div>
@@ -473,7 +473,7 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
           <form
             onSubmit={handleConfirmRejection}
             className={`w-full max-w-md p-6 rounded-2xl border space-y-4 ${
-              isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+              isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
             }`}
           >
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -503,7 +503,7 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
                 rows={3}
                 required
                 className={`w-full transition-colors duration-300 ${
-                  isDark ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400'
+                  isDark ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-600' : 'bg-white border-slate-200 text-black placeholder-slate-400'
                 } rounded-xl p-3 text-xs focus:outline-none focus:border-rose-500`}
               />
             </div>

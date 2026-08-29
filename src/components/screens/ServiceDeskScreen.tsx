@@ -625,7 +625,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
       case 'MEDIUM':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-300 dark:border-blue-800">Medium</span>;
       case 'LOW':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">Low</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-black dark:text-slate-200 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">Low</span>;
     }
   };
 
@@ -640,7 +640,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
       case 'RESOLVED':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">Resolved</span>;
       case 'CLOSED':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">Closed</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-900 dark:text-slate-300 dark:bg-slate-800 dark:text-slate-300">Closed</span>;
       case 'REOPENED':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">Reopened</span>;
       case 'ASSIGNED':
@@ -648,7 +648,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
       case 'ACCEPTED':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300">Accepted</span>;
       default:
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">{status}</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-900 dark:text-slate-300">{status}</span>;
     }
   };
 
@@ -700,7 +700,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
   };
 
   return (
-    <div className={`p-4 md:p-6 space-y-6 min-h-screen ${isDark ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`p-4 md:p-6 space-y-6 min-h-screen ${isDark ? 'bg-slate-900 text-slate-100' : 'bg-white text-black'}`}>
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -741,7 +741,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
           {(['SUPER_ADMIN', 'COMPANY_ADMIN', 'OPERATIONS_MANAGER', 'SERVICE_DESK'] as string[]).includes(userSession?.role || '') && (
             <button
               onClick={() => setShowSlaPolicyManager(true)}
-              className="flex items-center gap-2 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold shadow-sm transition"
+              className="flex items-center gap-2 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-300 dark:text-slate-200 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold shadow-sm transition"
             >
               <Sliders className="w-4 h-4" />
               <span>SLA Policies</span>
@@ -752,7 +752,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
           {(['SUPER_ADMIN', 'COMPANY_ADMIN', 'MANAGER'] as string[]).includes(userSession?.role || '') && (
             <button
               onClick={() => setShowCategoryManager(true)}
-              className="flex items-center gap-2 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold shadow-sm transition"
+              className="flex items-center gap-2 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-300 dark:text-slate-200 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold shadow-sm transition"
             >
               <span>Categories</span>
             </button>
@@ -776,7 +776,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
             <LifeBuoy className="w-4 h-4 text-indigo-500" />
           </div>
           <p className="text-2xl font-bold mt-2">{openCount}</p>
-          <span className="text-xs text-slate-500">Awaiting resolution</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Awaiting resolution</span>
         </div>
 
         <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
@@ -785,7 +785,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
             <ShieldAlert className="w-4 h-4 text-rose-500" />
           </div>
           <p className="text-2xl font-bold mt-2 text-rose-600 dark:text-rose-400">{criticalCount}</p>
-          <span className="text-xs text-slate-500">High priority response</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">High priority response</span>
         </div>
 
         <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
@@ -794,7 +794,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
             <AlertTriangle className="w-4 h-4 text-amber-500" />
           </div>
           <p className="text-2xl font-bold mt-2 text-amber-600 dark:text-amber-400">{slaBreachedCount}</p>
-          <span className="text-xs text-slate-500">Exceeded SLA target deadline</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Exceeded SLA target deadline</span>
         </div>
 
         <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
@@ -803,7 +803,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
           </div>
           <p className="text-2xl font-bold mt-2 text-emerald-600 dark:text-emerald-400">{resolvedCount}</p>
-          <span className="text-xs text-slate-500">Completed cases</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Completed cases</span>
         </div>
       </div>
 
@@ -819,7 +819,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={`w-full pl-9 pr-4 py-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-              isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+              isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
             }`}
           />
         </div>
@@ -829,7 +829,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className={`px-3 py-2 rounded-lg text-sm border focus:outline-none ${
-              isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+              isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
             }`}
           >
             <option value="ALL">All Status</option>
@@ -846,7 +846,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
             className={`px-3 py-2 rounded-lg text-sm border focus:outline-none ${
-              isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+              isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
             }`}
           >
             <option value="ALL">All Priorities</option>
@@ -861,14 +861,14 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
       {/* Ticket List Table */}
       <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
         {loading ? (
-          <div className="p-12 text-center text-slate-500">
+          <div className="p-12 text-center text-slate-500 dark:text-slate-400">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-indigo-600" />
             <p>Loading service desk tickets from Firestore...</p>
           </div>
         ) : filteredTickets.length === 0 ? (
-          <div className="p-12 text-center text-slate-500">
+          <div className="p-12 text-center text-slate-500 dark:text-slate-400">
             <LifeBuoy className="w-12 h-12 mx-auto mb-3 opacity-40" />
-            <h3 className="font-bold text-base text-slate-700 dark:text-slate-300">No Tickets Found</h3>
+            <h3 className="font-bold text-base text-slate-900 dark:text-slate-300">No Tickets Found</h3>
             <p className="text-sm mt-1">There are no client service tickets matching your search or filters.</p>
           </div>
         ) : (
@@ -898,19 +898,19 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       key={t.id}
                       onClick={() => setSelectedTicket(t)}
                       className={`cursor-pointer transition ${
-                        isDark ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'
+                        isDark ? 'hover:bg-slate-800/60' : 'hover:bg-white'
                       }`}
                     >
                       <td className="p-3.5 font-bold font-mono text-indigo-600 dark:text-indigo-400">
                         {t.ticketNumber}
                       </td>
                       <td className="p-3.5">
-                        <div className="font-semibold text-slate-900 dark:text-slate-100">{t.title}</div>
-                        <div className="text-xs text-slate-500 mt-0.5">{getCategoryName(t.category)}</div>
+                        <div className="font-semibold text-black dark:text-white dark:text-slate-100">{t.title}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{getCategoryName(t.category)}</div>
                       </td>
                       <td className="p-3.5">
-                        <div className="font-medium text-slate-800 dark:text-slate-200">{t.siteName}</div>
-                        <div className="text-xs text-slate-500">{t.clientName}</div>
+                        <div className="font-medium text-black dark:text-slate-200">{t.siteName}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{t.clientName}</div>
                       </td>
                       <td className="p-3.5">
                         {getPriorityBadge(t.priority)}
@@ -958,10 +958,10 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
       {selectedTicket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className={`w-full max-w-4xl max-h-[92vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
             {/* Modal Header */}
-            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-white'}`}>
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-lg">
                   {selectedTicket.ticketNumber}
@@ -993,8 +993,8 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
               )}
 
               <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{selectedTicket.title}</h2>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-2">
+                <h2 className="text-xl font-bold text-black dark:text-white dark:text-slate-100">{selectedTicket.title}</h2>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mt-2">
                   <span className="flex items-center gap-1">
                     <Building2 className="w-3.5 h-3.5" /> Client: {selectedTicket.clientName}
                   </span>
@@ -1011,11 +1011,11 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
               </div>
 
               {/* Operational SLA Tracking Panel */}
-              <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+              <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-indigo-500" />
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-300">
                       SLA Target Management & Timer Controls
                     </h4>
                   </div>
@@ -1048,14 +1048,14 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs mb-3">
                   <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750">
-                    <span className="text-slate-500 block mb-0.5">Matched Policy</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                    <span className="text-slate-500 dark:text-slate-400 block mb-0.5">Matched Policy</span>
+                    <span className="font-bold text-black dark:text-slate-200">
                       {selectedTicket.slaPolicyName || 'Default Priority Matrix'}
                     </span>
                   </div>
 
                   <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750">
-                    <span className="text-slate-500 block mb-0.5">First Response Status</span>
+                    <span className="text-slate-500 dark:text-slate-400 block mb-0.5">First Response Status</span>
                     <div className="flex items-center gap-1.5">
                       <span className={`font-bold ${
                         selectedTicket.responseSlaStatus === 'MET' 
@@ -1076,7 +1076,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
 
                   <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750">
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-slate-500">Resolution Deadline</span>
+                      <span className="text-slate-500 dark:text-slate-400">Resolution Deadline</span>
                       {selectedTicket.reopenCount && selectedTicket.reopenCount > 0 ? (
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300">
                           Cycle #{selectedTicket.reopenCount + 1}
@@ -1086,7 +1086,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                     <span className={`font-bold ${
                       selectedTicket.isSlaBreached 
                         ? 'text-red-600 dark:text-red-400' 
-                        : 'text-slate-800 dark:text-slate-200'
+                        : 'text-black dark:text-slate-200'
                     }`}>
                       {new Date(selectedTicket.resolutionDueTime || selectedTicket.slaDueTime).toLocaleString()}
                     </span>
@@ -1100,18 +1100,18 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       <span className="text-xs font-bold text-purple-900 dark:text-purple-300">
                         Pause SLA Countdown (Pending Hold)
                       </span>
-                      <button onClick={() => setIsPausingSla(false)} className="text-xs text-slate-500">Cancel</button>
+                      <button onClick={() => setIsPausingSla(false)} className="text-xs text-slate-500 dark:text-slate-400">Cancel</button>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-[11px] font-semibold text-slate-900 dark:text-slate-300 mb-1">
                           Hold Reason *
                         </label>
                         <select
                           value={pauseReason}
                           onChange={e => setPauseReason(e.target.value as TicketSlaPauseReason)}
-                          className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                         >
                           <option value="WAITING_ON_CLIENT">Waiting on Client Response</option>
                           <option value="WAITING_ON_PARTS">Waiting on Parts / Materials</option>
@@ -1123,7 +1123,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        <label className="block text-[11px] font-semibold text-slate-900 dark:text-slate-300 mb-1">
                           Notes / Explanation
                         </label>
                         <input
@@ -1131,7 +1131,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                           placeholder="e.g. Awaiting client gate pass clearance"
                           value={pauseNotes}
                           onChange={e => setPauseNotes(e.target.value)}
-                          className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                         />
                       </div>
                     </div>
@@ -1155,11 +1155,11 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       <History className="w-3 h-3" /> SLA Pause History ({selectedTicket.pauseHistory.length} events)
                     </span>
                     <div className="space-y-1.5 max-h-28 overflow-y-auto">
-                      {selectedTicket.pauseHistory.map(ph => (
+                      {selectedTicket.pauseHistory.map((ph: any) => (
                         <div key={ph.id} className="text-[11px] p-2 rounded bg-slate-100 dark:bg-slate-800 flex justify-between items-center">
                           <div>
                             <span className="font-semibold text-purple-700 dark:text-purple-400">[{ph.reason}]</span>
-                            <span className="text-slate-600 dark:text-slate-300 ml-1.5">{ph.notes || 'No notes'}</span>
+                            <span className="text-slate-600 dark:text-slate-400 dark:text-slate-300 ml-1.5">{ph.notes || 'No notes'}</span>
                           </div>
                           <span className="text-[10px] text-slate-400 font-mono">
                             {ph.pausedDurationMinutes ? `${ph.pausedDurationMinutes}m paused` : 'Active hold'}
@@ -1171,17 +1171,17 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                 )}
               </div>
 
-              <div className={`p-4 rounded-xl border text-sm ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+              <div className={`p-4 rounded-xl border text-sm ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
                 <h4 className="text-xs font-bold uppercase text-slate-400 mb-1">Issue Description</h4>
-                <p className="whitespace-pre-line text-slate-700 dark:text-slate-300">{selectedTicket.description}</p>
+                <p className="whitespace-pre-line text-slate-900 dark:text-slate-300">{selectedTicket.description}</p>
               </div>
 
               {/* Assignment & Dispatch UI */}
-              <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+              <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
                 <h4 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">Assignment Details</h4>
                 {selectedTicket.assignedToUserId ? (
                   <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    <div className="flex items-center gap-2 text-sm text-slate-900 dark:text-slate-300">
                       <User className="w-4 h-4 text-indigo-500" />
                       <strong>Assigned To:</strong> {selectedTicket.assignedToName} 
                       <span className="text-xs px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded-full">{selectedTicket.status}</span>
@@ -1197,7 +1197,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                         />
                         <div className="flex gap-2">
                           <button onClick={handleDecline} disabled={actionLoading} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow-sm transition disabled:opacity-50">Confirm Decline</button>
-                          <button onClick={() => setIsDeclining(false)} className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold shadow-sm transition">Cancel</button>
+                          <button onClick={() => setIsDeclining(false)} className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-300 dark:text-slate-200 rounded-lg text-xs font-semibold shadow-sm transition">Cancel</button>
                         </div>
                       </div>
                     ) : (
@@ -1213,7 +1213,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   </div>
                 ) : (
                   <div>
-                    <span className="text-sm text-slate-500 italic">Unassigned</span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400 italic">Unassigned</span>
                   </div>
                 )}
                 
@@ -1249,11 +1249,11 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                     <span>Workflow Status Controls</span>
                   </h4>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] text-slate-500">Current Status:</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">Current Status:</span>
                     <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${
                       ServiceDeskService.STATUS_DEFINITIONS[ServiceDeskService.normalizeStatus(selectedTicket.status)]?.badgeBg || 'bg-slate-100'
                     } ${
-                      ServiceDeskService.STATUS_DEFINITIONS[ServiceDeskService.normalizeStatus(selectedTicket.status)]?.badgeText || 'text-slate-800'
+                      ServiceDeskService.STATUS_DEFINITIONS[ServiceDeskService.normalizeStatus(selectedTicket.status)]?.badgeText || 'text-black'
                     } ${
                       ServiceDeskService.STATUS_DEFINITIONS[ServiceDeskService.normalizeStatus(selectedTicket.status)]?.badgeBorder || 'border-slate-300'
                     }`}>
@@ -1275,7 +1275,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
 
                     if (availableTransitions.length === 0) {
                       return (
-                        <div className="w-full py-1 text-xs text-slate-500 italic flex items-center gap-1.5">
+                        <div className="w-full py-1 text-xs text-slate-500 dark:text-slate-400 italic flex items-center gap-1.5">
                           <Info className="w-3.5 h-3.5 text-slate-400" />
                           <span>No workflow state transitions available in current state ({selectedTicket.status}) for your role.</span>
                         </div>
@@ -1332,7 +1332,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   className={`pb-2.5 px-3.5 text-xs font-bold flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
                     modalTab === 'COMMENTS'
                       ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                      : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
                   }`}
                 >
                   <MessageSquare className="w-4 h-4" />
@@ -1352,7 +1352,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   className={`pb-2.5 px-3.5 text-xs font-bold flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
                     modalTab === 'EVIDENCE'
                       ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                      : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
                   }`}
                 >
                   <Paperclip className="w-4 h-4" />
@@ -1372,7 +1372,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   className={`pb-2.5 px-3.5 text-xs font-bold flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
                     modalTab === 'STATUS_HISTORY'
                       ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                      : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
                   }`}
                 >
                   <History className="w-4 h-4" />
@@ -1394,7 +1394,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   className={`pb-2.5 px-3.5 text-xs font-bold flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
                     modalTab === 'RESOLUTION'
                       ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                      : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
                   }`}
                 >
                   <Award className="w-4 h-4" />
@@ -1417,7 +1417,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   className={`pb-2.5 px-3.5 text-xs font-bold flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
                     modalTab === 'FEEDBACK'
                       ? 'border-amber-500 text-amber-600 dark:text-amber-400 dark:border-amber-400'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                      : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
                   }`}
                 >
                   <Star className="w-4 h-4 fill-current text-amber-500" />
@@ -1484,7 +1484,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       <h4 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                         <MessageSquare className="w-4 h-4 text-indigo-500" /> Activity & Communication Thread
                       </h4>
-                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-300">
                         {comments.length}
                       </span>
                     </div>
@@ -1497,7 +1497,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       className={`px-2.5 py-1 rounded text-[10px] font-semibold transition ${
                         commentFilter === 'ALL'
                           ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                          : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                          : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
                       }`}
                     >
                       All ({comments.length})
@@ -1508,7 +1508,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       className={`px-2.5 py-1 rounded text-[10px] font-semibold transition ${
                         commentFilter === 'CLIENT'
                           ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-300 shadow-xs'
-                          : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                          : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
                       }`}
                     >
                       Client Visible ({comments.filter(c => !c.isInternalOnly).length})
@@ -1520,7 +1520,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                         className={`px-2.5 py-1 rounded text-[10px] font-semibold flex items-center gap-1 transition ${
                           commentFilter === 'INTERNAL'
                             ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-300 shadow-xs'
-                            : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                            : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
                         }`}
                       >
                         <Lock className="w-3 h-3" />
@@ -1540,7 +1540,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       value={commentSearch}
                       onChange={(e) => setCommentSearch(e.target.value)}
                       className={`w-full pl-8.5 pr-3 py-1.5 text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
-                        isDark ? 'bg-slate-900/60 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        isDark ? 'bg-slate-900/60 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-black'
                       }`}
                     />
                   </div>
@@ -1565,7 +1565,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                     }).length === 0 ? (
                     <div className="text-center py-6 border border-dashed rounded-xl border-slate-300 dark:border-slate-800">
                       <MessageSquare className="w-6 h-6 mx-auto text-slate-400 mb-1 opacity-50" />
-                      <p className="text-xs text-slate-500 italic">No notes matching filter.</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 italic">No notes matching filter.</p>
                     </div>
                   ) : (
                     comments
@@ -1595,7 +1595,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                                   : 'bg-amber-50/80 border-amber-200/90 text-amber-950'
                                 : isDark 
                                   ? 'bg-slate-850/80 border-slate-700/80 text-slate-200' 
-                                  : 'bg-white border-slate-200 text-slate-800 shadow-2xs'
+                                  : 'bg-white border-slate-200 text-black shadow-2xs'
                             }`}
                           >
                             <div className="flex items-center justify-between font-semibold mb-1.5">
@@ -1603,7 +1603,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                                 <span className="font-bold flex items-center gap-1">
                                   {comm.authorName}
                                 </span>
-                                <span className="px-1.5 py-0.2 text-[9px] rounded font-medium bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                <span className="px-1.5 py-0.2 text-[9px] rounded font-medium bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-300">
                                   {comm.authorRole}
                                 </span>
                                 {comm.isInternalOnly ? (
@@ -1660,7 +1660,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                             {/* Attachments rendering */}
                             {comm.attachmentUrls && comm.attachmentUrls.length > 0 && (
                               <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-wrap gap-2">
-                                {comm.attachmentUrls.map((url, idx) => (
+                                {comm.attachmentUrls.map((url: any, idx: number) => (
                                   <a
                                     key={idx}
                                     href={url}
@@ -1698,7 +1698,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                           key={idx}
                           type="button"
                           onClick={() => setNewComment(prev => prev ? `${prev}\n${tmpl}` : tmpl)}
-                          className="px-2 py-1 text-[10px] rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 hover:text-indigo-600 dark:hover:text-indigo-300 border border-slate-200 dark:border-slate-700 transition"
+                          className="px-2 py-1 text-[10px] rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 hover:text-indigo-600 dark:hover:text-indigo-300 border border-slate-200 dark:border-slate-700 transition"
                         >
                           + {tmpl.substring(0, 32)}...
                         </button>
@@ -1717,7 +1717,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       className={`w-full p-3 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none ${
-                        isDark ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                        isDark ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-black placeholder-slate-400'
                       }`}
                     />
                     <span className="absolute bottom-2 right-3 text-[10px] text-slate-400">
@@ -1747,7 +1747,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                     <div className="flex items-center gap-3">
                       {/* File attachment button */}
-                      <label className="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border border-slate-300 dark:border-slate-700 transition">
+                      <label className="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border border-slate-300 dark:border-slate-700 transition">
                         <Paperclip className="w-3.5 h-3.5 text-slate-400" />
                         <span>Attach Files</span>
                         <input
@@ -1765,7 +1765,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
 
                       {/* Internal note checkbox (Staff only) */}
                       {isStaff ? (
-                        <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+                        <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300 cursor-pointer select-none">
                           <input
                             type="checkbox"
                             checked={isInternalComment}
@@ -1808,9 +1808,9 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
       {editingComment && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
-            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-white'}`}>
               <h3 className="font-bold text-sm flex items-center gap-2">
                 <Edit2 className="w-4 h-4 text-indigo-500" /> Edit Comment
               </h3>
@@ -1820,7 +1820,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
             </div>
             <form onSubmit={handleEditComment} className="p-4 space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Updated Comment Text *</label>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Updated Comment Text *</label>
                 <textarea
                   rows={4}
                   required
@@ -1828,7 +1828,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   value={editCommentText}
                   onChange={(e) => setEditCommentText(e.target.value)}
                   className={`w-full p-3 text-xs rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                    isDark ? 'bg-slate-850 border-slate-700' : 'bg-slate-50 border-slate-300'
+                    isDark ? 'bg-slate-850 border-slate-700' : 'bg-white border-slate-300'
                   }`}
                 />
               </div>
@@ -1839,7 +1839,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditingComment(null)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-300"
                 >
                   Cancel
                 </button>
@@ -1861,9 +1861,9 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
       {archivingComment && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
-            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-white'}`}>
               <h3 className="font-bold text-sm flex items-center gap-2 text-rose-600">
                 <Trash2 className="w-4 h-4" /> Archive Comment
               </h3>
@@ -1872,18 +1872,18 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
               </button>
             </div>
             <form onSubmit={handleArchiveComment} className="p-4 space-y-3">
-              <p className="text-xs text-slate-600 dark:text-slate-300">
+              <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300">
                 Are you sure you want to archive this comment? It will be removed from the active discussion thread while maintaining immutable compliance logs.
               </p>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Reason for Archiving (Optional)</label>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Reason for Archiving (Optional)</label>
                 <input
                   type="text"
                   placeholder="e.g. Duplicate information, superseded by new SLA agreement"
                   value={archiveReason}
                   onChange={(e) => setArchiveReason(e.target.value)}
                   className={`w-full px-3 py-2 text-xs rounded-xl border focus:outline-none focus:ring-2 focus:ring-rose-500 ${
-                    isDark ? 'bg-slate-850 border-slate-700' : 'bg-slate-50 border-slate-300'
+                    isDark ? 'bg-slate-850 border-slate-700' : 'bg-white border-slate-300'
                   }`}
                 />
               </div>
@@ -1891,7 +1891,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                 <button
                   type="button"
                   onClick={() => setArchivingComment(null)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-300"
                 >
                   Cancel
                 </button>
@@ -1913,9 +1913,9 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className={`w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
-            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-white'}`}>
               <h3 className="font-bold text-lg">Create Service Desk Ticket</h3>
               <button onClick={() => setIsCreateModalOpen(false)} className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full">
                 <X className="w-5 h-5" />
@@ -1934,7 +1934,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   className={`w-full px-3.5 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                   }`}
                 />
               </div>
@@ -1956,10 +1956,10 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       }));
                     }}
                     className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                     }`}
                   >
-                    {categories.filter(c => c.isActive).map(c => (
+                    {categories.filter(c => c.isActive).map((c: any) => (
                       <option key={c.id} value={c.id}>
                         {c.name} {c.parentId ? '(Subcategory)' : ''}
                       </option>
@@ -1976,7 +1976,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                     value={formData.priority}
                     onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as ServiceTicketPriority }))}
                     className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                     }`}
                   >
                     <option value="CRITICAL">Critical</option>
@@ -1996,7 +1996,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                     value={formData.siteId}
                     onChange={(e) => setFormData(prev => ({ ...prev, siteId: e.target.value }))}
                     className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                     }`}
                   >
                     <option value="">-- Select Site --</option>
@@ -2014,11 +2014,11 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                     value={formData.clientId}
                     onChange={(e) => setFormData(prev => ({ ...prev, clientId: e.target.value }))}
                     className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                     }`}
                   >
                     <option value="">-- Auto-detect from Site --</option>
-                    {clients.map(c => (
+                    {clients.map((c: any) => (
                       <option key={c.id} value={c.id}>{c.legalName || c.primaryContactName || c.id}</option>
                     ))}
                   </select>
@@ -2035,7 +2035,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   className={`w-full px-3.5 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                   }`}
                 />
               </div>
@@ -2044,7 +2044,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="px-4 py-2 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>

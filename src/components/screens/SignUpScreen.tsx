@@ -245,7 +245,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   };
 
   return (
-    <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} p-4 md:p-6 flex flex-col justify-between max-w-xl mx-auto w-full`}>
+    <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'} p-4 md:p-6 flex flex-col justify-between max-w-xl mx-auto w-full`}>
       <div className="space-y-5">
         {/* Navigation & Header */}
         {/* Header with Back to Home & Back to Sign In */}
@@ -253,20 +253,20 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
           <div className="flex items-center gap-3">
             <button
               onClick={() => onNavigate('LANDING')}
-              className={`flex items-center gap-1 text-xs font-semibold ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
+              className={`flex items-center gap-1 text-xs font-semibold ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-black'}`}
             >
               <span>← Back to Website</span>
             </button>
-            <span className="text-slate-500 text-xs">•</span>
+            <span className="text-slate-500 dark:text-slate-400 text-xs">•</span>
             <button
               onClick={() => onNavigate('LOGIN')}
-              className={`flex items-center gap-1 text-xs font-semibold ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
+              className={`flex items-center gap-1 text-xs font-semibold ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-black'}`}
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Sign In</span>
             </button>
           </div>
-          <AppLogo size="sm" showSubtitle={false} />
+          <AppLogo size="sm" showSubtitle={false} company={initialCompany} />
         </div>
 
         {/* Title */}
@@ -383,7 +383,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   placeholder="e.g. +91 9876543210"
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none font-mono"
                 />
-                <Phone className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Phone className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
               </div>
             </div>
 
@@ -426,7 +426,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                 className={`w-full transition-colors duration-300 ${
                   isDark 
                     ? 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-white' 
-                    : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-800 shadow-sm'
+                    : 'bg-white hover:bg-slate-100 border-slate-200 text-black shadow-sm'
                 } border font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition disabled:opacity-60`}
               >
                 {googleLoading ? (
@@ -462,7 +462,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
 
             <div className="relative flex items-center justify-center">
               <div className="border-t border-slate-700/50 w-full" />
-              <span className={`text-[11px] uppercase font-mono tracking-wider px-3 ${isDark ? 'bg-slate-950 text-slate-500' : 'bg-slate-50 text-slate-400'} absolute`}>
+              <span className={`text-[11px] uppercase font-mono tracking-wider px-3 ${isDark ? 'bg-slate-950 text-slate-500' : 'bg-white text-slate-400'} absolute`}>
                 Or Email & Password
               </span>
             </div>
@@ -490,7 +490,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                         className={`w-full transition-colors duration-300 ${
                           isDark 
                             ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500' 
-                            : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'
+                            : 'bg-white border-slate-200 text-black placeholder-slate-400 focus:border-indigo-600 shadow-sm'
                         } rounded-xl px-4 py-2.5 text-xs focus:outline-none uppercase font-mono`}
                       />
                     </div>
@@ -532,7 +532,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                     className={`w-full transition-colors duration-300 ${
                       isDark 
                         ? 'bg-slate-900 border-slate-800 text-white focus:border-indigo-500' 
-                        : 'bg-white border-slate-200 text-slate-900 focus:border-indigo-600 shadow-sm'
+                        : 'bg-white border-slate-200 text-black focus:border-indigo-600 shadow-sm'
                     } rounded-xl px-4 py-2.5 text-xs focus:outline-none`}
                   >
                     {departments.map((dept) => (
@@ -558,10 +558,10 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                     className={`w-full transition-colors duration-300 ${
                       isDark 
                         ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500' 
-                        : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'
+                        : 'bg-white border-slate-200 text-black placeholder-slate-400 focus:border-indigo-600 shadow-sm'
                     } rounded-xl px-4 py-2.5 text-xs focus:outline-none`}
                   />
-                  <User className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <User className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                 </div>
               </div>
 
@@ -579,10 +579,10 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                     className={`w-full transition-colors duration-300 ${
                       isDark 
                         ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500' 
-                        : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'
+                        : 'bg-white border-slate-200 text-black placeholder-slate-400 focus:border-indigo-600 shadow-sm'
                     } rounded-xl px-4 py-2.5 text-xs focus:outline-none font-mono`}
                   />
-                  <Mail className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Mail className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                 </div>
               </div>
 
@@ -600,10 +600,10 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                     className={`w-full transition-colors duration-300 ${
                       isDark 
                         ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500' 
-                        : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'
+                        : 'bg-white border-slate-200 text-black placeholder-slate-400 focus:border-indigo-600 shadow-sm'
                     } rounded-xl px-4 py-2.5 text-xs focus:outline-none font-mono`}
                   />
-                  <Phone className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Phone className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                 </div>
               </div>
 
@@ -622,13 +622,13 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                       className={`w-full transition-colors duration-300 ${
                         isDark 
                           ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500' 
-                          : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'
+                          : 'bg-white border-slate-200 text-black placeholder-slate-400 focus:border-indigo-600 shadow-sm'
                       } rounded-xl px-4 py-2.5 text-xs focus:outline-none font-mono`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-300"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -648,7 +648,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                       className={`w-full transition-colors duration-300 ${
                         isDark 
                           ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500' 
-                          : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-600 shadow-sm'
+                          : 'bg-white border-slate-200 text-black placeholder-slate-400 focus:border-indigo-600 shadow-sm'
                       } rounded-xl px-4 py-2.5 text-xs focus:outline-none font-mono`}
                     />
                   </div>

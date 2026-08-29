@@ -150,7 +150,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
     unsubs.push(FirestoreService.subscribeToShifts(userSession, companyId, setShifts));
     unsubs.push(FirestoreService.subscribeToSites(companyId, setSites));
     unsubs.push(FirestoreService.subscribeToDepartments(companyId, setDepartments));
-    unsubs.push(FirestoreService.subscribeToOvertimePolicies(userSession, companyId, (pol) => {
+    unsubs.push(FirestoreService.subscribeToOvertimePolicies(userSession, companyId, (pol: any) => {
       setPolicies(pol);
       if (pol.length > 0 && !editingPolicy) {
         setEditingPolicy(pol[0]);
@@ -365,11 +365,11 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
             <span className="px-2.5 py-0.5 text-xs font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-full">
               WFM Point 3
             </span>
-            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-xl font-black text-black dark:text-white tracking-tight">
               Overtime & Late Calculation Engine
             </h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Deterministic rule-based overtime, late arrival grace windows, shortfall tracking, and approval workflow.
           </p>
         </div>
@@ -378,7 +378,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setBatchRecalcModal(prev => ({ ...prev, isOpen: true }))}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-300 dark:text-slate-200 rounded-xl transition-all"
           >
             <RefreshCw className="w-3.5 h-3.5 text-indigo-500" />
             Batch Recalculate
@@ -402,7 +402,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
           { label: 'Pending OT Approvals', value: stats.pendingOTRequests, icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
           { label: 'Late Arrivals', value: stats.lateArrivals, icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50' },
           { label: 'Early Departures', value: stats.earlyDepartures, icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
-          { label: 'Shortfall Hours', value: `${stats.shortfallHours}h`, icon: ShieldAlert, color: 'text-slate-600', bg: 'bg-slate-50' },
+          { label: 'Shortfall Hours', value: `${stats.shortfallHours}h`, icon: ShieldAlert, color: 'text-slate-600', bg: 'bg-white' },
         ].map((kpi, i) => (
           <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
             <div className="flex items-center justify-between">
@@ -411,7 +411,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                 <kpi.icon className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-xl font-black text-slate-900 dark:text-white mt-2">{kpi.value}</p>
+            <p className="text-xl font-black text-black dark:text-white mt-2">{kpi.value}</p>
           </div>
         ))}
       </div>
@@ -477,16 +477,16 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
         {(subTab === 'QUEUE' || subTab === 'EXCEPTIONS') && (
           <div className="flex items-center gap-2 flex-wrap">
             {/* Date filter */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-slate-950 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
               <input
                 type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="bg-transparent border-none outline-none text-slate-800 dark:text-slate-200 text-xs font-medium cursor-pointer"
+                className="bg-transparent border-none outline-none text-black dark:text-slate-200 text-xs font-medium cursor-pointer"
               />
               {dateFilter && (
-                <button onClick={() => setDateFilter('')} className="text-slate-400 hover:text-slate-600 text-[10px]">
+                <button onClick={() => setDateFilter('')} className="text-slate-400 hover:text-slate-600 dark:text-slate-400 text-[10px]">
                   Clear
                 </button>
               )}
@@ -496,7 +496,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
             <select
               value={selectedSiteId}
               onChange={(e) => setSelectedSiteId(e.target.value)}
-              className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 outline-none"
+              className="px-2.5 py-1.5 bg-white dark:bg-slate-950 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-black dark:text-slate-200 outline-none"
             >
               <option value="ALL">All Sites</option>
               {sites.map(s => (
@@ -505,14 +505,14 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
             </select>
 
             {/* Search Box */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-slate-950 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
               <Search className="w-3.5 h-3.5 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search employee..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent border-none outline-none text-slate-800 dark:text-slate-200 text-xs w-28 md:w-36"
+                className="bg-transparent border-none outline-none text-black dark:text-slate-200 text-xs w-28 md:w-36"
               />
             </div>
           </div>
@@ -527,14 +527,14 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
           {/* Status Filter & Bulk Action */}
           <div className="flex items-center justify-between flex-wrap gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-slate-500 mr-1">Status:</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
               {['ALL', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED'].map((st) => (
                 <button
                   key={st}
                   onClick={() => setSelectedStatus(st)}
                   className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
                     selectedStatus === st
-                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-black'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
                   }`}
                 >
@@ -558,7 +558,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                 </button>
                 <button
                   onClick={() => setSelectedRequestIds([])}
-                  className="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-800"
+                  className="px-2.5 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-black dark:text-slate-200"
                 >
                   Deselect
                 </button>
@@ -571,7 +571,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 font-bold text-slate-500">
+                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 dark:bg-slate-800/50 font-bold text-slate-500 dark:text-slate-400">
                     <th className="py-3 px-4 w-10">
                       <input
                         type="checkbox"
@@ -600,7 +600,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-900 dark:text-slate-300">
                   {filteredRequests.length === 0 ? (
                     <tr>
                       <td colSpan={10} className="py-12 text-center text-slate-400">
@@ -612,7 +612,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                     filteredRequests.map((req) => {
                       const isSelected = selectedRequestIds.includes(req.id);
                       return (
-                        <tr key={req.id} className={`hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors ${isSelected ? 'bg-indigo-50/40 dark:bg-indigo-950/20' : ''}`}>
+                        <tr key={req.id} className={`hover:bg-white/70 dark:hover:bg-slate-800/40 transition-colors ${isSelected ? 'bg-indigo-50/40 dark:bg-indigo-950/20' : ''}`}>
                           <td className="py-3 px-4">
                             <input
                               type="checkbox"
@@ -628,30 +628,30 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                             />
                           </td>
                           <td className="py-3 px-4">
-                            <div className="font-bold text-slate-900 dark:text-white">{req.employeeName}</div>
+                            <div className="font-bold text-black dark:text-white">{req.employeeName}</div>
                             <div className="text-[10px] text-slate-400">ID: {req.employeeId}</div>
                           </td>
                           <td className="py-3 px-4">
-                            <div className="font-semibold text-slate-800 dark:text-slate-200">{req.workDate}</div>
-                            <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                            <div className="font-semibold text-black dark:text-slate-200">{req.workDate}</div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
                               <MapPin className="w-2.5 h-2.5" />
                               {req.siteName || 'Default Site'}
                             </div>
                           </td>
                           <td className="py-3 px-4">
-                            <div className="font-semibold text-slate-800 dark:text-slate-200">{req.shiftName || 'Standard'}</div>
+                            <div className="font-semibold text-black dark:text-slate-200">{req.shiftName || 'Standard'}</div>
                             <div className="text-[10px] text-slate-400">{req.shiftStart} - {req.shiftEnd}</div>
                           </td>
                           <td className="py-3 px-4">
-                            <div className="text-[11px] text-slate-700 dark:text-slate-300">
+                            <div className="text-[11px] text-slate-900 dark:text-slate-300">
                               In: {req.actualCheckIn ? new Date(req.actualCheckIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
                             </div>
-                            <div className="text-[11px] text-slate-700 dark:text-slate-300">
+                            <div className="text-[11px] text-slate-900 dark:text-slate-300">
                               Out: {req.actualCheckOut ? new Date(req.actualCheckOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
                             </div>
                           </td>
                           <td className="py-3 px-4 text-center">
-                            <span className="font-bold text-slate-800 dark:text-slate-200">
+                            <span className="font-bold text-black dark:text-slate-200">
                               {AttendanceCalculationEngine.formatDuration(req.netWorkedMinutes)}
                             </span>
                           </td>
@@ -689,7 +689,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                                   record: req
                                 })}
                                 title="View Step-by-step Math"
-                                className="p-1.5 text-slate-500 hover:text-indigo-600 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg transition-colors"
+                                className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-indigo-600 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg transition-colors"
                               >
                                 <Info className="w-3.5 h-3.5" />
                               </button>
@@ -744,7 +744,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
         <div className="space-y-4">
           {/* Exception Filter Strip */}
           <div className="flex items-center gap-1.5 flex-wrap bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-            <span className="text-xs font-bold text-slate-500 mr-1">Filter Exception:</span>
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">Filter Exception:</span>
             {[
               { id: 'ALL', label: 'All Records' },
               { id: 'LATE', label: 'Late Arrival' },
@@ -773,7 +773,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 font-bold text-slate-500">
+                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 dark:bg-slate-800/50 font-bold text-slate-500 dark:text-slate-400">
                     <th className="py-3 px-4">Employee & Site</th>
                     <th className="py-3 px-4">Date</th>
                     <th className="py-3 px-4">Status</th>
@@ -787,7 +787,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-900 dark:text-slate-300">
                   {filteredAttendance.length === 0 ? (
                     <tr>
                       <td colSpan={11} className="py-12 text-center text-slate-400">
@@ -797,9 +797,9 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                     </tr>
                   ) : (
                     filteredAttendance.map((att) => (
-                      <tr key={att.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                      <tr key={att.id} className="hover:bg-white dark:bg-slate-950/70 dark:hover:bg-slate-800/40 transition-colors">
                         <td className="py-3 px-4">
-                          <div className="font-bold text-slate-900 dark:text-white">{att.employeeName}</div>
+                          <div className="font-bold text-black dark:text-white">{att.employeeName}</div>
                           <div className="text-[10px] text-slate-400">{att.siteName || 'Site'}</div>
                         </td>
                         <td className="py-3 px-4 font-semibold">{att.attendanceDate}</td>
@@ -811,7 +811,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                               ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
                               : att.status === 'HALF_DAY'
                               ? 'bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300'
-                              : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'
+                              : 'bg-slate-100 text-black dark:bg-slate-800 dark:text-slate-300'
                           }`}>
                             {att.status}
                           </span>
@@ -819,7 +819,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                         <td className="py-3 px-4 text-center">
                           {AttendanceCalculationEngine.formatDuration(att.scheduledMinutes || 480)}
                         </td>
-                        <td className="py-3 px-4 text-center font-bold text-slate-900 dark:text-white">
+                        <td className="py-3 px-4 text-center font-bold text-black dark:text-white">
                           {AttendanceCalculationEngine.formatDuration(att.workedMinutes || 0)}
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -861,7 +861,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-1 flex-wrap">
                             {att.exceptions && att.exceptions.length > 0 ? (
-                              att.exceptions.map((ex, idx) => (
+                              att.exceptions.map((ex: any, idx: number) => (
                                 <span key={idx} className="px-1.5 py-0.5 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-[9px] font-bold rounded">
                                   {ex}
                                 </span>
@@ -883,7 +883,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                                 record: att
                               })}
                               title="Audit Explanation"
-                              className="p-1.5 text-slate-500 hover:text-indigo-600 bg-slate-100 dark:bg-slate-800 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-indigo-600 bg-slate-100 dark:bg-slate-800 rounded-lg transition-colors"
                             >
                               <FileText className="w-3.5 h-3.5" />
                             </button>
@@ -916,7 +916,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
           {/* Policy Selector Column */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h3 className="font-bold text-black dark:text-white flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-indigo-500" />
                 Active Policies
               </h3>
@@ -935,7 +935,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
             </div>
 
             <div className="space-y-2">
-              {policies.map(pol => (
+              {policies.map((pol: any) => (
                 <div
                   key={pol.id}
                   onClick={() => setEditingPolicy(pol)}
@@ -946,14 +946,14 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900 dark:text-white text-xs">{pol.policyName}</span>
+                    <span className="font-bold text-black dark:text-white text-xs">{pol.policyName}</span>
                     {pol.isDefault && (
                       <span className="px-2 py-0.5 text-[9px] font-black bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 rounded-full">
                         DEFAULT
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-1">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
                     Grace: {pol.gracePeriodMinutes}m | Rounding: {pol.overtimeRoundingRule} | OT Threshold: {pol.overtimeThresholdMinutes}m
                   </p>
                 </div>
@@ -966,10 +966,10 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
             <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                  <h3 className="font-bold text-black dark:text-white text-base">
                     Policy Configuration: {editingPolicy.policyName}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Defines deterministic rules for grace periods, OT rounding, caps, and approval boundaries.
                   </p>
                 </div>
@@ -982,41 +982,41 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Policy Name</label>
+                  <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Policy Name</label>
                   <input
                     type="text"
                     value={editingPolicy.policyName}
                     onChange={(e) => setEditingPolicy({ ...editingPolicy, policyName: e.target.value })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                    className="w-full mt-1 p-2.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Default Break Deduction (Minutes)</label>
+                  <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Default Break Deduction (Minutes)</label>
                   <input
                     type="number"
                     value={editingPolicy.defaultBreakMinutes}
                     onChange={(e) => setEditingPolicy({ ...editingPolicy, defaultBreakMinutes: +e.target.value })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                    className="w-full mt-1 p-2.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Late Arrival Grace Window (Minutes)</label>
+                  <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Late Arrival Grace Window (Minutes)</label>
                   <input
                     type="number"
                     value={editingPolicy.gracePeriodMinutes}
                     onChange={(e) => setEditingPolicy({ ...editingPolicy, gracePeriodMinutes: +e.target.value })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                    className="w-full mt-1 p-2.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Late Calculation Mode</label>
+                  <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Late Calculation Mode</label>
                   <select
                     value={editingPolicy.lateCalculationMode}
                     onChange={(e) => setEditingPolicy({ ...editingPolicy, lateCalculationMode: e.target.value as any })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                    className="w-full mt-1 p-2.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
                   >
                     <option value="FROM_SHIFT_START">From Shift Start Time (Full Late)</option>
                     <option value="FROM_GRACE_END">From Grace Window End (Penalty Only)</option>
@@ -1024,31 +1024,31 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Early Departure Grace Window (Minutes)</label>
+                  <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Early Departure Grace Window (Minutes)</label>
                   <input
                     type="number"
                     value={editingPolicy.earlyDepartureGraceMinutes}
                     onChange={(e) => setEditingPolicy({ ...editingPolicy, earlyDepartureGraceMinutes: +e.target.value })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                    className="w-full mt-1 p-2.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Minimum OT Threshold (Minutes)</label>
+                  <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Minimum OT Threshold (Minutes)</label>
                   <input
                     type="number"
                     value={editingPolicy.overtimeThresholdMinutes}
                     onChange={(e) => setEditingPolicy({ ...editingPolicy, overtimeThresholdMinutes: +e.target.value })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                    className="w-full mt-1 p-2.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">OT Rounding Mode</label>
+                  <label className="text-xs font-bold text-slate-900 dark:text-slate-300">OT Rounding Mode</label>
                   <select
                     value={editingPolicy.overtimeRoundingRule}
                     onChange={(e) => setEditingPolicy({ ...editingPolicy, overtimeRoundingRule: e.target.value as any })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                    className="w-full mt-1 p-2.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
                   >
                     <option value="NEAREST_15">Nearest 15 Minutes</option>
                     <option value="NEAREST_30">Nearest 30 Minutes</option>
@@ -1061,39 +1061,39 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Daily Max Overtime Cap (Minutes)</label>
+                  <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Daily Max Overtime Cap (Minutes)</label>
                   <input
                     type="number"
                     value={editingPolicy.maxDailyOvertimeMinutes}
                     onChange={(e) => setEditingPolicy({ ...editingPolicy, maxDailyOvertimeMinutes: +e.target.value })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                    className="w-full mt-1 p-2.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Weekly Max Overtime Cap (Minutes)</label>
+                  <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Weekly Max Overtime Cap (Minutes)</label>
                   <input
                     type="number"
                     value={editingPolicy.maxWeeklyOvertimeMinutes}
                     onChange={(e) => setEditingPolicy({ ...editingPolicy, maxWeeklyOvertimeMinutes: +e.target.value })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                    className="w-full mt-1 p-2.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Auto-Approve Under (Minutes)</label>
+                  <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Auto-Approve Under (Minutes)</label>
                   <input
                     type="number"
                     value={editingPolicy.autoApproveUnderMinutes || 0}
                     onChange={(e) => setEditingPolicy({ ...editingPolicy, autoApproveUnderMinutes: +e.target.value })}
-                    className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                    className="w-full mt-1 p-2.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
 
               {/* Toggles */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl cursor-pointer">
+                <label className="flex items-center gap-3 p-3 bg-white dark:bg-slate-950 dark:bg-slate-800/50 rounded-2xl cursor-pointer">
                   <input
                     type="checkbox"
                     checked={editingPolicy.requireApprovalForOvertime}
@@ -1101,12 +1101,12 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                     className="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4"
                   />
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">Require Supervisor Approval</div>
-                    <div className="text-[10px] text-slate-500">Overtime requires explicit authorization</div>
+                    <div className="text-xs font-bold text-black dark:text-white">Require Supervisor Approval</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Overtime requires explicit authorization</div>
                   </div>
                 </label>
 
-                <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl cursor-pointer">
+                <label className="flex items-center gap-3 p-3 bg-white dark:bg-slate-950 dark:bg-slate-800/50 rounded-2xl cursor-pointer">
                   <input
                     type="checkbox"
                     checked={editingPolicy.eligibleForOvertime}
@@ -1114,8 +1114,8 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                     className="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4"
                   />
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">Overtime Calculation Active</div>
-                    <div className="text-[10px] text-slate-500">Enable automatic overtime computation</div>
+                    <div className="text-xs font-bold text-black dark:text-white">Overtime Calculation Active</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Enable automatic overtime computation</div>
                   </div>
                 </label>
               </div>
@@ -1143,10 +1143,10 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
             <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+                <h3 className="font-bold text-black dark:text-white text-sm">
                   Attendance & Overtime Adjustments
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Audit-tracked supervisor adjustments with justification.
                 </p>
               </div>
@@ -1161,7 +1161,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 font-bold text-slate-500">
+                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 dark:bg-slate-800/50 font-bold text-slate-500 dark:text-slate-400">
                     <th className="py-3 px-4">Employee</th>
                     <th className="py-3 px-4">Work Date</th>
                     <th className="py-3 px-4">Adjustment Type</th>
@@ -1172,7 +1172,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-900 dark:text-slate-300">
                   {adjustments.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="py-12 text-center text-slate-400">
@@ -1182,13 +1182,13 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                     </tr>
                   ) : (
                     adjustments.map((adj) => (
-                      <tr key={adj.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                        <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">
+                      <tr key={adj.id} className="hover:bg-white dark:bg-slate-950/70 dark:hover:bg-slate-800/40">
+                        <td className="py-3 px-4 font-bold text-black dark:text-white">
                           {adj.employeeName}
                         </td>
                         <td className="py-3 px-4 font-semibold">{adj.workDate}</td>
                         <td className="py-3 px-4">
-                          <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded">
+                          <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300 font-bold rounded">
                             {adj.adjustmentType}
                           </span>
                         </td>
@@ -1199,7 +1199,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                           {AttendanceCalculationEngine.formatDuration(adj.requestedMinutes)}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="text-slate-800 dark:text-slate-200">{adj.reason}</div>
+                          <div className="text-black dark:text-slate-200">{adj.reason}</div>
                           <div className="text-[10px] text-slate-400">By: {adj.requestedByName}</div>
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -1250,26 +1250,26 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+              <h3 className="font-bold text-black dark:text-white text-sm flex items-center gap-2">
                 <Info className="w-4 h-4 text-indigo-500" />
                 {selectedExplanation.title}
               </h3>
               <button
                 onClick={() => setSelectedExplanation(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 rounded-lg"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl font-mono text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto">
+            <div className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 p-4 rounded-2xl font-mono text-xs text-black dark:text-slate-200 whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto">
               {selectedExplanation.breakdown || selectedExplanation.explanation || 'No detailed steps recorded.'}
             </div>
 
             <div className="flex justify-end">
               <button
                 onClick={() => setSelectedExplanation(null)}
-                className="px-4 py-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold rounded-xl"
+                className="px-4 py-2 bg-slate-900 text-white dark:bg-white dark:bg-slate-900 dark:text-black dark:text-white text-xs font-bold rounded-xl"
               >
                 Close
               </button>
@@ -1285,18 +1285,18 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+              <h3 className="font-bold text-black dark:text-white text-sm">
                 {reviewModal.status === 'APPROVED' ? 'Approve Overtime' : 'Reject Overtime'}
               </h3>
               <button
                 onClick={() => setReviewModal(prev => ({ ...prev, isOpen: false }))}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 rounded-lg"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl text-xs space-y-1">
+            <div className="bg-white dark:bg-slate-950 dark:bg-slate-800 p-3 rounded-2xl text-xs space-y-1">
               <div><strong className="text-slate-600 dark:text-slate-400">Employee:</strong> {reviewModal.request.employeeName}</div>
               <div><strong className="text-slate-600 dark:text-slate-400">Date:</strong> {reviewModal.request.workDate}</div>
               <div><strong className="text-slate-600 dark:text-slate-400">Calculated OT:</strong> {AttendanceCalculationEngine.formatDuration(reviewModal.request.roundedOvertimeMinutes)}</div>
@@ -1304,19 +1304,19 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
 
             {reviewModal.status === 'APPROVED' && (
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Approved OT Hours</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Approved OT Hours</label>
                 <input
                   type="number"
                   step="0.25"
                   value={reviewModal.approvedHours}
                   onChange={(e) => setReviewModal({ ...reviewModal, approvedHours: +e.target.value })}
-                  className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                  className="w-full mt-1 p-2.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
                 />
               </div>
             )}
 
             <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-300">
                 {reviewModal.status === 'APPROVED' ? 'Supervisor Remarks (Optional)' : 'Rejection Reason (Mandatory)'}
               </label>
               <textarea
@@ -1324,14 +1324,14 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                 value={reviewModal.reason}
                 onChange={(e) => setReviewModal({ ...reviewModal, reason: e.target.value })}
                 placeholder="Enter remarks..."
-                className="w-full mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
+                className="w-full mt-1 p-2.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none focus:border-indigo-500"
               />
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setReviewModal(prev => ({ ...prev, isOpen: false }))}
-                className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800"
+                className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-black dark:text-slate-200"
               >
                 Cancel
               </button>
@@ -1355,49 +1355,49 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+              <h3 className="font-bold text-black dark:text-white text-sm flex items-center gap-2">
                 <RefreshCw className="w-4 h-4 text-indigo-500" />
                 Batch Recalculate Attendance
               </h3>
               <button
                 onClick={() => setBatchRecalcModal(prev => ({ ...prev, isOpen: false }))}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 rounded-lg"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Re-evaluates attendance punches against configured site policies, updating late, overtime, grace window, and shortfall metrics.
             </p>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Start Date</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Start Date</label>
                 <input
                   type="date"
                   value={batchRecalcModal.startDate}
                   onChange={(e) => setBatchRecalcModal({ ...batchRecalcModal, startDate: e.target.value })}
-                  className="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
+                  className="w-full mt-1 p-2 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">End Date</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300">End Date</label>
                 <input
                   type="date"
                   value={batchRecalcModal.endDate}
                   onChange={(e) => setBatchRecalcModal({ ...batchRecalcModal, endDate: e.target.value })}
-                  className="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
+                  className="w-full mt-1 p-2 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Site Scope</label>
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Site Scope</label>
               <select
                 value={batchRecalcModal.siteId}
                 onChange={(e) => setBatchRecalcModal({ ...batchRecalcModal, siteId: e.target.value })}
-                className="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
+                className="w-full mt-1 p-2 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
               >
                 <option value="ALL">All Sites</option>
                 {sites.map(s => (
@@ -1415,7 +1415,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setBatchRecalcModal(prev => ({ ...prev, isOpen: false }))}
-                className="px-4 py-2 text-xs font-bold text-slate-500"
+                className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400"
               >
                 Cancel
               </button>
@@ -1448,19 +1448,19 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+              <h3 className="font-bold text-black dark:text-white text-sm">
                 Request Attendance / Overtime Adjustment
               </h3>
               <button
                 onClick={() => setAdjustmentModal(prev => ({ ...prev, isOpen: false }))}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 rounded-lg"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Employee</label>
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Employee</label>
               <select
                 value={adjustmentModal.employeeId}
                 onChange={(e) => {
@@ -1473,7 +1473,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                     attendanceId: matchingAtt?.id || ''
                   });
                 }}
-                className="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
+                className="w-full mt-1 p-2 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
               >
                 <option value="">Select Employee</option>
                 {Array.from(new Set(attendance.map(a => a.employeeId))).map(empId => {
@@ -1489,11 +1489,11 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Adjustment Type</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Adjustment Type</label>
                 <select
                   value={adjustmentModal.type}
                   onChange={(e) => setAdjustmentModal({ ...adjustmentModal, type: e.target.value as any })}
-                  className="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
+                  className="w-full mt-1 p-2 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
                 >
                   <option value="OVERTIME">Overtime</option>
                   <option value="LATE">Late Arrival</option>
@@ -1503,31 +1503,31 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">New Minutes</label>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300">New Minutes</label>
                 <input
                   type="number"
                   value={adjustmentModal.requestedMinutes}
                   onChange={(e) => setAdjustmentModal({ ...adjustmentModal, requestedMinutes: +e.target.value })}
-                  className="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
+                  className="w-full mt-1 p-2 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Reason / Justification (Required)</label>
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-300">Reason / Justification (Required)</label>
               <textarea
                 rows={3}
                 value={adjustmentModal.reason}
                 onChange={(e) => setAdjustmentModal({ ...adjustmentModal, reason: e.target.value })}
                 placeholder="E.g. Client emergency handover overtime verified by site in-charge."
-                className="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
+                className="w-full mt-1 p-2 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none"
               />
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setAdjustmentModal(prev => ({ ...prev, isOpen: false }))}
-                className="px-4 py-2 text-xs font-bold text-slate-500"
+                className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400"
               >
                 Cancel
               </button>

@@ -17,7 +17,9 @@ interface TabletNavigationRailProps {
   onNavigate: (screen: PhaseAScreen) => void;
   onOpenDrawer: () => void;
   unreadNotifCount: number;
-  userSession: UserSession | null;
+  userSession,
+  activeCompany: UserSession | null;
+  activeCompany?: import('../../types').CompanyTenant | null;
 }
 
 export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
@@ -26,6 +28,7 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
   onOpenDrawer,
   unreadNotifCount,
   userSession,
+  activeCompany,
 }) => {
   const { setThemeMode, isDark } = useTheme();
 
@@ -78,14 +81,14 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
     <aside className={`w-20 border-r py-3 px-1 flex flex-col items-center justify-between shrink-0 z-20 ${
       isDark 
         ? isSuperAdmin ? 'bg-slate-950 border-amber-900/40 text-slate-100' : 'bg-slate-900 border-slate-800 text-slate-100' 
-        : isSuperAdmin ? 'bg-amber-50/30 border-amber-200 text-slate-900' : 'bg-white border-slate-200 text-slate-900'
+        : isSuperAdmin ? 'bg-amber-50/30 border-amber-200 text-black' : 'bg-white border-slate-200 text-black'
     }`}>
       {/* Top Section: Menu Trigger & Logo */}
       <div className="flex flex-col items-center gap-2.5 w-full">
         <button
           onClick={onOpenDrawer}
           className={`p-2 rounded-xl transition ${
-            isDark ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-700'
+            isDark ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-900'
           }`}
           title="Open All 15 Enterprise Modules"
         >
@@ -154,14 +157,14 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
-        {userSession && (
+        {userSession && activeCompany && (
           <button
             onClick={() => onNavigate('PROFILE')}
             className="relative"
-            title={`${userSession.fullName} (${userSession.role})`}
+            title={`${userSession?.fullName} (${userSession?.role})`}
           >
             <img
-              src={userSession.avatarUrl || undefined}
+              src={userSession?.avatarUrl || undefined}
               alt="Avatar"
               className={`w-9 h-9 rounded-full object-cover border-2 shadow ${
                 isSuperAdmin ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-indigo-500'

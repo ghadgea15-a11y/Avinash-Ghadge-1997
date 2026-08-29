@@ -111,7 +111,7 @@ export const ResourcesSection: React.FC<ResourcesSectionProps> = ({ onNavigate }
                     </div>
                   </div>
 
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                  <h3 className="text-base font-bold text-black dark:text-white mb-2">
                     {res.title}
                   </h3>
                   <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>

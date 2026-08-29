@@ -1,5 +1,2 @@
-import React from 'react';
-
-export const SkilledStaffDashboard: React.FC<any> = () => (
-  <div>SkilledStaffDashboard</div>
-);
+import { EmployeeSelfServiceDashboard } from './EmployeeSelfServiceDashboard';
+export const SkilledStaffDashboard = EmployeeSelfServiceDashboard;

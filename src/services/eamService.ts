@@ -1,4 +1,5 @@
 import { db, storage } from '../firebase';
+import { FirestoreService } from './firestoreService';
 import { 
   collection, doc, setDoc, updateDoc, getDoc, getDocs, 
   query, where, orderBy, onSnapshot, writeBatch, serverTimestamp
@@ -100,6 +101,7 @@ export class EamService {
       });
 
       await batch.commit();
+      FirestoreService.logAuditEvent(companyId, assignedBy, assignedByName, 'ASSET_DEPLOYED', `Deployed asset ${asset.id} to ${assigneeName}`, asset.id);
       return true;
     } catch (e) {
       console.error('Error deploying asset:', e);
@@ -205,7 +207,7 @@ export class EamService {
         status: 'RESERVED',
         updatedAt: now
       });
-
+      FirestoreService.logAuditEvent(companyId, requestedBy, 'System', 'ASSET_TRANSFER_REQUESTED', `Transfer requested for asset ${asset.id} from ${fromSiteId} to ${toSiteId}`, asset.id);
       return true;
     } catch (e) {
       console.error('Error requesting transfer:', e);
@@ -329,6 +331,82 @@ export class EamService {
       console.error('Error returning asset:', e);
       return false;
     }
+  }
+
+  /**
+   * Schedule Maintenance for an asset
+   */
+  static async scheduleMaintenance(
+    companyId: string,
+    assetId: string,
+    maintenanceType: 'PREVENTIVE' | 'BREAKDOWN' | 'CALIBRATION',
+    scheduledDate: string,
+    description: string,
+    performedBy: string
+  ): Promise<string> {
+    const id = `MNT-${Date.now()}`;
+    const mntRef = doc(db, 'companies', companyId, 'asset_maintenance', id);
+    const now = new Date().toISOString();
+
+    const record = {
+      id,
+      companyId,
+      assetId,
+      maintenanceType,
+      scheduledDate,
+      description,
+      status: 'SCHEDULED',
+      createdBy: performedBy,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    await setDoc(mntRef, record);
+    
+    // Mark asset as UNDER_MAINTENANCE if it's breakdown
+    if (maintenanceType === 'BREAKDOWN') {
+      const assetRef = doc(db, 'companies', companyId, 'assets', assetId);
+      await updateDoc(assetRef, { currentStatus: 'UNDER_MAINTENANCE', updatedAt: now });
+    }
+
+    return id;
+  }
+
+  /**
+   * Log completed maintenance activity
+   */
+  static async logMaintenanceActivity(
+    companyId: string,
+    maintenanceId: string,
+    assetId: string,
+    cost: number,
+    remarks: string,
+    performedBy: string,
+    conditionAfter: AssetCondition
+  ): Promise<void> {
+    const batch = writeBatch(db);
+    const now = new Date().toISOString();
+    
+    const mntRef = doc(db, 'companies', companyId, 'asset_maintenance', maintenanceId);
+    batch.update(mntRef, {
+      status: 'COMPLETED',
+      actualDate: now,
+      cost,
+      remarks,
+      completedBy: performedBy,
+      conditionAfter,
+      updatedAt: now
+    });
+
+    const assetRef = doc(db, 'companies', companyId, 'assets', assetId);
+    batch.update(assetRef, {
+      currentStatus: 'AVAILABLE',
+      condition: conditionAfter,
+      lastMaintenanceDate: now,
+      updatedAt: now
+    });
+
+    await batch.commit();
   }
 
   /**

@@ -114,7 +114,7 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
   });
 
   return (
-    <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} p-4 md:p-6 space-y-6 max-w-6xl mx-auto w-full`}>
+    <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'} p-4 md:p-6 space-y-6 max-w-6xl mx-auto w-full`}>
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -158,7 +158,7 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
               onChange={(e) => handleSelectCompany(e.target.value)}
               disabled={loading}
               className={`w-full md:w-96 px-3 py-2 text-xs font-semibold rounded-xl border ${
-                isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
+                isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
               } focus:outline-none focus:border-cyan-500`}
             >
               {companies.map((c) => (
@@ -196,7 +196,7 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
                   ? 'bg-cyan-600 text-white shadow-md'
                   : isDark
                     ? 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-                    : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                    : 'bg-white text-slate-600 hover:text-black border border-slate-200'
               }`}
             >
               {cat}

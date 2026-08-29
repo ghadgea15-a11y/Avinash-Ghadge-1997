@@ -5,7 +5,7 @@ import { Target, Activity } from 'lucide-react';
 export const SlaDefinitionList: React.FC<{ definitions: SlaDefinitionRecord[], onRefresh: () => void }> = ({ definitions }) => {
   if (definitions.length === 0) {
     return (
-      <div className="py-12 flex flex-col items-center justify-center text-slate-500 bg-white rounded-lg border border-slate-200">
+      <div className="py-12 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-lg border border-slate-200">
         <Target className="w-12 h-12 text-slate-300 mb-3" />
         <p>No SLA Definitions found.</p>
         <p className="text-sm mt-1">Create an SLA to start tracking performance metrics.</p>
@@ -14,33 +14,33 @@ export const SlaDefinitionList: React.FC<{ definitions: SlaDefinitionRecord[], o
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 shadow-sm overflow-hidden">
       <table className="min-w-full divide-y divide-slate-200">
-        <thead className="bg-slate-50">
+        <thead className="bg-white dark:bg-slate-950">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">SLA Name / Code</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Contract / Client</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Target</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">SLA Name / Code</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contract / Client</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Target</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-slate-200">
+        <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200">
           {definitions.map(def => (
-            <tr key={def.id} className="hover:bg-slate-50">
+            <tr key={def.id} className="hover:bg-white dark:bg-slate-950">
               <td className="px-6 py-4">
-                <div className="font-medium text-slate-900">{def.slaName || def.name || 'SLA'}</div>
-                <div className="text-xs text-slate-500">{def.slaCode || def.slaId || 'N/A'} • {def.measurementType ? def.measurementType.replace('_', ' ') : 'Metric'}</div>
+                <div className="font-medium text-black dark:text-white">{def.slaName || def.name || 'SLA'}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">{def.slaCode || def.slaId || 'N/A'} • {def.measurementType ? def.measurementType.replace('_', ' ') : 'Metric'}</div>
               </td>
               <td className="px-6 py-4">
-                <div className="text-sm text-slate-900 line-clamp-1">{def.contractId || 'All Contracts'}</div>
-                <div className="text-xs text-slate-500">{def.clientId || 'All Clients'}</div>
+                <div className="text-sm text-black dark:text-white line-clamp-1">{def.contractId || 'All Contracts'}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">{def.clientId || 'All Clients'}</div>
               </td>
-              <td className="px-6 py-4 text-sm font-medium text-slate-900">
+              <td className="px-6 py-4 text-sm font-medium text-black dark:text-white">
                 {def.targetValue ?? def.targetResponseMinutes ?? 0} {def.targetUnit || 'Minutes'}
               </td>
               <td className="px-6 py-4">
                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                  def.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'
+                  def.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-black'
                 }`}>
                   {def.status}
                 </span>

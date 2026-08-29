@@ -309,7 +309,7 @@ const FeedbackToastContainer: React.FC<{
       className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-md w-full pointer-events-none px-4 sm:px-0"
     >
       {toasts.map((toast) => {
-        let bgClass = 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-700 shadow-xl';
+        let bgClass = 'bg-white dark:bg-slate-800 text-black dark:text-slate-100 border-slate-200 dark:border-slate-700 shadow-xl';
         let icon = <Info className="w-5 h-5 text-blue-500 shrink-0" />;
 
         switch (toast.type) {
@@ -331,7 +331,7 @@ const FeedbackToastContainer: React.FC<{
             icon = <Loader2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400 animate-spin shrink-0" />;
             break;
           case 'CANCELLED':
-            bgClass = 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600 shadow-lg';
+            bgClass = 'bg-slate-100 dark:bg-slate-800 text-black dark:text-slate-200 border-slate-300 dark:border-slate-600 shadow-lg';
             icon = <Ban className="w-5 h-5 text-slate-500 dark:text-slate-400 shrink-0" />;
             break;
           case 'PERMISSION_DENIED':
@@ -360,7 +360,7 @@ const FeedbackToastContainer: React.FC<{
             {toast.type !== 'LOADING' && (
               <button
                 onClick={() => onDismiss(toast.id)}
-                className="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors shrink-0 text-current opacity-70 hover:opacity-100"
+                className="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white dark:bg-slate-900/10 transition-colors shrink-0 text-current opacity-70 hover:opacity-100"
                 aria-label="Close notification"
               >
                 <X className="w-4 h-4" />
@@ -414,10 +414,10 @@ const ConfirmDialogModal: React.FC<{
             {iconComp}
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+            <h3 className="text-lg font-bold text-black dark:text-white">
               {title}
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-300 leading-relaxed">
               {message}
             </p>
           </div>
@@ -427,7 +427,7 @@ const ConfirmDialogModal: React.FC<{
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+            className="px-4 py-2 text-sm font-medium text-slate-900 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
           >
             {cancelLabel}
           </button>

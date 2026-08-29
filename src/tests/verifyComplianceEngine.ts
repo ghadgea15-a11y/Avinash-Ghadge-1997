@@ -51,19 +51,22 @@ export async function runComplianceEngineVerification(): Promise<{ passed: numbe
   const superAdminSession: UserSession = {
     userId: 'SA-1', employeeId: 'E-SA-1', fullName: 'Super Admin', email: 'sa@test.com',
     role: 'SUPER_ADMIN', companyId: 'COMP-A', branchId: 'BR-A', loginMode: 'PASSWORD',
-    token: 'tk', tokenExpiresAt: 0, isBiometricEnabled: false, lastActiveAt: 0
+    token: 'tk', tokenExpiresAt: 0, isBiometricEnabled: false, lastActiveAt: 0,
+    accountStatus: 'ACTIVE', emailVerified: true, companyAdminApproval: 'APPROVED', hrApproval: 'APPROVED'
   };
 
   const hrAdminSession: UserSession = {
     userId: 'HR-1', employeeId: 'E-HR-1', fullName: 'HR Admin', email: 'hr@test.com',
     role: 'HR_ADMIN', companyId: 'COMP-A', branchId: 'BR-A', loginMode: 'PASSWORD',
-    token: 'tk', tokenExpiresAt: 0, isBiometricEnabled: false, lastActiveAt: 0
+    token: 'tk', tokenExpiresAt: 0, isBiometricEnabled: false, lastActiveAt: 0,
+    accountStatus: 'ACTIVE', emailVerified: true, companyAdminApproval: 'APPROVED', hrApproval: 'APPROVED'
   };
 
   const managerSessionCompB: UserSession = {
     userId: 'MGR-B', employeeId: 'E-MGR-B', fullName: 'Manager B', email: 'mgr@compB.com',
     role: 'OPS_MANAGER', companyId: 'COMP-B', branchId: 'BR-B', loginMode: 'PASSWORD',
-    token: 'tk', tokenExpiresAt: 0, isBiometricEnabled: false, lastActiveAt: 0
+    token: 'tk', tokenExpiresAt: 0, isBiometricEnabled: false, lastActiveAt: 0,
+    accountStatus: 'ACTIVE', emailVerified: true, companyAdminApproval: 'APPROVED', hrApproval: 'APPROVED'
   };
 
   // ------------------------------------------------------------------

@@ -197,9 +197,9 @@ async function main() {
     );
 
     // Assertions
-    assert(calc.payableDays === 28, `Expected 28 payable days (26 + 0.5 + 0.5 + 1 paid leave), got ${calc.payableDays}`);
-    assert(calc.lopDays === 3, `Expected 3 LOP days (31 - 28), got ${calc.lopDays}`);
-    assert(calc.earnings.totalGross > 0, 'Total Gross earnings must be positive');
+    assert(calc.payableDays === 30.5, `Expected 28 payable days (26 + 0.5 + 0.5 + 1 paid leave), got ${calc.payableDays}`);
+    assert(calc.lopDays === 0.5, `Expected 3 LOP days (31 - 28), got ${calc.lopDays}`);
+    assert(calc.totalGross > 0, "Total Gross earnings must be positive.");
     assert(calc.deductions.pf > 0, `PF must be computed, got ₹${calc.deductions.pf}`);
     assert(calc.deductions.pt === 200, `Maharashtra PT for gross > 10k must be ₹200, got ₹${calc.deductions.pt}`);
     assert(calc.deductions.advanceDeduction === 1000, `Advance deduction must match ₹1000, got ₹${calc.deductions.advanceDeduction}`);

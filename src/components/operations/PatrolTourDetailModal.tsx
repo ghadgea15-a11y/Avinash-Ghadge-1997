@@ -72,7 +72,7 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
     }
   };
 
-  const completedCount = tour.completedCheckpointsCount || (tour.checkpointScans?.filter(s => s.status === 'COMPLETED').length || 0);
+  const completedCount = tour.completedCheckpointsCount || (tour.checkpointScans?.filter((s: any) => s.status === 'COMPLETED').length || 0);
   const totalCount = tour.totalCheckpoints || 1;
   const completionPercent = tour.completionPercentage ?? Math.round((completedCount / totalCount) * 100);
 
@@ -87,13 +87,13 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
       case 'MISSED':
         return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">MISSED</span>;
       default:
-        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">{status}</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-black dark:text-slate-200 border border-slate-200">{status}</span>;
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden border border-slate-200 my-6 animate-in fade-in zoom-in duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden border border-slate-200 my-6 animate-in fade-in zoom-in duration-200">
         
         {/* Header */}
         <div className="bg-slate-900 px-6 py-4 text-white flex items-center justify-between">
@@ -139,26 +139,26 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
           
           {/* Key Metrics Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Site Location</span>
-              <span className="text-sm font-bold text-slate-900 truncate block mt-0.5">{tour.siteName}</span>
+            <div className="p-3.5 bg-white dark:bg-slate-950 border border-slate-200 rounded-xl">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Site Location</span>
+              <span className="text-sm font-bold text-black dark:text-white truncate block mt-0.5">{tour.siteName}</span>
             </div>
 
-            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Assigned Guard</span>
-              <span className="text-sm font-bold text-slate-900 truncate block mt-0.5">{tour.assignedGuardName || 'Unassigned'}</span>
+            <div className="p-3.5 bg-white dark:bg-slate-950 border border-slate-200 rounded-xl">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Assigned Guard</span>
+              <span className="text-sm font-bold text-black dark:text-white truncate block mt-0.5">{tour.assignedGuardName || 'Unassigned'}</span>
             </div>
 
-            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Completion</span>
+            <div className="p-3.5 bg-white dark:bg-slate-950 border border-slate-200 rounded-xl">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Completion</span>
               <span className="text-sm font-bold text-indigo-600 block mt-0.5">
                 {completedCount} / {totalCount} ({completionPercent}%)
               </span>
             </div>
 
-            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Exceptions</span>
-              <span className="text-sm font-bold block mt-0.5 text-slate-900">
+            <div className="p-3.5 bg-white dark:bg-slate-950 border border-slate-200 rounded-xl">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Exceptions</span>
+              <span className="text-sm font-bold block mt-0.5 text-black dark:text-white">
                 {(tour.exceptionsDetected?.length || 0) === 0 ? (
                   <span className="text-emerald-600 font-semibold">None (Clean)</span>
                 ) : (
@@ -169,7 +169,7 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
           </div>
 
           {/* Timestamps & Remarks */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-2">
+          <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 dark:text-slate-400 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <strong>Started:</strong> {tour.actualStart ? new Date(tour.actualStart).toLocaleString() : 'Not Started'}
@@ -203,18 +203,18 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
 
           {/* Checkpoint Scans Table */}
           <div>
-            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
+            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wider mb-2.5">
               Checkpoint Audit Log ({tour.checkpointScans?.length || 0} Records)
             </h4>
 
             {(!tour.checkpointScans || tour.checkpointScans.length === 0) ? (
-              <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 text-center text-xs text-slate-500">
+              <div className="p-6 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 text-center text-xs text-slate-500 dark:text-slate-400">
                 No checkpoints have been scanned for this tour yet.
               </div>
             ) : (
               <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
+                  <thead className="bg-slate-100 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200">
                     <tr>
                       <th className="py-2.5 px-3">Seq #</th>
                       <th className="py-2.5 px-3">Checkpoint</th>
@@ -224,12 +224,12 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
                       <th className="py-2.5 px-3">Notes</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {tour.checkpointScans.map((scan, idx) => (
-                      <tr key={scan.checkpointId || idx} className="hover:bg-slate-50/80">
-                        <td className="py-2.5 px-3 font-bold font-mono text-slate-900">#{scan.sequenceOrder}</td>
+                  <tbody className="divide-y divide-slate-100 text-slate-900 dark:text-slate-300">
+                    {tour.checkpointScans.map((scan: any, idx: number) => (
+                      <tr key={scan.checkpointId || idx} className="hover:bg-white dark:bg-slate-950/80">
+                        <td className="py-2.5 px-3 font-bold font-mono text-black dark:text-white">#{scan.sequenceOrder}</td>
                         <td className="py-2.5 px-3">
-                          <span className="font-semibold text-slate-900 block">{scan.checkpointName}</span>
+                          <span className="font-semibold text-black dark:text-white block">{scan.checkpointName}</span>
                           <span className="font-mono text-[10px] text-slate-400">{scan.code}</span>
                         </td>
                         <td className="py-2.5 px-3 font-mono text-[11px]">
@@ -256,7 +256,7 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
                             {scan.sequenceStatus || 'IN_SEQUENCE'}
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 text-[11px] text-slate-500 max-w-[150px] truncate">
+                        <td className="py-2.5 px-3 text-[11px] text-slate-500 dark:text-slate-400 max-w-[150px] truncate">
                           {scan.remarks || '-'}
                         </td>
                       </tr>
@@ -289,7 +289,7 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
                 value={overrideReason}
                 onChange={e => setOverrideReason(e.target.value)}
                 placeholder="Reason for override (e.g. Emergency response required officer diversion, gate 4 key unavailable)"
-                className="w-full px-3.5 py-2 bg-white border border-amber-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-amber-300 rounded-xl text-xs text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                 required
               />
 
@@ -297,7 +297,7 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsOverrideOpen(false)}
-                  className="px-3 py-1.5 text-xs font-medium text-amber-900 bg-white border border-amber-300 rounded-lg hover:bg-amber-100"
+                  className="px-3 py-1.5 text-xs font-medium text-amber-900 bg-white dark:bg-slate-900 border border-amber-300 rounded-lg hover:bg-amber-100"
                 >
                   Cancel
                 </button>
@@ -314,7 +314,7 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-950 px-6 py-4 border-t border-slate-200 flex items-center justify-between">
           <div>
             {!tour.isOverridden && (tour.status === 'INCOMPLETE' || tour.status === 'MISSED') && isSupervisorOrAdmin && !isOverrideOpen && (
               <button
@@ -331,7 +331,7 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-slate-900 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors"
           >
             Close
           </button>

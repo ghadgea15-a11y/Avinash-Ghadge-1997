@@ -104,7 +104,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                 placeholder="e.g. guard@apexsecurity.com or EMP-G-8821"
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono"
               />
-              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400" />
             </div>
           </div>
 
@@ -148,7 +148,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
       </div>
 
       <div className="text-center pt-6 border-t border-slate-900">
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           Need immediate help? Contact your Control Room or HR Desk.
         </p>
       </div>

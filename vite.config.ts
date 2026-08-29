@@ -10,6 +10,7 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 3000,
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -23,5 +24,8 @@ export default defineConfig({
         }
       }
     }
+  },
+  esbuild: {
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
   }
 });

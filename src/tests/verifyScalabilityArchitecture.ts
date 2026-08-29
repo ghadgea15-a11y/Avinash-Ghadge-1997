@@ -65,7 +65,11 @@ export async function runScalabilityArchitectureTests(): Promise<{
     tokenExpiresAt: Date.now() + 3600000,
     isBiometricEnabled: false,
     lastActiveAt: Date.now(),
-    loginMode: 'PASSWORD'
+    loginMode: 'PASSWORD',
+    accountStatus: 'ACTIVE',
+    emailVerified: true,
+    companyAdminApproval: 'APPROVED',
+    hrApproval: 'APPROVED'
   };
 
   const supStrategy = OfflineSyncGovernor.getCacheSyncStrategy(mockSupervisorSession);
@@ -85,7 +89,11 @@ export async function runScalabilityArchitectureTests(): Promise<{
     tokenExpiresAt: Date.now() + 3600000,
     isBiometricEnabled: false,
     lastActiveAt: Date.now(),
-    loginMode: 'PASSWORD'
+    loginMode: 'PASSWORD',
+    accountStatus: 'ACTIVE',
+    emailVerified: true,
+    companyAdminApproval: 'APPROVED',
+    hrApproval: 'APPROVED'
   };
 
   const workerStrategy = OfflineSyncGovernor.getCacheSyncStrategy(mockWorkerSession);

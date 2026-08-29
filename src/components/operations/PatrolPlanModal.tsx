@@ -130,7 +130,7 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/75 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 my-8 animate-in fade-in zoom-in duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 my-8 animate-in fade-in zoom-in duration-200">
         {/* Header */}
         <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white">
           <div className="flex items-center space-x-2.5">
@@ -162,14 +162,14 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Site */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 uppercase tracking-wider mb-1">
                 Target Site *
               </label>
               <select
                 value={siteId}
                 onChange={e => handleSiteChange(e.target.value)}
                 disabled={!!existingPlan}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-950 border border-slate-300 rounded-xl text-sm font-medium text-black dark:text-white focus:bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                 required
               >
                 {sites.map(s => (
@@ -180,7 +180,7 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
 
             {/* Plan Name */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 uppercase tracking-wider mb-1">
                 Plan Name *
               </label>
               <input
@@ -188,7 +188,7 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
                 value={planName}
                 onChange={e => setPlanName(e.target.value)}
                 placeholder="e.g. Night Perimeter Security Tour"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-950 border border-slate-300 rounded-xl text-sm text-black dark:text-white focus:bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                 required
               />
             </div>
@@ -196,7 +196,7 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 uppercase tracking-wider mb-1">
               Description / Instructions
             </label>
             <input
@@ -204,20 +204,20 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="e.g. Inspect all perimeter gates, emergency exits, and warehouse locks"
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-950 border border-slate-300 rounded-xl text-sm text-black dark:text-white focus:bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Frequency */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 uppercase tracking-wider mb-1">
                 Tour Frequency
               </label>
               <select
                 value={frequency}
                 onChange={e => setFrequency(e.target.value as any)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-950 border border-slate-300 rounded-xl text-sm font-medium text-black dark:text-white focus:bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="PER_SHIFT">Per Shift</option>
                 <option value="HOURLY">Hourly</option>
@@ -229,7 +229,7 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
             {/* Custom Interval */}
             {(frequency === 'CUSTOM_INTERVAL' || frequency === 'HOURLY') && (
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Interval (Minutes)
                 </label>
                 <input
@@ -238,20 +238,20 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
                   max="1440"
                   value={intervalMinutes}
                   onChange={e => setIntervalMinutes(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-950 border border-slate-300 rounded-xl text-sm text-black dark:text-white focus:bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             )}
 
             {/* Shift Linkage */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 uppercase tracking-wider mb-1">
                 Associated Shift
               </label>
               <select
                 value={shiftId}
                 onChange={e => setShiftId(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-950 border border-slate-300 rounded-xl text-sm font-medium text-black dark:text-white focus:bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">All / Any Shift</option>
                 {shifts.map(sh => (
@@ -262,31 +262,31 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
           </div>
 
           {/* Verification Rules */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Operational Rules & Validation</h4>
+          <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 space-y-3">
+            <h4 className="text-xs font-bold text-black dark:text-slate-200 uppercase tracking-wider">Operational Rules & Validation</h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <label className="flex items-center space-x-2.5 p-2.5 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-indigo-300 transition-colors">
+              <label className="flex items-center space-x-2.5 p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 cursor-pointer hover:border-indigo-300 transition-colors">
                 <input
                   type="checkbox"
                   checked={enforceSequence}
                   onChange={e => setEnforceSequence(e.target.checked)}
                   className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
                 />
-                <span className="text-xs font-medium text-slate-800">Enforce Sequence Order</span>
+                <span className="text-xs font-medium text-black dark:text-slate-200">Enforce Sequence Order</span>
               </label>
 
-              <label className="flex items-center space-x-2.5 p-2.5 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-indigo-300 transition-colors">
+              <label className="flex items-center space-x-2.5 p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 cursor-pointer hover:border-indigo-300 transition-colors">
                 <input
                   type="checkbox"
                   checked={requireGeofence}
                   onChange={e => setRequireGeofence(e.target.checked)}
                   className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
                 />
-                <span className="text-xs font-medium text-slate-800">Require GPS Geofence</span>
+                <span className="text-xs font-medium text-black dark:text-slate-200">Require GPS Geofence</span>
               </label>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                   Min Completion Pass %
                 </label>
                 <div className="flex items-center space-x-2">
@@ -308,7 +308,7 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
           {/* Checkpoint Selection list */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 uppercase tracking-wider">
                 Include Checkpoints ({selectedCheckpointIds.length}/{siteCheckpoints.length} Selected)
               </label>
               {siteCheckpoints.length > 0 && (
@@ -327,7 +327,7 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
                 No checkpoints found for this site. Please add checkpoints under the Checkpoints tab first.
               </div>
             ) : (
-              <div className="max-h-48 overflow-y-auto space-y-1.5 border border-slate-200 rounded-xl p-2 bg-slate-50">
+              <div className="max-h-48 overflow-y-auto space-y-1.5 border border-slate-200 rounded-xl p-2 bg-white dark:bg-slate-950">
                 {siteCheckpoints.map(cp => {
                   const isSelected = selectedCheckpointIds.includes(cp.id);
                   return (
@@ -348,7 +348,7 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
                           className="w-4 h-4 text-indigo-600 rounded pointer-events-none"
                         />
                         <div className="flex items-center space-x-2">
-                          <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center justify-center">
+                          <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-900 dark:text-slate-300 text-[11px] font-bold flex items-center justify-center">
                             {cp.sequenceOrder}
                           </span>
                           <span className="text-xs font-semibold">{cp.checkpointName}</span>
@@ -356,7 +356,7 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
                         </div>
                       </div>
                       {cp.locationDescription && (
-                        <span className="text-[11px] text-slate-500 truncate max-w-[160px]">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[160px]">
                           {cp.locationDescription}
                         </span>
                       )}
@@ -372,7 +372,7 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-900 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors"
             >
               Cancel
             </button>

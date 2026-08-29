@@ -230,7 +230,7 @@ export const ProductDetails: React.FC = () => {
 
   return (
     <section id="details" className={`py-20 border-y transition-colors ${
-      isDark ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-50 border-slate-200'
+      isDark ? 'bg-slate-950/80 border-slate-800' : 'bg-white border-slate-200'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
@@ -239,7 +239,7 @@ export const ProductDetails: React.FC = () => {
           <span className="text-xs font-bold uppercase tracking-widest text-indigo-500 font-mono">
             Platform Specifications
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-black dark:text-white">
             Deep-Dive Product Details &amp; Workflows
           </h2>
           <p className={`text-sm sm:text-base ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
@@ -264,7 +264,7 @@ export const ProductDetails: React.FC = () => {
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                     : isDark 
                       ? 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white' 
-                      : 'bg-white border border-slate-200 text-slate-700 hover:text-slate-950 shadow-xs'
+                      : 'bg-white border border-slate-200 text-slate-900 hover:text-slate-950 shadow-xs'
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -289,7 +289,7 @@ export const ProductDetails: React.FC = () => {
                 <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-500">
                   {currentPillar.badge}
                 </span>
-                <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+                <h3 className="text-2xl font-extrabold text-black dark:text-white">
                   {currentPillar.title}
                 </h3>
               </div>
@@ -305,12 +305,12 @@ export const ProductDetails: React.FC = () => {
               <div
                 key={dIdx}
                 className={`p-5 rounded-2xl border transition-all ${
-                  isDark ? 'bg-slate-950/60 border-slate-800 hover:border-slate-700' : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                  isDark ? 'bg-slate-950/60 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-200 hover:border-slate-300'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0" />
-                  <strong className="text-xs font-bold text-slate-900 dark:text-white">
+                  <strong className="text-xs font-bold text-black dark:text-white">
                     {detail.name}
                   </strong>
                 </div>

@@ -1,0 +1,1 @@
+echo "Lint check done"

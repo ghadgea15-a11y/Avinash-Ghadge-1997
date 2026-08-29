@@ -1,98 +1,62 @@
 import React from 'react';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Download, 
-  PieChart, 
-  Layers, 
-  CheckCircle2, 
-  ArrowRight,
-  FileSpreadsheet
-} from 'lucide-react';
 import { PhaseAScreen } from '../../types';
 import { navigateToUrl } from '../../utils/publicRouter';
+import { BarChart3, ArrowRight, CheckCircle2 } from 'lucide-react';
 
-interface ReportsAnalyticsPageProps {
-  onNavigate: (screen: PhaseAScreen) => void;
-}
-
-export const ReportsAnalyticsPage: React.FC<ReportsAnalyticsPageProps> = ({ onNavigate }) => {
-  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
-    e.preventDefault();
-    navigateToUrl(path);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
+export const ReportsAnalyticsPage: React.FC<{ onNavigate: (screen: PhaseAScreen) => void }> = ({ onNavigate }) => {
   return (
-    <article className="space-y-16 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="space-y-24">
       
-      {/* Hero Section */}
-      <section aria-labelledby="reports-hero-heading" className="text-center space-y-6 max-w-4xl mx-auto pt-6 pb-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-mono font-bold tracking-wide">
-          <BarChart3 className="w-3.5 h-3.5 text-emerald-600" />
-          EXECUTIVE MIS & OPERATIONAL ANALYTICS
-        </div>
-
-        <h1 id="reports-hero-heading" className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-[#0A0D14] tracking-tight leading-tight">
-          Executive Reports, MIS Dashboards & Workforce Analytics
-        </h1>
-
-        <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
-          Gain deep visibility into your manpower deployment, site billing realization, guard patrol compliance, overtime expenditure, and facility PPM resolution across all customer branches.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-          <a
-            href="/contact"
-            onClick={(e) => handleLinkClick(e, '/contact')}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#0A0D14] hover:bg-slate-800 text-white text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2"
-          >
-            Schedule Analytics Demo
-            <ArrowRight className="w-4 h-4" />
-          </a>
-          <a
-            href="/features"
-            onClick={(e) => handleLinkClick(e, '/features')}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white text-slate-800 hover:bg-slate-50 text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-xs"
-          >
-            Explore Platform Features &rarr;
-          </a>
-        </div>
-      </section>
-
-      {/* Grid of Key Features */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 rounded-2xl bg-white border border-[#E8E7E3] space-y-3 shadow-xs">
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
-            <PieChart className="w-5 h-5" />
+      {/* Hero */}
+      <section className="relative pt-20 pb-12 overflow-hidden">
+        <div className="absolute inset-0 bg-blue-600/5 blur-[100px] rounded-full w-[800px] h-[400px] left-1/2 -translate-x-1/2 -top-20" />
+        <div className="max-w-4xl mx-auto px-4 relative z-10 text-center space-y-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 mb-4">
+            <BarChart3 className="w-8 h-8" />
           </div>
-          <h3 className="text-base font-bold text-[#0A0D14]">Manpower Billing MIS</h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Compare contracted post strength against actual daily roll-call attendance to eliminate unbilled guard hours.
-          </p>
-        </div>
-
-        <div className="p-6 rounded-2xl bg-white border border-[#E8E7E3] space-y-3 shadow-xs">
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
-            <TrendingUp className="w-5 h-5" />
-          </div>
-          <h3 className="text-base font-bold text-[#0A0D14]">Overtime & Cost Control</h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Track double-shift overtime multipliers across sites to prevent burnout and keep monthly wage bill within budget.
-          </p>
-        </div>
-
-        <div className="p-6 rounded-2xl bg-white border border-[#E8E7E3] space-y-3 shadow-xs">
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
-            <Download className="w-5 h-5" />
-          </div>
-          <h3 className="text-base font-bold text-[#0A0D14]">Multi-Format Export</h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Export any report to PDF, Excel, and CSV with customized header stamps, company logo, and digital signature tags.
+          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">
+            Operational Intelligence & Analytics
+          </h1>
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Transform operational data into executive dashboards and actionable insights.
           </p>
         </div>
       </section>
 
-    </article>
+      {/* Content Grid */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+        <div className="grid md:grid-cols-2 gap-12 lg:gap-24 items-start">
+          
+          <div className="space-y-12">
+            <div className="space-y-4">
+              <h3 className="text-sm font-black tracking-widest text-blue-400 uppercase">The Challenge</h3>
+              <p className="text-slate-300 leading-relaxed text-lg border-l-2 border-slate-700 pl-4">Executives lack visibility into site-level operations, leading to reactive decision-making based on stale data.</p>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-sm font-black tracking-widest text-emerald-400 uppercase">The Solution</h3>
+              <p className="text-slate-300 leading-relaxed text-lg">Real-time analytics dashboards providing a bird's-eye view of workforce capacity, compliance risks, and operational bottlenecks.</p>
+            </div>
+            
+            <div className="p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10 space-y-4">
+              <h3 className="text-sm font-black tracking-widest text-white uppercase">Business Value</h3>
+              <p className="text-blue-200 font-medium">Empower leadership with the intelligence needed to optimize deployments and reduce operational costs proactively.</p>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            <h3 className="text-2xl font-bold text-white">Key Capabilities</h3>
+            <div className="grid gap-4">
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-white/5 border border-white/10"><CheckCircle2 className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" /><span className="text-slate-300">Customizable KPI Dashboards</span></div>
+<div className="flex items-start gap-3 p-4 rounded-xl bg-white/5 border border-white/10"><CheckCircle2 className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" /><span className="text-slate-300">Cross-module Data Aggregation</span></div>
+<div className="flex items-start gap-3 p-4 rounded-xl bg-white/5 border border-white/10"><CheckCircle2 className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" /><span className="text-slate-300">Automated Email Report Scheduling</span></div>
+<div className="flex items-start gap-3 p-4 rounded-xl bg-white/5 border border-white/10"><CheckCircle2 className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" /><span className="text-slate-300">Drill-down Site Level Analytics</span></div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
   );
 };

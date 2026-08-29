@@ -74,7 +74,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
       await FirestoreService.createApprovalRequest(userSession.companyId, {
         type: 'SUBSCRIPTION_UPGRADE',
         requestedByUid: userSession.userId,
-        targetEntity: requestUpgradeModal.planName,
+        targetEntity: requestUpgradeModal.planName || '',
         details: `Requested upgrade to ${requestUpgradeModal.planName} (${requestUpgradeModal.planCode}). Notes: ${upgradeNotes || 'Standard upgrade request'}`
       });
 
@@ -98,13 +98,13 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
       case 'TRIAL': return 'text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400 border-blue-200';
       case 'PAST_DUE': return 'text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 border-rose-200';
       case 'GRACE_PERIOD': return 'text-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200';
-      default: return 'text-slate-600 bg-slate-50 dark:bg-slate-500/10 dark:text-slate-400 border-slate-200';
+      default: return 'text-slate-600 bg-white dark:bg-white0/10 dark:text-slate-400 border-slate-200';
     }
   };
 
   if (loading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-950' : 'bg-white'}`}>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -114,7 +114,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
   const usagePercentage = Math.min(100, Math.round((employeesCount / maxEmps) * 100));
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-800'}`}>
+    <div className={`min-h-screen ${isDark ? 'bg-slate-950 text-slate-200' : 'bg-white text-black'}`}>
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         
         {upgradeSuccessMsg && (
@@ -140,7 +140,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Plan & Subscriptions</h1>
+                <h1 className="text-2xl font-bold text-black dark:text-white">Plan & Subscriptions</h1>
                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30">
                   {userSession.companyId}
                 </span>
@@ -193,7 +193,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
                     </span>
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Billing Cycle: <span className="font-semibold text-slate-700 dark:text-slate-300">{subscription.billingCycle}</span> • License ID: <span className="font-mono text-xs text-indigo-400">{subscription.subscriptionId}</span>
+                    Billing Cycle: <span className="font-semibold text-slate-900 dark:text-slate-300">{subscription.billingCycle}</span> • License ID: <span className="font-mono text-xs text-indigo-400">{subscription.subscriptionId}</span>
                   </p>
                 </div>
 
@@ -232,28 +232,28 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'}`}>
                   <div className="flex items-center gap-2 mb-2 text-slate-500 dark:text-slate-400">
                     <Users className="w-4 h-4" />
                     <span className="text-xs font-bold uppercase tracking-wider">Employee Capacity</span>
                   </div>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">{maxEmps} Seats</p>
+                  <p className="text-xl font-bold text-black dark:text-white">{maxEmps} Seats</p>
                 </div>
 
-                <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'}`}>
                   <div className="flex items-center gap-2 mb-2 text-slate-500 dark:text-slate-400">
                     <Shield className="w-4 h-4" />
                     <span className="text-xs font-bold uppercase tracking-wider">Admin User Seats</span>
                   </div>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">{plan?.userLimit || subscription.userLimit || 5} Admins</p>
+                  <p className="text-xl font-bold text-black dark:text-white">{plan?.userLimit || subscription.userLimit || 5} Admins</p>
                 </div>
 
-                <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'}`}>
                   <div className="flex items-center gap-2 mb-2 text-slate-500 dark:text-slate-400">
                     <Activity className="w-4 h-4" />
                     <span className="text-xs font-bold uppercase tracking-wider">Cloud Storage</span>
                   </div>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">
+                  <p className="text-xl font-bold text-black dark:text-white">
                     {plan?.storageLimitMB ? `${Math.round(plan.storageLimitMB / 1024)} GB` : `${Math.round((subscription.storageLimitMB || 5120) / 1024)} GB`}
                   </p>
                 </div>
@@ -265,20 +265,20 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Layers className="w-5 h-5 text-indigo-500" />
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Active Module Entitlements</h3>
+                  <h3 className="text-lg font-bold text-black dark:text-white">Active Module Entitlements</h3>
                 </div>
-                <span className="text-xs text-slate-500">Real-time synchronized with Firestore RBAC rules</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Real-time synchronized with Firestore RBAC rules</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {entitlements.map(ent => (
-                  <div key={ent.moduleId} className={`flex items-center justify-between p-3.5 rounded-xl border ${isDark ? 'border-slate-800 bg-slate-800/40' : 'border-slate-100 bg-slate-50'}`}>
+                  <div key={ent.moduleId} className={`flex items-center justify-between p-3.5 rounded-xl border ${isDark ? 'border-slate-800 bg-slate-800/40' : 'border-slate-100 bg-white'}`}>
                     <div className="flex items-center gap-2.5">
                       {ent.enabled ? (
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                       ) : (
                         <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
                       )}
-                      <span className="font-semibold text-xs text-slate-800 dark:text-slate-200">{ent.moduleId.replace('_', ' ')}</span>
+                      <span className="font-semibold text-xs text-black dark:text-slate-200">{ent.moduleId.replace('_', ' ')}</span>
                     </div>
                     <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${ent.enabled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400'}`}>
                       {ent.enabled ? 'Enabled' : 'Disabled'}
@@ -286,7 +286,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
                   </div>
                 ))}
                 {entitlements.length === 0 && (
-                  <p className="text-sm text-slate-500 col-span-3">All standard modules available on active plan.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 col-span-3">All standard modules available on active plan.</p>
                 )}
               </div>
             </div>
@@ -297,7 +297,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-indigo-500" />
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Available Enterprise Tiers</h3>
+                    <h3 className="text-lg font-bold text-black dark:text-white">Available Enterprise Tiers</h3>
                   </div>
                   <span className="text-xs opacity-60">Request instant tier upgrades or feature expansions</span>
                 </div>
@@ -316,7 +316,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
                       >
                         <div>
                           <div className="flex items-center justify-between mb-1">
-                            <h4 className="font-bold text-sm text-slate-900 dark:text-white">{p.planName}</h4>
+                            <h4 className="font-bold text-sm text-black dark:text-white">{p.planName}</h4>
                             {isCurrent && (
                               <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded bg-indigo-600 text-white">Current</span>
                             )}
@@ -324,7 +324,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
                           <div className="text-lg font-black mb-2">
                             ₹{p.monthlyPrice}<span className="text-xs font-normal opacity-60">/mo</span>
                           </div>
-                          <p className="text-xs text-slate-500 mb-3">{p.description || 'Enterprise Workforce Management'}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{p.description || 'Enterprise Workforce Management'}</p>
                           <ul className="text-xs space-y-1.5 text-slate-600 dark:text-slate-400 mb-4">
                             <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Up to {p.employeeLimit} Employees</li>
                             <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> {p.userLimit} Admin Seats</li>
@@ -365,7 +365,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+              <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-bold">{requestUpgradeModal.planName}</span>
                   <span className="font-black text-indigo-400">₹{requestUpgradeModal.monthlyPrice}/mo</span>
@@ -380,7 +380,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
                   value={upgradeNotes}
                   onChange={(e) => setUpgradeNotes(e.target.value)}
                   placeholder="e.g. We are expanding to 3 new sites and need higher employee seat quotas..."
-                  className={`w-full p-2.5 rounded-xl border outline-none ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'}`}
+                  className={`w-full p-2.5 rounded-xl border outline-none ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
                 />
               </div>
             </div>

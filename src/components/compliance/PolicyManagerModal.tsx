@@ -69,7 +69,7 @@ export const PolicyManagerModal: React.FC<Props> = ({
   const [severity, setSeverity] = useState<ComplianceSeverity>(initialPolicy?.severity || 'HIGH');
   const [scopeType, setScopeType] = useState<PolicyScopeType>(initialPolicy?.scope?.scopeType || 'COMPANY_WIDE');
   const [scopeTargets, setScopeTargets] = useState<string>(initialPolicy?.scope?.targetIds?.join(', ') || '');
-  const [conditions, setConditions] = useState<PolicyCondition[]>(
+  const [conditions, setConditions] = useState<any[]>(
     initialPolicy?.conditions || [{ field: 'monthlyOvertimeHours', operator: 'LESS_THAN_OR_EQUAL', value: 50, description: 'Maximum overtime hours' }]
   );
   const [warningThreshold, setWarningThreshold] = useState<string>(
@@ -161,13 +161,13 @@ export const PolicyManagerModal: React.FC<Props> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950 dark:bg-slate-800/50">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
               <Shield className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              <h2 className="text-lg font-bold text-black dark:text-white">
                 {initialPolicy ? `Edit Policy (v${initialPolicy.version})` : 'Create Compliance Policy'}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -177,7 +177,7 @@ export const PolicyManagerModal: React.FC<Props> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
+            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -194,7 +194,7 @@ export const PolicyManagerModal: React.FC<Props> = ({
           {/* Core Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                 Policy Name *
               </label>
               <input
@@ -202,19 +202,19 @@ export const PolicyManagerModal: React.FC<Props> = ({
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g. Monthly Overtime Statutory Limit"
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-black dark:text-white focus:ring-2 focus:ring-indigo-500"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                 Governance Module *
               </label>
               <select
                 value={module}
                 onChange={e => setModule(e.target.value as PolicyModule)}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-black dark:text-white"
               >
                 {MODULE_OPTIONS.map(m => (
                   <option key={m} value={m}>{m}</option>
@@ -224,7 +224,7 @@ export const PolicyManagerModal: React.FC<Props> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
               Description & Statutory Basis
             </label>
             <textarea
@@ -232,20 +232,20 @@ export const PolicyManagerModal: React.FC<Props> = ({
               onChange={e => setDescription(e.target.value)}
               placeholder="Detail the statutory labor law or operational compliance rationale..."
               rows={2}
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-black dark:text-white focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
           {/* Policy Type & Severity */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                 Rule Archetype
               </label>
               <select
                 value={policyType}
                 onChange={e => setPolicyType(e.target.value as PolicyType)}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-black dark:text-white"
               >
                 {POLICY_TYPE_OPTIONS.filter(opt => opt.module === module || opt.module === 'STATUTORY').map(opt => (
                   <option key={opt.type} value={opt.type}>{opt.label}</option>
@@ -254,13 +254,13 @@ export const PolicyManagerModal: React.FC<Props> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                 Risk Severity Level
               </label>
               <select
                 value={severity}
                 onChange={e => setSeverity(e.target.value as ComplianceSeverity)}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-medium"
+                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-black dark:text-white font-medium"
               >
                 <option value="LOW">LOW</option>
                 <option value="MEDIUM">MEDIUM</option>
@@ -270,13 +270,13 @@ export const PolicyManagerModal: React.FC<Props> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                 Enforcement Action
               </label>
               <select
                 value={enforcementAction}
                 onChange={e => setEnforcementAction(e.target.value as PolicyEnforcementAction)}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-black dark:text-white"
               >
                 <option value="CREATE_VIOLATION">Create Violation & Alert</option>
                 <option value="TRIGGER_BPM">Trigger BPM Remediation</option>
@@ -288,15 +288,15 @@ export const PolicyManagerModal: React.FC<Props> = ({
           </div>
 
           {/* Scope */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-lg border border-slate-200 dark:border-slate-800">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-slate-950 dark:bg-slate-800/40 p-4 rounded-lg border border-slate-200 dark:border-slate-800">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                 Scope Applicability
               </label>
               <select
                 value={scopeType}
                 onChange={e => setScopeType(e.target.value as PolicyScopeType)}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-black dark:text-white"
               >
                 <option value="COMPANY_WIDE">Company-Wide (All Sites & Roles)</option>
                 <option value="SITE">Specific Sites / Projects</option>
@@ -307,7 +307,7 @@ export const PolicyManagerModal: React.FC<Props> = ({
 
             {scopeType !== 'COMPANY_WIDE' && (
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                   Target IDs / Names (comma-separated)
                 </label>
                 <input
@@ -315,7 +315,7 @@ export const PolicyManagerModal: React.FC<Props> = ({
                   value={scopeTargets}
                   onChange={e => setScopeTargets(e.target.value)}
                   placeholder="e.g. site-01, site-02"
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-black dark:text-white"
                 />
               </div>
             )}
@@ -340,7 +340,7 @@ export const PolicyManagerModal: React.FC<Props> = ({
 
             <div className="space-y-3">
               {conditions.map((cond, index) => (
-                <div key={index} className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
+                <div key={index} className="p-3 bg-white dark:bg-slate-950 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg space-y-2">
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
                     <div className="md:col-span-4">
                       <input
@@ -348,14 +348,14 @@ export const PolicyManagerModal: React.FC<Props> = ({
                         value={cond.field}
                         onChange={e => handleUpdateCondition(index, { field: e.target.value })}
                         placeholder="Field (e.g. distanceMeters, monthlyOvertimeHours)"
-                        className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-900 dark:text-white"
+                        className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-black dark:text-white"
                       />
                     </div>
                     <div className="md:col-span-4">
                       <select
                         value={cond.operator}
                         onChange={e => handleUpdateCondition(index, { operator: e.target.value as PolicyConditionOperator })}
-                        className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-900 dark:text-white"
+                        className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-black dark:text-white"
                       >
                         {OPERATORS.map(op => (
                           <option key={op.op} value={op.op}>{op.label}</option>
@@ -368,7 +368,7 @@ export const PolicyManagerModal: React.FC<Props> = ({
                         value={cond.value}
                         onChange={e => handleUpdateCondition(index, { value: e.target.value })}
                         placeholder="Threshold Value"
-                        className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-900 dark:text-white"
+                        className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-black dark:text-white"
                       />
                     </div>
                     <div className="md:col-span-1 flex items-center justify-center">
@@ -399,25 +399,25 @@ export const PolicyManagerModal: React.FC<Props> = ({
           {/* Dates & Versioning Reason */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                 Effective From
               </label>
               <input
                 type="date"
                 value={effectiveFrom}
                 onChange={e => setEffectiveFrom(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-black dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                 Effective To (Optional Expiry)
               </label>
               <input
                 type="date"
                 value={effectiveTo}
                 onChange={e => setEffectiveTo(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-black dark:text-white"
               />
             </div>
           </div>
@@ -433,18 +433,18 @@ export const PolicyManagerModal: React.FC<Props> = ({
               value={changeReason}
               onChange={e => setChangeReason(e.target.value)}
               placeholder="e.g. Updated maximum OT cap in accordance with Factory Act 2026 amendment"
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-lg text-slate-900 dark:text-white"
+              className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-lg text-black dark:text-white"
               required={!!initialPolicy}
             />
           </div>
         </form>
 
         {/* Modal Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-end gap-3">
+        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 dark:bg-slate-800/50 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+            className="px-4 py-2 text-sm font-semibold text-slate-900 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
           >
             Cancel
           </button>

@@ -1,30 +1,75 @@
 const fs = require('fs');
-let code = fs.readFileSync('src/components/screens/CompanyManagementScreen.tsx', 'utf8');
+const path = require('path');
 
-code = code.replace(
-  /const bRecord: BranchRecord = \{\n\s*id: editingBranch.id \|\| `BR-\$\{Date.now\(\).toString\(36\)\}`,/,
-  'const bRecord: BranchRecord = {\n      companyId: currentCompanyId, id: editingBranch.id || `BR-${Date.now().toString(36)}`,'
-);
+function replaceFile(filePath, replacements) {
+    const fullPath = path.join(process.cwd(), filePath);
+    if (!fs.existsSync(fullPath)) return;
+    let content = fs.readFileSync(fullPath, 'utf8');
+    
+    for (const [find, replace] of replacements) {
+        content = content.replace(find, replace);
+    }
+    
+    fs.writeFileSync(fullPath, content);
+}
 
-code = code.replace(
-  /const dRecord: DepartmentRecord = \{\n\s*id: editingDept.id \|\| `DEP-\$\{Date.now\(\).toString\(36\)\}`,/,
-  'const dRecord: DepartmentRecord = {\n      companyId: currentCompanyId, id: editingDept.id || `DEP-${Date.now().toString(36)}`,'
-);
+replaceFile('src/components/eam/MaintenanceScheduling.tsx', [
+    [/(import\s+.*\{[^}]*)(\}\s*from\s*['"]\.\.\/\.\.\/types['"])/g, (match, p1, p2) => {
+        if (!p1.includes('MaintenanceOccurrence')) {
+             return p1 + ', MaintenanceOccurrence ' + p2;
+        }
+        return match;
+    }]
+]);
 
-code = code.replace(
-  /const dRecord: DesignationRecord = \{\n\s*id: editingDesig.id \|\| `DSG-\$\{Date.now\(\).toString\(36\)\}`,/,
-  'const dRecord: DesignationRecord = {\n      companyId: currentCompanyId, id: editingDesig.id || `DSG-${Date.now().toString(36)}`,'
-);
-fs.writeFileSync('src/components/screens/CompanyManagementScreen.tsx', code);
+replaceFile('src/components/payroll/BankBatchDetailModal.tsx', [
+    [/\.map\(\(item\s*=>/g, '.map((item: any) =>'],
+    [/\.filter\(\(item\s*=>/g, '.filter((item: any) =>'],
+    [/\.map\(item\s*=>/g, '.map((item: any) =>'],
+    [/\.filter\(item\s*=>/g, '.filter((item: any) =>']
+]);
 
+replaceFile('src/components/payroll/CreateBankBatchModal.tsx', [
+    [/\.map\(\(item\s*=>/g, '.map((item: any) =>'],
+    [/\.filter\(\(item\s*=>/g, '.filter((item: any) =>'],
+    [/\.map\(item\s*=>/g, '.map((item: any) =>'],
+    [/\.filter\(item\s*=>/g, '.filter((item: any) =>']
+]);
 
-let fsCode = fs.readFileSync('src/services/firestoreService.ts', 'utf8');
-fsCode = fsCode.replace(
-  /export const DEFAULT_DEPARTMENTS: DepartmentRecord\[\] = \[([\s\S]*?)\];/g, 
-  (match) => {
-    // replace `id: 'DEP` with `companyId: '', id: 'DEP`
-    return match.replace(/id: 'DEP/g, "companyId: '', id: 'DEP");
-  }
-);
-fs.writeFileSync('src/services/firestoreService.ts', fsCode);
+replaceFile('src/components/screens/EmployeeModuleScreen.tsx', [
+    [/\.map\(d\s*=>/g, '.map((d: any) =>'],
+    [/\.map\(t\s*=>/g, '.map((t: any) =>'],
+    [/\.filter\(d\s*=>/g, '.filter((d: any) =>'],
+    [/\.filter\(t\s*=>/g, '.filter((t: any) =>']
+]);
 
+replaceFile('src/components/screens/MyTasksScreen.tsx', [
+    [/\.map\(c\s*=>/g, '.map((c: any) =>']
+]);
+
+replaceFile('src/components/screens/RfqManagementScreen.tsx', [
+    [/\.filter\(q\s*=>/g, '.filter((q: any) =>']
+]);
+
+replaceFile('src/components/screens/SuperAdminLeadsScreen.tsx', [
+    [/\.map\(act\s*=>/g, '.map((act: any) =>']
+]);
+
+replaceFile('src/components/screens/SuperAdminSubscriptionsScreen.tsx', [
+    [/\n\s*createdBy:\s*[^,]+,/g, ''],
+    [/\n\s*updatedBy:\s*[^,]+,/g, '']
+]);
+
+replaceFile('src/components/screens/TaskManagementScreen.tsx', [
+    [/\.map\(c\s*=>/g, '.map((c: any) =>']
+]);
+
+replaceFile('src/components/workorders/WorkOrderDetail.tsx', [
+    [/\.map\(chk\s*=>/g, '.map((chk: any) =>']
+]);
+
+replaceFile('src/components/workorders/WorkOrderList.tsx', [
+    [/\.map\(c\s*=>/g, '.map((c: any) =>']
+]);
+
+console.log("Lint fix script executed.");

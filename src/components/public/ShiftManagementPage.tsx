@@ -33,11 +33,11 @@ export const ShiftManagementPage: React.FC<ShiftManagementPageProps> = ({ onNavi
           24/7 ROTATIONAL SHIFT & ROSTER SCHEDULER
         </div>
 
-        <h1 id="shift-hero-heading" className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-[#0A0D14] tracking-tight leading-tight">
+        <h1 id="shift-hero-heading" className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-black tracking-tight leading-tight">
           Intelligent Shift Management & 24/7 Rotational Roster Planning
         </h1>
 
-        <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
+        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
           Manage 24/7 complex rotational rosters across multiple customer sites. Prevent short-staffing, manage shift swaps, enforce mandatory rest intervals, and log digital supervisor handovers.
         </p>
 
@@ -45,7 +45,7 @@ export const ShiftManagementPage: React.FC<ShiftManagementPageProps> = ({ onNavi
           <a
             href="/contact"
             onClick={(e) => handleLinkClick(e, '/contact')}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#0A0D14] hover:bg-slate-800 text-white text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-black hover:bg-slate-800 text-white text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2"
           >
             Schedule Roster Demo
             <ArrowRight className="w-4 h-4" />
@@ -53,7 +53,7 @@ export const ShiftManagementPage: React.FC<ShiftManagementPageProps> = ({ onNavi
           <a
             href="/workforce-management"
             onClick={(e) => handleLinkClick(e, '/workforce-management')}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white text-slate-800 hover:bg-slate-50 text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-xs"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white dark:bg-slate-900 text-black dark:text-slate-200 hover:bg-white dark:bg-slate-950 text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-xs"
           >
             Explore Workforce Ops &rarr;
           </a>
@@ -62,32 +62,32 @@ export const ShiftManagementPage: React.FC<ShiftManagementPageProps> = ({ onNavi
 
       {/* Grid of Key Features */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 rounded-2xl bg-white border border-[#E8E7E3] space-y-3 shadow-xs">
+        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 space-y-3 shadow-xs">
           <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
             <RotateCw className="w-5 h-5" />
           </div>
-          <h3 className="text-base font-bold text-[#0A0D14]">Rotational 3-Shift Patterns</h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <h3 className="text-base font-bold text-black">Rotational 3-Shift Patterns</h3>
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             Automate Morning (A), Afternoon (B), Night (C), and General shifts with customizable grace periods and rest breaks.
           </p>
         </div>
 
-        <div className="p-6 rounded-2xl bg-white border border-[#E8E7E3] space-y-3 shadow-xs">
+        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 space-y-3 shadow-xs">
           <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
             <AlertCircle className="w-5 h-5" />
           </div>
-          <h3 className="text-base font-bold text-[#0A0D14]">Short-Staffing Alerts</h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <h3 className="text-base font-bold text-black">Short-Staffing Alerts</h3>
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             Immediate visual alerts when required guard or technician headcount drops below customer SLA minimum requirements.
           </p>
         </div>
 
-        <div className="p-6 rounded-2xl bg-white border border-[#E8E7E3] space-y-3 shadow-xs">
+        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 space-y-3 shadow-xs">
           <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5" />
           </div>
-          <h3 className="text-base font-bold text-[#0A0D14]">Digital Handover Sign-Off</h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <h3 className="text-base font-bold text-black">Digital Handover Sign-Off</h3>
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             Outgoing and incoming site supervisors sign digital handover checklists for key assets, incidents, and equipment status.
           </p>
         </div>

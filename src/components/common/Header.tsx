@@ -54,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className={`px-4 py-2.5 flex items-center justify-between sticky top-0 z-40 shadow-lg border-b transition-colors ${
-      isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+      isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-black'
     }`}>
       {/* Left branding & drawer toggle */}
       <div className="flex items-center gap-3">
@@ -62,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onOpenDrawer}
             className={`p-2 rounded-xl border transition ${
-              isDark ? 'bg-slate-950 border-slate-800 hover:bg-slate-800 text-slate-200' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-800'
+              isDark ? 'bg-slate-950 border-slate-800 hover:bg-slate-800 text-slate-200' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-black'
             }`}
             title="Open Drawer Menu"
           >
@@ -71,18 +71,15 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate(userSession ? 'EMPLOYEES' : 'LOGIN')}>
-          <AppLogo size="sm" showSubtitle={false} />
+          <AppLogo size="sm" company={activeCompany} />
+          {activeCompany && (
+            <span className={`hidden lg:inline-block text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+              isDark ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-600'
+            }`}>
+              {activeCompany.companyId}
+            </span>
+          )}
         </div>
-
-        {activeCompany && (
-          <div className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border ${
-            isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
-          }`}>
-            <Building2 className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="font-medium">{activeCompany.brandName}</span>
-            <span className="text-[10px] text-slate-400">({activeCompany.companyId})</span>
-          </div>
-        )}
       </div>
 
       {/* Middle: Viewport Switcher & Code Viewer */}
@@ -145,7 +142,7 @@ export const Header: React.FC<HeaderProps> = ({
             className={`relative p-1.5 rounded-lg border transition ${
               currentScreen === 'NOTIFICATIONS'
                 ? 'bg-indigo-600 text-white border-indigo-500'
-                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                : isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-900'
             }`}
             title="Notifications"
           >
@@ -163,7 +160,7 @@ export const Header: React.FC<HeaderProps> = ({
           className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-all ${
             currentScreen === 'KOTLIN_CODE_VIEWER'
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 font-semibold'
-              : isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-800 border-slate-300'
+              : isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-black border-slate-300'
           }`}
         >
           <Code2 className="w-3.5 h-3.5 text-amber-400" />

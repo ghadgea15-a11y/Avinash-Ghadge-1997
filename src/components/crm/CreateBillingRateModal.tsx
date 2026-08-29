@@ -61,13 +61,13 @@ export const CreateBillingRateModal: React.FC<Props> = ({ session, company, cont
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-2xl">
         <div className="flex items-center justify-between p-6 border-b border-slate-200">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <Calculator className="w-5 h-5 text-indigo-600" />
             Create Rate Matrix
           </h2>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full">
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-full">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -78,7 +78,7 @@ export const CreateBillingRateModal: React.FC<Props> = ({ session, company, cont
           <div className="p-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Contract</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Contract</label>
                 <select
                   value={formData.contractId}
                   onChange={e => setFormData({ ...formData, contractId: e.target.value })}
@@ -90,7 +90,7 @@ export const CreateBillingRateModal: React.FC<Props> = ({ session, company, cont
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Site Scope (Optional)</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Site Scope (Optional)</label>
                 <input
                   type="text"
                   placeholder="e.g. SITE-001 or leave blank for all"
@@ -98,13 +98,13 @@ export const CreateBillingRateModal: React.FC<Props> = ({ session, company, cont
                   onChange={e => setFormData({ ...formData, siteId: e.target.value })}
                   className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
-                <p className="text-xs text-slate-500 mt-1">Leave blank to apply to all sites in contract.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Leave blank to apply to all sites in contract.</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Rate Type</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Rate Type</label>
                 <select
                   value={formData.rateType}
                   onChange={e => setFormData({ ...formData, rateType: e.target.value as BillingRateType })}
@@ -120,7 +120,7 @@ export const CreateBillingRateModal: React.FC<Props> = ({ session, company, cont
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Unit Description</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Unit Description</label>
                 <input
                   type="text"
                   placeholder="e.g. Shift, Hour, Month"
@@ -133,7 +133,7 @@ export const CreateBillingRateModal: React.FC<Props> = ({ session, company, cont
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Rate Amount</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Rate Amount</label>
                 <input
                   type="number"
                   min="0"
@@ -144,7 +144,7 @@ export const CreateBillingRateModal: React.FC<Props> = ({ session, company, cont
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+                <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Currency</label>
                 <select
                   value={formData.currency}
                   onChange={e => setFormData({ ...formData, currency: e.target.value })}
@@ -159,7 +159,7 @@ export const CreateBillingRateModal: React.FC<Props> = ({ session, company, cont
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Effective From</label>
+              <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Effective From</label>
               <input
                 type="date"
                 value={formData.effectiveFrom}
@@ -170,7 +170,7 @@ export const CreateBillingRateModal: React.FC<Props> = ({ session, company, cont
           </div>
         )}
 
-        <div className="p-6 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl">
+        <div className="p-6 border-t border-slate-200 flex justify-end gap-3 bg-white dark:bg-slate-950 rounded-b-xl">
           <button onClick={onClose} className="btn-secondary">Cancel</button>
           <button 
             onClick={handleSave} 

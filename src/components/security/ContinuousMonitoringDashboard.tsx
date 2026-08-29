@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ContinuousMonitoringService } from '../../services/continuousMonitoringService';
 import { DetectedRiskEvent, SecurityDetectionRule } from '../../types';
 import { ShieldAlert, AlertTriangle, ShieldCheck, Clock, CheckCircle, Activity, Search } from 'lucide-react';
+import { formatTimestamp } from '../../utils/dateUtils';
 
 export function ContinuousMonitoringDashboard({ userSession }: { userSession: any }) {
   const session = userSession;
@@ -73,25 +74,25 @@ export function ContinuousMonitoringDashboard({ userSession }: { userSession: an
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-gray-100">
           <div className="text-sm font-medium text-gray-500">Total Open Risks</div>
           <div className="mt-2 text-3xl font-bold text-gray-900">
             {riskEvents.filter(e => !['CLOSED', 'FALSE_POSITIVE'].includes(e.status)).length}
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 border border-red-100">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-red-100">
           <div className="text-sm font-medium text-red-600">Critical / High Risks</div>
           <div className="mt-2 text-3xl font-bold text-red-700">
             {riskEvents.filter(e => !['CLOSED', 'FALSE_POSITIVE'].includes(e.status) && (e.severity === 'CRITICAL' || e.severity === 'HIGH')).length}
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 border border-blue-100">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-blue-100">
           <div className="text-sm font-medium text-blue-600">Active Investigations</div>
           <div className="mt-2 text-3xl font-bold text-blue-700">
             {riskEvents.filter(e => e.status === 'INVESTIGATION' || e.status === 'REMEDIATION').length}
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 border border-green-100">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-green-100">
           <div className="text-sm font-medium text-green-600">Active Detection Rules</div>
           <div className="mt-2 text-3xl font-bold text-green-700">
             {activeRules.length}
@@ -99,7 +100,7 @@ export function ContinuousMonitoringDashboard({ userSession }: { userSession: an
         </div>
       </div>
 
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 shadow rounded-lg overflow-hidden">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
           <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-gray-500" />
@@ -133,7 +134,7 @@ export function ContinuousMonitoringDashboard({ userSession }: { userSession: an
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200">
                 {filteredEvents.map(event => (
                   <tr key={event.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -156,7 +157,7 @@ export function ContinuousMonitoringDashboard({ userSession }: { userSession: an
                       <div className="text-xs text-gray-500">{event.source}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(event.timestamp).toLocaleString()}
+                      {formatTimestamp(event.timestamp)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
                       {event.description}

@@ -14,6 +14,7 @@ import { RiskRegisterViewer } from './RiskRegisterViewer';
 import { ComplianceControlViewer } from './ComplianceControlViewer';
 
 import { Lock, FileKey, FileText } from 'lucide-react';
+import { formatTimestamp } from '../../utils/dateUtils';
 
 interface SecurityDashboardProps {
   userSession: UserSession;
@@ -107,32 +108,32 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-xs flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 shadow-xs flex flex-col items-center justify-center">
           <AlertTriangle className={`w-10 h-10 mb-2 ${criticalCount > 0 ? 'text-red-500' : 'text-gray-300'}`} />
           <span className="text-3xl font-bold text-gray-900">{criticalCount}</span>
           <span className="text-sm text-gray-500 font-medium mt-1">Active Critical</span>
         </div>
 
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-xs flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 shadow-xs flex flex-col items-center justify-center">
           <Activity className={`w-10 h-10 mb-2 ${highCount > 0 ? 'text-orange-500' : 'text-gray-300'}`} />
           <span className="text-3xl font-bold text-gray-900">{highCount}</span>
           <span className="text-sm text-gray-500 font-medium mt-1">Active High</span>
         </div>
 
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-xs flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 shadow-xs flex flex-col items-center justify-center">
           <Server className="w-10 h-10 text-indigo-500 mb-2" />
           <span className="text-3xl font-bold text-gray-900">{anomalies.length}</span>
           <span className="text-sm text-gray-500 font-medium mt-1">Total Anomalies</span>
         </div>
 
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-xs flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 shadow-xs flex flex-col items-center justify-center">
           <CheckCircle className="w-10 h-10 text-emerald-500 mb-2" />
           <span className="text-3xl font-bold text-gray-900">{events.length}</span>
           <span className="text-sm text-gray-500 font-medium mt-1">Audit Events Logged</span>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-gray-100 overflow-hidden">
         <div className="flex border-b border-gray-100 overflow-x-auto">
           <button
             onClick={() => setActiveTab('ANOMALIES')}
@@ -243,7 +244,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
                   </button>
                   {/* Detailed Anomaly View */}
                   {anomalies.filter(a => a.anomalyId === viewingAnomalyId).map(anomaly => (
-                    <div key={anomaly.anomalyId} className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div key={anomaly.anomalyId} className="bg-white dark:bg-slate-900 border border-gray-200 rounded-lg p-6">
                       <div className="flex justify-between items-start mb-6">
                         <div>
                           <div className="flex items-center gap-3 mb-2">
@@ -255,7 +256,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
                             </span>
                           </div>
                           <h3 className="text-xl font-bold text-gray-900">{(anomaly.type || anomaly.anomalyType || 'ANOMALY').replace(/_/g, ' ')}</h3>
-                          <p className="text-gray-500 mt-1">Detected: {new Date(anomaly.detectedAt).toLocaleString()}</p>
+                          <p className="text-gray-500 mt-1">Detected: {formatTimestamp(anomaly.detectedAt)}</p>
                         </div>
                       </div>
                       
@@ -272,7 +273,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
                             <div key={evt.eventId || evt.id} className="bg-gray-50 p-4 rounded-lg border border-gray-100">
                               <div className="flex justify-between">
                                 <span className="font-medium text-gray-900">{evt.action}</span>
-                                <span className="text-sm text-gray-500">{new Date(evt.timestamp).toLocaleString()}</span>
+                                <span className="text-sm text-gray-500">{formatTimestamp(evt.timestamp)}</span>
                               </div>
                               <div className="text-sm text-gray-600 mt-1">
                                 User: {evt.userId} | Resource: {evt.resource}
@@ -317,7 +318,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
                     </select>
                   </div>
 
-                  <div className="divide-y divide-gray-100 bg-white border border-gray-100 rounded-lg overflow-hidden">
+                  <div className="divide-y divide-gray-100 bg-white dark:bg-slate-900 border border-gray-100 rounded-lg overflow-hidden">
                     {anomalies
                       .filter(a => filterStatus === 'ALL' || a.status === filterStatus)
                       .filter(a => filterSeverity === 'ALL' || a.severity === filterSeverity)
@@ -343,7 +344,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
                               <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2 text-sm text-gray-500">
                                   <Clock className="w-4 h-4" />
-                                  {new Date(anomaly.detectedAt).toLocaleString()}
+                                  {formatTimestamp(anomaly.detectedAt)}
                                 </div>
                                 <button onClick={() => setViewingAnomalyId(aId)} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1">
                                   <Eye className="w-4 h-4" /> View Evidence
@@ -445,7 +446,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ userSessio
 
       {selectedAnomaly && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
               Mark as {selectedAnomaly.status?.replace(/_/g, ' ') || 'RESOLVED'}
             </h3>

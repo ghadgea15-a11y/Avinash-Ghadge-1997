@@ -96,19 +96,19 @@ export const ClientDirectoryTab: React.FC<Props> = ({ session, company }) => {
       </div>
 
       {loading ? (
-        <div className="py-12 text-center text-slate-500">Loading directory...</div>
+        <div className="py-12 text-center text-slate-500 dark:text-slate-400">Loading directory...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredClients.map(client => (
-            <div key={client.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
+            <div key={client.id} className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
               <div className="p-5 border-b border-slate-100 flex justify-between items-start">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
                     <Building2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800 line-clamp-1" title={client.legalName}>{client.legalName}</h3>
-                    <p className="text-xs text-slate-500">{client.clientCode} • {client.clientType}</p>
+                    <h3 className="font-bold text-black dark:text-slate-200 line-clamp-1" title={client.legalName}>{client.legalName}</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{client.clientCode} • {client.clientType}</p>
                   </div>
                 </div>
                 <button 
@@ -118,15 +118,15 @@ export const ClientDirectoryTab: React.FC<Props> = ({ session, company }) => {
                   <Edit className="w-4 h-4" />
                 </button>
               </div>
-              <div className="p-5 space-y-3 bg-slate-50/50">
+              <div className="p-5 space-y-3 bg-white dark:bg-slate-950/50">
                 {client.billingAddress && (
-                  <div className="flex items-start gap-2 text-sm text-slate-600">
+                  <div className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
                     <MapPin className="w-4 h-4 mt-0.5 text-slate-400 shrink-0" />
                     <span className="line-clamp-2">{client.billingAddress}</span>
                   </div>
                 )}
                 {client.primaryContactEmail && (
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                     <Mail className="w-4 h-4 text-slate-400 shrink-0" />
                     <span className="truncate">{client.primaryContactEmail}</span>
                   </div>
@@ -135,11 +135,11 @@ export const ClientDirectoryTab: React.FC<Props> = ({ session, company }) => {
                   <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                     client.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' :
                     client.status === 'ONBOARDING' ? 'bg-blue-100 text-blue-700' :
-                    'bg-slate-200 text-slate-700'
+                    'bg-slate-200 text-slate-900'
                   }`}>
                     {client.status}
                   </span>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     Created {new Date(client.createdAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -148,7 +148,7 @@ export const ClientDirectoryTab: React.FC<Props> = ({ session, company }) => {
           ))}
           
           {filteredClients.length === 0 && (
-            <div className="col-span-full py-12 text-center text-slate-500 border-2 border-dashed rounded-xl">
+            <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400 border-2 border-dashed rounded-xl">
               No clients found matching your search.
             </div>
           )}
@@ -158,34 +158,34 @@ export const ClientDirectoryTab: React.FC<Props> = ({ session, company }) => {
       {/* Editor Modal */}
       {showModal && editingClient && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-xl">
-              <h3 className="text-lg font-bold text-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-white dark:bg-slate-950 rounded-t-xl">
+              <h3 className="text-lg font-bold text-black dark:text-slate-200">
                 {editingClient.id ? 'Edit Client Profile' : 'New Client Profile'}
               </h3>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400 text-2xl leading-none">&times;</button>
             </div>
             
             <div className="p-6 overflow-y-auto">
               <form id="clientForm" onSubmit={handleSave} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Legal Name *</label>
+                    <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Legal Name *</label>
                     <input required type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
                       value={editingClient.legalName || ''} onChange={e => setEditingClient({...editingClient, legalName: e.target.value})} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Display Name</label>
+                    <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Display Name</label>
                     <input type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
                       value={editingClient.displayName || ''} onChange={e => setEditingClient({...editingClient, displayName: e.target.value})} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Client Code *</label>
+                    <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Client Code *</label>
                     <input required type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
                       value={editingClient.clientCode || ''} onChange={e => setEditingClient({...editingClient, clientCode: e.target.value})} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Client Type *</label>
+                    <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Client Type *</label>
                     <select className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                       value={editingClient.clientType} onChange={e => setEditingClient({...editingClient, clientType: e.target.value as any})}>
                       <option value="CORPORATE">Corporate</option>
@@ -197,12 +197,12 @@ export const ClientDirectoryTab: React.FC<Props> = ({ session, company }) => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Industry</label>
+                    <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Industry</label>
                     <input type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
                       value={editingClient.industry || ''} onChange={e => setEditingClient({...editingClient, industry: e.target.value})} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Status *</label>
+                    <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Status *</label>
                     <select className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                       value={editingClient.status} onChange={e => setEditingClient({...editingClient, status: e.target.value as any})}>
                       <option value="ONBOARDING">Onboarding</option>
@@ -212,17 +212,17 @@ export const ClientDirectoryTab: React.FC<Props> = ({ session, company }) => {
                     </select>
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Registration / Tax Details (e.g. GST)</label>
+                    <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Registration / Tax Details (e.g. GST)</label>
                     <input type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
                       value={editingClient.registrationDetails || ''} onChange={e => setEditingClient({...editingClient, registrationDetails: e.target.value})} />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Billing Address</label>
+                    <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Billing Address</label>
                     <textarea className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" rows={2}
                       value={editingClient.billingAddress || ''} onChange={e => setEditingClient({...editingClient, billingAddress: e.target.value})} />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Primary Contact Email</label>
+                    <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Primary Contact Email</label>
                     <input type="email" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
                       value={editingClient.primaryContactEmail || ''} onChange={e => setEditingClient({...editingClient, primaryContactEmail: e.target.value})} />
                   </div>
@@ -230,11 +230,11 @@ export const ClientDirectoryTab: React.FC<Props> = ({ session, company }) => {
               </form>
             </div>
             
-            <div className="p-6 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl">
+            <div className="p-6 border-t border-slate-200 flex justify-end gap-3 bg-white dark:bg-slate-950 rounded-b-xl">
               <button 
                 type="button" 
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                className="px-4 py-2 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 border border-slate-300 rounded-lg hover:bg-white dark:bg-slate-950 transition-colors"
               >
                 Cancel
               </button>

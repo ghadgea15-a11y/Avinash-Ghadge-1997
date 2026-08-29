@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { UserSession, CompanyTenant, StockBalanceRecord, InventoryItemRecord, InventoryAlertRecord } from '../../types';
+import { UserSession, CompanyTenant, StockAlertRecord } from '../../types';
 import { collection, query, where, getDocs, doc, updateDoc, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { AlertTriangle, CheckCircle, Package, TrendingDown, ArrowUpRight } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Package, TrendingDown } from 'lucide-react';
 
 export function InventoryDashboardTab({ session, company }: { session: UserSession, company: CompanyTenant }) {
-  const [alerts, setAlerts] = useState<InventoryAlertRecord[]>([]);
+  const [alerts, setAlerts] = useState<StockAlertRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadAlerts = async () => {
@@ -15,7 +15,7 @@ export function InventoryDashboardTab({ session, company }: { session: UserSessi
         orderBy('createdAt', 'desc')
       );
       const snap = await getDocs(q);
-      setAlerts(snap.docs.map(d => d.data() as InventoryAlertRecord));
+      setAlerts(snap.docs.map(d => ({ id: d.id, ...d.data() } as StockAlertRecord)));
     } catch (e) {
       console.error(e);
     } finally {
@@ -52,12 +52,12 @@ export function InventoryDashboardTab({ session, company }: { session: UserSessi
       </div>
 
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-slate-900">Alert History & Status</h3>
+        <h3 className="text-lg font-medium text-black dark:text-white">Alert History & Status</h3>
       </div>
 
-      <div className="flex-1 rounded-md border border-slate-200 bg-white shadow-sm overflow-auto">
+      <div className="flex-1 rounded-md border border-slate-200 bg-white dark:bg-slate-900 shadow-sm overflow-auto">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-600 sticky top-0">
+          <thead className="bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 sticky top-0">
             <tr>
               <th className="px-4 py-3 font-medium">Timestamp</th>
               <th className="px-4 py-3 font-medium">Item</th>
@@ -70,13 +70,13 @@ export function InventoryDashboardTab({ session, company }: { session: UserSessi
           </thead>
           <tbody className="divide-y divide-slate-100">
             {alerts.map(a => (
-              <tr key={a.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
+              <tr key={a.id} className="hover:bg-white dark:bg-slate-950">
+                <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                   {new Date(a.createdAt).toLocaleString()}
                 </td>
-                <td className="px-4 py-3 font-medium text-slate-900">{a.itemName}</td>
-                <td className="px-4 py-3 text-slate-600">{a.locationId}</td>
-                <td className="px-4 py-3 text-slate-600">
+                <td className="px-4 py-3 font-medium text-black dark:text-white">{a.itemName}</td>
+                <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{a.locationId}</td>
+                <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                   {a.previousStatus} &rarr; {a.newStatus}
                 </td>
                 <td className="px-4 py-3 text-right font-medium">{a.currentQuantity}</td>
@@ -106,7 +106,7 @@ export function InventoryDashboardTab({ session, company }: { session: UserSessi
               </tr>
             ))}
             {alerts.length === 0 && !loading && (
-              <tr><td colSpan={7} className="text-center py-8 text-slate-500">No alerts found</td></tr>
+              <tr><td colSpan={7} className="text-center py-8 text-slate-500 dark:text-slate-400">No alerts found</td></tr>
             )}
           </tbody>
         </table>
@@ -123,13 +123,13 @@ function MetricCard({ title, value, icon, color }: { title: string, value: numbe
     purple: 'bg-purple-50 text-purple-600',
   };
   return (
-    <div className="flex items-center rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="flex items-center rounded-lg border border-slate-200 bg-white dark:bg-slate-900 p-4 shadow-sm">
       <div className={`mr-4 flex h-10 w-10 items-center justify-center rounded-lg ${colors[color]}`}>
         {icon}
       </div>
       <div>
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        <p className="text-2xl font-bold text-slate-900">{value}</p>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
+        <p className="text-2xl font-bold text-black dark:text-white">{value}</p>
       </div>
     </div>
   );

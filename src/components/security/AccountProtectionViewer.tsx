@@ -47,7 +47,7 @@ export const AccountProtectionViewer: React.FC<AccountProtectionViewerProps> = (
     <div className="space-y-6" id="account-protection-viewer">
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-start space-x-4">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-200 shadow-sm flex items-start space-x-4">
           <div className="p-3 bg-indigo-50 rounded-lg text-indigo-600">
             <Lock className="w-6 h-6" />
           </div>
@@ -58,7 +58,7 @@ export const AccountProtectionViewer: React.FC<AccountProtectionViewerProps> = (
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-start space-x-4">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-200 shadow-sm flex items-start space-x-4">
           <div className="p-3 bg-emerald-50 rounded-lg text-emerald-600">
             <ShieldCheck className="w-6 h-6" />
           </div>
@@ -69,7 +69,7 @@ export const AccountProtectionViewer: React.FC<AccountProtectionViewerProps> = (
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-start space-x-4">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-gray-200 shadow-sm flex items-start space-x-4">
           <div className="p-3 bg-amber-50 rounded-lg text-amber-600">
             <Key className="w-6 h-6" />
           </div>
@@ -82,7 +82,7 @@ export const AccountProtectionViewer: React.FC<AccountProtectionViewerProps> = (
       </div>
 
       {/* Account Lock Inspector & Resolution */}
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
         <div className="flex items-center gap-2">
           <ShieldAlert className="w-5 h-5 text-indigo-600" />
           <h3 className="text-lg font-bold text-gray-900">Account Lock & Rate-Limit Inspector</h3>

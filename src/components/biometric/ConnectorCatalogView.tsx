@@ -56,7 +56,7 @@ export const ConnectorCatalogView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-xs font-bold text-white">{c.supportedManufacturer}</h3>
-                  <span className="text-[10px] text-slate-500 font-mono">{c.connectorId}</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{c.connectorId}</span>
                 </div>
               </div>
               <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 text-slate-400 border border-slate-800">
@@ -65,7 +65,7 @@ export const ConnectorCatalogView: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 block uppercase font-medium">Supported Protocols</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase font-medium">Supported Protocols</span>
               <div className="flex flex-wrap gap-1">
                 {c.supportedProtocols.map(p => (
                   <span key={p} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-900 text-amber-400/90 border border-slate-800">
@@ -79,7 +79,7 @@ export const ConnectorCatalogView: React.FC = () => {
               <span className="flex items-center gap-1 text-emerald-400">
                 <ShieldCheck className="w-3.5 h-3.5" /> Certified Connector
               </span>
-              <span className="text-slate-500">Auto-Detect Ready</span>
+              <span className="text-slate-500 dark:text-slate-400">Auto-Detect Ready</span>
             </div>
           </div>
         ))}

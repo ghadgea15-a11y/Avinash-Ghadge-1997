@@ -1,127 +1,85 @@
 import React from 'react';
-import { 
-  Building2, 
-  MapPin, 
-  Mail, 
-  Phone, 
-  ShieldCheck, 
-  Award, 
-  CheckCircle2, 
-  ArrowRight,
-  User,
-  HeartHandshake
-} from 'lucide-react';
 import { PhaseAScreen } from '../../types';
-import { navigateToUrl } from '../../utils/publicRouter';
 import { COMPANY_INFO } from '../../utils/seo';
+import { Building2, MapPin, User, CheckCircle2 } from 'lucide-react';
 
-interface AboutPageProps {
-  onNavigate: (screen: PhaseAScreen) => void;
-}
-
-export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
-  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
-    e.preventDefault();
-    navigateToUrl(path);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
+export const AboutPage: React.FC<{ onNavigate: (screen: PhaseAScreen) => void }> = ({ onNavigate }) => {
   return (
-    <article className="space-y-16 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      
-      {/* Hero Section */}
-      <section aria-labelledby="about-hero-heading" className="text-center space-y-6 max-w-4xl mx-auto pt-6 pb-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-mono font-bold tracking-wide">
-          <Building2 className="w-3.5 h-3.5 text-emerald-600" />
-          ABOUT SHOURYA ENTERPRISES PVT. LTD.
-        </div>
-
-        <h1 id="about-hero-heading" className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-[#0A0D14] tracking-tight leading-tight">
-          Empowering India's Operational & Field Workforces
-        </h1>
-
-        <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
-          Log Sheet Muster is built and maintained by Shourya Enterprises Pvt. Ltd., headquartered in Pune, Maharashtra. Our mission is to eliminate paper-based operational friction and bring modern digital governance to security guarding, facility management, and industrial workforce operations.
-        </p>
-      </section>
-
-      {/* Corporate Details Grid */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        <div className="p-8 rounded-3xl bg-white border border-[#E8E7E3] space-y-6 shadow-xs">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
-            <User className="w-6 h-6" />
+    <div className="space-y-24">
+      <section className="relative pt-20 pb-12 overflow-hidden">
+        <div className="absolute inset-0 bg-blue-600/5 blur-[100px] rounded-full w-[800px] h-[400px] left-1/2 -translate-x-1/2 -top-20" />
+        <div className="max-w-4xl mx-auto px-4 relative z-10 text-center space-y-6">
+          <div className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 mb-4 font-mono text-xs uppercase tracking-wider font-bold">
+            <Building2 className="w-4 h-4 mr-2 inline" />
+            ABOUT {COMPANY_INFO.legalName.toUpperCase()}
           </div>
-          <h2 className="text-xl font-display font-bold text-[#0A0D14]">Leadership & Vision</h2>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Founded by <strong>{COMPANY_INFO.founder}</strong>, Shourya Enterprises Pvt. Ltd. focuses on practical, real-world operational software tailored to the stringent compliance and execution requirements of Indian enterprise environments.
+          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">
+            Empowering India's Operational & Field Workforces
+          </h1>
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Log Sheet Muster is built and maintained by Shourya Enterprises Pvt. Ltd. Our mission is to eliminate paper-based operational friction and bring modern digital governance to facility management, security, and industrial workforces.
           </p>
-          <div className="p-4 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] text-xs font-mono text-slate-700 space-y-1">
-            <div><strong>Company:</strong> {COMPANY_INFO.legalName}</div>
-            <div><strong>Founder:</strong> {COMPANY_INFO.founder}</div>
-            <div><strong>Platform:</strong> Log Sheet Muster SaaS</div>
-          </div>
-        </div>
-
-        <div className="p-8 rounded-3xl bg-white border border-[#E8E7E3] space-y-6 shadow-xs">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
-            <MapPin className="w-6 h-6" />
-          </div>
-          <h2 className="text-xl font-display font-bold text-[#0A0D14]">Headquarters & Operations</h2>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Headquartered in Pune's industrial and IT hub, our solutions architecture and engineering teams serve clients across Maharashtra and India.
-          </p>
-          <div className="p-4 rounded-xl bg-[#FBFBFA] border border-[#E8E7E3] text-xs font-mono text-slate-700 space-y-1">
-            <div><strong>Address:</strong> {COMPANY_INFO.address.streetAddress}, {COMPANY_INFO.address.addressLocality}, {COMPANY_INFO.address.addressRegion} - {COMPANY_INFO.address.postalCode}</div>
-            <div><strong>Email:</strong> <a href={`mailto:${COMPANY_INFO.email}`} className="text-emerald-700 underline">{COMPANY_INFO.email}</a></div>
-            <div><strong>Direct Contact:</strong> <a href={`tel:${COMPANY_INFO.telephone}`} className="text-emerald-700 underline">{COMPANY_INFO.telephone}</a></div>
-          </div>
-        </div>
-
-      </section>
-
-      {/* Core Engineering Principles */}
-      <section className="bg-white border border-[#E8E7E3] rounded-3xl p-8 sm:p-12 space-y-6 shadow-sm">
-        <h2 className="text-2xl font-display font-bold text-[#0A0D14]">
-          Our Core Engineering Principles
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-          <div className="space-y-2">
-            <h3 className="text-sm font-bold text-slate-900">1. Single Source of Truth</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              No fragmented spreadsheets. Attendance, payroll, guard tours, and log sheets share one atomic Firestore database backend.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-sm font-bold text-slate-900">2. Zero Tolerance for Data Loss</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Production data is treated as mission-critical. Strict tenant isolation ensures Company A never touches Company B records.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-sm font-bold text-slate-900">3. Practical Field Usability</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Optimized for low-bandwidth 4G connectivity, offline caching, fast supervisor roll-calls, and high readability in bright sunlight.
-            </p>
-          </div>
         </div>
       </section>
 
-      {/* CTA Footer */}
-      <section className="p-8 rounded-3xl bg-[#0A0D14] text-white text-center space-y-4 shadow-xl">
-        <h2 className="text-2xl font-display font-bold">Have Questions for Our Leadership?</h2>
-        <p className="text-xs text-slate-400 max-w-xl mx-auto">
-          Contact our team directly to discuss custom enterprise requirements, API integrations, or regional deployments.
-        </p>
-        <a
-          href="/contact"
-          onClick={(e) => handleLinkClick(e, '/contact')}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono font-bold text-xs uppercase tracking-wider transition-all"
-        >
-          Contact Pune Office &rarr;
-        </a>
-      </section>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+        <div className="grid md:grid-cols-2 gap-8">
+          
+          <div className="p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6 backdrop-blur-sm">
+            <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
+              <User className="w-6 h-6" />
+            </div>
+            <h2 className="text-2xl font-bold text-white">Leadership & Vision</h2>
+            <p className="text-slate-400 leading-relaxed">
+              Founded by <strong>{COMPANY_INFO.founder}</strong>, Shourya Enterprises Pvt. Ltd. focuses on practical, real-world operational software tailored to the stringent compliance and execution requirements of Indian enterprise environments.
+            </p>
+            <div className="p-4 rounded-xl bg-black/40 border border-white/5 text-sm font-mono text-slate-300 space-y-2">
+              <div><strong className="text-blue-400">Company:</strong> {COMPANY_INFO.legalName}</div>
+              <div><strong className="text-blue-400">Founder:</strong> {COMPANY_INFO.founder}</div>
+              <div><strong className="text-blue-400">Platform:</strong> Log Sheet Muster SaaS</div>
+            </div>
+          </div>
 
-    </article>
+          <div className="p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6 backdrop-blur-sm">
+            <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
+              <MapPin className="w-6 h-6" />
+            </div>
+            <h2 className="text-2xl font-bold text-white">Headquarters & Operations</h2>
+            <p className="text-slate-400 leading-relaxed">
+              Headquartered in Pune's industrial and IT hub, our solutions architecture and engineering teams serve clients across Maharashtra and India.
+            </p>
+            <div className="p-4 rounded-xl bg-black/40 border border-white/5 text-sm font-mono text-slate-300 space-y-2">
+              <div><strong className="text-blue-400">Address:</strong> {COMPANY_INFO.address.streetAddress}, {COMPANY_INFO.address.addressLocality}, {COMPANY_INFO.address.addressRegion} - {COMPANY_INFO.address.postalCode}</div>
+              <div><strong className="text-blue-400">Email:</strong> <a href={`mailto:${COMPANY_INFO.email}`} className="text-white hover:text-blue-400 transition-colors">{COMPANY_INFO.email}</a></div>
+              <div><strong className="text-blue-400">Direct Contact:</strong> <a href={`tel:${COMPANY_INFO.telephone}`} className="text-white hover:text-blue-400 transition-colors">{COMPANY_INFO.telephone}</a></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div className="mt-16 bg-white/5 border border-white/10 rounded-3xl p-8 sm:p-12 space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-4">
+            <h2 className="text-3xl font-bold text-white">Our Core Engineering Principles</h2>
+            <p className="text-slate-400">We build mission-critical software for the physical world.</p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { title: "Single Source of Truth", desc: "No fragmented spreadsheets. Attendance, payroll, guard tours, and log sheets share one atomic Firestore database backend." },
+              { title: "Zero Data Loss", desc: "Production data is treated as mission-critical. Strict tenant isolation ensures Company A never touches Company B records." },
+              { title: "Practical Field Usability", desc: "Optimized for low-bandwidth 4G connectivity, offline caching, fast supervisor roll-calls, and high readability in bright sunlight." }
+            ].map(principle => (
+              <div key={principle.title} className="space-y-4 text-center md:text-left">
+                <div className="w-10 h-10 mx-auto md:mx-0 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5 text-blue-400" />
+                </div>
+                <h3 className="text-lg font-bold text-white">{principle.title}</h3>
+                <p className="text-slate-400 leading-relaxed">{principle.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
   );
 };

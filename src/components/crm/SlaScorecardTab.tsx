@@ -91,7 +91,7 @@ export const SlaScorecardTab: React.FC<Props> = ({ session, company }) => {
       </div>
 
       {loading ? (
-        <div className="py-8 text-center text-slate-500">Loading SLA data...</div>
+        <div className="py-8 text-center text-slate-500 dark:text-slate-400">Loading SLA data...</div>
       ) : (
         <>
           {subTab === 'SCORECARDS' && <SlaScorecardView scorecards={scorecards} />}

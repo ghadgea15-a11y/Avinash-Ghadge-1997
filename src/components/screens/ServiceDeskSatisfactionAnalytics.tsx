@@ -132,13 +132,13 @@ export function ServiceDeskSatisfactionAnalytics({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-6xl max-h-full flex flex-col my-auto border border-slate-200 dark:border-slate-800">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 rounded-t-2xl shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 dark:bg-slate-900/50 rounded-t-2xl shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg text-amber-600 dark:text-amber-400">
               <Star className="w-5 h-5 fill-current" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              <h2 className="text-lg font-bold text-black dark:text-white">
                 Client Satisfaction (CSAT) Analytics
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -149,7 +149,7 @@ export function ServiceDeskSatisfactionAnalytics({
           <div className="flex items-center gap-3">
             <button 
               onClick={handleExportCsv}
-              className="px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center gap-2 transition-colors border border-slate-200 dark:border-slate-700"
+              className="px-3 py-1.5 text-sm font-medium text-slate-900 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center gap-2 transition-colors border border-slate-200 dark:border-slate-700"
             >
               <Download className="w-4 h-4" /> Export Report
             </button>
@@ -170,7 +170,7 @@ export function ServiceDeskSatisfactionAnalytics({
           )}
 
           {/* Filters */}
-          <div className="flex flex-wrap items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div className="flex flex-wrap items-center gap-3 p-4 bg-white dark:bg-slate-950 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800">
             <Filter className="w-4 h-4 text-slate-400" />
             <select
               value={filters.dateRangePreset || ''}
@@ -200,8 +200,8 @@ export function ServiceDeskSatisfactionAnalytics({
               <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-400">
                 <Star className="w-8 h-8" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">No data available</h3>
-              <p className="text-slate-500 max-w-sm mt-1">
+              <h3 className="text-lg font-semibold text-black dark:text-white dark:text-slate-100">No data available</h3>
+              <p className="text-slate-500 dark:text-slate-400 max-w-sm mt-1">
                 There are no client feedback records matching the current filters.
               </p>
             </div>
@@ -224,19 +224,19 @@ export function ServiceDeskSatisfactionAnalytics({
 
               {/* Top KPI Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white dark:bg-slate-800/80 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 flex flex-col">
-                  <span className="text-sm font-medium text-slate-500 flex items-center gap-1.5"><Star className="w-4 h-4 text-amber-500 fill-amber-500"/> Overall Score</span>
-                  <div className="text-3xl font-black text-slate-900 dark:text-white mt-2 flex items-baseline gap-1">
+                <div className="bg-white dark:bg-slate-900 dark:bg-slate-800/80 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 flex flex-col">
+                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5"><Star className="w-4 h-4 text-amber-500 fill-amber-500"/> Overall Score</span>
+                  <div className="text-3xl font-black text-black dark:text-white mt-2 flex items-baseline gap-1">
                     {summary.overallAverageScore}
-                    <span className="text-sm font-normal text-slate-500">/ 5.0</span>
+                    <span className="text-sm font-normal text-slate-500 dark:text-slate-400">/ 5.0</span>
                   </div>
-                  <div className="mt-auto pt-4 text-xs font-medium text-slate-500">
+                  <div className="mt-auto pt-4 text-xs font-medium text-slate-500 dark:text-slate-400">
                     Across {summary.totalFeedbackRecords} responses
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800/80 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 flex flex-col">
-                  <span className="text-sm font-medium text-slate-500 flex items-center gap-1.5"><ThumbsUp className="w-4 h-4 text-emerald-500"/> Satisfaction Rate</span>
+                <div className="bg-white dark:bg-slate-900 dark:bg-slate-800/80 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 flex flex-col">
+                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5"><ThumbsUp className="w-4 h-4 text-emerald-500"/> Satisfaction Rate</span>
                   <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">
                     {summary.overallSatisfactionPercentage}%
                   </div>
@@ -246,22 +246,22 @@ export function ServiceDeskSatisfactionAnalytics({
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800/80 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 flex flex-col">
-                  <span className="text-sm font-medium text-slate-500 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500"/> Survey Response Rate</span>
-                  <div className="text-3xl font-black text-slate-900 dark:text-white mt-2">
+                <div className="bg-white dark:bg-slate-900 dark:bg-slate-800/80 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 flex flex-col">
+                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500"/> Survey Response Rate</span>
+                  <div className="text-3xl font-black text-black dark:text-white mt-2">
                     {summary.surveyResponseRate}%
                   </div>
-                  <div className="mt-auto pt-4 text-xs text-slate-500">
+                  <div className="mt-auto pt-4 text-xs text-slate-500 dark:text-slate-400">
                     From {summary.totalResolvedTickets} resolved tickets
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800/80 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 flex flex-col">
-                  <span className="text-sm font-medium text-slate-500 flex items-center gap-1.5"><MessageSquareWarning className="w-4 h-4 text-rose-500"/> Active Escalations</span>
-                  <div className={`text-3xl font-black mt-2 ${summary.escalationCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>
+                <div className="bg-white dark:bg-slate-900 dark:bg-slate-800/80 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 flex flex-col">
+                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5"><MessageSquareWarning className="w-4 h-4 text-rose-500"/> Active Escalations</span>
+                  <div className={`text-3xl font-black mt-2 ${summary.escalationCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-black dark:text-white'}`}>
                     {summary.escalationCount}
                   </div>
-                  <div className="mt-auto pt-4 text-xs text-slate-500">
+                  <div className="mt-auto pt-4 text-xs text-slate-500 dark:text-slate-400">
                     Requires management review
                   </div>
                 </div>
@@ -269,8 +269,8 @@ export function ServiceDeskSatisfactionAnalytics({
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Score Breakdown */}
-                <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-900 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+                  <h3 className="text-sm font-bold text-black dark:text-white mb-4 flex items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-indigo-500" />
                     Quality Dimension Scores
                   </h3>
@@ -290,8 +290,8 @@ export function ServiceDeskSatisfactionAnalytics({
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between text-xs mb-1">
-                              <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">{data.label}</span>
-                              <span className="font-bold text-slate-900 dark:text-white">{data.averageScore}★</span>
+                              <span className="font-semibold text-slate-900 dark:text-slate-300 truncate">{data.label}</span>
+                              <span className="font-bold text-black dark:text-white">{data.averageScore}★</span>
                             </div>
                             <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                               <div 
@@ -307,36 +307,36 @@ export function ServiceDeskSatisfactionAnalytics({
                 </div>
 
                 {/* SLA Correlation */}
-                <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-900 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+                  <h3 className="text-sm font-bold text-black dark:text-white mb-4 flex items-center gap-2">
                     <Clock className="w-4 h-4 text-emerald-500" />
                     SLA & Performance Correlation
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
-                      <span className="text-xs text-slate-500 block mb-1">When SLA is Met</span>
+                    <div className="p-3 bg-white dark:bg-slate-950 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">When SLA is Met</span>
                       <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
                         {summary.slaCorrelation.slaMetAvgScore}★
                       </div>
                       <span className="text-[10px] text-slate-400">{summary.slaCorrelation.slaMetResponsesCount} responses</span>
                     </div>
-                    <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
-                      <span className="text-xs text-slate-500 block mb-1">When SLA Breached</span>
+                    <div className="p-3 bg-white dark:bg-slate-950 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">When SLA Breached</span>
                       <div className="text-lg font-bold text-rose-600 dark:text-rose-400">
                         {summary.slaCorrelation.slaBreachedAvgScore}★
                       </div>
                       <span className="text-[10px] text-slate-400">{summary.slaCorrelation.slaBreachedResponsesCount} responses</span>
                     </div>
-                    <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
-                      <span className="text-xs text-slate-500 block mb-1">Satisfied Resolution (Avg)</span>
-                      <div className="text-lg font-bold text-slate-700 dark:text-slate-300">
+                    <div className="p-3 bg-white dark:bg-slate-950 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Satisfied Resolution (Avg)</span>
+                      <div className="text-lg font-bold text-slate-900 dark:text-slate-300">
                         {summary.slaCorrelation.avgResolutionHoursSatisfied} hrs
                       </div>
                       <span className="text-[10px] text-slate-400">Time to resolve</span>
                     </div>
-                    <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
-                      <span className="text-xs text-slate-500 block mb-1">Dissatisfied Resolution (Avg)</span>
-                      <div className="text-lg font-bold text-slate-700 dark:text-slate-300">
+                    <div className="p-3 bg-white dark:bg-slate-950 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Dissatisfied Resolution (Avg)</span>
+                      <div className="text-lg font-bold text-slate-900 dark:text-slate-300">
                         {summary.slaCorrelation.avgResolutionHoursDissatisfied} hrs
                       </div>
                       <span className="text-[10px] text-slate-400">Time to resolve</span>
@@ -346,16 +346,16 @@ export function ServiceDeskSatisfactionAnalytics({
               </div>
 
               {/* By Client / Group Metrics */}
-              <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <div className="bg-white dark:bg-slate-900 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 dark:bg-slate-900/50">
+                  <h3 className="text-sm font-bold text-black dark:text-white flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-blue-500" />
                     Satisfaction by Client
                   </h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-slate-500 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 uppercase">
+                    <thead className="text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-950 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 uppercase">
                       <tr>
                         <th className="px-5 py-3 font-semibold">Client</th>
                         <th className="px-5 py-3 font-semibold text-center">Score</th>
@@ -365,9 +365,9 @@ export function ServiceDeskSatisfactionAnalytics({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                      {summary.byClient.slice(0, 10).map(c => (
-                        <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                          <td className="px-5 py-3 font-medium text-slate-900 dark:text-slate-100">{c.name}</td>
+                      {summary.byClient.slice(0, 10).map((c: any) => (
+                        <tr key={c.id} className="hover:bg-white dark:bg-slate-950/50 dark:hover:bg-slate-800/30">
+                          <td className="px-5 py-3 font-medium text-black dark:text-white dark:text-slate-100">{c.name}</td>
                           <td className="px-5 py-3 text-center">
                             <span className={`inline-flex items-center gap-1 font-bold ${c.averageScore >= summary.thresholdAlerts.configuredThreshold ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                               {c.averageScore}★
@@ -376,11 +376,11 @@ export function ServiceDeskSatisfactionAnalytics({
                           <td className="px-5 py-3 text-center">
                             <div className="flex items-center justify-center gap-2 text-xs">
                               <span className="text-emerald-600 font-medium">{c.positiveCount}</span>
-                              <span className="text-slate-300 dark:text-slate-600">/</span>
+                              <span className="text-slate-300 dark:text-slate-600 dark:text-slate-400">/</span>
                               <span className="text-rose-600 font-medium">{c.negativeCount}</span>
                             </div>
                           </td>
-                          <td className="px-5 py-3 text-center text-slate-500">{c.totalResponses}</td>
+                          <td className="px-5 py-3 text-center text-slate-500 dark:text-slate-400">{c.totalResponses}</td>
                           <td className="px-5 py-3 text-right">
                             {c.escalationCount > 0 ? (
                               <span className="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-bold">
@@ -393,7 +393,7 @@ export function ServiceDeskSatisfactionAnalytics({
                         </tr>
                       ))}
                       {summary.byClient.length === 0 && (
-                         <tr><td colSpan={5} className="px-5 py-4 text-center text-slate-500 text-xs">No client data</td></tr>
+                         <tr><td colSpan={5} className="px-5 py-4 text-center text-slate-500 dark:text-slate-400 text-xs">No client data</td></tr>
                       )}
                     </tbody>
                   </table>

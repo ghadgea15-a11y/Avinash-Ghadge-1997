@@ -88,7 +88,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
   // Toggle checklist item
   const handleToggleChecklistItem = async (task: TaskRecord, itemIndex: number) => {
     if (!task.checklist || task.checklist.length === 0) return;
-    const updatedChecklist = task.checklist.map((item, idx) => 
+    const updatedChecklist = task.checklist.map((item: any, idx: number) => 
       idx === itemIndex ? { ...item, done: !item.done } : item
     );
 
@@ -195,14 +195,14 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center space-y-3">
           <div className="w-9 h-9 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-medium">Loading Assigned Tasks...</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Loading Assigned Tasks...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`p-6 max-w-4xl mx-auto space-y-6 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className={`p-6 max-w-4xl mx-auto space-y-6 ${isDark ? 'text-slate-100' : 'text-black'}`}>
       {/* Header */}
       <div className="flex items-center justify-between border-b pb-4">
         <div className="flex items-center gap-3">
@@ -211,7 +211,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">My Assigned Work Orders</h1>
-            <p className="text-xs text-slate-500">Field task execution, checklist verification & photo submission</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Field task execution, checklist verification & photo submission</p>
           </div>
         </div>
       </div>
@@ -223,7 +223,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
           className={`pb-3 px-4 text-xs font-bold transition-all relative ${
             activeTab === 'ACTIVE'
               ? 'text-indigo-600 border-b-2 border-indigo-600 dark:text-indigo-400'
-              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
           }`}
         >
           Active Tasks ({activeCount})
@@ -234,7 +234,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
           className={`pb-3 px-4 text-xs font-bold transition-all relative ${
             activeTab === 'PENDING_REVIEW'
               ? 'text-indigo-600 border-b-2 border-indigo-600 dark:text-indigo-400'
-              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
           }`}
         >
           Under Verification ({reviewCount})
@@ -245,7 +245,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
           className={`pb-3 px-4 text-xs font-bold transition-all relative ${
             activeTab === 'COMPLETED'
               ? 'text-indigo-600 border-b-2 border-indigo-600 dark:text-indigo-400'
-              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
           }`}
         >
           Completed Archive ({completedCount})
@@ -279,7 +279,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
                       task.status === 'COMPLETED' || task.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
                       task.status === 'PENDING_VERIFICATION' ? 'bg-amber-100 text-amber-700' :
                       task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
-                      'bg-slate-100 text-slate-700'
+                      'bg-slate-100 text-slate-900'
                     }`}>
                       {task.status}
                     </span>
@@ -302,18 +302,18 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
                   <div className="text-xs font-bold mb-2 flex items-center justify-between">
                     <span>Task Checklist Points:</span>
                     <span className="text-[11px] text-slate-400 font-normal">
-                      {task.checklist.filter(c => c.done).length} / {task.checklist.length} Completed
+                      {task.checklist.filter((c: any) => c.done).length} / {task.checklist.length} Completed
                     </span>
                   </div>
 
                   <div className="space-y-1.5">
-                    {task.checklist.map((item, idx) => (
+                    {task.checklist.map((item: any, idx: number) => (
                       <label 
                         key={idx}
                         className={`flex items-center gap-2.5 p-2 rounded-lg text-xs cursor-pointer transition-colors ${
                           item.done 
                             ? 'bg-emerald-50/50 dark:bg-emerald-950/20 text-slate-400 line-through' 
-                            : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-200'
+                            : 'hover:bg-white dark:hover:bg-slate-700/50 text-slate-900 dark:text-slate-200'
                         }`}
                       >
                         <input
@@ -346,8 +346,8 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
 
               {/* Action Buttons */}
               <div className="mt-4 pt-3 border-t flex items-center justify-between gap-3">
-                <div className="text-xs text-slate-500">
-                  Site: <span className="font-semibold text-slate-700 dark:text-slate-300">{task.siteName || task.siteId || 'Assigned HQ'}</span>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Site: <span className="font-semibold text-slate-900 dark:text-slate-300">{task.siteName || task.siteId || 'Assigned HQ'}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -393,7 +393,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
 
         {filteredTasks.length === 0 && (
           <div className={`text-center py-16 px-4 rounded-xl border border-dashed ${
-            isDark ? 'bg-slate-800/40 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-300 text-slate-500'
+            isDark ? 'bg-slate-800/40 border-slate-700 text-slate-400' : 'bg-white border-slate-300 text-slate-500'
           }`}>
             <CheckCircle2 className="w-12 h-12 mx-auto text-slate-400 mb-3 opacity-60" />
             <h3 className="text-base font-bold">No Tasks in this Tab</h3>
@@ -408,7 +408,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
       {activeTaskForAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className={`w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-2xl border ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
             <div className="flex items-center justify-between pb-4 border-b">
               <div className="flex items-center gap-2.5">
@@ -417,7 +417,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
                 </div>
                 <div>
                   <h3 className="font-bold text-base">Submit Work Order Proof</h3>
-                  <p className="text-xs text-slate-500">{activeTaskForAction.title}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{activeTaskForAction.title}</p>
                 </div>
               </div>
               <button 
@@ -438,7 +438,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
                   value={actionNotes}
                   onChange={e => setActionNotes(e.target.value)}
                   className={`w-full p-2.5 rounded-lg border outline-none ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                   }`}
                 />
               </div>
@@ -446,7 +446,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
               <div>
                 <label className="block font-semibold mb-1">Attach Photo Proof (Camera / File):</label>
                 <div className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${
-                  isDark ? 'border-slate-700 hover:border-indigo-500 bg-slate-800/50' : 'border-slate-300 hover:border-indigo-500 bg-slate-50'
+                  isDark ? 'border-slate-700 hover:border-indigo-500 bg-slate-800/50' : 'border-slate-300 hover:border-indigo-500 bg-white'
                 }`}>
                   <input
                     type="file"
@@ -469,7 +469,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
                     ) : (
                       <div className="space-y-2 py-2">
                         <Camera className="w-8 h-8 mx-auto text-slate-400" />
-                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Tap to Take Photo or Choose File</p>
+                        <p className="text-xs font-semibold text-slate-900 dark:text-slate-300">Tap to Take Photo or Choose File</p>
                         <p className="text-[10px] text-slate-400">JPEG, PNG up to 10MB</p>
                       </div>
                     )}

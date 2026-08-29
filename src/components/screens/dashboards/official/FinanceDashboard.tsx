@@ -29,7 +29,7 @@ export const FinanceDashboard: React.FC<DashboardProps> = ({ userSession, compan
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-slate-500">
+      <div className="flex flex-col items-center justify-center p-8 text-slate-500 dark:text-slate-400">
         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
         <p>Loading Finance Metrics...</p>
       </div>
@@ -42,12 +42,12 @@ export const FinanceDashboard: React.FC<DashboardProps> = ({ userSession, compan
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+        <div className="bg-white dark:bg-slate-900 dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-500">Draft Payroll Cycles</h3>
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Draft Payroll Cycles</h3>
             <DollarSign className="w-5 h-5 text-indigo-500" />
           </div>
-          <p className="text-3xl font-black text-slate-900 dark:text-white">{draftCycles}</p>
+          <p className="text-3xl font-black text-black dark:text-white">{draftCycles}</p>
           {RbacService.hasModuleAccess(userSession, 'PAYROLL') && (
             <button 
               onClick={() => onNavigate('PAYROLL_COMPENSATION')}
@@ -58,12 +58,12 @@ export const FinanceDashboard: React.FC<DashboardProps> = ({ userSession, compan
           )}
         </div>
 
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+        <div className="bg-white dark:bg-slate-900 dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-500">Pending Salary Advances</h3>
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Pending Salary Advances</h3>
             <FileText className="w-5 h-5 text-amber-500" />
           </div>
-          <p className="text-3xl font-black text-slate-900 dark:text-white">{pendingAdvances}</p>
+          <p className="text-3xl font-black text-black dark:text-white">{pendingAdvances}</p>
           {RbacService.hasModuleAccess(userSession, 'PAYROLL') && (
             <button 
               onClick={() => onNavigate('PAYROLL_COMPENSATION')}

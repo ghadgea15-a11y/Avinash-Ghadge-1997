@@ -286,8 +286,8 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
 
     if (status === 'EXPIRED' || now > endMs) {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border border-slate-300 dark:border-slate-700 flex items-center gap-1">
-          <Clock className="w-3 h-3 text-slate-500" />
+        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-900 dark:text-slate-300 dark:bg-slate-800 dark:text-slate-400 border border-slate-300 dark:border-slate-700 flex items-center gap-1">
+          <Clock className="w-3 h-3 text-slate-500 dark:text-slate-400" />
           <span>Expired</span>
         </span>
       );
@@ -334,7 +334,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
               activeSubTab === 'MY_DELEGATIONS'
                 ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white'
             }`}
           >
             <UserCheck className="w-3.5 h-3.5" />
@@ -346,7 +346,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
               activeSubTab === 'ASSIGNED_TO_ME'
                 ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white'
             }`}
           >
             <Share2 className="w-3.5 h-3.5" />
@@ -359,7 +359,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                 activeSubTab === 'ORGANIZATION_AUDIT'
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white'
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
@@ -372,7 +372,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
         <div className="flex items-center gap-2">
           <button
             onClick={loadDelegations}
-            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-800"
             title="Refresh Delegations"
           >
             <RefreshCw className="w-4 h-4" />
@@ -398,15 +398,15 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
         </div>
       ) : delegations.length === 0 ? (
         <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-3">
-          <Share2 className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto" />
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          <Share2 className="w-12 h-12 text-slate-300 dark:text-slate-900 dark:text-slate-300 mx-auto" />
+          <h3 className="text-base font-bold text-black dark:text-white">
             {activeSubTab === 'MY_DELEGATIONS' 
               ? 'No Delegations Configured' 
               : activeSubTab === 'ASSIGNED_TO_ME' 
                 ? 'No Proxy Authorities Assigned to You' 
                 : 'No Organization Delegations Found'}
           </h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto">
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
             {activeSubTab === 'MY_DELEGATIONS' 
               ? 'When going on leave or out of office, you can designate a qualified colleague to act as your approval proxy within strict scope boundaries.'
               : activeSubTab === 'ASSIGNED_TO_ME' 
@@ -440,7 +440,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-slate-900 dark:text-white">
+                      <span className="font-bold text-sm text-black dark:text-white">
                         {del.delegatorName}
                       </span>
                       <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
@@ -449,7 +449,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-400">
-                      Delegator Role: <span className="font-medium text-slate-600 dark:text-slate-300">{del.delegatorRole || 'Approver'}</span>
+                      Delegator Role: <span className="font-medium text-slate-600 dark:text-slate-400 dark:text-slate-300">{del.delegatorRole || 'Approver'}</span>
                     </p>
                   </div>
 
@@ -465,7 +465,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                     {del.scope.modules.map((m, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-md text-[11px] font-medium border border-slate-200 dark:border-slate-700"
+                        className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300 rounded-md text-[11px] font-medium border border-slate-200 dark:border-slate-700"
                       >
                         {m === 'ALL' ? 'All Modules' : m}
                       </span>
@@ -479,7 +479,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                 </div>
 
                 {/* Timeframe & Reason */}
-                <div className="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                <div className="bg-white dark:bg-slate-950/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
                   <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                     <div className="flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-indigo-500" />
@@ -539,18 +539,18 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                <h3 className="font-bold text-black dark:text-white text-base flex items-center gap-2">
                   <Share2 className="w-5 h-5 text-indigo-600" />
                   <span>Configure Proxy Delegation</span>
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Temporarily assign an authorized colleague to act on approvals on your behalf.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
-                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white"
               >
                 Cancel
               </button>
@@ -559,7 +559,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
             {/* EMERGENCY DELEGATION: SELECT DELEGATOR */}
             {canViewOrgAudit && (
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 block">
                   Assign On Behalf Of (Original Approver)
                 </label>
                 <p className="text-[10px] text-amber-600 dark:text-amber-500 mb-2 font-medium">
@@ -568,7 +568,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                 <select
                   value={selectedDelegatorId}
                   onChange={(e) => setSelectedDelegatorId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-black dark:text-white"
                 >
                   <option value="">{session.fullName} (Myself)</option>
                   {employees
@@ -592,7 +592,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
 
             {/* Delegate Colleague Selector */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-300 block">
                 Select Designated Proxy Approver *
               </label>
 
@@ -603,11 +603,11 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                   placeholder="Search by name, employee ID, designation, or department..."
                   value={delegateSearch}
                   onChange={(e) => setDelegateSearch(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-black dark:text-white focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
-              <div className="max-h-36 overflow-y-auto space-y-1 border border-slate-200 dark:border-slate-800 rounded-2xl p-1 bg-slate-50/50 dark:bg-slate-950/50">
+              <div className="max-h-36 overflow-y-auto space-y-1 border border-slate-200 dark:border-slate-800 rounded-2xl p-1 bg-white dark:bg-slate-950/50 dark:bg-slate-950/50">
                 {filteredEmployees.length === 0 ? (
                   <p className="text-xs text-slate-400 text-center py-4">No matching employees found.</p>
                 ) : (
@@ -618,7 +618,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                       className={`p-2 rounded-xl text-xs cursor-pointer flex items-center justify-between transition ${
                         selectedDelegateId === emp.id
                           ? 'bg-indigo-600 text-white font-bold'
-                          : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200'
+                          : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-black dark:text-slate-200'
                       }`}
                     >
                       <div>
@@ -637,7 +637,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
             {/* Timeframe Pickers */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 block">
                   Effective Start Time *
                 </label>
                 <div className="flex gap-2">
@@ -646,20 +646,20 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                     required
                     value={startAtDate}
                     onChange={(e) => setStartAtDate(e.target.value)}
-                    className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                    className="flex-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-black dark:text-white"
                   />
                   <input
                     type="time"
                     required
                     value={startAtTime}
                     onChange={(e) => setStartAtTime(e.target.value)}
-                    className="w-24 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 text-xs text-slate-900 dark:text-white"
+                    className="w-24 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 text-xs text-black dark:text-white"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-300 block">
                   Effective End Time *
                 </label>
                 <div className="flex gap-2">
@@ -668,14 +668,14 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                     required
                     value={endAtDate}
                     onChange={(e) => setEndAtDate(e.target.value)}
-                    className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                    className="flex-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-black dark:text-white"
                   />
                   <input
                     type="time"
                     required
                     value={endAtTime}
                     onChange={(e) => setEndAtTime(e.target.value)}
-                    className="w-24 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 text-xs text-slate-900 dark:text-white"
+                    className="w-24 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 text-xs text-black dark:text-white"
                   />
                 </div>
               </div>
@@ -683,7 +683,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
 
             {/* Scope Matrix */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-300 block">
                 Delegated Business Modules
               </label>
               <div className="flex flex-wrap gap-1.5">
@@ -697,7 +697,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
                         isSelected
                           ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                          : 'bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300'
                       }`}
                     >
                       {m.label}
@@ -709,13 +709,13 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
 
             {/* Max Approval Tier */}
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-300 block">
                 Maximum Allowed Approval Tier (Optional)
               </label>
               <select
                 value={maxTier}
                 onChange={(e) => setMaxTier(parseInt(e.target.value, 10))}
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-black dark:text-white"
               >
                 <option value={0}>Any Tier (Full Authority within Scope)</option>
                 <option value={1}>Tier 1 Approvals Only</option>
@@ -726,7 +726,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
 
             {/* Reason */}
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-300 block">
                 Business Reason & Justification *
               </label>
               <textarea
@@ -735,7 +735,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="e.g. Annual leave coverage, business travel, medical leave..."
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-black dark:text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
 
@@ -744,7 +744,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>
@@ -765,24 +765,24 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <h4 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2 text-rose-600">
+              <h4 className="font-bold text-black dark:text-white text-base flex items-center gap-2 text-rose-600">
                 <Trash2 className="w-4 h-4" />
                 <span>Revoke Proxy Delegation</span>
               </h4>
               <button
                 onClick={() => setShowRevokeModal(null)}
-                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white"
               >
                 Cancel
               </button>
             </div>
 
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Are you sure you want to revoke proxy authority assigned to <strong>{showRevokeModal.delegateName}</strong>? This action takes effect immediately.
             </p>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-300 block">
                 Revocation Reason (Optional)
               </label>
               <input
@@ -790,7 +790,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                 value={revokeReason}
                 onChange={(e) => setRevokeReason(e.target.value)}
                 placeholder="e.g. Returned to office early, role reassignment"
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-black dark:text-white"
               />
             </div>
 
@@ -798,7 +798,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
               <button
                 type="button"
                 onClick={() => setShowRevokeModal(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>
@@ -820,13 +820,13 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <h4 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+              <h4 className="font-bold text-black dark:text-white text-base flex items-center gap-2">
                 <Info className="w-4 h-4 text-indigo-600" />
                 <span>Delegation Policy Detail</span>
               </h4>
               <button
                 onClick={() => setSelectedDetail(null)}
-                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white"
               >
                 Close
               </button>
@@ -835,19 +835,19 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
             <div className="space-y-3 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400">Delegation ID:</span>
-                <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{selectedDetail.delegationId}</span>
+                <span className="font-mono font-bold text-black dark:text-slate-200">{selectedDetail.delegationId}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400">Delegator:</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedDetail.delegatorName} ({selectedDetail.delegatorRole || 'Approver'})</span>
+                <span className="font-semibold text-black dark:text-slate-200">{selectedDetail.delegatorName} ({selectedDetail.delegatorRole || 'Approver'})</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400">Designated Proxy:</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedDetail.delegateName} ({selectedDetail.delegateRole || 'Staff'})</span>
+                <span className="font-semibold text-black dark:text-slate-200">{selectedDetail.delegateName} ({selectedDetail.delegateRole || 'Staff'})</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400">Effective Window:</span>
-                <span className="font-medium text-slate-800 dark:text-slate-200">
+                <span className="font-medium text-black dark:text-slate-200">
                   {format(new Date(selectedDetail.startAt), 'PP p')} &rarr; {format(new Date(selectedDetail.endAt), 'PP p')}
                 </span>
               </div>
@@ -858,7 +858,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
               {selectedDetail.reason && (
                 <div className="py-1">
                   <span className="text-slate-400 block mb-1">Business Reason:</span>
-                  <p className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl text-slate-700 dark:text-slate-300 italic">
+                  <p className="p-2.5 bg-white dark:bg-slate-950 rounded-xl text-slate-900 dark:text-slate-300 italic">
                     {selectedDetail.reason}
                   </p>
                 </div>
@@ -873,7 +873,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setSelectedDetail(null)}
-                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold"
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300 rounded-xl text-xs font-semibold"
               >
                 Done
               </button>

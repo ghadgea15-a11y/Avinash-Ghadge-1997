@@ -296,7 +296,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
       case 'MEDIUM':
         return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">MEDIUM</span>;
       default:
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">LOW</span>;
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-900 dark:text-slate-300 dark:bg-slate-800 dark:text-slate-300">LOW</span>;
     }
   };
 
@@ -324,7 +324,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
               <TrendingUp className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-2xl font-black text-black dark:text-white tracking-tight">
                 Operational Cost & Risk Intelligence
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -340,7 +340,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value as any)}
-            className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="px-3 py-2 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-300 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
           >
             <option value="CURRENT_MONTH">Current Month</option>
             <option value="LAST_30_DAYS">Last 30 Days</option>
@@ -352,7 +352,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
           <button
             onClick={loadIntelligence}
             disabled={loading}
-            className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center justify-center"
+            className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center justify-center"
             title="Refresh Live Intelligence"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-indigo-600' : ''}`} />
@@ -385,10 +385,10 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                 className={`px-3 py-1 rounded-lg transition font-semibold flex items-center gap-1.5 ${
                   isLast
                     ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
                 }`}
               >
-                <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold">
+                <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-300 font-bold">
                   {node.level}
                 </span>
                 {node.name}
@@ -401,7 +401,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
       {loading ? (
         <div className="py-24 text-center space-y-4">
           <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-slate-600 dark:text-slate-300 text-sm font-medium">
+          <p className="text-slate-600 dark:text-slate-400 dark:text-slate-300 text-sm font-medium">
             Aggregating authoritative records from Payroll, Overtime, Assets, Maintenance, Procurement, Incidents & Operations...
           </p>
         </div>
@@ -429,14 +429,14 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                 </div>
               </div>
               <div>
-                <p className="text-2xl font-black text-slate-900 dark:text-white">
+                <p className="text-2xl font-black text-black dark:text-white">
                   ₹{currentNode.metrics.costBreakdown.totalOperationalCost.toLocaleString()}
                 </p>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   ₹{currentNode.metrics.costPerHeadcount.toLocaleString()} per active headcount
                 </p>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-500 font-medium">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                 <span>Payroll: ₹{currentNode.metrics.costBreakdown.payrollGross.toLocaleString()}</span>
                 <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-0.5 hover:underline">
                   Inspect <ArrowRight className="w-3 h-3" />
@@ -457,8 +457,8 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
               </div>
               <div>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-black text-slate-900 dark:text-white">
-                    {currentNode.metrics.overtimeHoursTotal.toFixed(1)} <span className="text-sm font-semibold text-slate-500">hrs</span>
+                  <p className="text-2xl font-black text-black dark:text-white">
+                    {currentNode.metrics.overtimeHoursTotal.toFixed(1)} <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">hrs</span>
                   </p>
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
                     currentNode.metrics.overtimeRatePercent > 18
@@ -468,11 +468,11 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                     {currentNode.metrics.overtimeRatePercent.toFixed(1)}% of total
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   Est. Payout: ₹{currentNode.metrics.overtimeCostTotal.toLocaleString()}
                 </p>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-500 font-medium">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                 <span>{currentNode.metrics.activeEmployees} active staff</span>
                 <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-0.5 hover:underline">
                   Audit OT <ArrowRight className="w-3 h-3" />
@@ -492,14 +492,14 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                 </div>
               </div>
               <div>
-                <p className="text-2xl font-black text-slate-900 dark:text-white">
+                <p className="text-2xl font-black text-black dark:text-white">
                   ₹{(currentNode.metrics.costBreakdown.maintenanceCost + currentNode.metrics.costBreakdown.procurementSpend).toLocaleString()}
                 </p>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   {currentNode.metrics.openWorkOrdersCount} open work orders • {currentNode.metrics.purchaseOrdersCount} POs
                 </p>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-500 font-medium">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                 <span>Assets: {currentNode.metrics.activeAssetsCount}</span>
                 <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-0.5 hover:underline">
                   View WO <ArrowRight className="w-3 h-3" />
@@ -518,15 +518,15 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
               </div>
               <div>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-black text-slate-900 dark:text-white">
-                    {currentNode.metrics.openIncidentsCount} <span className="text-sm font-semibold text-slate-500">open incidents</span>
+                  <p className="text-2xl font-black text-black dark:text-white">
+                    {currentNode.metrics.openIncidentsCount} <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">open incidents</span>
                   </p>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   {currentNode.metrics.criticalIncidentsCount} critical • ₹{currentNode.metrics.incidentLossTotal.toLocaleString()} loss impact
                 </p>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-500 font-medium">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                 <span>Muster: {currentNode.metrics.attendanceRate.toFixed(1)}%</span>
                 <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-0.5 hover:underline">
                   Incidents <ArrowRight className="w-3 h-3" />
@@ -541,12 +541,12 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <h2 className="text-lg font-black text-black dark:text-white flex items-center gap-2">
                     <ShieldAlert className="w-5 h-5 text-rose-500" />
                     Detected Operational Anomalies & Spikes ({nodeAnomalies.length})
                   </h2>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Algorithmically detected cost spikes, overtime leaps, maintenance surges, and incident risks.
                 </p>
               </div>
@@ -556,7 +556,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                 <select
                   value={selectedAnomalyType}
                   onChange={(e) => setSelectedAnomalyType(e.target.value as any)}
-                  className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200"
+                  className="px-3 py-1.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-300 dark:text-slate-200"
                 >
                   <option value="ALL">All Anomaly Types</option>
                   <option value="COST_SPIKE">Cost Spikes</option>
@@ -570,7 +570,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                 <select
                   value={selectedSeverity}
                   onChange={(e) => setSelectedSeverity(e.target.value as any)}
-                  className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200"
+                  className="px-3 py-1.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-slate-300 dark:text-slate-200"
                 >
                   <option value="ALL">All Severities</option>
                   <option value="CRITICAL">Critical Only</option>
@@ -585,7 +585,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search anomalies..."
-                    className="pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-200 outline-none w-44"
+                    className="pl-8 pr-3 py-1.5 bg-white dark:bg-slate-950 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-300 dark:text-slate-200 outline-none w-44"
                   />
                 </div>
               </div>
@@ -593,31 +593,31 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
 
             {/* Anomaly Cards Grid */}
             {nodeAnomalies.length === 0 ? (
-              <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
+              <div className="p-8 text-center bg-white dark:bg-slate-950 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
                 <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
-                <h4 className="text-sm font-bold text-slate-900 dark:text-white">Clean Operational Status</h4>
-                <p className="text-xs text-slate-500 mt-1">No cost or risk anomalies detected within current selection criteria.</p>
+                <h4 className="text-sm font-bold text-black dark:text-white">Clean Operational Status</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">No cost or risk anomalies detected within current selection criteria.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {nodeAnomalies.map((anomaly) => (
                   <div 
                     key={anomaly.id}
-                    className="bg-slate-50/70 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3.5 flex flex-col justify-between hover:shadow-md transition"
+                    className="bg-white dark:bg-slate-950/70 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3.5 flex flex-col justify-between hover:shadow-md transition"
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-black dark:text-slate-200">
                           {anomaly.entityLevel}: {anomaly.entityName}
                         </span>
                         {getSeverityBadge(anomaly.severity)}
                       </div>
 
-                      <h3 className="text-sm font-black text-slate-900 dark:text-white leading-snug">
+                      <h3 className="text-sm font-black text-black dark:text-white leading-snug">
                         {anomaly.title}
                       </h3>
 
-                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300 leading-relaxed">
                         {anomaly.description}
                       </p>
                     </div>
@@ -625,12 +625,12 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                     <div className="space-y-2.5 pt-3 border-t border-slate-200/80 dark:border-slate-700/80 text-xs">
                       <div className="space-y-1">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Root Cause:</span>
-                        <p className="text-slate-700 dark:text-slate-300 italic text-[11px]">"{anomaly.rootCause}"</p>
+                        <p className="text-slate-900 dark:text-slate-300 italic text-[11px]">"{anomaly.rootCause}"</p>
                       </div>
 
                       <div className="space-y-1">
                         <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Action Plan:</span>
-                        <p className="text-slate-700 dark:text-slate-300 text-[11px] font-medium">{anomaly.recommendedAction}</p>
+                        <p className="text-slate-900 dark:text-slate-300 text-[11px] font-medium">{anomaly.recommendedAction}</p>
                       </div>
 
                       {anomaly.financialImpact > 0 && (
@@ -642,7 +642,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
 
                       <button
                         onClick={() => openTransactionLedger(`Evidence for: ${anomaly.title}`, anomaly.sourceTransactions)}
-                        className="w-full py-2 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-indigo-600 dark:text-indigo-300 rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-600"
+                        className="w-full py-2 bg-white dark:bg-slate-900 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-indigo-600 dark:text-indigo-300 rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-600"
                       >
                         <FileText className="w-3.5 h-3.5" />
                         Inspect Source Transactions ({anomaly.sourceTransactions.length})
@@ -659,10 +659,10 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
             <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
-                  <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  <h3 className="text-base font-black text-black dark:text-white">
                     Operational Hierarchy Breakdown ({currentNode.children[0]?.level} Tier)
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Compare operational spend, overtime density, maintenance, and risk across all sub-units in {currentNode.name}.
                   </p>
                 </div>
@@ -691,41 +691,41 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                       return (
                         <tr 
                           key={child.id}
-                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition cursor-pointer"
+                          className="hover:bg-white dark:bg-slate-950/80 dark:hover:bg-slate-800/40 transition cursor-pointer"
                           onClick={() => handleDrillDownNode(child)}
                         >
-                          <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
+                          <td className="py-3.5 px-4 font-bold text-black dark:text-white">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-300 font-bold">
                                 {child.code}
                               </span>
                               <span>{child.name}</span>
                             </div>
                           </td>
-                          <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">
+                          <td className="py-3.5 px-4 text-slate-900 dark:text-slate-300">
                             {child.metrics.headcount}
                           </td>
                           <td className="py-3.5 px-4">
-                            <span className={`font-bold ${child.metrics.attendanceRate < 80 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                            <span className={`font-bold ${child.metrics.attendanceRate < 80 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-300'}`}>
                               {child.metrics.attendanceRate.toFixed(1)}%
                             </span>
                           </td>
-                          <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
+                          <td className="py-3.5 px-4 font-bold text-black dark:text-white">
                             ₹{child.metrics.costBreakdown.totalOperationalCost.toLocaleString()}
                           </td>
-                          <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">
+                          <td className="py-3.5 px-4 text-slate-900 dark:text-slate-300">
                             ₹{child.metrics.costPerHeadcount.toLocaleString()}
                           </td>
                           <td className="py-3.5 px-4">
                             <span className={`px-2 py-0.5 rounded text-xs font-bold ${
                               child.metrics.overtimeRatePercent > 18
                                 ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'
-                                : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                : 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-300'
                             }`}>
                               {child.metrics.overtimeRatePercent.toFixed(1)}%
                             </span>
                           </td>
-                          <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">
+                          <td className="py-3.5 px-4 text-slate-900 dark:text-slate-300">
                             {child.metrics.openIncidentsCount} {child.metrics.criticalIncidentsCount > 0 && <span className="text-rose-500 font-bold">({child.metrics.criticalIncidentsCount} crit)</span>}
                           </td>
                           <td className="py-3.5 px-4">
@@ -770,22 +770,22 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
           <div className="bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[90vh] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-scale-up">
             
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-950/50 dark:bg-slate-800/50">
               <div>
                 <div className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                  <h3 className="text-lg font-black text-black dark:text-white">
                     {selectedTransactionModal.title}
                   </h3>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Traceable to authoritative Firestore records. Zero mock data.
                 </p>
               </div>
 
               <button
                 onClick={() => setSelectedTransactionModal({ isOpen: false, title: '', transactions: [] })}
-                className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition"
+                className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-black dark:text-white dark:hover:text-white flex items-center justify-center transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -819,21 +819,21 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                   {modalTransactions.map((tx) => (
                     <div 
                       key={tx.id}
-                      className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 text-xs"
+                      className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 text-xs"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold text-[10px]">
                             {tx.module}
                           </span>
-                          <span className="font-mono text-slate-500 font-medium">#{tx.referenceNumber}</span>
+                          <span className="font-mono text-slate-500 dark:text-slate-400 font-medium">#{tx.referenceNumber}</span>
                           <span className="text-slate-400">•</span>
-                          <span className="text-slate-500">{new Date(tx.date).toLocaleDateString()}</span>
+                          <span className="text-slate-500 dark:text-slate-400">{new Date(tx.date).toLocaleDateString()}</span>
                         </div>
-                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                        <h4 className="font-bold text-black dark:text-white text-sm">
                           {tx.title}
                         </h4>
-                        <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+                        <p className="text-slate-600 dark:text-slate-400 dark:text-slate-300 text-[11px]">
                           {tx.description}
                         </p>
                       </div>
@@ -842,12 +842,12 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                         {tx.amount !== undefined && tx.amount > 0 && (
                           <div className="text-right">
                             <span className="text-[10px] text-slate-400 block uppercase font-bold">Amount</span>
-                            <span className="font-black text-slate-900 dark:text-white text-sm">
+                            <span className="font-black text-black dark:text-white text-sm">
                               ₹{tx.amount.toLocaleString()}
                             </span>
                           </div>
                         )}
-                        <span className="px-2.5 py-1 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-[10px] uppercase">
+                        <span className="px-2.5 py-1 rounded-xl bg-slate-200 dark:bg-slate-700 text-black dark:text-slate-200 font-bold text-[10px] uppercase">
                           {tx.status}
                         </span>
                       </div>
@@ -858,11 +858,11 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center text-xs text-slate-500">
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950/50 dark:bg-slate-800/50 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400">
               <span>Showing {modalTransactions.length} authoritative transaction records</span>
               <button
                 onClick={() => setSelectedTransactionModal({ isOpen: false, title: '', transactions: [] })}
-                className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl hover:bg-slate-300 transition"
+                className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-300 dark:text-slate-200 font-bold rounded-xl hover:bg-slate-300 transition"
               >
                 Close Ledger
               </button>

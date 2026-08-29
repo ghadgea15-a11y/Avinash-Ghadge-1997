@@ -81,7 +81,11 @@ export async function runDataProtectionTests(): Promise<{ passed: number; failed
       tokenExpiresAt: Date.now() + 3600000,
       isBiometricEnabled: false,
       lastActiveAt: Date.now(),
-      loginMode: 'PASSWORD'
+      loginMode: 'PASSWORD',
+      accountStatus: 'ACTIVE',
+      emailVerified: true,
+      companyAdminApproval: 'APPROVED',
+      hrApproval: 'APPROVED'
     };
 
     const crossTenantEval = DataProtectionService.evaluateAccess(compASession, {
@@ -116,7 +120,11 @@ export async function runDataProtectionTests(): Promise<{ passed: number; failed
       tokenExpiresAt: Date.now() + 3600000,
       isBiometricEnabled: false,
       lastActiveAt: Date.now(),
-      loginMode: 'PASSWORD'
+      loginMode: 'PASSWORD',
+      accountStatus: 'ACTIVE',
+      emailVerified: true,
+      companyAdminApproval: 'APPROVED',
+      hrApproval: 'APPROVED'
     };
 
     const crossSiteEval = DataProtectionService.evaluateAccess(siteInchargeSession, {
@@ -151,7 +159,11 @@ export async function runDataProtectionTests(): Promise<{ passed: number; failed
       tokenExpiresAt: Date.now() + 3600000,
       isBiometricEnabled: false,
       lastActiveAt: Date.now(),
-      loginMode: 'PASSWORD'
+      loginMode: 'PASSWORD',
+      accountStatus: 'ACTIVE',
+      emailVerified: true,
+      companyAdminApproval: 'APPROVED',
+      hrApproval: 'APPROVED'
     };
 
     // Supervisor accessing another employee's salary
@@ -189,7 +201,11 @@ export async function runDataProtectionTests(): Promise<{ passed: number; failed
       tokenExpiresAt: Date.now() + 3600000,
       isBiometricEnabled: false,
       lastActiveAt: Date.now(),
-      loginMode: 'PASSWORD'
+      loginMode: 'PASSWORD',
+      accountStatus: 'ACTIVE',
+      emailVerified: true,
+      companyAdminApproval: 'APPROVED',
+      hrApproval: 'APPROVED'
     };
     const hrSalaryEval = DataProtectionService.evaluateAccess(hrSession, {
       targetCompanyId: 'COMP-ALPHA',
@@ -248,7 +264,11 @@ export async function runDataProtectionTests(): Promise<{ passed: number; failed
       tokenExpiresAt: Date.now() + 3600000,
       isBiometricEnabled: false,
       lastActiveAt: Date.now(),
-      loginMode: 'PASSWORD'
+      loginMode: 'PASSWORD',
+      accountStatus: 'ACTIVE',
+      emailVerified: true,
+      companyAdminApproval: 'APPROVED',
+      hrApproval: 'APPROVED'
     };
 
     // Cross-tenant storage access
@@ -284,7 +304,11 @@ export async function runDataProtectionTests(): Promise<{ passed: number; failed
       tokenExpiresAt: Date.now() + 3600000,
       isBiometricEnabled: false,
       lastActiveAt: Date.now(),
-      loginMode: 'PASSWORD'
+      loginMode: 'PASSWORD',
+      accountStatus: 'ACTIVE',
+      emailVerified: true,
+      companyAdminApproval: 'APPROVED',
+      hrApproval: 'APPROVED'
     };
 
     const auditDelete = DataProtectionService.validateDeletionRequest(superAdminSession, 'SECURITY_AUDIT', 'EVT-1001');
@@ -304,7 +328,11 @@ export async function runDataProtectionTests(): Promise<{ passed: number; failed
       tokenExpiresAt: Date.now() + 3600000,
       isBiometricEnabled: false,
       lastActiveAt: Date.now(),
-      loginMode: 'PASSWORD'
+      loginMode: 'PASSWORD',
+      accountStatus: 'ACTIVE',
+      emailVerified: true,
+      companyAdminApproval: 'APPROVED',
+      hrApproval: 'APPROVED'
     };
 
     const guardEmpDelete = DataProtectionService.validateDeletionRequest(guardSession, 'EMPLOYEE_PERSONAL', 'EMP-G2');

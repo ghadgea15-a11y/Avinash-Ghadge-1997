@@ -76,11 +76,11 @@ export const ThirdPartyRiskScreen: React.FC<Props> = ({ session, activeCompany }
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-black dark:text-white flex items-center gap-3">
             <ShieldAlert className="w-8 h-8 text-rose-600" />
             Third-Party Risk Management
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Vendor lifecycle, automated compliance, and external personnel control.
           </p>
         </div>
@@ -96,19 +96,19 @@ export const ThirdPartyRiskScreen: React.FC<Props> = ({ session, activeCompany }
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-slate-500">Total Vendors</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-1">{data.vendors.length}</h3>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Vendors</p>
+              <h3 className="text-2xl font-bold text-black dark:text-white mt-1">{data.vendors.length}</h3>
             </div>
             <Users className="w-8 h-8 text-indigo-500 opacity-20" />
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-slate-500">Active Contracts</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Active Contracts</p>
               <h3 className="text-2xl font-bold text-emerald-600 mt-1">
                 {data.contracts.filter((c: any) => c.status === 'ACTIVE').length}
               </h3>
@@ -116,7 +116,7 @@ export const ThirdPartyRiskScreen: React.FC<Props> = ({ session, activeCompany }
             <FileText className="w-8 h-8 text-emerald-500 opacity-20" />
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-rose-200 bg-rose-50/50 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-rose-200 bg-rose-50/50 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-rose-800">Expired Docs/Contracts</p>
@@ -127,7 +127,7 @@ export const ThirdPartyRiskScreen: React.FC<Props> = ({ session, activeCompany }
             <AlertTriangle className="w-8 h-8 text-rose-500 opacity-20" />
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-amber-200 bg-amber-50/50 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-amber-200 bg-amber-50/50 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-amber-800">Unauthorized/Expired Access</p>
@@ -141,17 +141,17 @@ export const ThirdPartyRiskScreen: React.FC<Props> = ({ session, activeCompany }
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
-          <div className="p-4 border-b border-slate-200 bg-slate-50">
-            <h2 className="font-bold text-slate-900">External Personnel Access</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+          <div className="p-4 border-b border-slate-200 bg-white dark:bg-slate-950">
+            <h2 className="font-bold text-black dark:text-white">External Personnel Access</h2>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {data.personnel.map((p: any) => (
-              <div key={p.id} className="p-4 border border-slate-100 rounded-xl bg-slate-50 flex justify-between items-center">
+              <div key={p.id} className="p-4 border border-slate-100 rounded-xl bg-white dark:bg-slate-950 flex justify-between items-center">
                 <div>
-                  <h3 className="font-bold text-slate-900">{p.name}</h3>
-                  <p className="text-xs text-slate-500">Role: {p.role} | Sites: {p.authorizedSites.join(', ')}</p>
-                  <p className="text-xs text-slate-500">Expires: {format(new Date(p.accessExpiryDate), 'PP')}</p>
+                  <h3 className="font-bold text-black dark:text-white">{p.name}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Role: {p.role} | Sites: {p.authorizedSites.join(', ')}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Expires: {format(new Date(p.accessExpiryDate), 'PP')}</p>
                 </div>
                 <div className="text-right">
                   {p.status === 'ACTIVE' ? (
@@ -168,29 +168,29 @@ export const ThirdPartyRiskScreen: React.FC<Props> = ({ session, activeCompany }
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
-          <div className="p-4 border-b border-slate-200 bg-slate-50">
-            <h2 className="font-bold text-slate-900">Compliance & Contracts</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+          <div className="p-4 border-b border-slate-200 bg-white dark:bg-slate-950">
+            <h2 className="font-bold text-black dark:text-white">Compliance & Contracts</h2>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            <h3 className="text-xs font-bold text-slate-500 uppercase">Contracts</h3>
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Contracts</h3>
             {data.contracts.map((c: any) => (
               <div key={c.id} className="p-3 border border-slate-100 rounded-xl flex justify-between items-center">
                 <div>
-                  <p className="font-bold text-sm text-slate-900">{c.title}</p>
-                  <p className="text-xs text-slate-500">Expires: {format(new Date(c.endDate), 'PP')}</p>
+                  <p className="font-bold text-sm text-black dark:text-white">{c.title}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Expires: {format(new Date(c.endDate), 'PP')}</p>
                 </div>
                 <span className={`px-2 py-1 text-[10px] font-bold rounded-lg ${c.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                   {c.status}
                 </span>
               </div>
             ))}
-            <h3 className="text-xs font-bold text-slate-500 uppercase mt-4">Documents</h3>
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mt-4">Documents</h3>
             {data.compliance.map((d: any) => (
               <div key={d.id} className="p-3 border border-slate-100 rounded-xl flex justify-between items-center">
                 <div>
-                  <p className="font-bold text-sm text-slate-900">{d.docType}</p>
-                  <p className="text-xs text-slate-500">Expires: {format(new Date(d.expiryDate), 'PP')}</p>
+                  <p className="font-bold text-sm text-black dark:text-white">{d.docType}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Expires: {format(new Date(d.expiryDate), 'PP')}</p>
                 </div>
                 <span className={`px-2 py-1 text-[10px] font-bold rounded-lg ${d.status === 'VALID' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                   {d.status}

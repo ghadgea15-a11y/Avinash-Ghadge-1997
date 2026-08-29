@@ -1,7 +1,8 @@
 import { db } from '../firebase';
 import { collection, doc, getDoc, getDocs, setDoc, query, where, writeBatch, Timestamp, updateDoc, runTransaction } from 'firebase/firestore';
-import { EmployeeRecord, AttendanceRecord, PayrollCycleRecord, LeaveRequestRecord, ShiftRecord, CompanyTenant, AttendanceStatus } from '../types';
+import { EmployeeRecord, AttendanceRecord, PayrollCycleRecord, LeaveRequestRecord, ShiftRecord, CompanyTenant, AttendanceStatus, StatutoryConfigRecord } from '../types';
 import { PayrollEngine } from './payrollEngine';
+import { StatutoryRulesService } from './statutoryRulesService';
 
 export interface AttendanceAdjustmentRequest {
   attendanceId: string;
@@ -92,7 +93,7 @@ export class PayrollWorkflowService {
   }
 
   /**
-   * Payroll Generation (Transaction Safe, Prevents Double Calculation)
+   * Payroll Generation (Transaction Safe, Prevents Double Calculation, Dynamic State Statutory Engine)
    */
   static async calculatePayrollCycle(
     companyId: string,
@@ -104,8 +105,6 @@ export class PayrollWorkflowService {
     const cycleRef = doc(db, 'companies', companyId, 'payrollCycles', cycleId);
 
     // Fetch all necessary data outside transaction to avoid limits (Firestore transactions limit read/writes)
-    // Actually, to ensure idempotency and prevent double processing, we must use a transaction for the cycle status.
-    
     // First transaction: Lock the cycle as PROCESSING
     await runTransaction(db, async (t) => {
       const snap = await t.get(cycleRef);
@@ -157,6 +156,15 @@ export class PayrollWorkflowService {
       const structuresSnap = await getDocs(collection(db, 'companies', companyId, 'salaryStructures'));
       const structures = structuresSnap.docs.map(d => d.data() as any);
 
+      const statutoryConfigs = await StatutoryRulesService.getCompanyStatutoryConfigs(companyId);
+      const defaultStatutory = statutoryConfigs.find(c => c.state === 'DEFAULT') || StatutoryRulesService.DEFAULT_STATE_STATUTORY_CONFIGS.DEFAULT;
+
+      const holidaysSnap = await getDocs(query(collection(db, 'companies', companyId, 'holidays'),
+        where('date', '>=', startDate),
+        where('date', '<=', endDate)
+      ));
+      const holidays = holidaysSnap.docs.map(d => d.data());
+
       let totalGross = 0;
       let totalDeductions = 0;
       let totalNetPay = 0;
@@ -175,7 +183,13 @@ export class PayrollWorkflowService {
           const profile = salaries.find(s => s.employeeId === emp.id) || { baseMonthlySalary: 18000 };
           const structure = structures.find(s => s.id === profile.structureId) || { basicPercentage: 50 };
 
-          const calc = PayrollEngine.calculate(month, year, emp, profile, structure, [], empLeaves, empAtts, 0);
+          // Dynamic state matching
+          const empStateKey = StatutoryRulesService.normalizeStateKey((emp as any).state || emp.assignedRegionId || (emp as any).workLocation);
+          const empStatutory = statutoryConfigs.find(c => c.state === empStateKey) || 
+                               StatutoryRulesService.DEFAULT_STATE_STATUTORY_CONFIGS[empStateKey] || 
+                               defaultStatutory;
+
+          const calc = PayrollEngine.calculate(month, year, emp, profile, structure, holidays, empLeaves, empAtts, 0, empStatutory);
 
           const prId = `PR-${cycleId}-${emp.id}`;
           const prRef = doc(db, 'companies', companyId, 'payrollRecords', prId);
@@ -190,6 +204,7 @@ export class PayrollWorkflowService {
             year,
             calculations: calc,
             status: 'CALCULATED',
+            statutoryState: empStatutory.state,
             createdAt: new Date().toISOString()
           });
 
@@ -222,7 +237,7 @@ export class PayrollWorkflowService {
         entityType: 'PAYROLL_CYCLE',
         userId: actor.id,
         userName: actor.name,
-        details: `Calculated payroll for ${employees.length} employees for ${month}/${year}`,
+        details: `Calculated payroll for ${employees.length} employees for ${month}/${year} using dynamic statutory state rules`,
         timestamp: new Date().toISOString()
       });
 

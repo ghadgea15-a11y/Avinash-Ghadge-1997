@@ -10,7 +10,7 @@ export function GateVerificationTab({ session, company }: { session: UserSession
   const loadPasses = async () => {
     if (!companyId) return;
     const all = await ScmService.getGatePasses(companyId);
-    setPasses(all.filter(p => p.status === 'DISPATCHED' || (p.passType === 'INWARD' && p.status === 'APPROVED')));
+    setPasses(all.filter((p: any) => p.status === 'DISPATCHED' || (p.passType === 'INWARD' && p.status === 'APPROVED')));
   };
 
   useEffect(() => { loadPasses(); }, [companyId]);
@@ -27,16 +27,16 @@ export function GateVerificationTab({ session, company }: { session: UserSession
   return (
     <div className="flex h-full flex-col space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-slate-900">Gate Verification Queue</h3>
+        <h3 className="text-lg font-medium text-black dark:text-white">Gate Verification Queue</h3>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {passes.map(p => (
-          <div key={p.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div key={p.id} className="rounded-lg border border-slate-200 bg-white dark:bg-slate-900 p-5 shadow-sm">
             <div className="flex justify-between border-b border-slate-100 pb-3 mb-3">
               <div>
-                <h4 className="font-semibold text-slate-900">{p.passNumber}</h4>
-                <p className="text-xs text-slate-500">{p.passType}</p>
+                <h4 className="font-semibold text-black dark:text-white">{p.passNumber}</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{p.passType}</p>
               </div>
               <span className="rounded bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800 h-fit">
                 {p.status}
@@ -44,9 +44,9 @@ export function GateVerificationTab({ session, company }: { session: UserSession
             </div>
             
             <div className="text-sm space-y-2 mb-4">
-              <p><span className="text-slate-500">Source:</span> {p.sourceLocationName || 'External'}</p>
-              <p><span className="text-slate-500">Dest:</span> {p.destinationLocationName || 'External'}</p>
-              <p><span className="text-slate-500">Items:</span> {p.lines.map(l => `${l.quantity}x ${l.itemName}`).join(', ')}</p>
+              <p><span className="text-slate-500 dark:text-slate-400">Source:</span> {p.sourceLocationName || 'External'}</p>
+              <p><span className="text-slate-500 dark:text-slate-400">Dest:</span> {p.destinationLocationName || 'External'}</p>
+              <p><span className="text-slate-500 dark:text-slate-400">Items:</span> {p.lines.map((l: any) => `${l.quantity}x ${l.itemName}`).join(', ')}</p>
             </div>
 
             <button 
@@ -59,7 +59,7 @@ export function GateVerificationTab({ session, company }: { session: UserSession
         ))}
 
         {passes.length === 0 && (
-          <div className="col-span-full py-12 text-center text-slate-500">
+          <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">
             No gate passes pending verification at the gate.
           </div>
         )}

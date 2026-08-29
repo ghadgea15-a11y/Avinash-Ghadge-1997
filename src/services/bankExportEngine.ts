@@ -203,8 +203,8 @@ export class BankExportEngine {
    */
   static verifyTotalIntegrity(batch: PaymentBatchRecord): { isValid: boolean; calculatedTotal: number; batchTotal: number; difference: number } {
     const calculatedTotal = batch.items
-      .filter(item => item.validationStatus === 'VALID')
-      .reduce((sum, item) => sum + (item.netPay || 0), 0);
+      .filter((item: any) => item.validationStatus === 'VALID')
+      .reduce((sum: number, item: any) => sum + (item.netPay || 0), 0);
 
     const difference = Math.abs(calculatedTotal - batch.totalAmount);
     const isValid = difference < 0.01; // exact match within 1 paisa floating point tolerance
@@ -225,7 +225,7 @@ export class BankExportEngine {
     companyBank: CompanyBankAccountRecord | null,
     format: BankExportFormat
   ): BankExportFileResult {
-    const validItems = batch.items.filter(i => i.validationStatus === 'VALID');
+    const validItems = batch.items.filter((i: any) => i.validationStatus === 'VALID');
     const now = new Date();
     const dateFormatted = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
     const isoDate = now.toISOString().split('T')[0];
@@ -253,7 +253,7 @@ export class BankExportEngine {
           'Payment Date',
           'Remarks'
         ];
-        const rows = validItems.map((item, index) => [
+        const rows = validItems.map((item: any, index: number) => [
           index + 1,
           `"${item.employeeName.replace(/"/g, '""')}"`,
           `'${item.accountNumber}`, // Prepend apostrophe to preserve leading zeros in Excel
@@ -266,7 +266,7 @@ export class BankExportEngine {
           dateFormatted,
           `"Salary ${batch.payrollCycleLabel}"`
         ]);
-        fileContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+        fileContent = [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\r\n');
         break;
       }
 
@@ -295,7 +295,7 @@ export class BankExportEngine {
           'Branch Name',
           'Beneficiary Email ID'
         ];
-        const rows = validItems.map((item, index) => [
+        const rows = validItems.map((item: any, index: number) => [
           item.paymentMethod === 'RTGS' ? 'R' : 'N', // N for NEFT, R for RTGS
           item.employeeCode || `EMP${index + 1}`,
           item.accountNumber,
@@ -313,7 +313,7 @@ export class BankExportEngine {
           '', // Branch name
           '' // Email
         ]);
-        fileContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+        fileContent = [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\r\n');
         break;
       }
 
@@ -330,7 +330,7 @@ export class BankExportEngine {
           'Payment Mode',
           'Narration'
         ];
-        const rows = validItems.map(item => [
+        const rows = validItems.map((item: any) => [
           debitAcc,
           dateFormatted,
           `"${item.employeeName.replace(/"/g, '""')}"`,
@@ -340,7 +340,7 @@ export class BankExportEngine {
           item.paymentMethod,
           `"Salary ${batch.payrollCycleLabel} Ref ${item.paymentReference}"`
         ]);
-        fileContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+        fileContent = [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\r\n');
         break;
       }
 
@@ -359,7 +359,7 @@ export class BankExportEngine {
           'Debit Account Number',
           'Remarks'
         ];
-        const rows = validItems.map(item => [
+        const rows = validItems.map((item: any) => [
           item.paymentMethod === 'RTGS' ? 'RTG' : 'NFT',
           `"${item.employeeName.replace(/"/g, '""')}"`,
           `"${item.bankName.replace(/"/g, '""')}"`,
@@ -371,7 +371,7 @@ export class BankExportEngine {
           debitAcc,
           `"Salary ${batch.month}/${batch.year}"`
         ]);
-        fileContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+        fileContent = [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\r\n');
         break;
       }
 
@@ -388,7 +388,7 @@ export class BankExportEngine {
           'Date',
           'Remarks'
         ];
-        const rows = validItems.map(item => [
+        const rows = validItems.map((item: any) => [
           item.paymentMethod,
           `"${item.employeeName.replace(/"/g, '""')}"`,
           item.accountNumber,
@@ -399,7 +399,7 @@ export class BankExportEngine {
           dateFormatted,
           `"Salary ${batch.payrollCycleLabel}"`
         ]);
-        fileContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+        fileContent = [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\r\n');
         break;
       }
 
@@ -415,7 +415,7 @@ export class BankExportEngine {
           'IFSC_CODE',
           'PAYMENT_REF'
         ];
-        const rows = validItems.map(item => [
+        const rows = validItems.map((item: any) => [
           item.paymentMethod,
           debitAcc,
           dateFormatted,
@@ -425,7 +425,7 @@ export class BankExportEngine {
           item.ifscCode,
           item.paymentReference
         ]);
-        fileContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+        fileContent = [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\r\n');
         break;
       }
 
@@ -434,7 +434,7 @@ export class BankExportEngine {
         mimeType = 'text/plain;charset=utf-8;';
         fileExtension = 'txt';
         const headers = 'HEADER|RECORD_TYPE|SR_NO|BENEFICIARY_NAME|ACCOUNT_NO|IFSC|AMOUNT|PAY_MODE|DEBIT_ACC|PAYMENT_REF|DATE|REMARKS';
-        const rows = validItems.map((item, idx) => [
+        const rows = validItems.map((item: any, idx: number) => [
           'DETAIL',
           idx + 1,
           item.employeeName,

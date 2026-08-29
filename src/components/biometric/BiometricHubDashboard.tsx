@@ -146,15 +146,15 @@ export const BiometricHubDashboard: React.FC<BiometricHubDashboardProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mt-6 pt-6 border-t border-slate-800/80">
           <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/60 flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 block">Connected Devices</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 block">Connected Devices</span>
               <span className="text-xl font-bold text-white font-mono">{devices.length}</span>
             </div>
-            <Server className="w-5 h-5 text-slate-600" />
+            <Server className="w-5 h-5 text-slate-600 dark:text-slate-400" />
           </div>
 
           <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/60 flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 block">Online & Active</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 block">Online & Active</span>
               <span className="text-xl font-bold text-emerald-400 font-mono">{onlineCount}</span>
             </div>
             <Wifi className="w-5 h-5 text-emerald-500" />
@@ -162,7 +162,7 @@ export const BiometricHubDashboard: React.FC<BiometricHubDashboardProps> = ({
 
           <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/60 flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 block">Punches Synced</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 block">Punches Synced</span>
               <span className="text-xl font-bold text-sky-400 font-mono">{totalPunches}</span>
             </div>
             <Activity className="w-5 h-5 text-sky-500" />
@@ -170,7 +170,7 @@ export const BiometricHubDashboard: React.FC<BiometricHubDashboardProps> = ({
 
           <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/60 flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 block">Hardware NTP Drift</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 block">Hardware NTP Drift</span>
               <span className="text-xl font-bold text-amber-400 font-mono">&lt; 1.0s</span>
             </div>
             <Clock className="w-5 h-5 text-amber-500" />
@@ -218,7 +218,7 @@ export const BiometricHubDashboard: React.FC<BiometricHubDashboardProps> = ({
         {activeTab === 'DEVICES' && (
           <div className="flex items-center space-x-2">
             <div className="relative flex-1 sm:w-60">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
@@ -255,7 +255,7 @@ export const BiometricHubDashboard: React.FC<BiometricHubDashboardProps> = ({
       {activeTab === 'DEVICES' && (
         <div className="space-y-4">
           {loading ? (
-            <div className="py-16 text-center text-slate-500 space-y-3">
+            <div className="py-16 text-center text-slate-500 dark:text-slate-400 space-y-3">
               <RefreshCw className="w-6 h-6 animate-spin mx-auto text-amber-400" />
               <p className="text-xs">Querying biometric terminals across company sites...</p>
             </div>

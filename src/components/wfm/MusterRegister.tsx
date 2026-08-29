@@ -27,7 +27,7 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
     const fetchContext = async () => {
       unsubs.push(FirestoreService.subscribeToShifts(userSession, activeCompany.companyId, setShifts));
       unsubs.push(FirestoreService.subscribeToEmployees(userSession, activeCompany.companyId, setEmployees));
-      unsubs.push(FirestoreService.subscribeToSites(activeCompany.companyId, (data) => {
+      unsubs.push(FirestoreService.subscribeToSites(activeCompany.companyId, (data: any[]) => {
         setSites(data);
         if (data.length > 0 && !selectedSiteId) setSelectedSiteId(data[0].id);
       }));
@@ -64,7 +64,7 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
   const currentRosters = rosters.filter(r => (r.date === selectedDate || r.rosterDate === selectedDate) && r.siteId === selectedSiteId);
   
   const filteredRosters = currentRosters.filter(r => 
-    r.employeeName.toLowerCase().includes(searchTerm.toLowerCase())
+    (r.employeeName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const stats = {
@@ -78,7 +78,7 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
       {/* Header & Filters */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-black dark:text-white flex items-center gap-2">
             <Users className="w-6 h-6 text-indigo-600" /> Site Muster Register
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">Manage daily attendance and perform supervisor-led muster.</p>
@@ -86,7 +86,7 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
 
         <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <select
-            className="bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 outline-none pr-4 border-r border-slate-100 dark:border-slate-800"
+            className="bg-transparent text-xs font-bold text-slate-900 dark:text-slate-300 dark:text-slate-200 outline-none pr-4 border-r border-slate-100 dark:border-slate-800"
             value={selectedSiteId}
             onChange={(e) => setSelectedSiteId(e.target.value)}
           >
@@ -94,7 +94,7 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
           </select>
           <input
             type="date"
-            className="bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 outline-none pl-2"
+            className="bg-transparent text-xs font-bold text-slate-900 dark:text-slate-300 dark:text-slate-200 outline-none pl-2"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
           />
@@ -104,8 +104,8 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Expected Manpower</p>
-          <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{stats.total}</p>
+          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Expected Manpower</p>
+          <p className="text-2xl font-black text-black dark:text-white mt-1">{stats.total}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Present On-Site</p>
@@ -119,7 +119,7 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
 
       {/* Muster List */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-        <div className="p-4 bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div className="p-4 bg-white dark:bg-slate-950/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="relative flex-1 max-w-xs">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -134,7 +134,7 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50/30 dark:bg-slate-800/30">
+              <tr className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-white dark:bg-slate-950/30 dark:bg-slate-800/30">
                 <th className="p-4">Employee</th>
                 <th className="p-4">Scheduled Shift</th>
                 <th className="p-4">Punch In</th>
@@ -149,26 +149,26 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
                 const shift = shifts.find(s => s.id === roster.shiftId);
 
                 return (
-                  <tr key={roster.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                  <tr key={roster.id} className="hover:bg-white dark:bg-slate-950/50 dark:hover:bg-slate-800/30 transition-all">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-500">
-                          {roster.employeeName[0]}
+                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-500 dark:text-slate-400">
+                          {(roster.employeeName || 'E')[0]}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900 dark:text-white">{roster.employeeName}</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-tighter">{roster.employeeId}</p>
+                          <p className="font-bold text-black dark:text-white">{roster.employeeName || 'Employee'}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-tighter">{roster.employeeId}</p>
                         </div>
                       </div>
                     </td>
                     <td className="p-4">
                       <p className="font-bold text-indigo-600 dark:text-indigo-400">{roster.shiftName}</p>
-                      <p className="text-[10px] text-slate-500">{shift?.startTime} - {shift?.endTime}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{shift?.startTime} - {shift?.endTime}</p>
                     </td>
                     <td className="p-4">
                       {att?.checkIn ? (
                         <div className="flex flex-col">
-                          <span className="font-bold text-slate-900 dark:text-white">
+                          <span className="font-bold text-black dark:text-white">
                             {new Date(att.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                           <span className="text-[9px] text-slate-400 uppercase tracking-tighter">{att.source}</span>
@@ -180,7 +180,7 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
                     <td className="p-4">
                       {att?.checkOut ? (
                         <div className="flex flex-col">
-                          <span className="font-bold text-slate-900 dark:text-white">
+                          <span className="font-bold text-black dark:text-white">
                             {new Date(att.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                           <span className="text-[9px] text-slate-400 uppercase tracking-tighter">{att.source}</span>
@@ -215,14 +215,14 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
                       <div className="flex justify-end gap-1">
                         {!att?.checkIn ? (
                           <button
-                            onClick={() => handleSupervisorPunch(roster.employeeId, roster.employeeName, roster.id, roster.shiftId, 'IN')}
+                            onClick={() => handleSupervisorPunch(roster.employeeId, roster.employeeName || 'Employee', roster.id || '', roster.shiftId, 'IN')}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow-sm transition-all"
                           >
                             <UserCheck className="w-3.5 h-3.5" /> Muster IN
                           </button>
                         ) : !att.checkOut ? (
                           <button
-                            onClick={() => handleSupervisorPunch(roster.employeeId, roster.employeeName, roster.id, roster.shiftId, 'OUT')}
+                            onClick={() => handleSupervisorPunch(roster.employeeId, roster.employeeName || 'Employee', roster.id || '', roster.shiftId, 'OUT')}
                             className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow-sm transition-all"
                           >
                             <UserX className="w-3.5 h-3.5" /> Muster OUT
@@ -241,10 +241,10 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
           </table>
           {filteredRosters.length === 0 && (
             <div className="p-20 text-center flex flex-col items-center justify-center space-y-3">
-              <div className="w-16 h-16 rounded-3xl bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center text-slate-300 dark:text-slate-700">
+              <div className="w-16 h-16 rounded-3xl bg-white dark:bg-slate-950 dark:bg-slate-800/50 flex items-center justify-center text-slate-300 dark:text-slate-900 dark:text-slate-300">
                 <Users className="w-8 h-8" />
               </div>
-              <p className="text-sm font-bold text-slate-900 dark:text-white">No scheduled manpower found for this site</p>
+              <p className="text-sm font-bold text-black dark:text-white">No scheduled manpower found for this site</p>
             </div>
           )}
         </div>

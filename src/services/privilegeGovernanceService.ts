@@ -63,13 +63,32 @@ export class PrivilegeGovernanceService {
    * Validates role assignment to prevent unauthorized privilege escalation.
    * A user can only assign roles of lower or equal authority to their own, 
    * and cannot assign SUPER_ADMIN or OWNER_PROMOTER unless they are already at that rank.
+   * SUPER_ADMIN can only be managed by Platform Administrators via the Platform Control Plane.
    */
   public static async validateRoleAssignment(
     actorSession: UserSession,
     targetRole: UserRole,
     targetCompanyId: string
   ): Promise<{ allowed: boolean; reason?: string }> {
-    // 1. Cross-company role assignment blocked
+    // 1. Tenant users can NEVER grant the Platform SUPER_ADMIN role
+    if (targetRole === 'SUPER_ADMIN' && actorSession.role !== 'SUPER_ADMIN') {
+      const reason = `Security Violation: Tenant roles cannot assign the Platform SUPER_ADMIN identity. Platform identities are strictly isolated to the Platform Control Plane.`;
+      await SecurityAuditService.logEvent(
+        actorSession.companyId,
+        actorSession.userId,
+        actorSession.role,
+        actorSession.employeeId,
+        'PRIVILEGE_ESCALATION_BLOCKED',
+        'RBAC',
+        targetRole,
+        false,
+        'CRITICAL',
+        reason
+      ).catch(() => {});
+      return { allowed: false, reason };
+    }
+
+    // 2. Cross-company role assignment blocked
     if (actorSession.role !== 'SUPER_ADMIN' && actorSession.companyId !== targetCompanyId) {
       const reason = `Cross-tenant privilege escalation attempt: Actor from ${actorSession.companyId} cannot assign roles in ${targetCompanyId}.`;
       await SecurityAuditService.logEvent(
@@ -87,27 +106,9 @@ export class PrivilegeGovernanceService {
       return { allowed: false, reason };
     }
 
-    // 2. Only Super Admin can assign SUPER_ADMIN
-    if (targetRole === 'SUPER_ADMIN' && actorSession.role !== 'SUPER_ADMIN') {
-      const reason = `Unauthorized privilege escalation: Only SUPER_ADMIN can grant the SUPER_ADMIN role.`;
-      await SecurityAuditService.logEvent(
-        actorSession.companyId,
-        actorSession.userId,
-        actorSession.role,
-        actorSession.employeeId,
-        'PRIVILEGE_ESCALATION_BLOCKED',
-        'RBAC',
-        targetRole,
-        false,
-        'CRITICAL',
-        reason
-      ).catch(() => {});
-      return { allowed: false, reason };
-    }
-
-    // 3. Only Owner/Promoter or Super Admin can assign OWNER_PROMOTER
-    if (targetRole === 'OWNER_PROMOTER' && actorSession.role !== 'SUPER_ADMIN' && actorSession.role !== 'OWNER_PROMOTER') {
-      const reason = `Unauthorized privilege escalation: Only OWNER_PROMOTER or SUPER_ADMIN can assign the OWNER_PROMOTER role.`;
+    // 3. Only Owner/Promoter can assign OWNER_PROMOTER in tenant domain
+    if (targetRole === 'OWNER_PROMOTER' && actorSession.role !== 'OWNER_PROMOTER' && actorSession.role !== 'SUPER_ADMIN') {
+      const reason = `Unauthorized privilege escalation: Only OWNER_PROMOTER can assign the OWNER_PROMOTER role in this organization.`;
       await SecurityAuditService.logEvent(
         actorSession.companyId,
         actorSession.userId,
@@ -124,7 +125,7 @@ export class PrivilegeGovernanceService {
     }
 
     // 4. Check actor has privilege governance permission
-    const canManagePrivileges = PermissionRegistry.evaluatePermission(actorSession, 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:CREATE');
+    const canManagePrivileges = PermissionRegistry.evaluatePermission(actorSession, 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:CREATE', { targetCompanyId });
     if (!canManagePrivileges.allowed) {
       const reason = `Actor lacks permission to assign roles: ${canManagePrivileges.reason}`;
       await SecurityAuditService.logEvent(
@@ -147,15 +148,37 @@ export class PrivilegeGovernanceService {
 
   /**
    * Validates tenant isolation on any document or transaction request.
+   * Controlled Super Admin access requires an active support session.
    */
   public static async validateTenantAccess(
     session: UserSession,
     targetCompanyId: string,
     resource: string = 'COMPANY_DATA',
-    resourceId: string = 'UNKNOWN'
+    resourceId: string = 'UNKNOWN',
+    context?: AccessContext
   ): Promise<boolean> {
     if (session.role === 'SUPER_ADMIN') {
-      return true;
+      // Super admin can access tenant metadata for platform governance or if active support session exists
+      if (context?.supportSession && context.supportSession.isActive && context.supportSession.targetCompanyId === targetCompanyId && context.supportSession.expiresAt > Date.now()) {
+        return true;
+      }
+      if (resource === 'TENANT_METADATA_VIEW' || resource === 'PLATFORM_GOVERNANCE') {
+        return true;
+      }
+      const reason = `Controlled Support Access Required: Super Admin cannot perform direct tenant operational access without an active support session for '${targetCompanyId}'.`;
+      await SecurityAuditService.logEvent(
+        targetCompanyId,
+        session.userId,
+        session.role,
+        session.employeeId,
+        'UNAUTHORIZED_ACCESS',
+        resource,
+        resourceId,
+        false,
+        'HIGH',
+        reason
+      ).catch(() => {});
+      return false;
     }
 
     if (session.companyId !== targetCompanyId) {

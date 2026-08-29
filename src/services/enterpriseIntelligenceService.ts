@@ -162,7 +162,7 @@ export class EnterpriseIntelligenceService {
     result.compliance.overdueAudits = auditSnap.docs.filter(d => d.data().status === 'OVERDUE' || (d.data().dueDate && new Date(d.data().dueDate).getTime() < nowMs)).length;
 
     // 8. Payroll
-    let payrollQuery = query(collection(db, 'companies', companyId, 'payroll_cycles'), where('status', '==', 'PROCESSING_ERROR'));
+    let payrollQuery = query(collection(db, 'companies', companyId, 'payrollCycles'), where('status', '==', 'PROCESSING_ERROR'));
     const payrollSnap = await getDocs(payrollQuery);
     result.financial.payrollExceptions = payrollSnap.size;
 

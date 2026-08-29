@@ -129,7 +129,7 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
   const historyEvents = useMemo(() => events.filter(e => ['CLOSED', 'CANCELLED', 'FALSE_ALARM', 'RESOLVED'].includes(e.status)), [events]);
 
   if (loading) {
-     return <div className="p-8 text-center text-slate-500"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>;
+     return <div className="p-8 text-center text-slate-500 dark:text-slate-400"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>;
   }
 
   return (
@@ -149,28 +149,28 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 font-medium text-slate-800 flex justify-between items-center">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-100 bg-white dark:bg-slate-950 font-medium text-black dark:text-slate-200 flex justify-between items-center">
             <span>Active Emergencies</span>
             <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">{activeEvents.length}</span>
           </div>
           <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
             {activeEvents.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 flex flex-col items-center">
+              <div className="p-8 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center">
                 <CheckCircle className="w-12 h-12 text-emerald-400 mb-3" />
                 <p>No active emergencies</p>
               </div>
             ) : (
               activeEvents.map(event => (
-                <div key={event.id} className="p-4 hover:bg-slate-50 transition-colors">
+                <div key={event.id} className="p-4 hover:bg-white dark:bg-slate-950 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                       <span className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 text-red-600">
                         <AlertTriangle className="w-4 h-4" />
                       </span>
                       <div>
-                        <h4 className="font-medium text-slate-900">{(event.emergencyType || 'EMERGENCY').replace(/_/g, ' ')}</h4>
-                        <p className="text-xs text-slate-500 flex items-center gap-1">
+                        <h4 className="font-medium text-black dark:text-white">{(event.emergencyType || 'EMERGENCY').replace(/_/g, ' ')}</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                           <Clock className="w-3 h-3" /> {new Date(event.triggeredAt).toLocaleTimeString()}
                         </p>
                       </div>
@@ -185,9 +185,9 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
                   </div>
                   
                   <div className="mt-3 flex justify-between items-end">
-                    <div className="text-sm text-slate-600">
+                    <div className="text-sm text-slate-600 dark:text-slate-400">
                       <p><strong>Emp ID:</strong> {employees.find(e => e.id === event.employeeId)?.firstName || event.employeeId}</p>
-                      <p className="flex items-center gap-1 text-xs text-slate-500 mt-1">
+                      <p className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mt-1">
                         <MapPin className="w-3 h-3" />
                         {event.latitude.toFixed(4)}, {event.longitude.toFixed(4)}
                       </p>
@@ -202,23 +202,23 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 font-medium text-slate-800 flex justify-between items-center">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-100 bg-white dark:bg-slate-950 font-medium text-black dark:text-slate-200 flex justify-between items-center">
             <span>Recent History</span>
           </div>
           <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
             {historyEvents.length === 0 ? (
-               <div className="p-8 text-center text-slate-500">
+               <div className="p-8 text-center text-slate-500 dark:text-slate-400">
                  <p>No recent history</p>
                </div>
             ) : (
               historyEvents.map(event => (
                 <div key={event.id} className="p-4 opacity-75">
                    <div className="flex justify-between">
-                     <span className="font-medium text-slate-800">{(event.emergencyType || 'EMERGENCY').replace(/_/g, ' ')}</span>
-                     <span className="text-xs text-slate-500">{new Date(event.triggeredAt).toLocaleDateString()}</span>
+                     <span className="font-medium text-black dark:text-slate-200">{(event.emergencyType || 'EMERGENCY').replace(/_/g, ' ')}</span>
+                     <span className="text-xs text-slate-500 dark:text-slate-400">{new Date(event.triggeredAt).toLocaleDateString()}</span>
                    </div>
-                   <p className="text-xs text-slate-500 mt-1">Status: {event.status}</p>
+                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Status: {event.status}</p>
                 </div>
               ))
             )}
@@ -228,7 +228,7 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
 
       {showTriggerModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="p-4 bg-red-600 text-white flex justify-between items-center">
               <h3 className="font-bold flex items-center gap-2">
                 <AlertCircle className="w-5 h-5" />
@@ -237,14 +237,14 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
               <button onClick={() => setShowTriggerModal(false)}><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-sm text-slate-600 mb-4">This will instantly alert all administrators and response teams.</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">This will instantly alert all administrators and response teams.</p>
               
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { type: 'MEDICAL_EMERGENCY', label: 'Medical', color: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' },
                   { type: 'SECURITY_THREAT', label: 'Security', color: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' },
                   { type: 'FIRE_EMERGENCY', label: 'Fire', color: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
-                  { type: 'PERSONAL_EMERGENCY', label: 'Personal SOS', color: 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' },
+                  { type: 'PERSONAL_EMERGENCY', label: 'Personal SOS', color: 'bg-white text-slate-900 border-slate-200 hover:bg-slate-100' },
                 ].map(opt => (
                   <button 
                     key={opt.type}
@@ -262,25 +262,25 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
 
       {selectedEvent && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
              <div className="p-4 border-b border-slate-100 flex justify-between items-center">
-              <h3 className="font-bold text-slate-900 flex items-center gap-2">
+              <h3 className="font-bold text-black dark:text-white flex items-center gap-2">
                 <ShieldAlert className="w-5 h-5 text-red-500" />
                 SOS Response Protocol
               </h3>
               <button onClick={() => setSelectedEvent(null)}><X className="w-5 h-5 text-slate-400" /></button>
             </div>
             <div className="p-6">
-               <div className="bg-slate-50 p-4 rounded-lg mb-6 space-y-2 text-sm">
-                 <p><span className="text-slate-500">Event Type:</span> <span className="font-semibold">{(selectedEvent.emergencyType || 'EMERGENCY').replace(/_/g, ' ')}</span></p>
-                 <p><span className="text-slate-500">Status:</span> <span>{selectedEvent.status}</span></p>
-                 <p><span className="text-slate-500">Triggered By:</span> {employees.find(e => e.id === selectedEvent.employeeId)?.firstName}</p>
-                 <p><span className="text-slate-500">Location:</span> {selectedEvent.latitude.toFixed(5)}, {selectedEvent.longitude.toFixed(5)}</p>
-                 <p><span className="text-slate-500">Time:</span> {new Date(selectedEvent.triggeredAt).toLocaleString()}</p>
+               <div className="bg-white dark:bg-slate-950 p-4 rounded-lg mb-6 space-y-2 text-sm">
+                 <p><span className="text-slate-500 dark:text-slate-400">Event Type:</span> <span className="font-semibold">{(selectedEvent.emergencyType || 'EMERGENCY').replace(/_/g, ' ')}</span></p>
+                 <p><span className="text-slate-500 dark:text-slate-400">Status:</span> <span>{selectedEvent.status}</span></p>
+                 <p><span className="text-slate-500 dark:text-slate-400">Triggered By:</span> {employees.find(e => e.id === selectedEvent.employeeId)?.firstName}</p>
+                 <p><span className="text-slate-500 dark:text-slate-400">Location:</span> {selectedEvent.latitude.toFixed(5)}, {selectedEvent.longitude.toFixed(5)}</p>
+                 <p><span className="text-slate-500 dark:text-slate-400">Time:</span> {new Date(selectedEvent.triggeredAt).toLocaleString()}</p>
                </div>
                
                <div className="space-y-3">
-                 <h4 className="font-medium text-slate-800">Available Actions</h4>
+                 <h4 className="font-medium text-black dark:text-slate-200">Available Actions</h4>
                  
                  {selectedEvent.status === 'TRIGGERED' && (
                    <button type="button" className="w-full px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-md font-medium" onClick={() => handleUpdateStatus(selectedEvent.id, 'ACKNOWLEDGED')}>
@@ -303,7 +303,7 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
                  )}
 
                  {['TRIGGERED', 'ACKNOWLEDGED'].includes(selectedEvent.status) && (
-                    <button type="button" className="w-full px-4 py-2 border border-slate-300 rounded-md font-medium hover:bg-slate-50" onClick={() => handleUpdateStatus(selectedEvent.id, 'FALSE_ALARM', 'Confirmed false alarm')}>
+                    <button type="button" className="w-full px-4 py-2 border border-slate-300 rounded-md font-medium hover:bg-white dark:bg-slate-950" onClick={() => handleUpdateStatus(selectedEvent.id, 'FALSE_ALARM', 'Confirmed false alarm')}>
                        Mark as False Alarm
                     </button>
                  )}

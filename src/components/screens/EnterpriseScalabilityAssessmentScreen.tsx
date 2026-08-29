@@ -198,7 +198,7 @@ export const EnterpriseScalabilityAssessmentScreen: React.FC<Props> = ({ session
             </div>
             <div className="text-2xl font-black text-white">99.9% Reduction</div>
             <div className="text-xs text-emerald-400 mt-1 font-medium">8.4M reads → 1,450 reads / day</div>
-            <p className="text-xs text-slate-500 mt-2">Protected by cursor tokens & server-side aggregations.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Protected by cursor tokens & server-side aggregations.</p>
           </div>
 
           <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 shadow-lg">
@@ -208,7 +208,7 @@ export const EnterpriseScalabilityAssessmentScreen: React.FC<Props> = ({ session
             </div>
             <div className="text-2xl font-black text-white">95 ms</div>
             <div className="text-xs text-cyan-400 mt-1 font-medium">Reduced from 22.0s unmitigated</div>
-            <p className="text-xs text-slate-500 mt-2">Backed by compound multi-field Firestore indexes.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Backed by compound multi-field Firestore indexes.</p>
           </div>
 
           <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 shadow-lg">
@@ -218,7 +218,7 @@ export const EnterpriseScalabilityAssessmentScreen: React.FC<Props> = ({ session
             </div>
             <div className="text-2xl font-black text-white">5.8 MB</div>
             <div className="text-xs text-indigo-400 mt-1 font-medium">Bounded within 10MB budget</div>
-            <p className="text-xs text-slate-500 mt-2">Zero Out-of-Memory crashes for field supervisors.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Zero Out-of-Memory crashes for field supervisors.</p>
           </div>
 
           <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 shadow-lg">
@@ -228,7 +228,7 @@ export const EnterpriseScalabilityAssessmentScreen: React.FC<Props> = ({ session
             </div>
             <div className="text-2xl font-black text-emerald-400">12 / 12 PASS</div>
             <div className="text-xs text-slate-300 mt-1 font-medium">FAIL → FIX → RETEST → PASS</div>
-            <p className="text-xs text-slate-500 mt-2">Zero regressions across all architecture pillars.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Zero regressions across all architecture pillars.</p>
           </div>
         </div>
 
@@ -549,7 +549,7 @@ export const EnterpriseScalabilityAssessmentScreen: React.FC<Props> = ({ session
                 <div className="text-3xl font-black text-emerald-400">
                   {cacheStats?.estimatedCacheSizeMb.toFixed(1)} MB
                 </div>
-                <p className="text-xs text-slate-500">Max budget: {cacheStats?.maxMemoryBudgetMb} MB</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Max budget: {cacheStats?.maxMemoryBudgetMb} MB</p>
               </div>
 
               <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-2">
@@ -557,7 +557,7 @@ export const EnterpriseScalabilityAssessmentScreen: React.FC<Props> = ({ session
                 <div className="text-3xl font-black text-cyan-400">
                   {cacheStats?.totalCachedEntities} Staff
                 </div>
-                <p className="text-xs text-slate-500">Scoped to assigned site only</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Scoped to assigned site only</p>
               </div>
 
               <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-2">
@@ -566,7 +566,7 @@ export const EnterpriseScalabilityAssessmentScreen: React.FC<Props> = ({ session
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                   <span>{cacheStats?.syncStatus}</span>
                 </div>
-                <p className="text-xs text-slate-500">Chunked writeBatch(50) active</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Chunked writeBatch(50) active</p>
               </div>
             </div>
 

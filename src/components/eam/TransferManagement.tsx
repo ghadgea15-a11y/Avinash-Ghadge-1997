@@ -37,7 +37,7 @@ export function TransferManagement({ session, assets, sites, employees, transfer
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+        <h3 className="text-base font-bold text-black dark:text-white flex items-center gap-2">
           <ArrowRightLeft className="w-5 h-5 text-purple-600" />
           Active Transfers
         </h3>
@@ -47,15 +47,15 @@ export function TransferManagement({ session, assets, sites, employees, transfer
         </button>
       </div>
 
-      <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-slate-950 border border-slate-200 rounded-xl overflow-hidden">
         {pendingTransfers.length === 0 ? (
-          <div className="p-12 text-center text-slate-500">
+          <div className="p-12 text-center text-slate-500 dark:text-slate-400">
             <ArrowRightLeft className="w-8 h-8 text-slate-300 mx-auto mb-3" />
             <p>No active transfers in progress.</p>
           </div>
         ) : (
           <table className="w-full text-sm text-left">
-            <thead className="bg-white border-b border-slate-200 text-slate-600 font-medium">
+            <thead className="bg-white dark:bg-slate-900 border-b border-slate-200 text-slate-600 dark:text-slate-400 font-medium">
               <tr>
                 <th className="px-4 py-3">Asset</th>
                 <th className="px-4 py-3">From</th>
@@ -72,19 +72,19 @@ export function TransferManagement({ session, assets, sites, employees, transfer
                 const toSite = sites.find(s => s.id === trf.toLocationId)?.name || 'Unknown';
                 
                 return (
-                  <tr key={trf.id} className="hover:bg-white transition-colors">
+                  <tr key={trf.id} className="hover:bg-white dark:bg-slate-900 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="font-bold text-slate-900">{asset?.assetName || 'Unknown Asset'}</div>
-                      <div className="font-mono text-xs text-slate-500">{asset?.assetCode}</div>
+                      <div className="font-bold text-black dark:text-white">{asset?.assetName || 'Unknown Asset'}</div>
+                      <div className="font-mono text-xs text-slate-500 dark:text-slate-400">{asset?.assetCode}</div>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{fromSite}</td>
-                    <td className="px-4 py-3 text-slate-600">{toSite}</td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{fromSite}</td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{toSite}</td>
                     <td className="px-4 py-3">
                       <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-bold rounded">
                         {trf.status.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-500 text-xs">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs">
                       {new Date(trf.requestedAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right">

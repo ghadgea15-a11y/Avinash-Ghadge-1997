@@ -1,0 +1,11 @@
+    await this.logAction(
+      session,
+      module,
+      action,
+      'UNKNOWN',
+      details.resourceId || 'N/A',
+      details.status !== 'FAILURE',
+      details.status === 'WARNING' ? 'MEDIUM' : (details.status === 'FAILURE' ? 'HIGH' : 'INFO'),
+      `Action ${action} performed on module ${module}`,
+      details
+    );

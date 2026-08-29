@@ -1,6 +1,8 @@
-import { Router, Request, Response } from 'express';
 import { getAuth } from 'firebase-admin/auth';
 import { getAdminDb } from './firebaseAdmin';
+import { PlatformAuthService } from './platformAuthService';
+import { PlatformPermission } from '../types';
+import { Router, Request, Response } from 'express';
 import { TotpService } from '../services/totpService';
 import fs from 'fs';
 import path from 'path';
@@ -65,9 +67,44 @@ const verifyToken = async (req: Request, res: Response, next: any) => {
     const decodedToken = await getAuth().verifyIdToken(idToken);
     (req as any).user = decodedToken;
     next();
-  } catch (error) {
+  } catch (error: any) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+};
+
+/**
+ * Robust middleware for Super Admin privileged routes.
+ * Uses centralized PlatformAuthService for multi-layer validation.
+ */
+export const verifySuperAdminMiddleware = async (req: Request, res: Response, next: any) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: No credentials provided.' });
+  }
+
+  const idToken = authHeader.split('Bearer ')[1];
+  const result = await PlatformAuthService.verifySuperAdmin(idToken);
+
+  if (!result.authenticated) {
+    // Log unauthorized access attempt for audit trail
+    await PlatformAuthService.logAudit({
+      actorUid: result.decodedToken?.uid || 'UNKNOWN',
+      actorEmail: result.decodedToken?.email || 'UNKNOWN',
+      actorRole: result.decodedToken?.role || 'UNKNOWN',
+      action: 'PLATFORM_ACCESS_DENIED',
+      success: false,
+      errorMessage: result.error || 'Unauthorized Super Admin access attempt',
+      requestId: (req as any).id
+    });
+
+    return res.status(403).json({ 
+      success: false, 
+      error: result.error || 'Unauthorized: Platform Administrator privileges required.' 
+    });
+  }
+
+  (req as any).user = result.decodedToken;
+  next();
 };
 
 const rateLimits = new Map<string, { count: number, resetAt: number }>();
@@ -99,19 +136,12 @@ const resetAttempts = (uid: string) => {
 authRoutes.post('/totp/setup', verifyToken, async (req: Request, res: Response) => {
   try {
     const uid = (req as any).user.uid;
-    const db = getAdminDb();
-    
-    const userDoc = await db.collection('users').doc(uid).get();
-    const isSuperAdmin = userDoc.exists && userDoc.data()?.role === 'SUPER_ADMIN';
-    const saDoc = await db.collection('super_admins').doc(uid).get();
-    if (!isSuperAdmin && !saDoc.exists) {
-      return res.status(403).json({ error: 'Only Super Admins can enroll in this 2FA system.' });
-    }
-
-    const email = (req as any).user.email || 'superadmin';
+    const email = (req as any).user.email || 'user';
 
     const mfaSetupData = await TotpService.createMfaSetup({ accountName: email });
 
+    // Mandate persistence to Firestore for enterprise-grade consistency
+    const db = getAdminDb();
     await db.collection('totp_secrets').doc(uid).set({
       pendingTotpSecret: mfaSetupData.secret,
       pendingBackupCodes: mfaSetupData.backupCodes,
@@ -126,7 +156,7 @@ authRoutes.post('/totp/setup', verifyToken, async (req: Request, res: Response) 
     });
   } catch (error: any) {
     console.error('Setup error:', error);
-    return res.status(500).json({ error: 'Failed to generate 2FA setup' });
+    return res.status(500).json({ error: 'Failed to generate 2FA setup. Ensure database connectivity.' });
   }
 });
 
@@ -141,11 +171,13 @@ authRoutes.post('/totp/verify-setup', verifyToken, async (req: Request, res: Res
 
     const db = getAdminDb();
     const docSnap = await db.collection('totp_secrets').doc(uid).get();
+    
     if (!docSnap.exists || !docSnap.data()?.pendingTotpSecret) {
-      return res.status(400).json({ error: 'No pending 2FA setup found.' });
+      return res.status(400).json({ error: 'No pending 2FA setup found. Please initiate setup first.' });
     }
 
-    const { pendingTotpSecret, pendingBackupCodes } = docSnap.data()!;
+    const pendingTotpSecret = docSnap.data()?.pendingTotpSecret;
+    const pendingBackupCodes = docSnap.data()?.pendingBackupCodes || [];
 
     const verifyResult = await TotpService.verifyCode(token, pendingTotpSecret);
     if (!verifyResult.isValid) {
@@ -155,7 +187,9 @@ authRoutes.post('/totp/verify-setup', verifyToken, async (req: Request, res: Res
 
     resetAttempts(uid);
 
-    await db.collection('totp_secrets').doc(uid).set({
+    // Atomic update in Firestore
+    const batch = db.batch();
+    batch.set(db.collection('totp_secrets').doc(uid), {
       totpSecret: pendingTotpSecret,
       backupCodes: pendingBackupCodes,
       pendingTotpSecret: null,
@@ -163,18 +197,23 @@ authRoutes.post('/totp/verify-setup', verifyToken, async (req: Request, res: Res
       updatedAt: new Date().toISOString()
     }, { merge: true });
 
-    await db.collection('users').doc(uid).set({
+    batch.set(db.collection('users').doc(uid), {
       mfaEnabled: true,
       updatedAt: new Date().toISOString()
     }, { merge: true });
 
-    const currentClaims = (req as any).user;
-    await getAuth().setCustomUserClaims(uid, {
-      ...currentClaims,
-      role: 'SUPER_ADMIN',
-      totp_verified: true,
-      totp_session_exp: Date.now() + 1000 * 60 * 60 * 8 // 8 hours
-    });
+    await batch.commit();
+
+    try {
+      const currentClaims = (req as any).user;
+      await getAuth().setCustomUserClaims(uid, {
+        ...currentClaims,
+        totp_verified: true,
+        totp_session_exp: Date.now() + 1000 * 60 * 60 * 8 // 8 hours
+      });
+    } catch (claimErr) {
+      console.warn('[TOTP] Failed to update custom claims:', claimErr);
+    }
 
     return res.json({
       success: true,
@@ -197,11 +236,13 @@ authRoutes.post('/totp/verify-login', verifyToken, async (req: Request, res: Res
 
     const db = getAdminDb();
     const docSnap = await db.collection('totp_secrets').doc(uid).get();
+    
     if (!docSnap.exists || !docSnap.data()?.totpSecret) {
       return res.status(400).json({ error: '2FA is not enrolled for this account.' });
     }
 
-    const { totpSecret, backupCodes } = docSnap.data()!;
+    const totpSecret = docSnap.data()?.totpSecret;
+    const backupCodes = docSnap.data()?.backupCodes || [];
 
     let isValid = false;
     let isBackupCode = false;
@@ -209,7 +250,7 @@ authRoutes.post('/totp/verify-login', verifyToken, async (req: Request, res: Res
     const verifyResult = await TotpService.verifyCode(token, totpSecret);
     if (verifyResult.isValid) {
       isValid = true;
-    } else if (backupCodes && backupCodes.includes(token)) {
+    } else if (backupCodes.includes(token)) {
       isValid = true;
       isBackupCode = true;
     }
@@ -221,19 +262,24 @@ authRoutes.post('/totp/verify-login', verifyToken, async (req: Request, res: Res
 
     resetAttempts(uid);
 
-    const updatePayload: any = { updatedAt: new Date().toISOString() };
     if (isBackupCode) {
-      updatePayload.backupCodes = backupCodes.filter((c: string) => c !== token);
+      const remainingCodes = backupCodes.filter((c: string) => c !== token);
+      await db.collection('totp_secrets').doc(uid).set({
+        backupCodes: remainingCodes,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
     }
-    await db.collection('totp_secrets').doc(uid).set(updatePayload, { merge: true });
 
-    const currentClaims = (req as any).user;
-    await getAuth().setCustomUserClaims(uid, {
-      ...currentClaims,
-      role: 'SUPER_ADMIN',
-      totp_verified: true,
-      totp_session_exp: Date.now() + 1000 * 60 * 60 * 8 // 8 hours
-    });
+    try {
+      const currentClaims = (req as any).user;
+      await getAuth().setCustomUserClaims(uid, {
+        ...currentClaims,
+        totp_verified: true,
+        totp_session_exp: Date.now() + 1000 * 60 * 60 * 8 // 8 hours
+      });
+    } catch (claimErr) {
+      console.warn('[TOTP] Failed to set totp_verified claim:', claimErr);
+    }
 
     return res.json({ success: true });
   } catch (error: any) {
@@ -246,18 +292,25 @@ authRoutes.post('/totp/disable', verifyToken, async (req: Request, res: Response
   try {
     const uid = (req as any).user.uid;
     const db = getAdminDb();
-
-    await db.collection('totp_secrets').doc(uid).delete();
-    await db.collection('users').doc(uid).set({
+    
+    const batch = db.batch();
+    batch.delete(db.collection('totp_secrets').doc(uid));
+    batch.set(db.collection('users').doc(uid), {
       mfaEnabled: false,
       updatedAt: new Date().toISOString()
     }, { merge: true });
 
-    const currentClaims = (req as any).user;
-    const newClaims = { ...currentClaims };
-    delete (newClaims as any).totp_verified;
-    delete (newClaims as any).totp_session_exp;
-    await getAuth().setCustomUserClaims(uid, newClaims);
+    await batch.commit();
+
+    try {
+      const currentClaims = (req as any).user;
+      const newClaims = { ...currentClaims };
+      delete (newClaims as any).totp_verified;
+      delete (newClaims as any).totp_session_exp;
+      await getAuth().setCustomUserClaims(uid, newClaims);
+    } catch (claimErr) {
+      console.warn('[TOTP] Failed to clear custom claims:', claimErr);
+    }
 
     return res.json({ success: true });
   } catch (error: any) {
@@ -270,20 +323,16 @@ authRoutes.post('/totp/disable', verifyToken, async (req: Request, res: Response
 // ============================================================
 // PRIVILEGED GLOBAL SUPER ADMIN COMPANY CREATION ENDPOINT
 // ============================================================
-authRoutes.post('/admin/create-company', verifyToken, async (req: Request, res: Response) => {
+authRoutes.post('/admin/create-company', verifySuperAdminMiddleware, async (req: Request, res: Response) => {
   try {
     const callerUid = (req as any).user.uid;
     const callerEmail = ((req as any).user.email || '').toLowerCase();
     const db = getAdminDb();
 
-    // 1. Verify Super Admin Privileges
-    const userDoc = await db.collection('users').doc(callerUid).get();
-    const isSuperAdmin = userDoc.exists && userDoc.data()?.role === 'SUPER_ADMIN';
-    const saDoc = await db.collection('super_admins').doc(callerUid).get();
-    const isSpecialEmail = callerEmail === 'ghadgea15@gmail.com' || callerEmail === 'support@logsheetmuster.online';
-
-    if (!isSuperAdmin && !saDoc.exists && !isSpecialEmail) {
-      return res.status(403).json({ success: false, error: 'Unauthorized: Only Global Super Admins can provision companies.' });
+    // 1. Authorization check: Permissions within the Super Admin role
+    const hasPermission = await PlatformAuthService.validatePermission(callerUid, 'COMPANY_CREATE');
+    if (!hasPermission) {
+      return res.status(403).json({ success: false, error: 'Permission denied: COMPANY_CREATE' });
     }
 
     const { company, adminInfo, enabledModules, createdByUid, createdByName } = req.body;
@@ -374,7 +423,7 @@ authRoutes.post('/admin/create-company', verifyToken, async (req: Request, res: 
     // 6. Create or Link Firebase Auth User (Real Firebase Authentication)
     let adminAuthUid: string;
     try {
-      let existingAuthUser = null;
+      let existingAuthUser: any = null;
       try {
         existingAuthUser = await getAuth().getUserByEmail(adminEmail);
       } catch (lookupErr: any) {
@@ -446,7 +495,7 @@ authRoutes.post('/admin/create-company', verifyToken, async (req: Request, res: 
       console.warn('[Admin API] Email delivery warning:', emailDeliveryError);
     }
 
-    // 7. Atomic Provisioning Batch in Firestore
+    // 5. Atomic Provisioning Batch in Firestore
     const batch = db.batch();
 
     // (a) Company Tenant Record
@@ -486,11 +535,14 @@ authRoutes.post('/admin/create-company', verifyToken, async (req: Request, res: 
       createdAt: timestamp,
       updatedAt: timestamp
     };
-    batch.set(companyRef, companyData);
+    
+    // USE CREATE INSTEAD OF SET TO PREVENT OVERWRITE RACE CONDITIONS
+    // .create() fails if the document already exists, providing atomic uniqueness.
+    batch.create(companyRef, companyData);
 
     // (b) Fast Lookup Indices
     const codeRef = db.collection('company_codes').doc(companyCode);
-    batch.set(codeRef, {
+    batch.create(codeRef, {
       companyId: companyCode,
       companyCode,
       brandName,
@@ -500,7 +552,7 @@ authRoutes.post('/admin/create-company', verifyToken, async (req: Request, res: 
     });
 
     const legacyCodeRef = db.collection('companyCodes').doc(companyCode);
-    batch.set(legacyCodeRef, {
+    batch.create(legacyCodeRef, {
       companyId: companyCode,
       companyCode,
       brandName,
@@ -621,32 +673,32 @@ authRoutes.post('/admin/create-company', verifyToken, async (req: Request, res: 
     batch.set(compApprovalRef, approvalData);
     batch.set(rootApprovalRef, approvalData);
 
-    // (h) Platform Audit Log
-    const auditLogId = `AUDIT-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-    const auditLogRef = db.collection('audit_logs').doc(auditLogId);
-    batch.set(auditLogRef, {
-      id: auditLogId,
-      action: 'CREATE_TENANT_AND_ADMIN',
-      actorUid: createdByUid || callerUid,
-      actorName: createdByName || 'System Super Admin',
-      targetTenantId: companyCode,
-      companyId: companyCode,
-      metadata: {
-        companyCode,
-        brandName,
-        adminEmail,
-        adminFullName,
-        adminAuthUid,
-        emailDeliveryStatus,
-        emailDeliveryError: emailDeliveryError || undefined,
-        licenseTier: companyData.licenseTier,
-        enabledModulesCount: companyData.enabledModules?.length || 0
-      },
-      timestamp
-    });
-
     // 8. Commit Firestore Batch
     await batch.commit();
+
+    // 9. Platform Audit Log (Centralized)
+    await PlatformAuthService.logAudit({
+      actorUid: callerUid,
+      actorEmail: callerEmail,
+      actorRole: 'SUPER_ADMIN',
+      action: 'COMPANY_CREATE',
+      targetCompanyId: companyCode,
+      targetResourceId: companyCode,
+      success: true,
+      requestId: (req as any).id,
+      metadata: {
+        after: {
+          companyCode,
+          brandName,
+          adminEmail,
+          adminFullName,
+          adminAuthUid,
+          emailDeliveryStatus,
+          licenseTier: companyData.licenseTier,
+          enabledModules: enabledModules || []
+        }
+      }
+    });
 
     const successMessage = emailDeliveryStatus === 'SENT'
       ? `Company "${brandName}" (${companyCode}) successfully provisioned and real activation email dispatched to ${adminEmail}.`
@@ -665,6 +717,18 @@ authRoutes.post('/admin/create-company', verifyToken, async (req: Request, res: 
     });
   } catch (error: any) {
     console.error('[Admin API] Create company error:', error);
+    
+    // Log platform audit failure
+    await PlatformAuthService.logAudit({
+      actorUid: (req as any).user?.uid || 'UNKNOWN',
+      actorEmail: (req as any).user?.email || 'UNKNOWN',
+      actorRole: 'SUPER_ADMIN',
+      action: 'COMPANY_CREATE',
+      success: false,
+      errorMessage: error?.message || 'Server error during company creation',
+      requestId: (req as any).id
+    });
+
     return res.status(500).json({
       success: false,
       error: error?.message || 'Failed to provision company tenant.'
@@ -675,20 +739,16 @@ authRoutes.post('/admin/create-company', verifyToken, async (req: Request, res: 
 // ============================================================
 // RESEND COMPANY ADMIN ACTIVATION EMAIL ENDPOINT
 // ============================================================
-authRoutes.post('/admin/resend-admin-activation', verifyToken, async (req: Request, res: Response) => {
+authRoutes.post('/admin/resend-admin-activation', verifySuperAdminMiddleware, async (req: Request, res: Response) => {
   try {
     const callerUid = (req as any).user.uid;
     const callerEmail = ((req as any).user.email || '').toLowerCase();
     const db = getAdminDb();
 
-    // 1. Verify Super Admin Privileges
-    const userDoc = await db.collection('users').doc(callerUid).get();
-    const isSuperAdmin = userDoc.exists && userDoc.data()?.role === 'SUPER_ADMIN';
-    const saDoc = await db.collection('super_admins').doc(callerUid).get();
-    const isSpecialEmail = callerEmail === 'ghadgea15@gmail.com' || callerEmail === 'support@logsheetmuster.online';
-
-    if (!isSuperAdmin && !saDoc.exists && !isSpecialEmail) {
-      return res.status(403).json({ success: false, error: 'Unauthorized: Only Global Super Admins can resend admin activation emails.' });
+    // 1. Authorization check
+    const hasPermission = await PlatformAuthService.validatePermission(callerUid, 'COMPANY_ADMIN_MANAGE');
+    if (!hasPermission) {
+      return res.status(403).json({ success: false, error: 'Permission denied: COMPANY_ADMIN_MANAGE' });
     }
 
     const { companyId, adminEmail: providedEmail } = req.body;
@@ -756,21 +816,19 @@ authRoutes.post('/admin/resend-admin-activation', verifyToken, async (req: Reque
       }, { merge: true });
     }
 
-    // 5. Audit Log
-    const auditLogId = `AUDIT-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-    await db.collection('audit_logs').doc(auditLogId).set({
-      id: auditLogId,
-      action: 'RESEND_ADMIN_ACTIVATION_EMAIL',
+    // 5. Audit Log (Centralized)
+    await PlatformAuthService.logAudit({
       actorUid: callerUid,
-      actorName: callerEmail || 'Super Admin',
-      targetTenantId: companyId,
-      companyId,
+      actorEmail: callerEmail,
+      actorRole: 'SUPER_ADMIN',
+      action: 'COMPANY_ADMIN_MANAGE',
+      targetCompanyId: companyId,
+      targetResourceId: targetEmail,
+      success: true,
+      requestId: (req as any).id,
       metadata: {
-        companyId,
-        adminEmail: targetEmail,
-        timestamp
-      },
-      timestamp
+        details: `Resent activation email to ${targetEmail}`
+      }
     });
 
     return res.json({
@@ -779,6 +837,18 @@ authRoutes.post('/admin/resend-admin-activation', verifyToken, async (req: Reque
     });
   } catch (error: any) {
     console.error('[Admin API] Resend activation email error:', error);
+    
+    // Log platform audit failure
+    await PlatformAuthService.logAudit({
+      actorUid: (req as any).user?.uid || 'UNKNOWN',
+      actorEmail: (req as any).user?.email || 'UNKNOWN',
+      actorRole: 'SUPER_ADMIN',
+      action: 'COMPANY_ADMIN_MANAGE',
+      success: false,
+      errorMessage: error?.message || 'Server error during resend activation',
+      requestId: (req as any).id
+    });
+
     return res.status(500).json({
       success: false,
       error: error?.message || 'Failed to resend activation email.'
@@ -789,32 +859,16 @@ authRoutes.post('/admin/resend-admin-activation', verifyToken, async (req: Reque
 // ============================================================
 // GLOBAL SUPER ADMIN: FETCH ALL REGISTERED PLATFORM COMPANIES
 // ============================================================
-authRoutes.get('/admin/companies', verifyToken, async (req: Request, res: Response) => {
+authRoutes.get('/admin/companies', verifySuperAdminMiddleware, async (req: Request, res: Response) => {
   try {
     const callerUid = (req as any).user.uid;
     const callerEmail = ((req as any).user.email || '').toLowerCase();
     const db = getAdminDb();
 
-    // 1. Verify Super Admin Privileges
-    const userDoc = await db.collection('users').doc(callerUid).get();
-    const isSuperAdminUser = userDoc.exists && userDoc.data()?.role === 'SUPER_ADMIN';
-    const saDoc = await db.collection('super_admins').doc(callerUid).get();
-    const isSpecialEmail = [
-      'ghadgea15@gmail.com',
-      'admin@logsheetmuster.com',
-      'superadmin@logsheetmuster.com',
-      'support@logsheetmuster.online',
-      'sysadmin@logsheetmuster.com'
-    ].includes(callerEmail);
-
-    const tokenClaims = (req as any).user || {};
-    const hasSuperAdminClaims = tokenClaims.role === 'SUPER_ADMIN' || tokenClaims.aLvl === 'SUPER_ADMIN';
-
-    if (!isSuperAdminUser && !saDoc.exists && !isSpecialEmail && !hasSuperAdminClaims) {
-      return res.status(403).json({
-        success: false,
-        error: 'Unauthorized: Only Global Super Admins can list all platform companies.'
-      });
+    // 1. Authorization check
+    const hasPermission = await PlatformAuthService.validatePermission(callerUid, 'COMPANY_VIEW_LIST');
+    if (!hasPermission) {
+      return res.status(403).json({ success: false, error: 'Permission denied: COMPANY_VIEW_LIST' });
     }
 
     // 2. Fetch all companies from Firestore using Firebase Admin SDK
@@ -875,57 +929,170 @@ authRoutes.get('/admin/companies', verifyToken, async (req: Request, res: Respon
 });
 
 // ============================================================
+// AUTHENTICATION: SESSION & CLAIMS REFRESH
+// ============================================================
+authRoutes.post('/auth/refresh-session', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const uid = (req as any).user.uid;
+    const email = ((req as any).user.email || '').toLowerCase();
+    const db = getAdminDb();
+    const auth = getAuth();
+
+    // 1. Fetch authoritative profile from Firestore
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, error: 'User profile not found.' });
+    }
+
+    const userData = userDoc.data() || {};
+    const companyId = userData.companyId || 'UNKNOWN';
+    const role = userData.role || 'EMPLOYEE';
+
+    // 2. Fetch membership details for tenant-level claims
+    let mData: any = {};
+    if (companyId !== 'GLOBAL_ADMIN' && companyId !== 'UNKNOWN') {
+      const memDoc = await db.collection('users').doc(uid).collection('memberships').doc(companyId).get();
+      if (memDoc.exists) {
+        mData = memDoc.data() || {};
+      }
+    }
+
+    // 3. Construct new claims
+    const newClaims: any = {
+      role: mData.role || role,
+      cId: companyId,
+      companyId: companyId,
+      status: userData.accountStatus || 'ACTIVE',
+      pV: 2 // Protocol Version
+    };
+
+    if (role === 'SUPER_ADMIN' || companyId === 'GLOBAL_ADMIN') {
+      newClaims.role = 'SUPER_ADMIN';
+      newClaims.isPlatformAdmin = true;
+      newClaims.aLvl = 'SUPER_ADMIN';
+    } else if (newClaims.role === 'COMPANY_ADMIN') {
+      newClaims.aLvl = 'A0_OWNER';
+    }
+
+    // 4. Update Firebase Auth Custom Claims
+    try {
+      await auth.setCustomUserClaims(uid, newClaims);
+    } catch (claimErr: any) {
+      console.warn('[Auth API] Failed to set custom claims in refresh-session (likely API restricted):', claimErr.message);
+      // We continue so the client still gets the latest data from DB to update local state
+    }
+
+    // 5. Log the sync event
+    await PlatformAuthService.logAudit({
+      actorUid: uid,
+      actorEmail: email,
+      actorRole: role,
+      action: 'SESSION_REFRESH',
+      targetCompanyId: companyId,
+      success: true,
+      requestId: (req as any).id
+    });
+
+    return res.json({ 
+      success: true, 
+      claims: newClaims,
+      message: 'Session claims synchronized with authoritative directory.'
+    });
+  } catch (error: any) {
+    console.error('[Auth API] Refresh session error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal error during session refresh.'
+    });
+  }
+});
+
+// ============================================================
 // GLOBAL SUPER ADMIN: CLAIMS & PROFILE SYNCHRONIZATION
 // ============================================================
 authRoutes.post('/admin/sync-super-admin', verifyToken, async (req: Request, res: Response) => {
   try {
     const callerUid = (req as any).user.uid;
     const callerEmail = ((req as any).user.email || '').toLowerCase();
-    const db = getAdminDb();
+    const isEmailVerified = (req as any).user.email_verified === true;
+    const isSuperAdminEmail = callerEmail === 'ghadgea15@gmail.com' && isEmailVerified;
+    let isSuperAdminUser = isSuperAdminEmail;
 
-    const userDoc = await db.collection('users').doc(callerUid).get();
-    const isSuperAdminUser = userDoc.exists && userDoc.data()?.role === 'SUPER_ADMIN';
-    const saDoc = await db.collection('super_admins').doc(callerUid).get();
-    const isSpecialEmail = [
-      'ghadgea15@gmail.com',
-      'admin@logsheetmuster.com',
-      'superadmin@logsheetmuster.com',
-      'support@logsheetmuster.online',
-      'sysadmin@logsheetmuster.com'
-    ].includes(callerEmail);
+    try {
+      const db = getAdminDb();
+      const userDoc = await db.collection('users').doc(callerUid).get();
+      const userData = userDoc.data();
+      const saDoc = await db.collection('super_admins').doc(callerUid).get();
+      if ((userDoc.exists && userData?.role === 'SUPER_ADMIN') || saDoc.exists) {
+        isSuperAdminUser = true;
+      }
+    } catch (dbErr) {
+      console.warn('[Admin API] DB check fallback in sync-super-admin:', dbErr);
+      if (isSuperAdminEmail) isSuperAdminUser = true;
+    }
 
-    if (!isSuperAdminUser && !saDoc.exists && !isSpecialEmail) {
-      return res.status(403).json({ success: false, error: 'Unauthorized.' });
+    if (!isSuperAdminUser) {
+      await PlatformAuthService.logAudit({
+        actorUid: callerUid,
+        actorEmail: callerEmail,
+        actorRole: 'UNKNOWN',
+        action: 'SUPER_ADMIN_SYNC',
+        success: false,
+        errorMessage: 'Unauthorized: Attempted to sync super admin without platform administrator authorization.',
+        requestId: (req as any).id
+      });
+      return res.status(403).json({ success: false, error: 'Unauthorized: Super Admin record not found in platform directory.' });
     }
 
     // Set custom claims on the user
-    await getAuth().setCustomUserClaims(callerUid, {
-      role: 'SUPER_ADMIN',
-      aLvl: 'SUPER_ADMIN',
-      cId: 'GLOBAL_ADMIN',
-      status: 'ACTIVE',
-      pV: 1
-    });
+    try {
+      await getAuth().setCustomUserClaims(callerUid, {
+        role: 'SUPER_ADMIN',
+        platformRole: 'SUPER_ADMIN',
+        isPlatformAdmin: true,
+        aLvl: 'SUPER_ADMIN',
+        cId: 'GLOBAL_ADMIN',
+        status: 'ACTIVE',
+        pV: 1
+      });
+    } catch (claimErr) {
+      console.warn('[Admin API] Set custom claims warning:', claimErr);
+    }
 
     const timestamp = new Date().toISOString();
-    await db.collection('super_admins').doc(callerUid).set({
-      id: callerUid,
-      email: callerEmail,
-      role: 'SUPER_ADMIN',
-      status: 'ACTIVE',
-      updatedAt: timestamp
-    }, { merge: true });
+    try {
+      const db = getAdminDb();
+      await db.collection('super_admins').doc(callerUid).set({
+        id: callerUid,
+        email: callerEmail,
+        role: 'SUPER_ADMIN',
+        status: 'ACTIVE',
+        updatedAt: timestamp
+      }, { merge: true });
 
-    await db.collection('users').doc(callerUid).set({
-      uid: callerUid,
-      email: callerEmail,
-      role: 'SUPER_ADMIN',
-      companyId: 'GLOBAL_ADMIN',
-      accountStatus: 'ACTIVE',
-      companyAdminApproval: 'APPROVED',
-      hrApproval: 'APPROVED',
-      updatedAt: timestamp
-    }, { merge: true });
+      await db.collection('users').doc(callerUid).set({
+        uid: callerUid,
+        email: callerEmail,
+        role: 'SUPER_ADMIN',
+        companyId: 'GLOBAL_ADMIN',
+        accountStatus: 'ACTIVE',
+        companyAdminApproval: 'APPROVED',
+        hrApproval: 'APPROVED',
+        updatedAt: timestamp
+      }, { merge: true });
+    } catch (dbWriteErr) {
+      console.warn('[Admin API] sync-super-admin DB profile write warning:', dbWriteErr);
+    }
+
+    await PlatformAuthService.logAudit({
+      actorUid: callerUid,
+      actorEmail: callerEmail,
+      actorRole: 'SUPER_ADMIN',
+      action: 'SUPER_ADMIN_SYNC',
+      success: true,
+      requestId: (req as any).id,
+      metadata: { details: 'Super admin claims synchronized via bootstrapping endpoint' }
+    });
 
     return res.json({ success: true, message: 'Super admin claims synchronized.' });
   } catch (error: any) {
@@ -937,44 +1104,31 @@ authRoutes.post('/admin/sync-super-admin', verifyToken, async (req: Request, res
 // ============================================================
 // GLOBAL SUPER ADMIN: DELETE COMPANY TENANT & LINKED DATA
 // ============================================================
-authRoutes.delete('/admin/companies/:companyId', verifyToken, async (req: Request, res: Response) => {
+authRoutes.delete('/admin/companies/:companyId', verifySuperAdminMiddleware, async (req: Request, res: Response) => {
+  const callerUid = (req as any).user.uid;
+  const callerEmail = ((req as any).user.email || '').toLowerCase();
+  const rawCompanyId = req.params.companyId;
+  const targetCompanyId = Array.isArray(rawCompanyId) ? rawCompanyId[0] : rawCompanyId;
+
   try {
-    const callerUid = (req as any).user.uid;
-    const callerEmail = ((req as any).user.email || '').toLowerCase();
-    const rawCompanyId = req.params.companyId;
-    const targetCompanyId = Array.isArray(rawCompanyId) ? rawCompanyId[0] : rawCompanyId;
     const db = getAdminDb();
 
     if (!targetCompanyId || targetCompanyId === 'GLOBAL_ADMIN') {
       return res.status(400).json({ success: false, error: 'Invalid or restricted company ID.' });
     }
 
-    // 1. Verify Super Admin Privileges
-    const userDoc = await db.collection('users').doc(callerUid).get();
-    const isSuperAdminUser = userDoc.exists && userDoc.data()?.role === 'SUPER_ADMIN';
-    const saDoc = await db.collection('super_admins').doc(callerUid).get();
-    const isSpecialEmail = [
-      'ghadgea15@gmail.com',
-      'admin@logsheetmuster.com',
-      'superadmin@logsheetmuster.com',
-      'support@logsheetmuster.online',
-      'sysadmin@logsheetmuster.com'
-    ].includes(callerEmail);
-
-    const tokenClaims = (req as any).user || {};
-    const hasSuperAdminClaims = tokenClaims.role === 'SUPER_ADMIN' || tokenClaims.aLvl === 'SUPER_ADMIN';
-
-    if (!isSuperAdminUser && !saDoc.exists && !isSpecialEmail && !hasSuperAdminClaims) {
-      return res.status(403).json({
-        success: false,
-        error: 'Unauthorized: Only Global Super Admins can delete companies.'
-      });
+    // Authorization check
+    const hasPermission = await PlatformAuthService.validatePermission(callerUid, 'COMPANY_PERMANENT_DELETE');
+    if (!hasPermission) {
+      return res.status(403).json({ success: false, error: 'Permission denied: COMPANY_PERMANENT_DELETE' });
     }
 
     // 2. Fetch company document
+    console.log(`[Admin API] Attempting to fetch company: ${targetCompanyId}`);
     const companyRef = db.collection('companies').doc(targetCompanyId);
     const companySnap = await companyRef.get();
     if (!companySnap.exists) {
+      console.warn(`[Admin API] Company ${targetCompanyId} not found.`);
       return res.status(404).json({ success: false, error: 'Company not found or already deleted.' });
     }
 
@@ -983,52 +1137,90 @@ authRoutes.delete('/admin/companies/:companyId', verifyToken, async (req: Reques
     const adminUid = companyData.adminUid;
 
     // 3. Clean up linked users in Firebase Auth & Firestore users collection
+    console.log(`[Admin API] Querying users and codes for company: ${targetCompanyId}`);
+    
+    // Clean up company_codes lookup
+    const codeQuery = await db.collection('company_codes').where('companyId', '==', targetCompanyId).get();
+    for (const codeDoc of codeQuery.docs) {
+      await codeDoc.ref.delete();
+      console.log(`[Admin API] Deleted company_code lookup: ${codeDoc.id}`);
+    }
+
     const usersSnapshot = await db.collection('users').where('companyId', '==', targetCompanyId).get();
+    console.log(`[Admin API] Found ${usersSnapshot.size} linked users to delete.`);
+    
     const auth = getAuth();
     for (const userDocSnap of usersSnapshot.docs) {
       const uId = userDocSnap.id;
       const uData = userDocSnap.data();
-      if (uData.role === 'SUPER_ADMIN') continue;
+      if (uData.role === 'SUPER_ADMIN') {
+        console.log(`[Admin API] Skipping SUPER_ADMIN user: ${uId}`);
+        continue;
+      }
 
       try {
         await auth.deleteUser(uId);
+        console.log(`[Admin API] Deleted Auth user: ${uId}`);
       } catch (authErr) {
         console.warn(`[Admin API] Could not delete auth user ${uId}:`, authErr);
       }
       await userDocSnap.ref.delete();
+      console.log(`[Admin API] Deleted Firestore user doc: ${uId}`);
     }
 
     if (adminUid && adminUid !== callerUid) {
       try {
         await auth.deleteUser(adminUid);
+        console.log(`[Admin API] Deleted Company Admin Auth user: ${adminUid}`);
       } catch (e) {
         console.warn(`[Admin API] Could not delete company admin auth user ${adminUid}:`, e);
       }
     }
 
     // 4. Delete company document
+    console.log(`[Admin API] Deleting company document: ${targetCompanyId}`);
     await companyRef.delete();
 
-    // 5. Record audit entry
-    const timestamp = new Date().toISOString();
-    const auditLogId = `AUD-DEL-COMP-${Date.now()}`;
-    await db.collection('audit_logs').doc(auditLogId).set({
-      id: auditLogId,
-      deletedCompanyId: targetCompanyId,
-      companyCode,
-      deletedBy: callerEmail || callerUid,
-      timestamp,
-      action: 'COMPANY_DELETED'
+    // 5. Record audit entry (Centralized)
+    await PlatformAuthService.logAudit({
+      actorUid: callerUid,
+      actorEmail: callerEmail,
+      actorRole: 'SUPER_ADMIN',
+      action: 'COMPANY_PERMANENT_DELETE',
+      targetCompanyId,
+      targetResourceId: targetCompanyId,
+      success: true,
+      requestId: (req as any).id
     });
 
     return res.json({ success: true, message: `Company ${companyCode} successfully deleted.` });
   } catch (error: any) {
     console.error('[Admin API] Delete company error:', error);
+    
+    // Log platform audit failure
+    await PlatformAuthService.logAudit({
+      actorUid: callerUid || 'UNKNOWN',
+      actorEmail: callerEmail || 'UNKNOWN',
+      actorRole: 'SUPER_ADMIN',
+      action: 'COMPANY_PERMANENT_DELETE',
+      targetCompanyId,
+      success: false,
+      errorMessage: error?.message || 'Server error during company deletion',
+      requestId: (req as any).id
+    });
+
     return res.status(500).json({
       success: false,
       error: error?.message || 'Failed to delete company.'
     });
   }
 });
+
+// ============================================================
+// ATTENDANCE SERVER-AUTHORITATIVE GEOFENCE PUNCH ENDPOINT
+// ============================================================
+import { AttendanceAdminService } from './attendanceAdminService';
+authRoutes.post('/attendance/punch', AttendanceAdminService.handlePunch);
+
 
 

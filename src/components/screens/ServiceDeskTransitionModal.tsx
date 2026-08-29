@@ -167,7 +167,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                <h3 className="text-base font-bold text-black dark:text-white">
                   Transition to {targetDefinition.name}
                 </h3>
                 <span className={`px-2 py-0.5 text-[11px] font-bold rounded-full ${targetDefinition.badgeBg} ${targetDefinition.badgeText}`}>
@@ -181,7 +181,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-md transition"
+            className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-md transition"
             disabled={loading}
           >
             <X className="w-5 h-5" />
@@ -192,10 +192,10 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
           
           {/* Status Description Banner */}
-          <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 flex items-start gap-2.5">
+          <div className="p-3 bg-white dark:bg-slate-950 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 flex items-start gap-2.5">
             <Info className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
-            <div className="text-xs text-slate-600 dark:text-slate-300">
-              <p className="font-semibold text-slate-800 dark:text-slate-200">{targetDefinition.description}</p>
+            <div className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300">
+              <p className="font-semibold text-black dark:text-slate-200">{targetDefinition.description}</p>
               {targetNorm === 'ON_HOLD' && (
                 <p className="text-amber-600 dark:text-amber-400 mt-1">
                   ⏱️ Resolution SLA Timer will be <strong>PAUSED</strong> until work resumes.
@@ -228,13 +228,13 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
           {targetNorm === 'ON_HOLD' && (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                   Pause Reason Category <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={pauseReason}
                   onChange={(e) => setPauseReason(e.target.value as TicketSlaPauseReason)}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
                   required
                 >
                   <option value="WAITING_ON_CLIENT">Waiting on Client Verification / Reply</option>
@@ -246,7 +246,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                   Detailed Explanation / Notes <span className="text-rose-500">*</span>
                 </label>
                 <textarea
@@ -254,7 +254,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Specify why the ticket is being held (e.g. Sent email to client for IP configuration details)..."
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
                   required
                 />
               </div>
@@ -265,13 +265,13 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
           {targetNorm === 'RESOLVED' && (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                   Resolution Category
                 </label>
                 <select
                   value={resolutionCategory}
                   onChange={(e) => setResolutionCategory(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
                 >
                   <option value="TECHNICAL_FIX">Technical Fix / System Remediation</option>
                   <option value="HARDWARE_REPLACEMENT">Hardware / Component Replacement</option>
@@ -283,7 +283,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                   Root Cause Analysis (RCA)
                 </label>
                 <input
@@ -291,12 +291,12 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
                   value={rootCause}
                   onChange={(e) => setRootCause(e.target.value)}
                   placeholder="e.g. Overheated PoE power switch in Rack 2 or Corrupted firmware"
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                   Corrective & Preventive Action (CAPA)
                 </label>
                 <input
@@ -304,12 +304,12 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
                   value={correctiveAction}
                   onChange={(e) => setCorrectiveAction(e.target.value)}
                   placeholder="e.g. Replaced switch fan assembly and updated power thresholds"
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                   Resolution Summary <span className="text-rose-500">*</span>
                 </label>
                 <textarea
@@ -317,7 +317,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
                   value={resolutionSummary}
                   onChange={(e) => setResolutionSummary(e.target.value)}
                   placeholder="Describe the actions taken to fix the issue and confirm operational readiness..."
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
                   required
                 />
               </div>
@@ -328,10 +328,10 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
           {targetNorm === 'CLOSED' && (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                   Client Satisfaction Rating (CSAT)
                 </label>
-                <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-2 p-3 bg-white dark:bg-slate-950 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -344,7 +344,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
                       </button>
                     ))}
                   </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-2">
+                  <span className="text-xs font-bold text-slate-900 dark:text-slate-300 ml-2">
                     {clientRating === 5 && '⭐⭐⭐⭐⭐ 5/5 - Excellent'}
                     {clientRating === 4 && '⭐⭐⭐⭐ 4/5 - Very Good'}
                     {clientRating === 3 && '⭐⭐⭐ 3/5 - Satisfactory'}
@@ -355,7 +355,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                   Closure Notes & Client Feedback
                 </label>
                 <textarea
@@ -363,7 +363,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
                   value={clientFeedbackNotes}
                   onChange={(e) => setClientFeedbackNotes(e.target.value)}
                   placeholder="Optional customer feedback or formal sign-off notes..."
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
                 />
               </div>
             </div>
@@ -373,7 +373,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
           {targetNorm === 'REOPENED' && (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                   Reopening Justification <span className="text-rose-500">*</span>
                 </label>
                 <textarea
@@ -381,7 +381,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="State why this ticket is being reopened (e.g. Issue recurred, client reported unresolved sub-component)..."
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
                   required
                 />
               </div>
@@ -392,7 +392,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
           {targetNorm === 'CANCELLED' && (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                   Cancellation Reason <span className="text-rose-500">*</span>
                 </label>
                 <textarea
@@ -400,7 +400,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Reason for ticket cancellation (e.g. Duplicate of TKT-2026-0042, Client withdrew request)..."
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
                   required
                 />
               </div>
@@ -410,7 +410,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
           {/* 6. GENERAL (ASSIGNED, IN PROGRESS) */}
           {(targetNorm === 'IN_PROGRESS' || targetNorm === 'ASSIGNED') && (
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                 Progress Notes (Optional)
               </label>
               <textarea
@@ -418,7 +418,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add optional notes for this status update..."
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden resize-none"
               />
             </div>
           )}
@@ -428,7 +428,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+              className="px-4 py-2 text-xs font-semibold text-slate-900 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
               disabled={loading}
             >
               Cancel

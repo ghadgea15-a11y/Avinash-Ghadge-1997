@@ -25,7 +25,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div className={`flex flex-col sm:flex-row items-center justify-between px-4 py-3 border-t ${isDark ? 'border-slate-800' : 'border-slate-200'} gap-4`}>
-      <div className="flex items-center text-xs text-slate-500">
+      <div className="flex items-center text-xs text-slate-500 dark:text-slate-400">
         <span>Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} entries</span>
         {onItemsPerPageChange && (
           <select 
@@ -34,7 +34,7 @@ export const Pagination: React.FC<PaginationProps> = ({
               onItemsPerPageChange(Number(e.target.value));
               onPageChange(1);
             }}
-            className={`ml-4 rounded-md border text-xs px-2 py-1 outline-none ${isDark ? 'bg-slate-900 border-slate-700 text-slate-300' : 'bg-white border-slate-300 text-slate-700'}`}
+            className={`ml-4 rounded-md border text-xs px-2 py-1 outline-none ${isDark ? 'bg-slate-900 border-slate-700 text-slate-300' : 'bg-white border-slate-300 text-slate-900'}`}
           >
             <option value={10}>10 per page</option>
             <option value={20}>20 per page</option>
@@ -91,7 +91,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
                   isActive 
                     ? 'bg-indigo-600 text-white' 
-                    : isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-100'
+                    : isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-900 hover:bg-slate-100'
                 }`}
               >
                 {pageNum}

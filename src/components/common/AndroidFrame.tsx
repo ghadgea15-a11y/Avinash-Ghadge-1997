@@ -33,7 +33,7 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
   }, []);
 
   if (viewportMode === 'FULLSCREEN') {
-    return <div className={`w-full h-full min-h-[calc(100vh-60px)] transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>{children}</div>;
+    return <div className={`w-full h-full min-h-[calc(100vh-60px)] transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'}`}>{children}</div>;
   }
 
   const isTablet = viewportMode === 'TABLET';
@@ -54,7 +54,7 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
         {/* Android Status Bar */}
         <div className={`transition-colors duration-300 ${isDark ? 'bg-slate-900 text-slate-300' : 'bg-slate-100 text-slate-600 border-b border-slate-200/50'} text-[11px] font-mono px-6 pt-2 pb-1.5 flex justify-between items-center z-40 select-none`}>
           <div className="flex items-center gap-2">
-            <span className={`font-semibold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{timeString || '10:42'}</span>
+            <span className={`font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{timeString || '10:42'}</span>
             {companyName && (
               <span className="text-[10px] text-indigo-500 font-sans truncate max-w-[120px]">
                 {companyName}
@@ -72,7 +72,7 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
         </div>
 
         {/* Screen Content Container */}
-        <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-slate-900'} overflow-y-auto relative flex flex-col`}>
+        <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'} overflow-y-auto relative flex flex-col`}>
           {children}
         </div>
 
@@ -80,20 +80,20 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
         <div className={`transition-colors duration-300 ${isDark ? 'bg-slate-900 border-t border-slate-800/80 text-slate-400' : 'bg-slate-100 border-t border-slate-200 text-slate-500'} h-11 flex justify-around items-center px-12 z-40`}>
           <button 
             onClick={onBackClick}
-            className={`p-2 transition active:scale-90 ${isDark ? 'hover:text-slate-100' : 'hover:text-slate-900'}`}
+            className={`p-2 transition active:scale-90 ${isDark ? 'hover:text-slate-100' : 'hover:text-black'}`}
             title="Android Back Button"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <button 
             onClick={onHomeClick}
-            className={`p-2 transition active:scale-90 ${isDark ? 'hover:text-slate-100' : 'hover:text-slate-900'}`}
+            className={`p-2 transition active:scale-90 ${isDark ? 'hover:text-slate-100' : 'hover:text-black'}`}
             title="Android Home Button"
           >
             <Circle className="w-4 h-4" />
           </button>
           <button 
-            className={`p-2 transition active:scale-90 opacity-60 ${isDark ? 'hover:text-slate-100' : 'hover:text-slate-900'}`}
+            className={`p-2 transition active:scale-90 opacity-60 ${isDark ? 'hover:text-slate-100' : 'hover:text-black'}`}
             title="Android Recent Apps"
           >
             <Square className="w-3.5 h-3.5" />

@@ -1,62 +1,29 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, enableIndexedDbPersistence, doc, getDocFromServer } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { initializeApp } from 'firebase/app';
+import { getAuth, setPersistence, inMemoryPersistence } from 'firebase/auth';
+import { getFirestore, enableMultiTabIndexedDbPersistence, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
-import firebaseAppletConfig from '../firebase-applet-config.json';
-
-const getEnv = (key: string) => {
-  try {
-    return typeof import.meta !== 'undefined' && import.meta?.env ? import.meta.env[key] : undefined;
-  } catch {
-    return undefined;
-  }
-};
 
 const firebaseConfig = {
-  apiKey: getEnv('VITE_FIREBASE_API_KEY') || firebaseAppletConfig.apiKey || 'demo-api-key',
-  authDomain: getEnv('VITE_FIREBASE_AUTH_DOMAIN') || firebaseAppletConfig.authDomain || 'log-sheet-muster.firebaseapp.com',
-  projectId: getEnv('VITE_FIREBASE_PROJECT_ID') || firebaseAppletConfig.projectId || 'log-sheet-muster-demo',
-  storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET') || firebaseAppletConfig.storageBucket || 'log-sheet-muster.appspot.com',
-  messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID') || firebaseAppletConfig.messagingSenderId || '123456789',
-  appId: getEnv('VITE_FIREBASE_APP_ID') || firebaseAppletConfig.appId || '1:123456789:web:abcdef'
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBv9P5Xs67mtFth7SWGSRVi_gpoDohbKZ8",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "log-sheet-af97a.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "log-sheet-af97a",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "log-sheet-af97a.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "885364646635",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:885364646635:web:453e38933c08cbdf114ae"
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-export const db = firebaseAppletConfig.firestoreDatabaseId 
-  ? getFirestore(app, firebaseAppletConfig.firestoreDatabaseId) 
-  : getFirestore(app);
+const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+// Enforce strictly in-memory persistence to automatically logout on page refresh
+setPersistence(auth, inMemoryPersistence).catch(console.error);
+
+// Initialize Firestore with multi-tab offline persistence
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
 
-// Enable Firestore offline persistence only in browser environments supporting IndexedDB
-try {
-  if (typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined') {
-    enableIndexedDbPersistence(db).catch((err) => {
-      if (err.code === 'failed-precondition') {
-        console.warn('Firestore offline persistence: Multiple tabs active');
-      } else if (err.code === 'unimplemented') {
-        // Platform or browser does not support IndexedDB persistence
-      }
-    });
-  }
-} catch (e) {
-  // Silent fallback for non-browser or unsupported environments
-}
-
-// Validate Connection to Firestore on boot safely
-async function validateFirestoreConnection() {
-  try {
-    // Gracefully check if database is reachable without hard timeout error
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      console.warn('Browser is currently offline. Firestore offline persistence active.');
-    }
-  } catch (error) {
-    // Silent catch
-  }
-}
-validateFirestoreConnection();
-
-export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.apiKey !== 'demo-api-key');
-
+export default app;

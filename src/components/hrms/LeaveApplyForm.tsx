@@ -1,4 +1,5 @@
 // @ts-nocheck
+// @ts-nocheck
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   X, 
@@ -136,16 +137,16 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-2xl max-w-lg w-full flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-slate-900 dark:bg-slate-800 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-2xl max-w-lg w-full flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
         
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/20">
+        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-950/50 dark:bg-slate-900/20">
           <div>
-            <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-xl font-black text-black dark:text-white flex items-center gap-2">
               <Paperclip className="w-5 h-5 text-indigo-600" />
               Apply Leave
             </h3>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Submit new time-off request</p>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Submit new time-off request</p>
           </div>
           <button 
             onClick={onClose}
@@ -172,7 +173,7 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
           <form id="leave-apply-form" onSubmit={handleSubmit} className="space-y-5">
             {/* Type */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Leave Type</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Leave Type</label>
               <div className="grid grid-cols-2 gap-2">
                 {policies.map(p => {
                   const bal = balance?.balances.find(b => b.leaveCode === p.leaveCode);
@@ -191,7 +192,7 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
                       }`}
                     >
                       <div className="flex justify-between items-start mb-1">
-                        <span className={`text-xs font-black ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                        <span className={`text-xs font-black ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-slate-300'}`}>
                           {p.leaveName}
                         </span>
                         {isSelected && <Check className="w-3 h-3 text-indigo-600" />}
@@ -206,36 +207,36 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
             {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Start Date</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Start Date</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                   <input
                     type="date"
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full pl-10 pr-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all"
+                    className="w-full pl-10 pr-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 dark:bg-slate-900 text-black dark:text-white outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all"
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">End Date</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">End Date</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                   <input
                     type="date"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full pl-10 pr-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all"
+                    className="w-full pl-10 pr-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 dark:bg-slate-900 text-black dark:text-white outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all"
                   />
                 </div>
               </div>
             </div>
 
             {/* Half Day */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-slate-950 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-indigo-500" />
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Is this a half-day?</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-300">Is this a half-day?</span>
               </div>
               <div className="flex items-center gap-3">
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -245,7 +246,7 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
                     onChange={(e) => setFormData({ ...formData, isHalfDay: e.target.checked })}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:bg-slate-900 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
             </div>
@@ -280,7 +281,7 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
             {/* Calculated Preview */}
             <div className="p-4 rounded-2xl bg-indigo-600 text-white flex justify-between items-center shadow-xl shadow-indigo-600/20">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/20 rounded-lg">
+                <div className="p-2 bg-white dark:bg-slate-900/20 rounded-lg">
                   <Calendar className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -295,36 +296,36 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
 
             {/* Reason */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Reason for Leave *</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Reason for Leave *</label>
               <textarea
                 value={formData.reason}
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                 rows={3}
                 placeholder="Brief description of your leave request..."
-                className="w-full p-3 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all resize-none"
+                className="w-full p-3 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 dark:bg-slate-900 text-black dark:text-white outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all resize-none"
               />
             </div>
 
             {/* Emergency Contact */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Contact During Leave</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Contact During Leave</label>
               <input
                 type="text"
                 value={formData.contactDuringLeave}
                 onChange={(e) => setFormData({ ...formData, contactDuringLeave: e.target.value })}
                 placeholder="+91 00000 00000"
-                className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all"
+                className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 dark:bg-slate-900 text-black dark:text-white outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all"
               />
             </div>
           </form>
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20 flex gap-3">
+        <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-950/50 dark:bg-slate-900/20 flex gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-all active:scale-95"
+            className="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-300 hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 transition-all active:scale-95"
           >
             Discard
           </button>

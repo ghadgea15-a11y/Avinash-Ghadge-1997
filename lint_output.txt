@@ -2,3 +2,8 @@
 > log-sheet-muster-architecture@1.0.0 lint
 > tsc --noEmit
 
+src/components/operations/PatrolTourRunnerModal.tsx(266,63): error TS1005: ',' expected.
+src/components/operations/PatrolTourRunnerModal.tsx(266,70): error TS1005: ';' expected.
+src/components/operations/PatrolTourRunnerModal.tsx(266,97): error TS1005: ';' expected.
+src/components/operations/PatrolTourRunnerModal.tsx(266,98): error TS1128: Declaration or statement expected.
+src/components/operations/PatrolTourRunnerModal.tsx(581,1): error TS1128: Declaration or statement expected.

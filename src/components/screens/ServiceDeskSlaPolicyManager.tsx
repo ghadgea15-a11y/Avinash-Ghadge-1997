@@ -147,7 +147,7 @@ export function ServiceDeskSlaPolicyManager({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className={`w-full max-w-5xl max-h-[92vh] flex flex-col rounded-2xl shadow-2xl border ${isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'}`}>
+      <div className={`w-full max-w-5xl max-h-[92vh] flex flex-col rounded-2xl shadow-2xl border ${isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-black'}`}>
         
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-5 border-b border-slate-200 dark:border-slate-800">
@@ -200,7 +200,7 @@ export function ServiceDeskSlaPolicyManager({
               <Plus className="w-4 h-4" />
               Add Policy
             </button>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500">
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -231,7 +231,7 @@ export function ServiceDeskSlaPolicyManager({
                 </h3>
                 <button 
                   onClick={() => setEditingPolicy(null)}
-                  className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-300"
                 >
                   Cancel
                 </button>
@@ -239,33 +239,33 @@ export function ServiceDeskSlaPolicyManager({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Policy Name *</label>
+                  <label className="block text-xs font-semibold mb-1 text-slate-900 dark:text-slate-300">Policy Name *</label>
                   <input
                     type="text"
                     placeholder="e.g. Critical 24x7 Facility Outage"
                     value={editingPolicy.policyName || ''}
                     onChange={e => setEditingPolicy({ ...editingPolicy, policyName: e.target.value })}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Policy Code *</label>
+                  <label className="block text-xs font-semibold mb-1 text-slate-900 dark:text-slate-300">Policy Code *</label>
                   <input
                     type="text"
                     placeholder="e.g. SLA-CRIT-24X7"
                     value={editingPolicy.code || ''}
                     onChange={e => setEditingPolicy({ ...editingPolicy, code: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 uppercase font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800 uppercase font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Status</label>
+                  <label className="block text-xs font-semibold mb-1 text-slate-900 dark:text-slate-300">Status</label>
                   <select
                     value={editingPolicy.status || 'ACTIVE'}
                     onChange={e => setEditingPolicy({ ...editingPolicy, status: e.target.value as any })}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="ACTIVE">ACTIVE</option>
                     <option value="DRAFT">DRAFT</option>
@@ -275,13 +275,13 @@ export function ServiceDeskSlaPolicyManager({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Description</label>
+                <label className="block text-xs font-semibold mb-1 text-slate-900 dark:text-slate-300">Description</label>
                 <input
                   type="text"
                   placeholder="Summary of terms, obligations, and coverage criteria"
                   value={editingPolicy.description || ''}
                   onChange={e => setEditingPolicy({ ...editingPolicy, description: e.target.value })}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -296,7 +296,7 @@ export function ServiceDeskSlaPolicyManager({
                     <select
                       value={editingPolicy.clientId || '*'}
                       onChange={e => setEditingPolicy({ ...editingPolicy, clientId: e.target.value })}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                     >
                       <option value="*">* All Clients</option>
                       {clients.map(c => (
@@ -310,7 +310,7 @@ export function ServiceDeskSlaPolicyManager({
                     <select
                       value={editingPolicy.contractId || '*'}
                       onChange={e => setEditingPolicy({ ...editingPolicy, contractId: e.target.value })}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                     >
                       <option value="*">* All Contracts</option>
                       {contracts.map(cnt => (
@@ -324,7 +324,7 @@ export function ServiceDeskSlaPolicyManager({
                     <select
                       value={editingPolicy.siteId || '*'}
                       onChange={e => setEditingPolicy({ ...editingPolicy, siteId: e.target.value })}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                     >
                       <option value="*">* All Sites</option>
                       {sites.map(s => (
@@ -338,7 +338,7 @@ export function ServiceDeskSlaPolicyManager({
                     <select
                       value={editingPolicy.category || '*'}
                       onChange={e => setEditingPolicy({ ...editingPolicy, category: e.target.value })}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                     >
                       <option value="*">* All Categories</option>
                       {categories.map(cat => (
@@ -352,7 +352,7 @@ export function ServiceDeskSlaPolicyManager({
                     <select
                       value={editingPolicy.priority || '*'}
                       onChange={e => setEditingPolicy({ ...editingPolicy, priority: e.target.value as any })}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                     >
                       <option value="*">* All Priorities</option>
                       <option value="CRITICAL">CRITICAL</option>
@@ -371,7 +371,7 @@ export function ServiceDeskSlaPolicyManager({
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
+                    <label className="block text-xs font-semibold mb-1 text-slate-900 dark:text-slate-300">
                       Response Target (Minutes) *
                     </label>
                     <input
@@ -379,15 +379,15 @@ export function ServiceDeskSlaPolicyManager({
                       min={1}
                       value={editingPolicy.responseTargetMinutes || ''}
                       onChange={e => setEditingPolicy({ ...editingPolicy, responseTargetMinutes: Number(e.target.value) })}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                     />
-                    <span className="text-[10px] text-slate-500 mt-1 block">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">
                       {Math.round((editingPolicy.responseTargetMinutes || 0) / 60 * 10) / 10} hours
                     </span>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
+                    <label className="block text-xs font-semibold mb-1 text-slate-900 dark:text-slate-300">
                       Resolution Target (Minutes) *
                     </label>
                     <input
@@ -395,15 +395,15 @@ export function ServiceDeskSlaPolicyManager({
                       min={1}
                       value={editingPolicy.resolutionTargetMinutes || ''}
                       onChange={e => setEditingPolicy({ ...editingPolicy, resolutionTargetMinutes: Number(e.target.value) })}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                     />
-                    <span className="text-[10px] text-slate-500 mt-1 block">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">
                       {Math.round((editingPolicy.resolutionTargetMinutes || 0) / 60 * 10) / 10} hours
                     </span>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
+                    <label className="block text-xs font-semibold mb-1 text-slate-900 dark:text-slate-300">
                       Warning Threshold %
                     </label>
                     <input
@@ -412,21 +412,21 @@ export function ServiceDeskSlaPolicyManager({
                       max={95}
                       value={editingPolicy.warningThresholdPercentage || 75}
                       onChange={e => setEditingPolicy({ ...editingPolicy, warningThresholdPercentage: Number(e.target.value) })}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                     />
-                    <span className="text-[10px] text-slate-500 mt-1 block">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">
                       Triggers warning at {editingPolicy.warningThresholdPercentage || 75}% elapsed time
                     </span>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
+                    <label className="block text-xs font-semibold mb-1 text-slate-900 dark:text-slate-300">
                       Coverage Window
                     </label>
                     <select
                       value={editingPolicy.coverageType || '24X7'}
                       onChange={e => setEditingPolicy({ ...editingPolicy, coverageType: e.target.value as any })}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                     >
                       <option value="24X7">24x7 Continuous</option>
                       <option value="BUSINESS_HOURS">Business Hours Only</option>
@@ -442,7 +442,7 @@ export function ServiceDeskSlaPolicyManager({
                         type="time"
                         value={editingPolicy.businessHoursStart || '09:00'}
                         onChange={e => setEditingPolicy({ ...editingPolicy, businessHoursStart: e.target.value })}
-                        className="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                        className="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                       />
                     </div>
                     <div>
@@ -451,12 +451,12 @@ export function ServiceDeskSlaPolicyManager({
                         type="time"
                         value={editingPolicy.businessHoursEnd || '18:00'}
                         onChange={e => setEditingPolicy({ ...editingPolicy, businessHoursEnd: e.target.value })}
-                        className="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                        className="w-full px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                       />
                     </div>
                     <div className="col-span-2">
                       <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Working Days</label>
-                      <span className="text-xs text-slate-700 dark:text-slate-300">Monday - Friday (Standard Business Week)</span>
+                      <span className="text-xs text-slate-900 dark:text-slate-300">Monday - Friday (Standard Business Week)</span>
                     </div>
                   </div>
                 )}
@@ -487,18 +487,18 @@ export function ServiceDeskSlaPolicyManager({
           {/* SLA Policies List */}
           <div>
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 dark:text-slate-300">
                 Configured Policies ({policies.length})
               </h3>
             </div>
 
             {loading ? (
-              <div className="py-12 text-center text-sm text-slate-500">Loading SLA policies...</div>
+              <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">Loading SLA policies...</div>
             ) : policies.length === 0 ? (
               <div className="py-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
                 <Clock className="w-10 h-10 mx-auto text-slate-400 mb-3" />
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">No SLA policies defined yet.</p>
-                <p className="text-xs text-slate-500 mt-1 mb-4">Initialize the default policies or create custom SLAs tailored to specific clients, sites, or categories.</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-300">No SLA policies defined yet.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">Initialize the default policies or create custom SLAs tailored to specific clients, sites, or categories.</p>
                 <button
                   onClick={handleInitDefaults}
                   className="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700"
@@ -519,13 +519,13 @@ export function ServiceDeskSlaPolicyManager({
                       className={`p-5 rounded-xl border transition-all ${
                         pol.status === 'ACTIVE' 
                           ? 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:border-blue-400 dark:hover:border-blue-700' 
-                          : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 opacity-70'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 opacity-70'
                       }`}
                     >
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                            <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300">
                               {pol.code}
                             </span>
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -539,7 +539,7 @@ export function ServiceDeskSlaPolicyManager({
                               {pol.coverageType === '24X7' ? '24x7 Coverage' : 'Business Hours'}
                             </span>
                           </div>
-                          <h4 className="text-sm font-bold mt-1 text-slate-900 dark:text-white">{pol.policyName}</h4>
+                          <h4 className="text-sm font-bold mt-1 text-black dark:text-white">{pol.policyName}</h4>
                         </div>
 
                         <div className="flex items-center gap-1">
@@ -565,10 +565,10 @@ export function ServiceDeskSlaPolicyManager({
                       )}
 
                       {/* Targets Grid */}
-                      <div className="grid grid-cols-3 gap-2 py-2.5 px-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 mb-3 text-center">
+                      <div className="grid grid-cols-3 gap-2 py-2.5 px-3 rounded-lg bg-white dark:bg-slate-950 dark:bg-slate-800/60 mb-3 text-center">
                         <div>
                           <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Response</span>
-                          <span className="text-xs font-bold text-slate-900 dark:text-white">
+                          <span className="text-xs font-bold text-black dark:text-white">
                             {pol.responseTargetMinutes >= 60 
                               ? `${Math.round(pol.responseTargetMinutes / 60 * 10) / 10}h` 
                               : `${pol.responseTargetMinutes}m`}
@@ -576,7 +576,7 @@ export function ServiceDeskSlaPolicyManager({
                         </div>
                         <div>
                           <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Resolution</span>
-                          <span className="text-xs font-bold text-slate-900 dark:text-white">
+                          <span className="text-xs font-bold text-black dark:text-white">
                             {pol.resolutionTargetMinutes >= 60 
                               ? `${Math.round(pol.resolutionTargetMinutes / 60 * 10) / 10}h` 
                               : `${pol.resolutionTargetMinutes}m`}
@@ -619,10 +619,10 @@ export function ServiceDeskSlaPolicyManager({
           </div>
 
           {/* Precedence Simulator / Rule Tester */}
-          <div className="mt-8 p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
+          <div className="mt-8 p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/70 dark:bg-slate-800/40">
             <div className="flex items-center gap-2 mb-3">
               <PlayCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              <h3 className="text-sm font-bold text-black dark:text-white">
                 SLA Precedence Tester & Due Time Simulator
               </h3>
             </div>
@@ -636,7 +636,7 @@ export function ServiceDeskSlaPolicyManager({
                 <select
                   value={simClient}
                   onChange={e => setSimClient(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                 >
                   <option value="*">* Generic Client</option>
                   {clients.map(c => (
@@ -650,7 +650,7 @@ export function ServiceDeskSlaPolicyManager({
                 <select
                   value={simSite}
                   onChange={e => setSimSite(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                 >
                   <option value="*">* Generic Site</option>
                   {sites.map(s => (
@@ -664,7 +664,7 @@ export function ServiceDeskSlaPolicyManager({
                 <select
                   value={simCategory}
                   onChange={e => setSimCategory(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800"
                 >
                   <option value="*">* Generic Category</option>
                   {categories.map(cat => (
@@ -678,7 +678,7 @@ export function ServiceDeskSlaPolicyManager({
                 <select
                   value={simPriority}
                   onChange={e => setSimPriority(e.target.value as ServiceTicketPriority)}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-semibold"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:bg-slate-800 font-semibold"
                 >
                   <option value="CRITICAL">CRITICAL</option>
                   <option value="HIGH">HIGH</option>
@@ -691,18 +691,18 @@ export function ServiceDeskSlaPolicyManager({
             {/* Test Match Output */}
             <div className="p-4 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block">Matched Policy</span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 block">Matched Policy</span>
+                <span className="text-sm font-bold text-black dark:text-white">
                   {testMatch.policy ? testMatch.policy.policyName : 'Default Priority-Based Fallback'}
                 </span>
-                <span className="text-xs text-slate-500 block">
+                <span className="text-xs text-slate-500 dark:text-slate-400 block">
                   {testMatch.policy ? `Matched Code: ${testMatch.policy.code} (Specificity Score: ${testMatch.score})` : 'Standard default priority matrix'}
                 </span>
               </div>
 
               <div className="flex items-center gap-6">
                 <div>
-                  <span className="text-[10px] text-slate-500 block">Target Response</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Target Response</span>
                   <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
                     {testMatch.policy 
                       ? `${testMatch.policy.responseTargetMinutes} mins` 
@@ -710,7 +710,7 @@ export function ServiceDeskSlaPolicyManager({
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 block">Target Resolution</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Target Resolution</span>
                   <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                     {testMatch.policy 
                       ? `${Math.round(testMatch.policy.resolutionTargetMinutes / 60 * 10) / 10} hours` 

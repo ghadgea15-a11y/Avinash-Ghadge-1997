@@ -1,0 +1,8 @@
+
+  public static async getLocations(companyId: string) {
+    return [];
+  }
+
+  public static async getItems(companyId: string) {
+    return [];
+  }

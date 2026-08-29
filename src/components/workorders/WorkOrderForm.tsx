@@ -84,11 +84,11 @@ export function WorkOrderForm({ companyId, userSession, onClose }: WorkOrderForm
     <div className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Create Work Order</h2>
-          <p className="text-sm text-slate-500">Draft a new operational task or dispatch order</p>
+          <h2 className="text-2xl font-bold text-black dark:text-white">Create Work Order</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Draft a new operational task or dispatch order</p>
         </div>
         <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
-          <X className="w-5 h-5 text-slate-500" />
+          <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
         </button>
       </div>
 
@@ -100,12 +100,12 @@ export function WorkOrderForm({ companyId, userSession, onClose }: WorkOrderForm
       )}
 
       <form onSubmit={handleSave} className="space-y-6">
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 space-y-6">
+        <div className="bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title *</label>
+            <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Title *</label>
             <input 
               type="text"
-              className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
               value={formData.title}
               onChange={e => setFormData({...formData, title: e.target.value})}
               required
@@ -113,10 +113,10 @@ export function WorkOrderForm({ companyId, userSession, onClose }: WorkOrderForm
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Description</label>
             <textarea 
               rows={3}
-              className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
               value={formData.description}
               onChange={e => setFormData({...formData, description: e.target.value})}
             />
@@ -124,20 +124,20 @@ export function WorkOrderForm({ companyId, userSession, onClose }: WorkOrderForm
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category *</label>
+              <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Category *</label>
               <input 
                 type="text"
                 placeholder="e.g. Maintenance, Inspection"
-                className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
                 value={formData.category}
                 onChange={e => setFormData({...formData, category: e.target.value})}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Priority</label>
+              <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Priority</label>
               <select 
-                className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
                 value={formData.priority}
                 onChange={e => setFormData({...formData, priority: e.target.value as WorkOrderPriority})}
               >
@@ -150,9 +150,9 @@ export function WorkOrderForm({ companyId, userSession, onClose }: WorkOrderForm
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6">
+        <div className="bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Execution Checklist</h3>
+            <h3 className="text-lg font-bold text-black dark:text-white">Execution Checklist</h3>
             <button 
               type="button"
               onClick={addChecklistItem}
@@ -163,17 +163,17 @@ export function WorkOrderForm({ companyId, userSession, onClose }: WorkOrderForm
           </div>
           
           {checklists.length === 0 ? (
-            <p className="text-sm text-slate-500 italic">No checklist items added. Employees will simply mark the task as complete.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 italic">No checklist items added. Employees will simply mark the task as complete.</p>
           ) : (
             <div className="space-y-3">
               {checklists.map((chk, idx) => (
                 <div key={chk.id} className="flex items-start gap-3">
                   <div className="pt-2">
-                    <div className="w-5 h-5 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900"></div>
+                    <div className="w-5 h-5 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 dark:bg-slate-900"></div>
                   </div>
                   <input 
                     type="text"
-                    className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
                     placeholder="Checklist task description..."
                     value={chk.text}
                     onChange={(e) => {
@@ -184,7 +184,7 @@ export function WorkOrderForm({ companyId, userSession, onClose }: WorkOrderForm
                     required
                   />
                   <div className="flex items-center gap-2 pt-2">
-                    <label className="flex items-center gap-1.5 text-sm text-slate-600">
+                    <label className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
                       <input 
                         type="checkbox" 
                         checked={chk.isRequired}
@@ -209,7 +209,7 @@ export function WorkOrderForm({ companyId, userSession, onClose }: WorkOrderForm
           <button 
             type="button"
             onClick={onClose}
-            className="px-6 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium"
+            className="px-6 py-2 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-300 rounded-lg hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-800 transition-colors font-medium"
           >
             Cancel
           </button>

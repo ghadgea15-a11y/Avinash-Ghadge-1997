@@ -33,15 +33,15 @@ export function WorkOrdersScreen({ userSession, activeCompany, isOnline }: WorkO
   if (!userSession) return null;
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
-      <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-row items-center justify-between">
+    <div className="h-full flex flex-col bg-white dark:bg-slate-950 dark:bg-slate-900">
+      <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 dark:bg-slate-950 flex flex-row items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg">
             <ListTodo className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Work Orders</h1>
-            <p className="text-sm text-slate-500">Dispatch, tracking, and operational tasks</p>
+            <h1 className="text-xl font-bold text-black dark:text-white">Work Orders</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Dispatch, tracking, and operational tasks</p>
           </div>
         </div>
         {view === 'LIST' && (

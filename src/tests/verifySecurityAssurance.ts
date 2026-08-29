@@ -23,17 +23,20 @@ export async function runSecurityAssuranceVerification(): Promise<{ passed: numb
   const superAdminSession: UserSession = {
     userId: 'U-SUPER', employeeId: 'EMP-S', fullName: 'Super Admin', email: 'sa@test.com',
     role: 'SUPER_ADMIN', companyId: 'COMP-ASSURE', branchId: 'BR-1', loginMode: 'PASSWORD',
-    token: 'tk', tokenExpiresAt: 0, isBiometricEnabled: false, lastActiveAt: 0
+    token: 'tk', tokenExpiresAt: 0, isBiometricEnabled: false, lastActiveAt: 0,
+    accountStatus: 'ACTIVE', emailVerified: true, companyAdminApproval: 'APPROVED', hrApproval: 'APPROVED'
   };
   const hrSession: UserSession = {
     userId: 'U-HR', employeeId: 'EMP-HR', fullName: 'HR Admin', email: 'hr@test.com',
     role: 'HR_ADMIN', companyId: 'COMP-ASSURE', branchId: 'BR-1', loginMode: 'PASSWORD',
-    token: 'tk', tokenExpiresAt: 0, isBiometricEnabled: false, lastActiveAt: 0
+    token: 'tk', tokenExpiresAt: 0, isBiometricEnabled: false, lastActiveAt: 0,
+    accountStatus: 'ACTIVE', emailVerified: true, companyAdminApproval: 'APPROVED', hrApproval: 'APPROVED'
   };
   const employeeSession: UserSession = {
     userId: 'U-EMP', employeeId: 'EMP-E', fullName: 'Employee', email: 'emp@test.com',
     role: 'EMPLOYEE', companyId: 'COMP-ASSURE', branchId: 'BR-1', loginMode: 'PASSWORD',
-    token: 'tk', tokenExpiresAt: 0, isBiometricEnabled: false, lastActiveAt: 0
+    token: 'tk', tokenExpiresAt: 0, isBiometricEnabled: false, lastActiveAt: 0,
+    accountStatus: 'ACTIVE', emailVerified: true, companyAdminApproval: 'APPROVED', hrApproval: 'APPROVED'
   };
 
   _setRunTransactionMockSec(async (db: any, callback: any) => { return await callback(); });

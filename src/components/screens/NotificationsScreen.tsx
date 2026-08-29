@@ -16,6 +16,7 @@ import {
 import { AppNotification, PhaseAScreen, UserSession } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { FirestoreService } from '../../services/firestoreService';
+import { formatTimestamp } from '../../utils/dateUtils';
 
 
 interface NotificationsScreenProps {
@@ -44,16 +45,31 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
     return () => unsub();
   }, [userSession]);
 
-  const handleMarkAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  const handleMarkAllRead = async () => {
+    if (!userSession) return;
+    try {
+      await FirestoreService.markAllNotificationsRead(userSession.companyId, userSession.role as any);
+    } catch (err) {
+      console.error('Failed to mark all as read:', err);
+    }
   };
 
-  const handleToggleRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: !n.isRead } : n));
+  const handleToggleRead = async (id: string, currentReadStatus: boolean) => {
+    if (!userSession) return;
+    try {
+      await FirestoreService.markNotificationRead(userSession.companyId, id, !currentReadStatus);
+    } catch (err) {
+      console.error('Failed to toggle read status:', err);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!userSession) return;
+    try {
+      await FirestoreService.deleteNotification(userSession.companyId, id);
+    } catch (err) {
+      console.error('Failed to delete notification:', err);
+    }
   };
 
   const filteredNotifs = notifications.filter(n => {
@@ -68,7 +84,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
   const paginatedNotifs = filteredNotifs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <div className={`p-4 space-y-4 overflow-y-auto max-h-full ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className={`p-4 space-y-4 overflow-y-auto max-h-full ${isDark ? 'text-slate-100' : 'text-black'}`}>
       {/* Header */}
       <div className={`p-4 rounded-3xl border flex items-center justify-between ${
         isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
@@ -115,7 +131,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
                 : isDark
                   ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
-                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                  : 'bg-white border-slate-200 text-slate-900 hover:bg-slate-100'
             }`}
           >
             {f.label}
@@ -126,8 +142,8 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
       {/* Notifications List */}
       <div className="space-y-2.5">
         {filteredNotifs.length === 0 ? (
-          <div className={`p-8 text-center rounded-3xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-            <ShieldAlert className="w-10 h-10 text-slate-500 mx-auto mb-2" />
+          <div className={`p-8 text-center rounded-3xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'}`}>
+            <ShieldAlert className="w-10 h-10 text-slate-500 dark:text-slate-400 mx-auto mb-2" />
             <p className="text-xs font-bold text-slate-400">No notifications found in this category.</p>
           </div>
         ) : (
@@ -163,7 +179,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
                     <h4 className="text-xs font-bold truncate">{item.title}</h4>
                     <span className="text-[10px] text-slate-400 font-mono shrink-0 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {item.timestamp}
+                      {formatTimestamp(item.timestamp)}
                     </span>
                   </div>
 
@@ -178,7 +194,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
 
                   <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-800/60">
                     <button
-                      onClick={() => handleToggleRead(item.id)}
+                      onClick={() => handleToggleRead(item.id, !!item.isRead)}
                       className="text-[10px] font-bold text-slate-400 hover:text-indigo-400 transition"
                     >
                       {item.isRead ? 'Mark Unread' : 'Mark Read'}
@@ -197,7 +213,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
 
                       <button
                         onClick={() => handleDelete(item.id)}
-                        className="text-slate-500 hover:text-rose-400 p-1 transition"
+                        className="text-slate-500 dark:text-slate-400 hover:text-rose-400 p-1 transition"
                         title="Delete notification"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

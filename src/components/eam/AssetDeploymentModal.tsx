@@ -48,7 +48,7 @@ export function AssetDeploymentModal({ session, asset, sites, employees, onClose
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-indigo-600 text-white">
           <div>
             <h3 className="font-bold">Deploy Asset</h3>
@@ -66,7 +66,7 @@ export function AssetDeploymentModal({ session, asset, sites, employees, onClose
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Target Site/Location *</label>
+            <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Target Site/Location *</label>
             <select 
               required
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
@@ -79,7 +79,7 @@ export function AssetDeploymentModal({ session, asset, sites, employees, onClose
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Assign to Custodian (Employee) *</label>
+            <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Assign to Custodian (Employee) *</label>
             <select 
               required
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
@@ -95,7 +95,7 @@ export function AssetDeploymentModal({ session, asset, sites, employees, onClose
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Handover Condition *</label>
+              <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Handover Condition *</label>
               <select 
                 required
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
@@ -108,7 +108,7 @@ export function AssetDeploymentModal({ session, asset, sites, employees, onClose
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Expected Return Date</label>
+              <label className="block text-sm font-medium text-slate-900 dark:text-slate-300 mb-1">Expected Return Date</label>
               <input 
                 type="date" 
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
@@ -119,8 +119,8 @@ export function AssetDeploymentModal({ session, asset, sites, employees, onClose
           </div>
         </form>
         
-        <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
-          <button type="button" onClick={onClose} className="px-4 py-2 font-medium text-slate-700 hover:bg-slate-100 rounded-lg">
+        <div className="p-4 border-t border-slate-100 bg-white dark:bg-slate-950 flex justify-end gap-3 shrink-0">
+          <button type="button" onClick={onClose} className="px-4 py-2 font-medium text-slate-900 dark:text-slate-300 hover:bg-slate-100 rounded-lg">
             Cancel
           </button>
           <button 

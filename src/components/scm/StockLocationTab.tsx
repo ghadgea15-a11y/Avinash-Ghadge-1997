@@ -13,10 +13,14 @@ export function StockLocationTab({ session, company }: { session: UserSession, c
 
   const loadData = async () => {
     try {
-      const locs = await ScmService.getLocations(company.companyId);
-      const bals = await ScmService.getBalances(company.companyId);
+      const [locs, bals, invItems] = await Promise.all([
+        ScmService.getLocations(company.companyId),
+        ScmService.getBalances(company.companyId),
+        ScmService.getItems(company.companyId)
+      ]);
       setLocations(locs);
       setBalances(bals);
+      setItems(invItems);
     } catch (e) {
       console.error(e);
     } finally {
@@ -29,10 +33,10 @@ export function StockLocationTab({ session, company }: { session: UserSession, c
   return (
     <div className="flex h-full flex-col space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-slate-900">Stock Locations</h3>
+        <h3 className="text-lg font-medium text-black dark:text-white">Stock Locations</h3>
         <button 
           onClick={() => setShowIssue(true)}
-          className="flex items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 mr-3"
+          className="flex items-center gap-2 rounded-md border border-slate-300 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-900 dark:text-slate-300 hover:bg-white dark:bg-slate-950 mr-3"
         >
           <ArrowRightLeft className="h-4 w-4" /> Issue Material
         </button>
@@ -46,7 +50,8 @@ export function StockLocationTab({ session, company }: { session: UserSession, c
                 name,
                 type: 'SITE_STORE',
                 status: 'ACTIVE',
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
               };
               ScmService.saveLocation(company.companyId, loc).then(loadData);
             }
@@ -64,29 +69,29 @@ export function StockLocationTab({ session, company }: { session: UserSession, c
           const totalQty = locBals.reduce((sum, b) => sum + (b.quantity || 0), 0);
           
           return (
-            <div key={loc.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div key={loc.id} className="rounded-lg border border-slate-200 bg-white dark:bg-slate-900 p-5 shadow-sm">
               <div className="flex items-center gap-3 border-b border-slate-100 pb-3 mb-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
                   <MapPin className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-slate-900">{loc.name}</h4>
-                  <span className="text-xs text-slate-500">{loc.type}</span>
+                  <h4 className="font-semibold text-black dark:text-white">{loc.name}</h4>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{loc.type}</span>
                 </div>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Unique Items:</span>
-                <span className="font-medium text-slate-900">{totalItems}</span>
+                <span className="text-slate-500 dark:text-slate-400">Unique Items:</span>
+                <span className="font-medium text-black dark:text-white">{totalItems}</span>
               </div>
               <div className="flex justify-between text-sm mt-1">
-                <span className="text-slate-500">Total Quantity:</span>
-                <span className="font-medium text-slate-900">{totalQty}</span>
+                <span className="text-slate-500 dark:text-slate-400">Total Quantity:</span>
+                <span className="font-medium text-black dark:text-white">{totalQty}</span>
               </div>
             </div>
           )
         })}
         {locations.length === 0 && !loading && (
-          <div className="col-span-full py-12 text-center text-slate-500">
+          <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">
             No stock locations configured.
           </div>
         )}
@@ -105,17 +110,17 @@ function IssueMaterialModal({ company, session, locations, items, onClose, onSuc
   const handleIssue = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await ScmService.issueStock(session, company.id, locId, itemId, parseInt(qty), reason);
+      await ScmService.issueStock(session, company.companyId, locId, itemId, parseInt(qty), reason);
       onSuccess();
     } catch(err: any) { alert(err.message); }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-sm rounded-xl bg-white shadow-xl">
+      <div className="w-full max-w-sm rounded-xl bg-white dark:bg-slate-900 shadow-xl">
         <form onSubmit={handleIssue}>
           <div className="border-b border-slate-200 px-6 py-4">
-            <h3 className="text-lg font-semibold text-slate-900">Issue Material (Internal)</h3>
+            <h3 className="text-lg font-semibold text-black dark:text-white">Issue Material (Internal)</h3>
           </div>
           <div className="p-6 space-y-4">
             <div>
@@ -141,7 +146,7 @@ function IssueMaterialModal({ company, session, locations, items, onClose, onSuc
               <input required className="mt-1 w-full rounded border px-3 py-2 text-sm" value={reason} onChange={e => setReason(e.target.value)} />
             </div>
           </div>
-          <div className="flex justify-end gap-3 bg-slate-50 px-6 py-4 rounded-b-xl border-t">
+          <div className="flex justify-end gap-3 bg-white dark:bg-slate-950 px-6 py-4 rounded-b-xl border-t">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm">Cancel</button>
             <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-sm text-white">Issue Material</button>
           </div>

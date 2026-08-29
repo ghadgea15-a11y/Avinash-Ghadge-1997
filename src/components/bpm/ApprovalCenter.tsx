@@ -198,8 +198,8 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
       {/* Top Header with Navigation Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Enterprise BPM Approval Center</h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <h2 className="text-2xl font-bold text-black dark:text-white">Enterprise BPM Approval Center</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Central multi-tier approval engine with proxy delegations, automated escalation timers, and SLA governance.
           </p>
         </div>
@@ -210,7 +210,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
               activeTab === 'PENDING'
                 ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white'
             }`}
           >
             <ListFilter className="w-3.5 h-3.5" />
@@ -222,7 +222,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
               activeTab === 'DELEGATIONS'
                 ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white'
             }`}
           >
             <Share2 className="w-3.5 h-3.5" />
@@ -236,7 +236,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                   activeTab === 'POLICIES'
                     ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 <Sliders className="w-3.5 h-3.5" />
@@ -248,7 +248,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                   activeTab === 'THRESHOLDS'
                     ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 <GitFork className="w-3.5 h-3.5" />
@@ -270,7 +270,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
           {/* Filter sub-bar */}
           <div className="flex items-center justify-between gap-2 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500">Filter Queue:</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Filter Queue:</span>
               <button
                 onClick={() => setFilterType('ALL')}
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
@@ -305,7 +305,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
 
             <button
               onClick={loadApprovals}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-800"
               title="Refresh Queue"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -319,8 +319,8 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
           ) : filteredApprovals.length === 0 ? (
             <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
               <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">All Caught Up!</h3>
-              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              <h3 className="text-lg font-bold text-black dark:text-white">All Caught Up!</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
                 {filterType === 'DELEGATED' 
                   ? 'You have no proxy-delegated approvals in your queue.' 
                   : 'You have no pending approvals requiring your authorization at this time.'}
@@ -351,11 +351,11 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
                           <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-slate-900 dark:text-white text-base">
+                          <h4 className="font-bold text-black dark:text-white text-base">
                             {instance.sourceModule} Request
                           </h4>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[11px] font-semibold text-slate-500">
+                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                               Tier {instance.currentTier} Approval Step
                             </span>
                             {instance.reassignedFrom && (
@@ -371,21 +371,21 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
                     </div>
                     
                     {/* Card Metrics & Dates */}
-                    <div className="space-y-2 bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
+                    <div className="space-y-2 bg-white dark:bg-slate-950/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400">Record ID:</span>
-                        <span className="font-mono font-medium text-slate-900 dark:text-white">{instance.sourceRecordId}</span>
+                        <span className="font-mono font-medium text-black dark:text-white">{instance.sourceRecordId}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400">Submitted:</span>
-                        <span className="font-medium text-slate-700 dark:text-slate-300">
+                        <span className="font-medium text-slate-900 dark:text-slate-300">
                           {format(new Date(instance.submittedAt), 'PP p')}
                         </span>
                       </div>
                       {instance.dueAt && (
                         <div className="flex items-center justify-between">
                           <span className="text-slate-400">SLA Due Target:</span>
-                          <span className={`font-semibold ${instance.isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                          <span className={`font-semibold ${instance.isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-300'}`}>
                             {format(new Date(instance.dueAt), 'PP p')}
                           </span>
                         </div>
@@ -419,7 +419,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
                             setDelegatingInstance(instance);
                             setDelegateUserId('');
                           }}
-                          className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1"
+                          className="text-slate-600 dark:text-slate-400 hover:text-black dark:text-white dark:hover:text-white font-semibold px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1"
                         >
                           <Share className="w-3.5 h-3.5" />
                           <span>Delegate</span>
@@ -469,25 +469,25 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
             className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <h4 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+              <h4 className="font-bold text-black dark:text-white text-base flex items-center gap-2">
                 <Share className="w-4 h-4 text-indigo-600" />
                 <span>Delegate Approval Authority</span>
               </h4>
               <button
                 type="button"
                 onClick={() => setDelegatingInstance(null)}
-                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white"
               >
                 Cancel
               </button>
             </div>
 
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Assign a colleague or supervisor as an authorized delegate for approval request <strong>{delegatingInstance.sourceRecordId}</strong>.
             </p>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-300 block mb-1">
                 Delegate User ID or Email *
               </label>
               <input
@@ -496,7 +496,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
                 value={delegateUserId}
                 onChange={(e) => setDelegateUserId(e.target.value)}
                 placeholder="e.g. user_123 or supervisor@company.com"
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-black dark:text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
 
@@ -504,7 +504,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
               <button
                 type="button"
                 onClick={() => setDelegatingInstance(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>
@@ -528,25 +528,25 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
             className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <h4 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+              <h4 className="font-bold text-black dark:text-white text-base flex items-center gap-2">
                 <CornerUpLeft className="w-4 h-4 text-amber-500" />
                 <span>Return Approval Request</span>
               </h4>
               <button
                 type="button"
                 onClick={() => setReturningInstance(null)}
-                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white"
               >
                 Cancel
               </button>
             </div>
 
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Return request <strong>{returningInstance.sourceRecordId}</strong> back to the submitter for revision or clarification.
             </p>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-300 block mb-1">
                 Reason for Return *
               </label>
               <textarea
@@ -555,7 +555,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
                 value={returnReason}
                 onChange={(e) => setReturnReason(e.target.value)}
                 placeholder="Explain what changes or clarifications are needed..."
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-black dark:text-white focus:outline-none focus:border-amber-500"
               />
             </div>
 
@@ -563,7 +563,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
               <button
                 type="button"
                 onClick={() => setReturningInstance(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>

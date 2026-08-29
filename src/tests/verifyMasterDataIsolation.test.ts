@@ -24,6 +24,7 @@ describe('Master Data Isolation', () => {
     lastActiveAt: Date.now(),
     loginMode: 'PASSWORD',
     accountStatus: 'ACTIVE',
+    emailVerified: true,
     companyAdminApproval: 'APPROVED',
     hrApproval: 'APPROVED',
     authorityLevel: 'A2_GENERAL_MANAGER',
@@ -62,7 +63,8 @@ describe('Master Data Isolation', () => {
     ];
     
     for (const role of roles) {
-      const session = { ...userA, role: role as any, authorityLevel: RbacService.getAuthorityLevel({ role } as any) };
+      const session = { ...userA, role: role as any };
+      session.authorityLevel = RbacService.getAuthorityLevel(session);
       expect(session.authorityLevel).toBeDefined();
     }
   });

@@ -44,6 +44,20 @@ export class IncidentWorkflowEngine {
         details: reason,
         timestamp: new Date().toISOString()
       });
+
+      const notifRef = doc(collection(db, 'companies', companyId, 'notifications'));
+      t.set(notifRef, {
+        id: notifRef.id,
+        title: 'CRITICAL INCIDENT ESCALATION - A1/A2 ACTION REQUIRED',
+        message: `Incident "${inc.title || reportId}" (${inc.severity || 'CRITICAL'}) escalated. Reason: ${reason}. Immediate review required by A1/A2 Executive Leadership.`,
+        type: 'ALERT',
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        severity: 'CRITICAL',
+        incidentId: reportId,
+        siteId: inc.siteId || null,
+        roleScope: ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_OFFICIAL_STAFF', 'COMPANY_ADMIN', 'DIRECTOR', 'GENERAL_MANAGER', 'OPS_MANAGER']
+      });
     });
   }
 

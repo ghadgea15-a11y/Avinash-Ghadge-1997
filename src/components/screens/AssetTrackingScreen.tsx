@@ -43,7 +43,7 @@ export const AssetTrackingScreen: React.FC<AssetTrackingScreenProps> = ({
     <div className={`h-full flex flex-col ${isDark ? 'dark' : ''}`}>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-black dark:text-white flex items-center gap-2">
             <Boxes className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
             Enterprise Asset Management
           </h2>

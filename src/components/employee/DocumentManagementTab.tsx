@@ -159,7 +159,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-sm font-bold flex items-center gap-2 text-slate-800 dark:text-white">
+        <h3 className="text-sm font-bold flex items-center gap-2 text-black dark:text-slate-200 dark:text-white">
           <FileText className="w-4 h-4 text-indigo-500" />
           KYC & Compliance Documents
         </h3>
@@ -176,9 +176,9 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
         {loading ? (
           <div className="py-8 text-center text-slate-400 text-xs">Loading documents...</div>
         ) : documents.length === 0 ? (
-          <div className="py-12 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+          <div className="py-12 text-center bg-white dark:bg-slate-950 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800">
             <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="text-xs text-slate-500 font-medium">No documents uploaded yet</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No documents uploaded yet</p>
             <button 
               onClick={() => setShowUploadModal(true)}
               className="mt-3 text-xs font-bold text-indigo-600 hover:underline"
@@ -188,7 +188,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
           </div>
         ) : (
           documents.filter(d => d.isLatest).map(doc => (
-            <div key={doc.id} className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group">
+            <div key={doc.id} className="p-3 bg-white dark:bg-slate-900 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group">
               <div className="flex justify-between items-start">
                 <div className="flex gap-3">
                   <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
@@ -196,12 +196,12 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                      <h4 className="font-bold text-sm text-black dark:text-white">
                         {docTypes.find(t => t.code === doc.documentTypeCode)?.name || doc.documentTypeCode}
                       </h4>
                       {getStatusBadge(doc.status)}
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-500">
+                    <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-500 dark:text-slate-400">
                       <span className="font-mono">#{doc.documentNumber || 'N/A'}</span>
                       {doc.expiryDate && (
                         <span className="flex items-center gap-1">
@@ -281,10 +281,10 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
               initial={{ scale: 0.95, opacity: 0 }} 
               animate={{ scale: 1, opacity: 1 }} 
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden"
+              className="relative w-full max-w-md bg-white dark:bg-slate-900 dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden"
             >
               <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <h4 className="font-bold text-black dark:text-white flex items-center gap-2">
                   <Upload className="w-4 h-4 text-indigo-600" />
                   {formData.previousDocumentId ? 'Renew Document' : 'Upload Document'}
                 </h4>
@@ -299,7 +299,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Document Type</label>
                     <select 
                       required
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-950 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
                       value={formData.typeCode}
                       onChange={e => setFormData(prev => ({ ...prev, typeCode: e.target.value }))}
                       disabled={!!formData.previousDocumentId}
@@ -314,7 +314,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Document #</label>
                     <input 
                       type="text" 
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-950 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
                       placeholder="e.g. DL-12345"
                       value={formData.documentNumber}
                       onChange={e => setFormData(prev => ({ ...prev, documentNumber: e.target.value }))}
@@ -325,7 +325,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Expiry Date</label>
                     <input 
                       type="date" 
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-950 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
                       value={formData.expiryDate}
                       onChange={e => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
                     />
@@ -343,7 +343,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
                           <input type="file" className="sr-only" onChange={handleFileChange} required />
                         </label>
                       </div>
-                      <p className="text-[10px] text-slate-500">PDF, JPG, PNG up to 5MB</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">PDF, JPG, PNG up to 5MB</p>
                     </div>
                   </div>
                 </div>
@@ -352,7 +352,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
                   <button 
                     type="button" 
                     onClick={() => setShowUploadModal(false)}
-                    className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700"
+                    className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-300"
                   >
                     Cancel
                   </button>

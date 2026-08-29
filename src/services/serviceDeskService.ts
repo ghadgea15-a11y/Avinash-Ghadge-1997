@@ -1649,8 +1649,8 @@ export class ServiceDeskService {
     const adminRoles = ['SUPER_ADMIN', 'COMPANY_ADMIN', 'ADMIN', 'OPS_MANAGER'];
 
     return def.allowedTransitions
-      .map(st => this.STATUS_DEFINITIONS[st])
-      .filter(tDef => {
+      .map((st: any) => this.STATUS_DEFINITIONS[st])
+      .filter((tDef: any) => {
         if (!tDef) return false;
         if (adminRoles.includes(userRole)) return true;
         if (isAssignee && ['IN_PROGRESS', 'ON_HOLD', 'PENDING_CLIENT', 'RESOLVED', 'ASSIGNED'].includes(tDef.status)) return true;
@@ -1700,7 +1700,7 @@ export class ServiceDeskService {
       // Validate transition in state machine
       const currentDef = this.STATUS_DEFINITIONS[currentNorm] || this.STATUS_DEFINITIONS.NEW;
       const isAllowedTransition = currentDef.allowedTransitions.some(
-        st => this.normalizeStatus(st) === targetNorm || st === payload.toStatus
+        (st: any) => this.normalizeStatus(st) === targetNorm || st === payload.toStatus
       );
 
       // Super admins / company admins can force-reopen or correct states if needed
@@ -1809,7 +1809,7 @@ export class ServiceDeskService {
         if (t.lastPausedAt) {
           const pausedMs = new Date(now).getTime() - new Date(t.lastPausedAt).getTime();
           const durationMinutes = Math.max(1, Math.round(pausedMs / (1000 * 60)));
-          const updatedPauses = (t.pauseHistory || []).map((p, idx, arr) => {
+          const updatedPauses = (t.pauseHistory || []).map((p: any, idx: number, arr: any) => {
             if (idx === arr.length - 1 && !p.resumedAt) {
               return {
                 ...p,
@@ -3161,7 +3161,7 @@ export class ServiceDeskService {
       const feedbackId = `fb_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
       // Determine sentiment & negative feedback threshold
-      const isNegative = rating <= 2 || (payload.feedbackTags && payload.feedbackTags.some(t => /dissatisfied|unresolved|poor|delay|rude/i.test(t)));
+      const isNegative = rating <= 2 || (payload.feedbackTags && payload.feedbackTags.some((t: any) => /dissatisfied|unresolved|poor|delay|rude/i.test(t)));
       const sentiment: FeedbackSentiment = rating >= 4 ? 'POSITIVE' : rating === 3 ? 'NEUTRAL' : 'NEGATIVE';
 
       const feedbackRecord: TicketFeedbackRecord = {

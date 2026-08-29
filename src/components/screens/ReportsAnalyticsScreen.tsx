@@ -14,6 +14,8 @@ import {
 } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { BulkExportGovernanceService } from '../../services/bulkExportGovernanceService';
+import { CustomReportsView } from './CustomReportsView';
+import { ScheduledReportsView } from './ScheduledReportsView';
 import { useTheme } from '../../context/ThemeContext';
 
 interface ReportsAnalyticsScreenProps {
@@ -29,7 +31,9 @@ type ReportTab =
   | 'ATTENDANCE_ANALYTICS' 
   | 'PAYROLL_STATUTORY' 
   | 'SECURITY_PATROLS' 
-  | 'ASSET_INVENTORY';
+  | 'ASSET_INVENTORY'
+  | 'CUSTOM_REPORTS'
+  | 'SCHEDULED_REPORTS';
 
 type StatutoryFormType = 'FORM_T' | 'FORM_D' | 'FORM_32' | 'MUSTER_2';
 
@@ -356,7 +360,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             <div className="w-9 h-9 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
               <BarChart3 className="w-5 h-5" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-black dark:text-white tracking-tight">
               Reports & Executive Analytics (अहवाल व मस्टर ॲनालिटिक्स)
             </h1>
           </div>
@@ -372,7 +376,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}
-              className="bg-transparent font-bold text-slate-800 dark:text-slate-200 focus:outline-none pr-1"
+              className="bg-transparent font-bold text-black dark:text-slate-200 focus:outline-none pr-1"
             >
               {[
                 { m: 1, name: 'Jan' }, { m: 2, name: 'Feb' }, { m: 3, name: 'Mar' },
@@ -386,7 +390,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
-              className="bg-transparent font-bold text-slate-800 dark:text-slate-200 focus:outline-none"
+              className="bg-transparent font-bold text-black dark:text-slate-200 focus:outline-none"
             >
               {[currentYear - 1, currentYear, currentYear + 1].map(y => (
                 <option key={y} value={y}>{y}</option>
@@ -396,7 +400,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
           <button
             onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-sm transition flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-300 dark:text-slate-200 shadow-sm transition flex items-center gap-1.5"
           >
             <Printer className="w-4 h-4 text-indigo-500" />
             <span className="hidden sm:inline">Print Report (प्रिंट अहवाल)</span>
@@ -414,7 +418,11 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
           { id: 'ATTENDANCE_ANALYTICS' as ReportTab, label: 'Attendance & Roster Analytics', marathi: 'हजेरी व शिफ्ट विश्लेषण', icon: Clock },
           { id: 'PAYROLL_STATUTORY' as ReportTab, label: 'Payroll, Bank & PF/ESIC Returns', marathi: 'पगार व पीएफ/ईएसआयसी', icon: DollarSign },
           { id: 'SECURITY_PATROLS' as ReportTab, label: 'Site Patrols, Gate & Incidents', marathi: 'सुरक्षा व घटना अहवाल', icon: ShieldCheck },
-          { id: 'ASSET_INVENTORY' as ReportTab, label: 'Assets & Stock Ledger', marathi: 'साधन व साठा लेजर', icon: Package }
+          
+          { id: 'ASSET_INVENTORY' as ReportTab, label: 'Assets & Stock Ledger', marathi: 'साधन व साठा लेजर', icon: Package },
+          { id: 'CUSTOM_REPORTS' as ReportTab, label: 'Custom Report Builder', marathi: 'सानुकूल अहवाल', icon: Filter },
+          { id: 'SCHEDULED_REPORTS' as ReportTab, label: 'Scheduled Reports', marathi: 'नियोजित अहवाल', icon: Calendar }
+
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -425,7 +433,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
               className={`px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 whitespace-nowrap transition-all ${
                 isActive
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -446,13 +454,13 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             {/* Workforce Strength */}
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Workforce</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Workforce</span>
                 <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                   <Users className="w-4 h-4" />
                 </div>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{kpis.activeStaff}</span>
+                <span className="text-2xl sm:text-3xl font-black text-black dark:text-white">{kpis.activeStaff}</span>
                 <span className="text-xs font-medium text-emerald-600">Active Personnel</span>
               </div>
               <p className="text-[11px] text-slate-400">Total Registered: {kpis.totalStaff} staff across {sites.length} sites</p>
@@ -461,14 +469,14 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             {/* Attendance Rate */}
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Today's Attendance</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Today's Attendance</span>
                 <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                   <UserCheck className="w-4 h-4" />
                 </div>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{kpis.todayAttendanceRate}%</span>
-                <span className="text-xs font-medium text-slate-500">({kpis.presentTodayCount} Present)</span>
+                <span className="text-2xl sm:text-3xl font-black text-black dark:text-white">{kpis.todayAttendanceRate}%</span>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">({kpis.presentTodayCount} Present)</span>
               </div>
               <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
                 <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${Math.min(100, kpis.todayAttendanceRate)}%` }}></div>
@@ -478,14 +486,14 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             {/* Monthly Gross Payroll Liability */}
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Payroll Cost ({selectedMonth}/{selectedYear})</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Payroll Cost ({selectedMonth}/{selectedYear})</span>
                 <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                   <DollarSign className="w-4 h-4" />
                 </div>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">₹{(kpis.totalGrossLiability / 1000).toFixed(1)}k</span>
-                <span className="text-xs font-medium text-slate-500">Gross Liability</span>
+                <span className="text-2xl sm:text-3xl font-black text-black dark:text-white">₹{(kpis.totalGrossLiability / 1000).toFixed(1)}k</span>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Gross Liability</span>
               </div>
               <p className="text-[11px] text-slate-400">Net Disbursement: ₹{(kpis.totalNetDisbursement / 1000).toFixed(1)}k</p>
             </div>
@@ -493,13 +501,13 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             {/* Security Compliance & Patrol */}
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Patrol & Safety Rate</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Patrol & Safety Rate</span>
                 <div className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{kpis.patrolTourRate}%</span>
+                <span className="text-2xl sm:text-3xl font-black text-black dark:text-white">{kpis.patrolTourRate}%</span>
                 <span className="text-xs font-medium text-emerald-600">Patrols On-Time</span>
               </div>
               <p className="text-[11px] text-slate-400">Incidents Resolved: {kpis.incidentResolutionRate}%</p>
@@ -514,7 +522,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             <div className="lg:col-span-2 p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Site-wise Guard Deployment & Compliance</h3>
+                  <h3 className="text-sm font-bold text-black dark:text-white">Site-wise Guard Deployment & Compliance</h3>
                   <p className="text-xs text-slate-400">Real-time duty post allocation vs active attendance</p>
                 </div>
                 <span className="text-xs font-mono font-bold text-indigo-600">{sites.length} Active Sites</span>
@@ -522,7 +530,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 font-bold border-b border-slate-200 dark:border-slate-700">
+                  <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
                     <tr>
                       <th className="p-3">Site / Client Name</th>
                       <th className="p-3">Deployed Staff</th>
@@ -540,8 +548,8 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                       const siteIncidents = incidents.filter(i => i.siteId === site.id && i.status === 'OPEN').length;
 
                       return (
-                        <tr key={site.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                          <td className="p-3 font-semibold text-slate-900 dark:text-slate-100">
+                        <tr key={site.id} className="hover:bg-white dark:bg-slate-950/50 dark:hover:bg-slate-800/30">
+                          <td className="p-3 font-semibold text-black dark:text-white dark:text-slate-100">
                             <div>{site.name}</div>
                             <div className="text-[10px] text-slate-400">{site.clientName || 'Commercial Post'}</div>
                           </td>
@@ -576,7 +584,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
             {/* Quick Statutory Actions & Cost Breakdown */}
             <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Statutory Labor Exports</h3>
+              <h3 className="text-sm font-bold text-black dark:text-white">Statutory Labor Exports</h3>
 
               <div className="space-y-2.5">
                 <button
@@ -584,10 +592,10 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                     setSelectedStatutoryForm('FORM_T');
                     setActiveTab('STATUTORY_MUSTER');
                   }}
-                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500 bg-slate-50 dark:bg-slate-800/40 text-left transition flex items-center justify-between group"
+                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500 bg-white dark:bg-slate-950 dark:bg-slate-800/40 text-left transition flex items-center justify-between group"
                 >
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-indigo-600">
+                    <div className="text-xs font-bold text-black dark:text-white group-hover:text-indigo-600">
                       Form-T (Muster Roll & Wage Register)
                     </div>
                     <div className="text-[10px] text-slate-400">Combined labor register (Central Rules)</div>
@@ -597,10 +605,10 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
                 <button
                   onClick={exportBankAdviceCSV}
-                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 bg-slate-50 dark:bg-slate-800/40 text-left transition flex items-center justify-between group"
+                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 bg-white dark:bg-slate-950 dark:bg-slate-800/40 text-left transition flex items-center justify-between group"
                 >
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600">
+                    <div className="text-xs font-bold text-black dark:text-white group-hover:text-emerald-600">
                       Bank NEFT / RTGS Salary Sheet
                     </div>
                     <div className="text-[10px] text-slate-400">Single-batch direct disbursement advice</div>
@@ -610,10 +618,10 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
                 <button
                   onClick={exportFormTCSV}
-                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-purple-500 bg-slate-50 dark:bg-slate-800/40 text-left transition flex items-center justify-between group"
+                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-purple-500 bg-white dark:bg-slate-950 dark:bg-slate-800/40 text-left transition flex items-center justify-between group"
                 >
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-purple-600">
+                    <div className="text-xs font-bold text-black dark:text-white group-hover:text-purple-600">
                       Monthly Attendance CSV Export
                     </div>
                     <div className="text-[10px] text-slate-400">31-day presence matrix for audit</div>
@@ -658,7 +666,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
                     selectedStatutoryForm === f.id
                       ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300 hover:bg-slate-200'
                   }`}
                 >
                   {f.label}
@@ -678,14 +686,14 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
           </div>
 
           {/* Printable Official Government Document View */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-white text-slate-950 border-2 border-slate-800 shadow-xl space-y-6 font-sans">
+          <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 text-slate-950 border-2 border-slate-800 shadow-xl space-y-6 font-sans">
             
             {/* Header Letterhead */}
             <div className="border-b-2 border-slate-950 pb-4 text-center space-y-1">
               <h2 className="text-xl sm:text-2xl font-black uppercase tracking-wider">
                 {activeCompany.brandName || activeCompany.companyLegalName}
               </h2>
-              <p className="text-xs font-semibold text-slate-700">
+              <p className="text-xs font-semibold text-slate-900 dark:text-slate-300">
                 {activeCompany.address || 'Registered Head Office'} • GSTIN: {activeCompany.companyId}-GST • LIN / Labour Reg: {activeCompany.companyId}-LIN-2026
               </p>
               <div className="inline-block px-4 py-1 bg-slate-900 text-white text-xs font-mono font-bold rounded uppercase mt-1">
@@ -694,7 +702,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                 {selectedStatutoryForm === 'FORM_32' && 'FORM 32 - HEALTH, SAFETY & SHIFT DUTY MUSTER ROLL'}
                 {selectedStatutoryForm === 'MUSTER_2' && 'MUSTER 2 - DAILY SECURITY GUARD SITE DEPLOYMENT LOG'}
               </div>
-              <p className="text-[11px] font-bold text-slate-600">
+              <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
                 Month & Year of Return: {selectedMonth.toString().padStart(2, '0')}/{selectedYear} • Duty Site: {selectedSiteId === 'ALL' ? 'All Operations Units' : selectedSiteId}
               </p>
             </div>
@@ -746,18 +754,18 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                     const net = Math.round(gross * 0.88);
 
                     return (
-                      <tr key={emp.id} className="hover:bg-slate-50">
+                      <tr key={emp.id} className="hover:bg-white dark:bg-slate-950">
                         <td className="p-1.5 border-r border-slate-300 text-center font-mono">{idx + 1}</td>
                         <td className="p-1.5 border-r border-slate-300">
                           <div className="font-bold truncate">{emp.firstName} {emp.lastName}</div>
-                          <div className="font-mono text-[9px] text-slate-500">{emp.employeeId || emp.id}</div>
+                          <div className="font-mono text-[9px] text-slate-500 dark:text-slate-400">{emp.employeeId || emp.id}</div>
                         </td>
                         <td className="p-1.5 border-r border-slate-300 truncate">{emp.designation || 'Guard'}</td>
                         {dayCols.map((char, cIdx) => (
                           <td 
                             key={cIdx} 
                             className={`p-1 border-r border-slate-300 text-center font-mono text-[9px] font-bold ${
-                              char === 'A' ? 'text-rose-600 bg-rose-50' : char === 'WO' ? 'text-slate-400 bg-slate-50' : 'text-slate-900'
+                              char === 'A' ? 'text-rose-600 bg-rose-50' : char === 'WO' ? 'text-slate-400 bg-white' : 'text-black'
                             }`}
                           >
                             {char}
@@ -783,7 +791,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                 <div className="h-8 border-b border-dashed border-slate-600"></div>
                 <div>
                   <div className="font-bold">{userSession.fullName}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">Prepared by: Muster Incharge / Field Officer</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Prepared by: Muster Incharge / Field Officer</div>
                 </div>
               </div>
 
@@ -791,7 +799,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                 <div className="h-8 border-b border-dashed border-slate-600"></div>
                 <div>
                   <div className="font-bold">{activeCompany.adminName || 'Authorized Signatory'}</div>
-                  <div className="text-[10px] text-slate-500 uppercase">Employer / Factory Manager Signature & Stamp</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Employer / Factory Manager Signature & Stamp</div>
                 </div>
               </div>
             </div>
@@ -808,20 +816,20 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Punctuality Score</span>
-              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">94.8%</div>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Punctuality Score</span>
+              <div className="text-2xl sm:text-3xl font-black text-black dark:text-white">94.8%</div>
               <p className="text-xs text-emerald-600 font-medium">On-time punch compliance</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Overtime Accumulation</span>
-              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{kpis.totalOtHours} Hours</div>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Overtime Accumulation</span>
+              <div className="text-2xl sm:text-3xl font-black text-black dark:text-white">{kpis.totalOtHours} Hours</div>
               <p className="text-xs text-slate-400">Total approved OT for {selectedMonth}/{selectedYear}</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Manual Punch Corrections</span>
-              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">12</div>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Manual Punch Corrections</span>
+              <div className="text-2xl sm:text-3xl font-black text-black dark:text-white">12</div>
               <p className="text-xs text-amber-500 font-medium">Supervisor approvals completed</p>
             </div>
 
@@ -830,7 +838,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
           {/* Overtime Leaderboard & Attendance Ledger */}
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Staff Roster & Attendance Detail</h3>
+              <h3 className="text-sm font-bold text-black dark:text-white">Staff Roster & Attendance Detail</h3>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
@@ -844,7 +852,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 font-bold border-b border-slate-200 dark:border-slate-700">
+                <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="p-3">Employee</th>
                     <th className="p-3">Site / Branch</th>
@@ -856,8 +864,8 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {filteredEmployees.map(emp => (
-                    <tr key={emp.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                      <td className="p-3 font-semibold text-slate-900 dark:text-slate-100">
+                    <tr key={emp.id} className="hover:bg-white dark:bg-slate-950/50 dark:hover:bg-slate-800/30">
+                      <td className="p-3 font-semibold text-black dark:text-white dark:text-slate-100">
                         <div>{emp.firstName} {emp.lastName}</div>
                         <div className="text-[10px] text-slate-400 font-mono">{emp.employeeId || emp.id}</div>
                       </td>
@@ -865,7 +873,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                       <td className="p-3 font-mono">{emp.shiftId || emp.shiftId || 'SHIFT-A (08:00 - 20:00)'}</td>
                       <td className="p-3 font-mono font-bold text-emerald-600">26 Days</td>
                       <td className="p-3 font-mono font-bold text-purple-600">18 Hrs</td>
-                      <td className="p-3 font-bold text-slate-700 dark:text-slate-300">96%</td>
+                      <td className="p-3 font-bold text-slate-900 dark:text-slate-300">96%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -882,19 +890,19 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-xs font-bold uppercase text-slate-500">Gross Wage Liability</span>
-              <div className="text-2xl font-black text-slate-900 dark:text-white">₹{kpis.totalGrossLiability.toLocaleString()}</div>
+              <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Gross Wage Liability</span>
+              <div className="text-2xl font-black text-black dark:text-white">₹{kpis.totalGrossLiability.toLocaleString()}</div>
               <p className="text-[11px] text-slate-400">Total earned salaries</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-xs font-bold uppercase text-slate-500">PF ECR Contribution</span>
+              <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">PF ECR Contribution</span>
               <div className="text-2xl font-black text-indigo-600">₹{kpis.totalPfDeduction.toLocaleString()}</div>
               <p className="text-[11px] text-slate-400">Employee 12% + Employer Match</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-xs font-bold uppercase text-slate-500">ESIC Return Liability</span>
+              <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">ESIC Return Liability</span>
               <div className="text-2xl font-black text-emerald-600">₹{kpis.totalEsicDeduction.toLocaleString()}</div>
               <p className="text-[11px] text-slate-400">Statutory Health Contribution</p>
             </div>
@@ -903,7 +911,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Bank Disbursement Batch Advice</h3>
+                <h3 className="text-sm font-bold text-black dark:text-white">Bank Disbursement Batch Advice</h3>
                 <p className="text-xs text-slate-400">Automated Direct Bank Transfer Batch File (NEFT / RTGS Format)</p>
               </div>
               <button
@@ -917,7 +925,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 font-bold border-b border-slate-200 dark:border-slate-700">
+                <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="p-3">Staff Name</th>
                     <th className="p-3">Bank Name</th>
@@ -930,12 +938,12 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
                   {filteredEmployees.slice(0, 20).map(emp => (
                     <tr key={emp.id}>
-                      <td className="p-3 font-sans font-semibold text-slate-900 dark:text-slate-100">
+                      <td className="p-3 font-sans font-semibold text-black dark:text-white dark:text-slate-100">
                         {emp.firstName} {emp.lastName}
                       </td>
                       <td className="p-3 font-sans">{(emp as any).bankName || 'HDFC Bank'}</td>
                       <td className="p-3">{(emp as any).accountNumber || '501004928192'}</td>
-                      <td className="p-3 font-bold text-slate-700 dark:text-slate-300">{(emp as any).ifscCode || 'HDFC000182'}</td>
+                      <td className="p-3 font-bold text-slate-900 dark:text-slate-300">{(emp as any).ifscCode || 'HDFC000182'}</td>
                       <td className="p-3 font-bold text-emerald-600">₹16,420</td>
                       <td className="p-3 font-sans">
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600">
@@ -958,29 +966,29 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-xs font-bold uppercase text-slate-500">Security Incidents</span>
-              <div className="text-2xl font-black text-slate-900 dark:text-white">{incidents.length}</div>
+              <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Security Incidents</span>
+              <div className="text-2xl font-black text-black dark:text-white">{incidents.length}</div>
               <p className="text-[11px] text-slate-400">Total logged across sites</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-xs font-bold uppercase text-slate-500">Visitor Gate Passes</span>
+              <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Visitor Gate Passes</span>
               <div className="text-2xl font-black text-sky-600">{visitorLogs.length}</div>
               <p className="text-[11px] text-slate-400">Checked in / verified</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-xs font-bold uppercase text-slate-500">Material Passes (In/Out)</span>
+              <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Material Passes (In/Out)</span>
               <div className="text-2xl font-black text-purple-600">{materialLogs.length}</div>
               <p className="text-[11px] text-slate-400">Reconciled gate movements</p>
             </div>
           </div>
 
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Recent Security Incident & Resolution Log</h3>
+            <h3 className="text-sm font-bold text-black dark:text-white">Recent Security Incident & Resolution Log</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 font-bold border-b border-slate-200 dark:border-slate-700">
+                <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="p-3">Incident Title</th>
                     <th className="p-3">Site Location</th>
@@ -999,7 +1007,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                   ) : (
                     incidents.map(inc => (
                       <tr key={inc.id}>
-                        <td className="p-3 font-bold text-slate-900 dark:text-slate-100">{inc.title}</td>
+                        <td className="p-3 font-bold text-black dark:text-white dark:text-slate-100">{inc.title}</td>
                         <td className="p-3">{inc.siteName || 'HQ Post'}</td>
                         <td className="p-3">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -1033,19 +1041,19 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-xs font-bold uppercase text-slate-500">Total Asset Book Value</span>
-              <div className="text-2xl font-black text-slate-900 dark:text-white">₹{kpis.totalAssetValue.toLocaleString()}</div>
+              <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Total Asset Book Value</span>
+              <div className="text-2xl font-black text-black dark:text-white">₹{kpis.totalAssetValue.toLocaleString()}</div>
               <p className="text-[11px] text-slate-400">{assets.length} registered equipment items</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-xs font-bold uppercase text-slate-500">Low Stock SKUs</span>
+              <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Low Stock SKUs</span>
               <div className="text-2xl font-black text-amber-500">{kpis.lowStockCount}</div>
               <p className="text-[11px] text-slate-400">Items below reorder point</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-xs font-bold uppercase text-slate-500">Total Stock Value</span>
+              <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Total Stock Value</span>
               <div className="text-2xl font-black text-emerald-600">
                 ₹{inventoryItems.reduce((acc, curr) => acc + (curr.currentStock * curr.unitCost), 0).toLocaleString()}
               </div>
@@ -1055,7 +1063,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">High-Value Asset & Gear Register</h3>
+              <h3 className="text-sm font-bold text-black dark:text-white">High-Value Asset & Gear Register</h3>
               <button
                 onClick={() => handleExportCSV(
                   'Asset_Register',
@@ -1071,7 +1079,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 font-bold border-b border-slate-200 dark:border-slate-700">
+                <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="p-3">Asset Code</th>
                     <th className="p-3">Equipment Name</th>
@@ -1085,7 +1093,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                   {assets.slice(0, 15).map(asset => (
                     <tr key={asset.id}>
                       <td className="p-3 font-mono font-bold text-indigo-600">{asset.assetCode}</td>
-                      <td className="p-3 font-bold text-slate-900 dark:text-slate-100">{asset.assetName}</td>
+                      <td className="p-3 font-bold text-black dark:text-white dark:text-slate-100">{asset.assetName}</td>
                       <td className="p-3">{asset.category}</td>
                       <td className="p-3 font-semibold">{asset.assignedEmployeeName || 'Central Store'}</td>
                       <td className="p-3">

@@ -228,7 +228,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
         orderDate: new Date().toISOString().split('T')[0],
         expectedDeliveryDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         paymentTerms: 'NET_30',
-        items: pr.items.map(it => ({
+        items: pr.items.map((it: any) => ({
           itemName: it.itemName,
           quantityOrdered: it.quantityRequested,
           quantityReceived: 0,
@@ -352,7 +352,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
   };
 
   return (
-    <div className={`p-4 md:p-6 space-y-6 min-h-screen ${isDark ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`p-4 md:p-6 space-y-6 min-h-screen ${isDark ? 'bg-slate-900 text-slate-100' : 'bg-white text-black'}`}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -405,26 +405,26 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
-          <span className="text-xs font-semibold text-slate-500 uppercase">Purchase Requisitions</span>
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Purchase Requisitions</span>
           <p className="text-2xl font-bold mt-1 text-amber-600 dark:text-amber-400">{requisitions.length}</p>
-          <span className="text-xs text-slate-500">Site material requests</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Site material requests</span>
         </div>
         <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
-          <span className="text-xs font-semibold text-slate-500 uppercase">Active Purchase Orders</span>
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Active Purchase Orders</span>
           <p className="text-2xl font-bold mt-1 text-blue-600 dark:text-blue-400">{purchaseOrders.length}</p>
-          <span className="text-xs text-slate-500">Issued & in fulfillment</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Issued & in fulfillment</span>
         </div>
         <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
-          <span className="text-xs font-semibold text-slate-500 uppercase">Goods Receipts (GRN)</span>
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Goods Receipts (GRN)</span>
           <p className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">{grns.length}</p>
-          <span className="text-xs text-slate-500">Inspected at site gate</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Inspected at site gate</span>
         </div>
         <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'}`}>
-          <span className="text-xs font-semibold text-slate-500 uppercase">3-Way Match Clearance</span>
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">3-Way Match Clearance</span>
           <p className="text-2xl font-bold mt-1 text-indigo-600 dark:text-indigo-400">
             {threeWayMatches.filter(m => m.matchStatus === 'EXACT_MATCH' || m.matchStatus === 'RESOLVED').length} / {threeWayMatches.length || 0}
           </p>
-          <span className="text-xs text-slate-500">Audit-ready for payout</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Audit-ready for payout</span>
         </div>
       </div>
 
@@ -435,7 +435,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
           className={`px-5 py-3 text-sm font-bold border-b-2 transition ${
             activeTab === 'REQUISITIONS'
               ? 'border-amber-600 text-amber-600 dark:text-amber-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
           Purchase Requisitions (PR) ({requisitions.length})
@@ -445,7 +445,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
           className={`px-5 py-3 text-sm font-bold border-b-2 transition ${
             activeTab === 'ORDERS'
               ? 'border-amber-600 text-amber-600 dark:text-amber-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
           Purchase Orders (PO) ({purchaseOrders.length})
@@ -455,7 +455,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
           className={`px-5 py-3 text-sm font-bold border-b-2 transition ${
             activeTab === 'GRN'
               ? 'border-amber-600 text-amber-600 dark:text-amber-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
           Goods Receipt Notes (GRN) ({grns.length})
@@ -465,7 +465,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
           className={`px-5 py-3 text-sm font-bold border-b-2 transition ${
             activeTab === 'THREE_WAY_MATCH'
               ? 'border-amber-600 text-amber-600 dark:text-amber-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
           3-Way Match Audit ({threeWayMatches.length})
@@ -477,14 +477,14 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
         <div className="space-y-4">
           <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
             {loading ? (
-              <div className="p-12 text-center text-slate-500">
+              <div className="p-12 text-center text-slate-500 dark:text-slate-400">
                 <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-amber-600" />
                 <p>Loading requisitions...</p>
               </div>
             ) : requisitions.length === 0 ? (
-              <div className="p-12 text-center text-slate-500">
+              <div className="p-12 text-center text-slate-500 dark:text-slate-400">
                 <ClipboardList className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                <h3 className="font-bold text-base text-slate-700 dark:text-slate-300">No Requisitions Found</h3>
+                <h3 className="font-bold text-base text-slate-900 dark:text-slate-300">No Requisitions Found</h3>
                 <p className="text-sm mt-1">Create a purchase requisition for site uniforms, safety gear, or supplies.</p>
               </div>
             ) : (
@@ -506,23 +506,23 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                     {requisitions.map((pr) => (
                       <tr
                         key={pr.id}
-                        className={`transition ${isDark ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                        className={`transition ${isDark ? 'hover:bg-slate-800/60' : 'hover:bg-white'}`}
                       >
                         <td className="p-3.5">
                           <div className="font-mono font-bold text-amber-600 dark:text-amber-400">{pr.prNumber}</div>
-                          <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                             <MapPin className="w-3 h-3" /> {pr.siteName}
                           </div>
                         </td>
                         <td className="p-3.5">
-                          <div className="font-medium text-slate-800 dark:text-slate-200">{pr.items[0]?.itemName}</div>
-                          <div className="text-xs text-slate-500">Qty: {pr.items[0]?.quantityRequested} {pr.items[0]?.unit} • {pr.justification}</div>
+                          <div className="font-medium text-black dark:text-slate-200">{pr.items[0]?.itemName}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">Qty: {pr.items[0]?.quantityRequested} {pr.items[0]?.unit} • {pr.justification}</div>
                         </td>
-                        <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
+                        <td className="p-3.5 font-bold text-black dark:text-white dark:text-slate-100">
                           ₹{pr.totalEstimatedValue.toLocaleString()}
                         </td>
-                        <td className="p-3.5 text-xs text-slate-500">
-                          <div className="font-semibold text-slate-700 dark:text-slate-300">Urgency: {pr.urgency}</div>
+                        <td className="p-3.5 text-xs text-slate-500 dark:text-slate-400">
+                          <div className="font-semibold text-slate-900 dark:text-slate-300">Urgency: {pr.urgency}</div>
                           <div>Needed: {new Date(pr.requiredByDate).toLocaleDateString()}</div>
                         </td>
                         <td className="p-3.5">
@@ -574,9 +574,9 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
         <div className="space-y-4">
           <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
             {purchaseOrders.length === 0 ? (
-              <div className="p-12 text-center text-slate-500">
+              <div className="p-12 text-center text-slate-500 dark:text-slate-400">
                 <FileText className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                <h3 className="font-bold text-base text-slate-700 dark:text-slate-300">No Purchase Orders Issued</h3>
+                <h3 className="font-bold text-base text-slate-900 dark:text-slate-300">No Purchase Orders Issued</h3>
                 <p className="text-sm mt-1">Approve a purchase requisition to issue a formal Purchase Order to vendors.</p>
               </div>
             ) : (
@@ -598,21 +598,21 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                     {purchaseOrders.map((po) => (
                       <tr
                         key={po.id}
-                        className={`transition ${isDark ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                        className={`transition ${isDark ? 'hover:bg-slate-800/60' : 'hover:bg-white'}`}
                       >
                         <td className="p-3.5">
                           <div className="font-mono font-bold text-blue-600 dark:text-blue-400">{po.poNumber}</div>
-                          <div className="text-xs text-slate-500">Issued: {po.orderDate}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">Issued: {po.orderDate}</div>
                         </td>
                         <td className="p-3.5">
-                          <div className="font-medium text-slate-800 dark:text-slate-200">{po.vendorName}</div>
-                          <div className="text-xs text-slate-500">Terms: {po.paymentTerms}</div>
+                          <div className="font-medium text-black dark:text-slate-200">{po.vendorName}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">Terms: {po.paymentTerms}</div>
                         </td>
-                        <td className="p-3.5 text-xs text-slate-600 dark:text-slate-300">
+                        <td className="p-3.5 text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300">
                           <div>{po.shippingSiteName}</div>
                           <div className="text-slate-400">{po.deliveryAddress}</div>
                         </td>
-                        <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
+                        <td className="p-3.5 font-bold text-black dark:text-white dark:text-slate-100">
                           ₹{po.grandTotal.toLocaleString()}
                         </td>
                         <td className="p-3.5">
@@ -652,9 +652,9 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
         <div className="space-y-4">
           <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
             {grns.length === 0 ? (
-              <div className="p-12 text-center text-slate-500">
+              <div className="p-12 text-center text-slate-500 dark:text-slate-400">
                 <Truck className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                <h3 className="font-bold text-base text-slate-700 dark:text-slate-300">No Goods Receipt Notes</h3>
+                <h3 className="font-bold text-base text-slate-900 dark:text-slate-300">No Goods Receipt Notes</h3>
                 <p className="text-sm mt-1">Receive material shipments at facility sites against approved Purchase Orders.</p>
               </div>
             ) : (
@@ -675,23 +675,23 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                     {grns.map((grn) => (
                       <tr
                         key={grn.id}
-                        className={`transition ${isDark ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                        className={`transition ${isDark ? 'hover:bg-slate-800/60' : 'hover:bg-white'}`}
                       >
                         <td className="p-3.5">
                           <div className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{grn.grnNumber}</div>
-                          <div className="text-xs text-slate-500">PO: {grn.poNumber}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">PO: {grn.poNumber}</div>
                         </td>
                         <td className="p-3.5">
-                          <div className="font-medium text-slate-800 dark:text-slate-200">{grn.vendorName}</div>
-                          <div className="text-xs text-slate-500">DC: {grn.deliveryChallanNumber}</div>
+                          <div className="font-medium text-black dark:text-slate-200">{grn.vendorName}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">DC: {grn.deliveryChallanNumber}</div>
                         </td>
-                        <td className="p-3.5 text-xs text-slate-600 dark:text-slate-300">
+                        <td className="p-3.5 text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300">
                           <div>Accepted: <span className="font-bold text-emerald-600">{grn.itemsReceived[0]?.quantityAccepted}</span> / {grn.itemsReceived[0]?.quantityOrdered} {grn.itemsReceived[0]?.unit}</div>
                           {grn.itemsReceived[0]?.quantityRejected ? (
                             <div className="text-rose-500 font-semibold">Rejected: {grn.itemsReceived[0]?.quantityRejected}</div>
                           ) : null}
                         </td>
-                        <td className="p-3.5 text-xs text-slate-500">
+                        <td className="p-3.5 text-xs text-slate-500 dark:text-slate-400">
                           <div>{grn.receivedByName}</div>
                           <div>{grn.receivedDate}</div>
                         </td>
@@ -719,9 +719,9 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
         <div className="space-y-4">
           <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-slate-200'}`}>
             {threeWayMatches.length === 0 ? (
-              <div className="p-12 text-center text-slate-500">
+              <div className="p-12 text-center text-slate-500 dark:text-slate-400">
                 <ShieldCheck className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                <h3 className="font-bold text-base text-slate-700 dark:text-slate-300">No 3-Way Matches Conducted</h3>
+                <h3 className="font-bold text-base text-slate-900 dark:text-slate-300">No 3-Way Matches Conducted</h3>
                 <p className="text-sm mt-1">Automatic verification will trigger when GRNs are recorded against active Purchase Orders.</p>
               </div>
             ) : (
@@ -743,21 +743,21 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                     {threeWayMatches.map((m) => (
                       <tr
                         key={m.id}
-                        className={`transition ${isDark ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                        className={`transition ${isDark ? 'hover:bg-slate-800/60' : 'hover:bg-white'}`}
                       >
                         <td className="p-3.5">
                           <div className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{m.id}</div>
-                          <div className="text-xs text-slate-500">PO: {m.poNumber} • GRN: {m.grnNumber}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">PO: {m.poNumber} • GRN: {m.grnNumber}</div>
                         </td>
-                        <td className="p-3.5 font-bold text-slate-800 dark:text-slate-200">
+                        <td className="p-3.5 font-bold text-black dark:text-slate-200">
                           ₹{(m.poTotalAmount ?? 0).toLocaleString()}
                         </td>
                         <td className="p-3.5 font-bold text-emerald-600 dark:text-emerald-400">
                           ₹{(m.grnAcceptedValue ?? 0).toLocaleString()}
                         </td>
                         <td className="p-3.5">
-                          <div className="font-bold text-slate-800 dark:text-slate-200">₹{(m.invoiceTotalAmount ?? 0).toLocaleString()}</div>
-                          <div className="text-xs text-slate-500">Inv: {m.vendorInvoiceNumber}</div>
+                          <div className="font-bold text-black dark:text-slate-200">₹{(m.invoiceTotalAmount ?? 0).toLocaleString()}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">Inv: {m.vendorInvoiceNumber}</div>
                         </td>
                         <td className="p-3.5">
                           <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
@@ -793,9 +793,9 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
       {isPrModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className={`w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
-            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-white'}`}>
               <h3 className="font-bold text-lg">Create Purchase Requisition</h3>
               <button onClick={() => setIsPrModalOpen(false)} className="p-1.5 hover:bg-slate-200 rounded-full">
                 <X className="w-5 h-5" />
@@ -809,7 +809,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                   value={prFormData.siteId}
                   onChange={(e) => setPrFormData(prev => ({ ...prev, siteId: e.target.value }))}
                   className={`w-full px-3.5 py-2 text-sm rounded-xl border focus:outline-none ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                   }`}
                 >
                   {sites.map(s => (
@@ -826,7 +826,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                   value={prFormData.itemName}
                   onChange={(e) => setPrFormData(prev => ({ ...prev, itemName: e.target.value }))}
                   className={`w-full px-3.5 py-2 text-sm rounded-xl border focus:outline-none ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                   }`}
                 />
               </div>
@@ -839,7 +839,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                     value={prFormData.quantity}
                     onChange={(e) => setPrFormData(prev => ({ ...prev, quantity: Number(e.target.value) }))}
                     className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                     }`}
                   />
                 </div>
@@ -850,7 +850,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                     value={prFormData.estimatedUnitCost}
                     onChange={(e) => setPrFormData(prev => ({ ...prev, estimatedUnitCost: Number(e.target.value) }))}
                     className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                     }`}
                   />
                 </div>
@@ -863,7 +863,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                   value={prFormData.justification}
                   onChange={(e) => setPrFormData(prev => ({ ...prev, justification: e.target.value }))}
                   className={`w-full px-3.5 py-2 text-sm rounded-xl border focus:outline-none ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                   }`}
                 />
               </div>
@@ -872,7 +872,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsPrModalOpen(false)}
-                  className="px-4 py-2 text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100"
+                  className="px-4 py-2 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100"
                 >
                   Cancel
                 </button>
@@ -892,9 +892,9 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
       {isGrnModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className={`w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'
           }`}>
-            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-slate-50'}`}>
+            <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-850' : 'border-slate-200 bg-white'}`}>
               <h3 className="font-bold text-lg">Receive Goods & Create GRN</h3>
               <button onClick={() => setIsGrnModalOpen(false)} className="p-1.5 hover:bg-slate-200 rounded-full">
                 <X className="w-5 h-5" />
@@ -908,7 +908,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                   value={grnFormData.poId}
                   onChange={(e) => setGrnFormData(prev => ({ ...prev, poId: e.target.value }))}
                   className={`w-full px-3.5 py-2 text-sm rounded-xl border focus:outline-none ${
-                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                   }`}
                 >
                   {purchaseOrders.map(p => (
@@ -926,7 +926,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                     value={grnFormData.challanNumber}
                     onChange={(e) => setGrnFormData(prev => ({ ...prev, challanNumber: e.target.value }))}
                     className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                     }`}
                   />
                 </div>
@@ -938,7 +938,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                     value={grnFormData.vendorInvoiceNumber}
                     onChange={(e) => setGrnFormData(prev => ({ ...prev, vendorInvoiceNumber: e.target.value }))}
                     className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                     }`}
                   />
                 </div>
@@ -952,7 +952,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                     value={grnFormData.receivedQty}
                     onChange={(e) => setGrnFormData(prev => ({ ...prev, receivedQty: Number(e.target.value) }))}
                     className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                     }`}
                   />
                 </div>
@@ -963,7 +963,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                     value={grnFormData.acceptedQty}
                     onChange={(e) => setGrnFormData(prev => ({ ...prev, acceptedQty: Number(e.target.value) }))}
                     className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                     }`}
                   />
                 </div>
@@ -974,7 +974,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                     value={grnFormData.rejectedQty}
                     onChange={(e) => setGrnFormData(prev => ({ ...prev, rejectedQty: Number(e.target.value) }))}
                     className={`w-full px-3 py-2 text-sm rounded-xl border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
                     }`}
                   />
                 </div>
@@ -984,7 +984,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsGrnModalOpen(false)}
-                  className="px-4 py-2 text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100"
+                  className="px-4 py-2 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100"
                 >
                   Cancel
                 </button>

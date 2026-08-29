@@ -1198,14 +1198,29 @@ export class PermissionRegistry {
     'GRC_SECURITY:VIOLATION:REPORT': { code: 'GRC_SECURITY:VIOLATION:REPORT', module: 'GRC_SECURITY', submodule: 'VIOLATION', action: 'REPORT', name: 'GRC Risk Scorecard', description: 'Company-wide compliance index and risk heat map', minimumAuthority: 'A2_GENERAL_MANAGER' },
     'GRC_SECURITY:VIOLATION:ADMIN': { code: 'GRC_SECURITY:VIOLATION:ADMIN', module: 'GRC_SECURITY', submodule: 'VIOLATION', action: 'ADMIN', name: 'Violation Escalation Engine', description: 'Configure automated BPM routing for high-risk findings', minimumAuthority: 'A1_DIRECTOR_CEO' },
 
-    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:READ': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:READ', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'READ', name: 'View Privilege Matrix', description: 'View effective role permissions and scopes', minimumAuthority: 'A2_GENERAL_MANAGER' },
-    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:CREATE': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:CREATE', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'CREATE', name: 'Assign User Role', description: 'Grant role or site scope to user account', minimumAuthority: 'A2_GENERAL_MANAGER', allowedRoles: ['COMPANY_ADMIN', 'SUPER_ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO'] },
-    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:UPDATE': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:UPDATE', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'UPDATE', name: 'Modify Permissions', description: 'Elevate or restrict role capabilities', minimumAuthority: 'A1_DIRECTOR_CEO', allowedRoles: ['COMPANY_ADMIN', 'SUPER_ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO'] },
-    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:DELETE': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:DELETE', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'DELETE', name: 'Revoke Access / Disable Account', description: 'Instantly revoke credentials and active sessions', minimumAuthority: 'A2_GENERAL_MANAGER', allowedRoles: ['COMPANY_ADMIN', 'SUPER_ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO'] },
-    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:EXPORT': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:EXPORT', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'EXPORT', name: 'Export User Access Review (UAR)', description: 'Export quarterly User Access Review matrix for ISO/SOC2', minimumAuthority: 'A1_DIRECTOR_CEO' },
-    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:APPROVE': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:APPROVE', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'APPROVE', name: 'Approve Privilege Escalation', description: 'Authorize elevated admin access grant', minimumAuthority: 'A0_OWNER', allowedRoles: ['SUPER_ADMIN', 'OWNER_PROMOTER'] },
-    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:REPORT': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:REPORT', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'REPORT', name: 'Segregation of Duties (SoD) Audit', description: 'Audit conflicting permissions (e.g. Creator & Approver)', minimumAuthority: 'A1_DIRECTOR_CEO' },
-    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:ADMIN': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:ADMIN', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'ADMIN', name: 'Zero-Trust RBAC Governance Engine', description: 'Configure zero-trust privilege boundaries and anti-forgery guards', minimumAuthority: 'A0_OWNER', allowedRoles: ['SUPER_ADMIN', 'OWNER_PROMOTER'] }
+    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:READ': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:READ', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'READ', name: 'View Privilege Matrix', description: 'View effective role permissions and scopes', minimumAuthority: 'A2_GENERAL_MANAGER', domain: 'TENANT' },
+    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:CREATE': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:CREATE', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'CREATE', name: 'Assign User Role', description: 'Grant role or site scope to user account', minimumAuthority: 'A2_GENERAL_MANAGER', allowedRoles: ['COMPANY_ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO'], domain: 'TENANT' },
+    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:UPDATE': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:UPDATE', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'UPDATE', name: 'Modify Permissions', description: 'Elevate or restrict role capabilities', minimumAuthority: 'A1_DIRECTOR_CEO', allowedRoles: ['COMPANY_ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO'], domain: 'TENANT' },
+    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:DELETE': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:DELETE', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'DELETE', name: 'Revoke Access / Disable Account', description: 'Instantly revoke credentials and active sessions', minimumAuthority: 'A2_GENERAL_MANAGER', allowedRoles: ['COMPANY_ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO'], domain: 'TENANT' },
+    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:EXPORT': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:EXPORT', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'EXPORT', name: 'Export User Access Review (UAR)', description: 'Export quarterly User Access Review matrix for ISO/SOC2', minimumAuthority: 'A1_DIRECTOR_CEO', domain: 'TENANT' },
+    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:APPROVE': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:APPROVE', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'APPROVE', name: 'Approve Privilege Escalation', description: 'Authorize elevated admin access grant', minimumAuthority: 'A0_OWNER', allowedRoles: ['OWNER_PROMOTER'], domain: 'TENANT' },
+    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:REPORT': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:REPORT', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'REPORT', name: 'Segregation of Duties (SoD) Audit', description: 'Audit conflicting permissions (e.g. Creator & Approver)', minimumAuthority: 'A1_DIRECTOR_CEO', domain: 'TENANT' },
+    'GRC_SECURITY:PRIVILEGE_GOVERNANCE:ADMIN': { code: 'GRC_SECURITY:PRIVILEGE_GOVERNANCE:ADMIN', module: 'GRC_SECURITY', submodule: 'PRIVILEGE_GOVERNANCE', action: 'ADMIN', name: 'Zero-Trust RBAC Governance Engine', description: 'Configure zero-trust privilege boundaries and anti-forgery guards', minimumAuthority: 'A0_OWNER', allowedRoles: ['OWNER_PROMOTER'], domain: 'TENANT' },
+
+    // -------------------------------------------------------------
+    // PLATFORM CONTROL PLANE PERMISSIONS (SUPER_ADMIN ONLY)
+    // -------------------------------------------------------------
+    'PLATFORM:GOVERNANCE:ADMIN': { code: 'PLATFORM:GOVERNANCE:ADMIN', module: 'PLATFORM', submodule: 'GOVERNANCE', action: 'ADMIN', name: 'Platform Governance', description: 'Global platform settings and policies', allowedRoles: ['SUPER_ADMIN'], domain: 'PLATFORM' },
+    'PLATFORM:TENANT_LIFECYCLE:CREATE': { code: 'PLATFORM:TENANT_LIFECYCLE:CREATE', module: 'PLATFORM', submodule: 'TENANT_LIFECYCLE', action: 'CREATE', name: 'Provision Tenant', description: 'Create and initialize company tenant', allowedRoles: ['SUPER_ADMIN'], domain: 'PLATFORM' },
+    'PLATFORM:TENANT_LIFECYCLE:UPDATE': { code: 'PLATFORM:TENANT_LIFECYCLE:UPDATE', module: 'PLATFORM', submodule: 'TENANT_LIFECYCLE', action: 'UPDATE', name: 'Update Tenant Lifecycle', description: 'Activate, suspend or configure company tenant', allowedRoles: ['SUPER_ADMIN'], domain: 'PLATFORM' },
+    'PLATFORM:TENANT_LIFECYCLE:DELETE': { code: 'PLATFORM:TENANT_LIFECYCLE:DELETE', module: 'PLATFORM', submodule: 'TENANT_LIFECYCLE', action: 'DELETE', name: 'Terminate Tenant', description: 'Terminate and decommission tenant organization', allowedRoles: ['SUPER_ADMIN'], domain: 'PLATFORM' },
+    'PLATFORM:SUBSCRIPTION:ADMIN': { code: 'PLATFORM:SUBSCRIPTION:ADMIN', module: 'PLATFORM', submodule: 'SUBSCRIPTION', action: 'ADMIN', name: 'Manage Subscription Plans', description: 'Manage platform tier plans, pricing, and quotas', allowedRoles: ['SUPER_ADMIN'], domain: 'PLATFORM' },
+    'PLATFORM:MODULE_ENTITLEMENT:ADMIN': { code: 'PLATFORM:MODULE_ENTITLEMENT:ADMIN', module: 'PLATFORM', submodule: 'MODULE_ENTITLEMENT', action: 'ADMIN', name: 'Manage Module Entitlements', description: 'Grant or revoke feature modules for tenants', allowedRoles: ['SUPER_ADMIN'], domain: 'PLATFORM' },
+    'PLATFORM:PLATFORM_SECURITY:ADMIN': { code: 'PLATFORM:PLATFORM_SECURITY:ADMIN', module: 'PLATFORM', submodule: 'PLATFORM_SECURITY', action: 'ADMIN', name: 'Platform Security Management', description: 'Manage Super Admin accounts, MFA, and access logs', allowedRoles: ['SUPER_ADMIN'], domain: 'PLATFORM' },
+    'PLATFORM:MONITORING:READ': { code: 'PLATFORM:MONITORING:READ', module: 'PLATFORM', submodule: 'MONITORING', action: 'READ', name: 'Platform Observability', description: 'View system health, storage, and platform telemetry', allowedRoles: ['SUPER_ADMIN', 'PLATFORM_OPS', 'SUPPORT_AUDITOR'], domain: 'PLATFORM' },
+    'PLATFORM:AUDIT:READ': { code: 'PLATFORM:AUDIT:READ', module: 'PLATFORM', submodule: 'AUDIT', action: 'READ', name: 'Platform Audit Log', description: 'Inspect centralized platform security audit log', allowedRoles: ['SUPER_ADMIN', 'SUPPORT_AUDITOR'], domain: 'PLATFORM' },
+    'PLATFORM:SUPPORT_ACCESS:ADMIN': { code: 'PLATFORM:SUPPORT_ACCESS:ADMIN', module: 'PLATFORM', submodule: 'SUPPORT_ACCESS', action: 'ADMIN', name: 'Support Session Management', description: 'Issue and revoke controlled auditable support sessions', allowedRoles: ['SUPER_ADMIN'], domain: 'PLATFORM' },
+    'PLATFORM:GLOBAL_CONFIG:ADMIN': { code: 'PLATFORM:GLOBAL_CONFIG:ADMIN', module: 'PLATFORM', submodule: 'GLOBAL_CONFIG', action: 'ADMIN', name: 'Global Platform Config', description: 'Configure global branding, dictionaries, and gateways', allowedRoles: ['SUPER_ADMIN'], domain: 'PLATFORM' }
   };
 
   /**
@@ -1227,8 +1242,53 @@ export class PermissionRegistry {
     return userRank >= reqRank;
   }
 
+  public static mapRoleToDefaultAuthority(role?: string): AuthorityLevel | undefined {
+    if (!role) return 'A9_SUPPORT';
+    // Platform identities do NOT belong to tenant A0-A9 hierarchy
+    if (role === 'SUPER_ADMIN' || role === 'PLATFORM_OPS' || role === 'SUPPORT_AUDITOR') {
+      return undefined;
+    }
+    const roleMap: Record<string, AuthorityLevel> = {
+      'OWNER_PROMOTER': 'A0_OWNER',
+      'DIRECTOR_CEO': 'A1_DIRECTOR_CEO',
+      'GENERAL_MANAGER': 'A2_GENERAL_MANAGER',
+      'COMPANY_ADMIN': 'A2_GENERAL_MANAGER',
+      'ADMIN': 'A2_GENERAL_MANAGER',
+      'FINANCE_MANAGER': 'A2_GENERAL_MANAGER',
+      'OPERATIONS_MANAGER': 'A2_GENERAL_MANAGER',
+      'HR_ADMIN': 'A3_OFFICIAL_STAFF',
+      'HR': 'A3_OFFICIAL_STAFF',
+      'PAYROLL_OFFICER': 'A3_OFFICIAL_STAFF',
+      'BILLING_OFFICER': 'A3_OFFICIAL_STAFF',
+      'OPS_MANAGER': 'A3_OFFICIAL_STAFF',
+      'IT': 'A3_OFFICIAL_STAFF',
+      'MIS': 'A3_OFFICIAL_STAFF',
+      'COMMERCIAL': 'A3_OFFICIAL_STAFF',
+      'PROCUREMENT': 'A3_OFFICIAL_STAFF',
+      'EHS': 'A3_OFFICIAL_STAFF',
+      'REGIONAL_MANAGER': 'A4_REGIONAL_AREA_MANAGER',
+      'AREA_MANAGER': 'A4_REGIONAL_AREA_MANAGER',
+      'REGIONAL_AREA_MANAGER': 'A4_REGIONAL_AREA_MANAGER',
+      'SITE_IN_CHARGE': 'A5_SITE_IN_CHARGE',
+      'SITE_MANAGER': 'A5_SITE_IN_CHARGE',
+      'SUPERVISOR': 'A6_SUPERVISOR',
+      'SITE_SUPERVISOR': 'A6_SUPERVISOR',
+      'FIELD_OFFICER': 'A6_SUPERVISOR',
+      'SAFETY_OFFICER': 'A6_SUPERVISOR',
+      'SKILLED': 'A7_SKILLED',
+      'SEMI_SKILLED': 'A8_SEMI_SKILLED',
+      'EMPLOYEE': 'A8_SEMI_SKILLED',
+      'GUARD': 'A8_SEMI_SKILLED',
+      'WORKER': 'A8_SEMI_SKILLED',
+      'SUPPORT': 'A9_SUPPORT',
+      'FIELD_WORKER': 'A9_SUPPORT'
+    };
+    return roleMap[role] || 'A9_SUPPORT';
+  }
+
   /**
-   * Evaluates if a permission is granted for a given session and context
+   * Evaluates if a permission is granted for a given session and context.
+   * Strictly enforces the Platform Domain vs Tenant Domain security boundary.
    */
   public static evaluatePermission(
     session: UserSession | null,
@@ -1239,29 +1299,108 @@ export class PermissionRegistry {
       return { allowed: false, reason: 'Unauthenticated: No active session found.' };
     }
 
-    // 1. Super Admin bypass (Global Administrator)
-    if (session.role === 'SUPER_ADMIN') {
-      return { allowed: true, userAuthority: 'A0_OWNER' };
+    const definition = this.PERMISSIONS[permissionCode];
+    if (!definition && !permissionCode.startsWith('PLATFORM:') && !permissionCode.startsWith('SYSTEM:GLOBAL')) {
+      return { allowed: false, reason: `Unknown permission definition code: ${permissionCode}` };
     }
 
-    // 2. Multi-tenant boundary validation
+    const isPlatformPermission = permissionCode.startsWith('PLATFORM:') || 
+                                 permissionCode.startsWith('SYSTEM:GLOBAL') || 
+                                 definition?.domain === 'PLATFORM' || 
+                                 context?.securityDomain === 'PLATFORM';
+
+    // -------------------------------------------------------------
+    // DOMAIN 1: PLATFORM CONTROL PLANE
+    // -------------------------------------------------------------
+    if (isPlatformPermission) {
+      // Platform permissions require verified platform identity (SUPER_ADMIN / PLATFORM_OPS / SUPPORT_AUDITOR)
+      const isPlatformRole = session.role === 'SUPER_ADMIN' || session.role === 'PLATFORM_OPS' || session.role === 'SUPPORT_AUDITOR';
+      if (isPlatformRole) {
+        if (definition?.allowedRoles && !definition.allowedRoles.includes(session.role)) {
+          return {
+            allowed: false,
+            violatesRole: true,
+            domain: 'PLATFORM',
+            reason: `Platform role '${session.role}' is not authorized for platform action '${permissionCode}'.`
+          };
+        }
+        return { 
+          allowed: true, 
+          domain: 'PLATFORM' 
+        };
+      }
+
+      // Tenant roles (A0_OWNER, COMPANY_ADMIN, etc.) CANNOT execute platform control plane actions
+      return {
+        allowed: false,
+        violatesDomain: true,
+        domain: 'PLATFORM',
+        reason: `Access Denied: Tenant-side role '${session.role}' cannot execute Platform Control Plane action '${permissionCode}'.`
+      };
+    }
+
+    // -------------------------------------------------------------
+    // DOMAIN 2: TENANT CONTROL PLANE
+    // -------------------------------------------------------------
+    // If user is a Platform identity (SUPER_ADMIN) attempting tenant operational action:
+    if (session.role === 'SUPER_ADMIN' || session.role === 'PLATFORM_OPS' || session.role === 'SUPPORT_AUDITOR') {
+      // Check if there is an active, valid, unexpired Support Access Session
+      const support = context?.supportSession;
+      if (support && support.isActive && support.expiresAt > Date.now()) {
+        if (context?.targetCompanyId && support.targetCompanyId === context.targetCompanyId) {
+          // Check scope of support session (READ_ONLY vs ADMIN_SUPPORT)
+          if (support.scope === 'READ_ONLY' && definition && ['CREATE', 'UPDATE', 'DELETE', 'ADMIN'].includes(definition.action)) {
+            return {
+              allowed: false,
+              violatesScope: true,
+              domain: 'TENANT',
+              reason: `Support session for company '${support.targetCompanyId}' is READ_ONLY and does not permit mutation '${permissionCode}'.`
+            };
+          }
+          return {
+            allowed: true,
+            domain: 'TENANT',
+            reason: `Controlled Support Access active for company ${support.targetCompanyId} (Audit Log: ${support.auditLogId}).`
+          };
+        }
+      }
+
+      // Super Admin without valid support session cannot perform tenant actions
+      return {
+        allowed: false,
+        violatesDomain: true,
+        domain: 'TENANT',
+        reason: `Super Admin is a Platform identity and cannot perform tenant operational actions without an active, authorized support session for target tenant.`
+      };
+    }
+
+    // Multi-tenant boundary validation for tenant users
+    if (!session.companyId) {
+      return {
+        allowed: false,
+        violatesTenant: true,
+        domain: 'TENANT',
+        reason: 'User session has no associated companyId.'
+      };
+    }
+
     if (context?.targetCompanyId && context.targetCompanyId !== session.companyId) {
       return {
         allowed: false,
         violatesTenant: true,
-        reason: `Cross-tenant isolation violation: User belonging to ${session.companyId} cannot access data of ${context.targetCompanyId}.`
+        domain: 'TENANT',
+        reason: `Cross-tenant isolation violation: User belonging to '${session.companyId}' cannot access data of '${context.targetCompanyId}'.`
       };
     }
 
-    const definition = this.PERMISSIONS[permissionCode];
     if (!definition) {
-      return { allowed: false, reason: `Unknown permission definition code: ${permissionCode}` };
+      return { allowed: false, domain: 'TENANT', reason: `Unknown permission definition code: ${permissionCode}` };
     }
 
-    const userAuthority = session.authorityLevel || 'A9_SUPPORT';
-    const userScope = session.dataScope || 'SELF';
+    const userAuthority = session.authorityLevel || (session.authority as AuthorityLevel) || PermissionRegistry.mapRoleToDefaultAuthority(session.role) || 'A9_SUPPORT';
+    const userScope = session.dataScope || (['OWNER_PROMOTER', 'DIRECTOR_CEO', 'GENERAL_MANAGER', 'COMPANY_ADMIN', 'ADMIN', 'HR_ADMIN'].includes(session.role) ? 'COMPANY' : 'SELF');
 
-    // 3. Role-specific explicit whitelist (if defined for the permission)
+    // Role-specific explicit whitelist (if defined for the tenant permission)
     if (definition.allowedRoles && definition.allowedRoles.length > 0) {
       if (!definition.allowedRoles.includes(session.role)) {
         return {
@@ -1269,23 +1408,25 @@ export class PermissionRegistry {
           violatesRole: true,
           requiredAuthority: definition.minimumAuthority,
           userAuthority,
+          domain: 'TENANT',
           reason: `Role '${session.role}' is not in the explicit whitelist for permission ${permissionCode}.`
         };
       }
     }
 
-    // 4. Authority Level Check
-    if (!this.isAuthoritySufficient(userAuthority, definition.minimumAuthority)) {
+    // Authority Level Check
+    if (definition.minimumAuthority && !this.isAuthoritySufficient(userAuthority, definition.minimumAuthority)) {
       return {
         allowed: false,
         violatesRole: true,
         requiredAuthority: definition.minimumAuthority,
         userAuthority,
+        domain: 'TENANT',
         reason: `Authority level '${userAuthority}' is below required minimum '${definition.minimumAuthority}' for ${permissionCode}.`
       };
     }
 
-    // 5. Data Scope Contextual Checks
+    // Data Scope Contextual Checks
     if (context) {
       // Site scope restriction
       if (userScope === 'SITE') {
@@ -1294,7 +1435,8 @@ export class PermissionRegistry {
           return {
             allowed: false,
             violatesScope: true,
-            reason: `Site boundary violation: User assigned to site ${userSite} cannot access site ${context.targetSiteId}.`
+            domain: 'TENANT',
+            reason: `Site boundary violation: User assigned to site '${userSite}' cannot access site '${context.targetSiteId}'.`
           };
         }
       }
@@ -1306,7 +1448,8 @@ export class PermissionRegistry {
           return {
             allowed: false,
             violatesScope: true,
-            reason: `Region boundary violation: User assigned to region ${userRegion} cannot access region ${context.targetRegionId}.`
+            domain: 'TENANT',
+            reason: `Region boundary violation: User assigned to region '${userRegion}' cannot access region '${context.targetRegionId}'.`
           };
         }
       }
@@ -1318,13 +1461,14 @@ export class PermissionRegistry {
           return {
             allowed: false,
             violatesScope: true,
+            domain: 'TENANT',
             reason: `Personal scope violation: User can only access self-owned records.`
           };
         }
       }
     }
 
-    return { allowed: true, userAuthority };
+    return { allowed: true, userAuthority, domain: 'TENANT' };
   }
 
   /**

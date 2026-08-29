@@ -526,4 +526,13 @@ export class BpmService {
     );
   }
 
+  static async getCompanyWorkflows(companyId: string): Promise<BpmApprovalWorkflow[]> {
+    const q = query(
+      collection(db, 'companies', companyId, 'bpm_workflows'),
+      orderBy('workflowName', 'asc')
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.data() as BpmApprovalWorkflow);
+  }
+
 }

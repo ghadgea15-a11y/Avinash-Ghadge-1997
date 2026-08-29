@@ -1,5 +1,7 @@
 import { UserRole, AuthorityLevel, DataScope, AppModuleKey } from './index';
 
+export type SecurityDomain = 'PLATFORM' | 'TENANT';
+
 export type PermissionAction = 
   | 'READ' 
   | 'CREATE' 
@@ -7,7 +9,7 @@ export type PermissionAction =
   | 'DELETE' 
   | 'APPROVE' 
   | 'EXPORT' 
-  | 'REPORT'
+  | 'REPORT' 
   | 'ADMIN';
 
 export type EnterpriseModule = 
@@ -22,77 +24,35 @@ export type EnterpriseModule =
   | 'BPM'
   | 'GRC_SECURITY';
 
-export type PermissionSubmodule = 
-  // HCM (Module 1)
-  | 'EMPLOYEE'
-  | 'ID_BADGE'
-  | 'DEPARTMENT'
-  | 'ORG_CHART'
-  // WFM (Module 2)
-  | 'ATTENDANCE'
-  | 'SHIFT'
-  | 'ROSTER'
-  | 'LEAVE'
-  | 'OVERTIME'
-  // ERP Finance (Module 3)
-  | 'PAYROLL'
-  | 'BILLING'
-  | 'INVOICE'
-  | 'COMPANY_BILLING'
-  | 'STATUTORY'
-  // Operations (Module 4)
-  | 'SITE_OPS'
-  | 'GUARD_PATROL'
-  | 'VISITOR'
-  | 'INCIDENT'
-  | 'TASK'
-  // EAM (Module 5)
-  | 'ASSET'
-  | 'WORK_ORDER'
-  | 'MAINTENANCE'
-  | 'CUSTODY'
-  | 'WARRANTY'
-  // SCM (Module 6)
-  | 'INVENTORY'
-  | 'PURCHASE_ORDER'
-  | 'SUPPLIER'
-  | 'STOCK_TRANSFER'
-  // CRM (Module 7)
-  | 'CLIENT'
-  | 'CONTRACT'
-  | 'SLA'
-  | 'SERVICE_DESK'
-  // BI (Module 8)
-  | 'REPORT'
-  | 'ANALYTICS'
-  | 'EXECUTIVE_BI'
-  | 'PREDICTIVE'
-  // BPM (Module 9)
-  | 'APPROVAL'
-  | 'DELEGATION'
-  | 'ESCALATION'
-  | 'ROUTING_RULE'
-  | 'THRESHOLD'
-  // GRC / Security (Module 10)
-  | 'SECURITY_AUDIT'
-  | 'ANOMALY'
-  | 'INVESTIGATION'
-  | 'COMPLIANCE_POLICY'
-  | 'VIOLATION'
-  | 'PRIVILEGE_GOVERNANCE';
+export type PlatformModule =
+  | 'GOVERNANCE'
+  | 'TENANT_LIFECYCLE'
+  | 'SUBSCRIPTION'
+  | 'MODULE_ENTITLEMENT'
+  | 'PLATFORM_SECURITY'
+  | 'MONITORING'
+  | 'AUDIT'
+  | 'SUPPORT_ACCESS'
+  | 'GLOBAL_CONFIG';
 
-export type StandardPermission = `${EnterpriseModule}:${PermissionSubmodule}:${PermissionAction}` | string;
+export type PermissionSubmodule = string;
 
-export interface PermissionDefinition {
-  code: StandardPermission;
-  module: EnterpriseModule;
-  submodule: PermissionSubmodule;
-  action: PermissionAction;
-  name: string;
-  description: string;
-  minimumAuthority: AuthorityLevel;
-  allowedRoles?: UserRole[];
-  requiredScope?: DataScope;
+export type StandardPermission = 
+  | `${EnterpriseModule}:${PermissionSubmodule}:${PermissionAction}` 
+  | `PLATFORM:${PlatformModule}:${PermissionAction}`
+  | string;
+
+export interface SupportAccessSession {
+  id: string;
+  superAdminUid: string;
+  superAdminEmail: string;
+  targetCompanyId: string;
+  reason: string;
+  scope: 'READ_ONLY' | 'DIAGNOSTIC' | 'ADMIN_SUPPORT';
+  authorizedAt: number;
+  expiresAt: number;
+  isActive: boolean;
+  auditLogId: string;
 }
 
 export interface AccessContext {
@@ -103,6 +63,9 @@ export interface AccessContext {
   targetOwnerId?: string;
   resourceType?: string;
   resourceId?: string;
+  module?: string;
+  securityDomain?: SecurityDomain;
+  supportSession?: SupportAccessSession;
 }
 
 export interface PrivilegeCheckResult {
@@ -111,6 +74,21 @@ export interface PrivilegeCheckResult {
   violatesScope?: boolean;
   violatesTenant?: boolean;
   violatesRole?: boolean;
+  violatesDomain?: boolean;
   requiredAuthority?: AuthorityLevel;
   userAuthority?: AuthorityLevel;
+  domain?: SecurityDomain;
+}
+
+export interface PermissionDefinition {
+  code: StandardPermission;
+  module: EnterpriseModule | 'PLATFORM';
+  submodule: PermissionSubmodule;
+  action: PermissionAction;
+  name: string;
+  description: string;
+  minimumAuthority?: AuthorityLevel;
+  allowedRoles?: UserRole[];
+  requiredScope?: DataScope;
+  domain?: SecurityDomain;
 }

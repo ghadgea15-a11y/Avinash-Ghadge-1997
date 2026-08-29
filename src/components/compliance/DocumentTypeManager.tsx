@@ -91,10 +91,10 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
         initial={{ scale: 0.95, opacity: 0 }} 
         animate={{ scale: 1, opacity: 1 }} 
         exit={{ scale: 0.95, opacity: 0 }}
-        className="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
-        <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-          <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-950 dark:bg-slate-900/50">
+          <h4 className="font-bold text-black dark:text-white flex items-center gap-2">
             <Settings2 className="w-5 h-5 text-indigo-600" />
             Compliance Document Settings
           </h4>
@@ -105,14 +105,14 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {editingType ? (
-            <form onSubmit={handleSave} className="space-y-4 bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
+            <form onSubmit={handleSave} className="space-y-4 bg-white dark:bg-slate-950 dark:bg-slate-900/50 p-5 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Document Name</label>
                   <input 
                     required
                     type="text" 
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="e.g. Aadhaar Card"
                     value={editingType.name}
                     onChange={e => setEditingType({...editingType, name: e.target.value})}
@@ -123,7 +123,7 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
                   <input 
                     required
                     type="text" 
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="e.g. AADHAR"
                     value={editingType.code}
                     onChange={e => setEditingType({...editingType, code: e.target.value.toUpperCase().replace(/\s/g, '_')})}
@@ -133,7 +133,7 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Alert Thresholds (Days Before Expiry)</label>
                   <input 
                     type="text" 
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="e.g. 90, 60, 30, 7"
                     value={editingType.expiryAlertThresholds.join(', ')}
                     onChange={e => setEditingType({...editingType, expiryAlertThresholds: e.target.value.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v))})}
@@ -147,7 +147,7 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
                       checked={editingType.isMandatory}
                       onChange={e => setEditingType({...editingType, isMandatory: e.target.checked})}
                     />
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Mandatory Document</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-slate-300">Mandatory Document</span>
                   </label>
                 </div>
               </div>
@@ -155,7 +155,7 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
                 <button 
                   type="button" 
                   onClick={() => setEditingType(null)}
-                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700"
+                  className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-300"
                 >
                   Cancel
                 </button>
@@ -184,17 +184,17 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
             {loading ? (
               <div className="text-center py-4 text-slate-400 text-xs">Loading...</div>
             ) : types.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 text-xs bg-slate-50 dark:bg-slate-900/50 rounded-2xl italic">No document types defined for this company</div>
+              <div className="text-center py-8 text-slate-400 text-xs bg-white dark:bg-slate-950 dark:bg-slate-900/50 rounded-2xl italic">No document types defined for this company</div>
             ) : (
               types.map(type => (
                 <div key={type.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:shadow-md transition-all">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-xl ${type.isMandatory ? 'bg-rose-50 text-rose-500' : 'bg-slate-50 text-slate-500'}`}>
+                    <div className={`p-2 rounded-xl ${type.isMandatory ? 'bg-rose-50 text-rose-500' : 'bg-white text-slate-500'}`}>
                       <FileText className="w-5 h-5" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-slate-900 dark:text-white">{type.name}</span>
+                        <span className="text-sm font-bold text-black dark:text-white">{type.name}</span>
                         {type.isMandatory && <span className="text-[8px] font-black bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded uppercase">Mandatory</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
@@ -221,9 +221,9 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
           </div>
         </div>
 
-        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex items-center gap-3">
+        <div className="p-4 bg-white dark:bg-slate-950 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex items-center gap-3">
           <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
-          <p className="text-[10px] text-slate-500 leading-relaxed">
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
             Thresholds define when automated alerts are triggered. For example, [90, 30] will notify stakeholders 90 days and 30 days before the document expires.
           </p>
         </div>

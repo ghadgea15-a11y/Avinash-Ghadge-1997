@@ -99,7 +99,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 
 
   return (
-    <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full`}>
+    <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'} p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full`}>
       
       {/* Header Banner */}
       <div className={`transition-colors duration-300 ${isDark ? 'bg-gradient-to-r from-amber-950/80 via-slate-900 to-slate-900 border-amber-800/60' : 'bg-gradient-to-r from-amber-500/10 via-indigo-500/5 to-white border-amber-200 shadow-sm'} border p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4`}>
@@ -126,7 +126,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition ${
               isDark 
                 ? 'bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-200' 
-                : 'bg-white border-slate-200 hover:bg-slate-100 text-slate-800 shadow-sm'
+                : 'bg-white border-slate-200 hover:bg-slate-100 text-black shadow-sm'
             }`}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-amber-500' : ''}`} />
@@ -222,7 +222,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             <Building2 className="w-4 h-4 text-indigo-400" />
             <span className="text-xs font-semibold">Company Directory</span>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-500" />
+          <ChevronRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
         </button>
 
         <button
@@ -235,7 +235,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             <PlusCircle className="w-4 h-4 text-amber-400" />
             <span className="text-xs font-semibold">Provision New Tenant</span>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-500" />
+          <ChevronRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
         </button>
 
         <button
@@ -248,7 +248,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             <Sliders className="w-4 h-4 text-cyan-400" />
             <span className="text-xs font-semibold">Module Access Rules</span>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-500" />
+          <ChevronRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
         </button>
 
         <button
@@ -261,7 +261,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             <Users className="w-4 h-4 text-emerald-400" />
             <span className="text-xs font-semibold">Leads CRM</span>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-500" />
+          <ChevronRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
         </button>
       </div>
 
@@ -296,7 +296,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
         ) : (
           <div className="space-y-3">
             {pendingRequests.slice(0, 5).map((req) => (
-              <div key={req.id} className={`flex items-center justify-between p-3 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <div key={req.id} className={`flex items-center justify-between p-3 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
                     <User className="w-4 h-4" />

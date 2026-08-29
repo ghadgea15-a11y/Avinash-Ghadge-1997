@@ -73,10 +73,10 @@ export const PlatformOverview: React.FC = () => {
   ];
 
   return (
-    <div id="platform" className="bg-[#FBFBFA]">
+    <div id="platform" className="bg-white">
       
       {/* SECTION 2: THE OPERATING SYSTEM FOR YOUR SITES (Editorial Split Layout) */}
-      <section className="py-24 lg:py-32 border-b border-[#E8E7E3]">
+      <section className="py-24 lg:py-32 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             
@@ -86,15 +86,15 @@ export const PlatformOverview: React.FC = () => {
                 Centralized Governance
               </span>
               
-              <h2 className="font-display text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#0A0D14] tracking-tight leading-[1.08]">
+              <h2 className="font-display text-3xl sm:text-5xl lg:text-6xl font-extrabold text-black tracking-tight leading-[1.08]">
                 THE OPERATING SYSTEM FOR YOUR SITES.
               </h2>
               
-              <p className="font-body text-base sm:text-lg text-[#52525B] leading-relaxed">
+              <p className="font-body text-base sm:text-lg text-black leading-relaxed">
                 Whether overseeing a flagship corporate headquarters or a distributed network of fifty industrial plants, Log Sheet Muster unifies every facility under a single operational standard.
               </p>
 
-              <div className="space-y-4 pt-4 border-t border-[#E8E7E3] font-body text-sm text-[#27272A]">
+              <div className="space-y-4 pt-4 border-t border-slate-200 font-body text-sm text-black">
                 <div className="flex items-start gap-3">
                   <span className="font-mono text-xs font-bold text-emerald-600 mt-1">01</span>
                   <p><strong>Multi-Tiered Branch Structure:</strong> Manage Headquarters, Regional Offices, Client Sites, and Guard Checkpoints with strict tenant data isolation.</p>
@@ -112,12 +112,12 @@ export const PlatformOverview: React.FC = () => {
 
             {/* Right: Abstract Connected Facility Illustration (NOT a card grid or dashboard mockup) */}
             <div className="lg:col-span-6">
-              <div className="relative p-8 sm:p-12 rounded-3xl border border-[#E2E0D8] bg-[#F4F3EF] overflow-hidden">
+              <div className="relative p-8 sm:p-12 rounded-3xl border border-slate-300 bg-white overflow-hidden">
                 
                 {/* SVG Visual Flow: Sites connecting to Log Sheet Muster */}
                 <div className="space-y-4 relative z-10">
-                  <div className="flex items-center justify-between pb-4 border-b border-[#E2E0D8]">
-                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#52525B]">
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-300">
+                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-black">
                       DISTRIBUTED TOPOLOGY
                     </span>
                     <span className="font-mono text-[11px] text-emerald-600 font-semibold flex items-center gap-1.5">
@@ -129,29 +129,29 @@ export const PlatformOverview: React.FC = () => {
                   {/* Connected Entity Nodes */}
                   <div className="space-y-3 font-body">
                     
-                    <div className="p-4 rounded-xl bg-white border border-[#E8E7E3] flex items-center justify-between shadow-2xs">
+                    <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 flex items-center justify-between shadow-2xs">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#0A0D14] text-white flex items-center justify-center font-display font-bold text-xs">
+                        <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center font-display font-bold text-xs">
                           HQ
                         </div>
                         <div>
-                          <strong className="text-xs font-bold text-[#0A0D14] block">Corporate Headquarters</strong>
-                          <span className="text-[11px] text-[#71717A]">Executive BI &bull; Consolidated Payroll Auditing</span>
+                          <strong className="text-xs font-bold text-black block">Corporate Headquarters</strong>
+                          <span className="text-[11px] text-slate-600">Executive BI &bull; Consolidated Payroll Auditing</span>
                         </div>
                       </div>
-                      <span className="font-mono text-[10px] bg-[#F4F3EF] px-2 py-1 rounded text-[#0A0D14] font-semibold">
+                      <span className="font-mono text-[10px] bg-white px-2 py-1 rounded text-black font-semibold">
                         PRIMARY DESK
                       </span>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-white border border-[#E8E7E3] flex items-center justify-between shadow-2xs">
+                    <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 flex items-center justify-between shadow-2xs">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center font-display font-bold text-xs">
                           PL
                         </div>
                         <div>
-                          <strong className="text-xs font-bold text-[#0A0D14] block">Manufacturing Plant &bull; Pune Zone</strong>
-                          <span className="text-[11px] text-[#71717A]">DG Log Sheets &bull; Material Gate Passes</span>
+                          <strong className="text-xs font-bold text-black block">Manufacturing Plant &bull; Pune Zone</strong>
+                          <span className="text-[11px] text-slate-600">DG Log Sheets &bull; Material Gate Passes</span>
                         </div>
                       </div>
                       <span className="font-mono text-[10px] bg-emerald-50 text-emerald-700 px-2 py-1 rounded font-semibold border border-emerald-200">
@@ -159,14 +159,14 @@ export const PlatformOverview: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-white border border-[#E8E7E3] flex items-center justify-between shadow-2xs">
+                    <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 flex items-center justify-between shadow-2xs">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-[#27272A] text-white flex items-center justify-center font-display font-bold text-xs">
                           SEC
                         </div>
                         <div>
-                          <strong className="text-xs font-bold text-[#0A0D14] block">Manned Security Posts (12 Gates)</strong>
-                          <span className="text-[11px] text-[#71717A]">QR Checkpoint Patrols &bull; Visitor ID Badges</span>
+                          <strong className="text-xs font-bold text-black block">Manned Security Posts (12 Gates)</strong>
+                          <span className="text-[11px] text-slate-600">QR Checkpoint Patrols &bull; Visitor ID Badges</span>
                         </div>
                       </div>
                       <span className="font-mono text-[10px] bg-emerald-50 text-emerald-700 px-2 py-1 rounded font-semibold border border-emerald-200">
@@ -174,17 +174,17 @@ export const PlatformOverview: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-white border border-[#E8E7E3] flex items-center justify-between shadow-2xs">
+                    <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 flex items-center justify-between shadow-2xs">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-[#52525B] text-white flex items-center justify-center font-display font-bold text-xs">
                           MOB
                         </div>
                         <div>
-                          <strong className="text-xs font-bold text-[#0A0D14] block">Field Supervisors &bull; Android Fleet</strong>
-                          <span className="text-[11px] text-[#71717A]">Mobile Shift Roll-Calls &bull; Offline Sync Queue</span>
+                          <strong className="text-xs font-bold text-black block">Field Supervisors &bull; Android Fleet</strong>
+                          <span className="text-[11px] text-slate-600">Mobile Shift Roll-Calls &bull; Offline Sync Queue</span>
                         </div>
                       </div>
-                      <span className="font-mono text-[10px] bg-[#F4F3EF] px-2 py-1 rounded text-[#0A0D14] font-semibold">
+                      <span className="font-mono text-[10px] bg-white px-2 py-1 rounded text-black font-semibold">
                         NATIVE ANDROID
                       </span>
                     </div>
@@ -201,27 +201,27 @@ export const PlatformOverview: React.FC = () => {
       </section>
 
       {/* SECTION 3: PLATFORM ARCHITECTURE (Large Full-Width Visualization) */}
-      <section id="architecture" className="py-24 lg:py-32 border-b border-[#E8E7E3]">
+      <section id="architecture" className="py-24 lg:py-32 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
           
           <div className="max-w-3xl mx-auto text-center space-y-4">
             <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-600">
               System Blueprint
             </span>
-            <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-[#0A0D14] tracking-tight">
+            <h2 className="font-display text-3xl sm:text-5xl font-extrabold text-black tracking-tight">
               CONNECTED ARCHITECTURE
             </h2>
-            <p className="font-body text-sm sm:text-base text-[#52525B] leading-relaxed">
+            <p className="font-body text-sm sm:text-base text-black leading-relaxed">
               An enterprise event-driven backbone linking people, physical sites, operational logs, and business intelligence into one continuous data pipeline.
             </p>
           </div>
 
           {/* Central Architecture Node & 8 Surrounding Pillars */}
-          <div className="p-8 sm:p-12 rounded-3xl border border-[#E7E6E1] bg-white shadow-sm">
+          <div className="p-8 sm:p-12 rounded-3xl border border-slate-200 bg-white dark:bg-slate-900 shadow-sm">
             
             {/* Core Engine Indicator */}
-            <div className="text-center pb-8 border-b border-[#E8E7E3] mb-8">
-              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-[#0A0D14] text-white">
+            <div className="text-center pb-8 border-b border-slate-200 mb-8">
+              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-black text-white">
                 <Cpu className="w-5 h-5 text-emerald-400" />
                 <span className="font-display text-sm font-bold tracking-wider">
                   LOG SHEET MUSTER CORE ENGINE
@@ -242,20 +242,20 @@ export const PlatformOverview: React.FC = () => {
                     onClick={() => setSelectedArchNode(node.id)}
                     className={`p-5 rounded-2xl border transition-all duration-200 cursor-pointer ${
                       isSelected 
-                        ? 'bg-[#F4F3EF] border-[#0A0D14] shadow-xs' 
-                        : 'bg-white border-[#E8E7E3] hover:border-[#D4D4D8]'
+                        ? 'bg-white border-[#0A0D14] shadow-xs' 
+                        : 'bg-white border-slate-200 hover:border-[#D4D4D8]'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-mono text-[11px] font-bold text-emerald-600 uppercase">
                         {node.subtitle}
                       </span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#0A0D14]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-black" />
                     </div>
-                    <h3 className="font-display text-sm font-bold text-[#0A0D14] mb-1.5">
+                    <h3 className="font-display text-sm font-bold text-black mb-1.5">
                       {node.label}
                     </h3>
-                    <p className="font-body text-xs text-[#52525B] leading-relaxed">
+                    <p className="font-body text-xs text-black leading-relaxed">
                       {node.desc}
                     </p>
                   </div>
@@ -264,7 +264,7 @@ export const PlatformOverview: React.FC = () => {
             </div>
 
             {/* Architectural Guarantees Footer */}
-            <div className="mt-8 pt-6 border-t border-[#E8E7E3] flex flex-wrap items-center justify-between gap-4 font-mono text-xs text-[#71717A]">
+            <div className="mt-8 pt-6 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4 font-mono text-xs text-slate-600">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>Single Source of Truth &bull; Zero Parallel Data Stores</span>
