@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   BarChart3, FileText, Download, Printer, Filter, Calendar, 
   Building2, MapPin, Users, Clock, AlertTriangle, ShieldCheck, 
@@ -47,14 +48,19 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
   // Active Tab
   const [activeTab, setActiveTab] = useState<ReportTab>('EXECUTIVE_KPI');
   const [selectedStatutoryForm, setSelectedStatutoryForm] = useState<StatutoryFormType>('FORM_T');
+  useBackNavigation(!!selectedStatutoryForm, () => setSelectedStatutoryForm(null as any), 'selectedStatutoryForm');
 
   // Filters State
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
+  useBackNavigation(!!selectedMonth, () => setSelectedMonth(null as any), 'selectedMonth');
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  useBackNavigation(!!selectedYear, () => setSelectedYear(null as any), 'selectedYear');
   const [selectedSiteId, setSelectedSiteId] = useState<string>('ALL');
+  useBackNavigation(!!selectedSiteId, () => setSelectedSiteId(null as any), 'selectedSiteId');
   const [selectedBranchId, setSelectedBranchId] = useState<string>('ALL');
+  useBackNavigation(!!selectedBranchId, () => setSelectedBranchId(null as any), 'selectedBranchId');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Data Collections
@@ -166,7 +172,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
     // Today's attendance
     const todayStr = new Date().toISOString().split('T')[0];
     const todayLogs = attendanceLogs.filter(a => a.attendanceDate === todayStr);
-    const presentTodayCount = todayLogs.filter(a => a.status === 'PRESENT' || a.status === 'HALF_DAY').length;
+    const presentTodayCount = todayLogs.filter(a => a.status === 'PRESENT' || a.status === 'HALFDAY' || (a.status as string) === 'HALF_DAY').length;
     const todayAttendanceRate = activeStaff > 0 ? Math.round((presentTodayCount / activeStaff) * 100) : 0;
 
     // Monthly overtime & wage liability
@@ -282,7 +288,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
         const log = monthlyAttendanceMap.get(`${emp.id}_${day}`);
         if (log) {
           if (log.status === 'PRESENT') { worked++; return 'P'; }
-          if (log.status === 'HALF_DAY') { worked += 0.5; return 'HD'; }
+          if (log.status === 'HALFDAY' || (log.status as string) === 'HALF_DAY') { worked += 0.5; return 'HD'; }
           if (log.status === 'ON_LEAVE') { leaves++; return 'L'; }
           if (log.status === 'ABSENT') return 'A';
         }
@@ -739,7 +745,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                       const log = monthlyAttendanceMap.get(`${emp.id}_${day}`);
                       if (log) {
                         if (log.status === 'PRESENT') { present++; return 'P'; }
-                        if (log.status === 'HALF_DAY') { present += 0.5; return 'HD'; }
+                        if (log.status === 'HALFDAY' || (log.status as string) === 'HALF_DAY') { present += 0.5; return 'HD'; }
                         if (log.status === 'ABSENT') { absent++; return 'A'; }
                         if (log.status === 'ON_LEAVE') return 'L';
                       }
@@ -1055,7 +1061,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
               <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Total Stock Value</span>
               <div className="text-2xl font-black text-emerald-600">
-                ₹{inventoryItems.reduce((acc, curr) => acc + (curr.currentStock * curr.unitCost), 0).toLocaleString()}
+                ₹{inventoryItems.reduce((acc, curr) => acc + ((curr.currentStock || 0) * (curr.unitCost || 0)), 0).toLocaleString()}
               </div>
               <p className="text-[11px] text-slate-400">{inventoryItems.length} inventory categories</p>
             </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { useTheme } from '../../context/ThemeContext';
 import { PhaseAScreen, UserSession, CompanyTenant } from '../../types';
 import { 
@@ -56,6 +57,7 @@ export const TrainingLmsScreen: React.FC<{
   const [verifyCertId, setVerifyCertId] = useState('');
   const [verifyResult, setVerifyResult] = useState<any>(null);
   const [selectedCertEnrollment, setSelectedCertEnrollment] = useState<TrainingEnrollmentRecord | null>(null);
+  useBackNavigation(!!selectedCertEnrollment, () => setSelectedCertEnrollment(null as any), 'selectedCertEnrollment');
 
   const handleVerifyCertificate = async (e: React.FormEvent) => {
     e.preventDefault();

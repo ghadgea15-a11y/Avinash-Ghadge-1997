@@ -4,8 +4,10 @@ export type PlatformRole = 'SUPER_ADMIN' | 'SUPPORT_AUDITOR' | 'PLATFORM_OPS';
 
 export interface SuperAdminUser {
   uid: string;
+  id?: string;
   email: string;
   name?: string;
+  displayName?: string;
   phone?: string;
   role: PlatformRole;
   status: 'ACTIVE' | 'SUSPENDED';

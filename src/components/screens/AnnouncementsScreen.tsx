@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { CompanyTenant, UserSession, PhaseAScreen, AnnouncementRecord, SiteRecord } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { RbacService } from '../../services/rbacService';
@@ -45,6 +46,7 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
 
   // Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
+  useBackNavigation(!!showCreateModal, () => setShowCreateModal(null as any), 'showCreateModal');
   const [actionProcessing, setActionProcessing] = useState(false);
 
   // Form State
@@ -52,6 +54,8 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
     title: string;
     message: string;
     targetAudience: string;
+    targetLevel: 'COMPANY' | 'SITE';
+    targetSiteId: string;
     category: string;
     priority: 'NORMAL' | 'URGENT';
     isPinned: boolean;
@@ -60,6 +64,8 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
     title: '',
     message: '',
     targetAudience: 'ALL',
+    targetLevel: 'COMPANY',
+    targetSiteId: '',
     category: 'Operational Notice',
     priority: 'NORMAL',
     isPinned: false,
@@ -102,6 +108,12 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
       const annId = `ANN-${Date.now()}`;
       const expiresAt = Date.now() + (formState.durationDays * 24 * 60 * 60 * 1000);
 
+      const visibilityScope = ['COMPANY_ALL'];
+      if (formState.targetLevel === 'SITE' && formState.targetSiteId) {
+        visibilityScope.length = 0; // Clear company-wide
+        visibilityScope.push(`SITE_${formState.targetSiteId}`);
+      }
+
       const record: AnnouncementRecord = {
         id: annId,
         companyId,
@@ -111,6 +123,9 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
         message: formState.message.trim(),
         category: formState.category,
         targetAudience: formState.targetAudience,
+        targetLevel: formState.targetLevel,
+        targetSiteId: formState.targetSiteId,
+        visibilityScope,
         priority: formState.priority,
         isPinned: formState.isPinned,
         createdBy: userSession.employeeId || userSession.userId || 'admin',
@@ -129,6 +144,8 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
         title: '',
         message: '',
         targetAudience: 'ALL',
+        targetLevel: 'COMPANY',
+        targetSiteId: '',
         category: 'Operational Notice',
         priority: 'NORMAL',
         isPinned: false,
@@ -344,9 +361,14 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                         </span>
                       )}
 
-                      <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 text-slate-600 dark:text-slate-400 dark:bg-slate-800 dark:text-slate-400 flex items-center gap-1">
+                      <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 text-slate-600 dark:text-slate-400 dark:bg-slate-800 flex items-center gap-1">
                         <Users className="w-3 h-3" /> Audience: {ann.targetAudience === 'ALL' ? 'Company-wide' : ann.targetAudience}
                       </span>
+                      {ann.targetLevel === 'SITE' && (
+                        <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 flex items-center gap-1">
+                          <Building2 className="w-3 h-3" /> Site Specific
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -493,15 +515,46 @@ export const AnnouncementsScreen: React.FC<Props> = ({ userSession, company, onN
                       isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
                     }`}
                   >
-                    <option value="ALL">All Company Employees</option>
+                    <option value="ALL">All Employees</option>
                     <option value="SECURITY_GUARDS">Security Guards Only</option>
                     <option value="SUPERVISORS">Supervisors & Ops Managers</option>
                     <option value="OFFICE_STAFF">HR & Corporate Staff</option>
-                    {sites.map(s => (
-                      <option key={s.id} value={`Site: ${s.name || s.siteName || s.id}`}>Site: {s.name || s.siteName || s.id}</option>
-                    ))}
                   </select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1">Target Location Level</label>
+                  <select
+                    value={formState.targetLevel}
+                    onChange={e => setFormState({ ...formState, targetLevel: e.target.value as 'COMPANY' | 'SITE' })}
+                    className={`w-full p-2.5 rounded-lg border outline-none ${
+                      isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
+                    }`}
+                  >
+                    <option value="COMPANY">Company Wide (All Sites)</option>
+                    <option value="SITE">Specific Site</option>
+                  </select>
+                </div>
+                {formState.targetLevel === 'SITE' && (
+                  <div>
+                    <label className="block font-semibold mb-1">Select Target Site</label>
+                    <select
+                      value={formState.targetSiteId}
+                      onChange={e => setFormState({ ...formState, targetSiteId: e.target.value })}
+                      className={`w-full p-2.5 rounded-lg border outline-none ${
+                        isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
+                      }`}
+                      required
+                    >
+                      <option value="">Select a Site...</option>
+                      {sites.map(s => (
+                        <option key={s.id} value={s.id}>{s.name || s.siteName || s.code}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

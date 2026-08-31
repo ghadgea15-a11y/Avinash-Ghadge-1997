@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   Network, 
   AlertTriangle, 
@@ -39,14 +40,18 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
 
   // Modals
   const [showAssignModal, setShowAssignModal] = useState(false);
+  useBackNavigation(!!showAssignModal, () => setShowAssignModal(null as any), 'showAssignModal');
   const [showGroupModal, setShowGroupModal] = useState(false);
+  useBackNavigation(!!showGroupModal, () => setShowGroupModal(null as any), 'showGroupModal');
   const [selectedGroup, setSelectedGroup] = useState<GroupRecord | null>(null);
+  useBackNavigation(!!selectedGroup, () => setSelectedGroup(null as any), 'selectedGroup');
   const [groupMembers, setGroupMembers] = useState<GroupMemberRecord[]>([]);
   const [showMemberModal, setShowMemberModal] = useState(false);
+  useBackNavigation(!!showMemberModal, () => setShowMemberModal(null as any), 'showMemberModal');
 
   const [groupForm, setGroupForm] = useState<Partial<GroupRecord>>({
     name: '',
-    type: 'TEAM',
+    type: 'OPERATIONAL',
     description: '',
     status: 'ACTIVE'
   });
@@ -329,8 +334,8 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
                           <div className="flex items-center gap-2">
                             <h4 className="text-sm font-bold">{emp?.firstName} {emp?.lastName}</h4>
                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider ${
-                              a.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400' :
-                              a.status === 'PENDING_APPROVAL' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400' :
+                              a.status === 'ACTIVE' || a.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400' :
+                              a.status === 'PENDING' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400' :
                               'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-400'
                             }`}>
                               {a.status}
@@ -358,7 +363,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-bold">Organization Groups</h3>
                   <button 
-                    onClick={() => { setSelectedGroup(null); setGroupForm({ name: '', type: 'TEAM', status: 'ACTIVE' }); setShowGroupModal(true); }}
+                    onClick={() => { setSelectedGroup(null); setGroupForm({ name: '', type: 'OPERATIONAL', status: 'ACTIVE' }); setShowGroupModal(true); }}
                     className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors"
                   >
                     + Create Group

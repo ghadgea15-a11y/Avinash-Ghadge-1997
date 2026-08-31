@@ -33,7 +33,7 @@ export const SupervisorRollCall: React.FC<Props> = ({ userSession, activeCompany
     return () => { if (unsubscribe) unsubscribe(); };
   }, [activeCompany.companyId, userSession]);
 
-  const handleMark = async (emp: any, status: 'PRESENT' | 'ABSENT' | 'HALF_DAY') => {
+    const handleMark = async (emp: any, status: 'PRESENT' | 'ABSENT' | 'HALFDAY') => {
     const dismiss = showLoading(`Marking ${emp.firstName} as ${status}...`);
     try {
       const logId = `ATT-${emp.id}-${Date.now()}`;
@@ -42,13 +42,13 @@ export const SupervisorRollCall: React.FC<Props> = ({ userSession, activeCompany
         logId,
         employeeId: emp.id,
         userName: `${emp.firstName} ${emp.lastName}`,
-        action: status === 'PRESENT' ? 'PUNCH_IN' : (status === 'ABSENT' ? 'ABSENT' : 'HALF_DAY'),
+        action: status === 'PRESENT' ? 'PUNCH_IN' : (status === 'ABSENT' ? 'ABSENT' : 'HALFDAY'),
         timestamp: new Date().toISOString(),
         siteId: emp.assignedSiteId || 'SITE-DEFAULT',
         locationDetails: 'Marked by Supervisor',
-        markedBy: userSession.userId,
-        status: status
-      });
+        markedBy: userSession.userId || userSession.uid || '',
+        status: status as any
+      } as any);
       dismiss();
       if (success) {
         showSuccess(`Marked ${emp.firstName} as ${status}`);
@@ -116,7 +116,7 @@ export const SupervisorRollCall: React.FC<Props> = ({ userSession, activeCompany
                         <CheckCircle className="w-5 h-5" />
                       </button>
                       <button 
-                        onClick={() => handleMark(emp, 'HALF_DAY')}
+                        onClick={() => handleMark(emp,'HALFDAY')}
                         className="p-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors"
                         title="Mark Half-Day"
                       >

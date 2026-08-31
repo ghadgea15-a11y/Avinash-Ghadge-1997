@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { Plus, Edit2, Archive, Save, X, AlertCircle } from 'lucide-react';
 import { ServiceDeskService } from '../../services/serviceDeskService';
 import { TicketCategoryRecord, UserSession, ServiceTicketPriority } from '../../types';
@@ -16,6 +17,7 @@ export function ServiceDeskCategoryManager({ userSession, activeCompany, onClose
   const [categories, setCategories] = useState<TicketCategoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCategory, setEditingCategory] = useState<Partial<TicketCategoryRecord> | null>(null);
+  useBackNavigation(!!editingCategory, () => setEditingCategory(null as any), 'editingCategory');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 

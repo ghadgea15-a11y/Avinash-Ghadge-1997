@@ -151,7 +151,7 @@ export class TransferService {
         referenceNo: `GP-TR-${Math.floor(Math.random()*10000)}`,
         type: 'OUTWARD',
         status: 'DISPATCHED', // Starts dispatched so security verifies it out
-        lines: transfer.lines.map((l: TransferOrderLine) => ({ itemId: l.itemId, itemName: l.itemName, itemCode: 'NA', uom: l.unitOfMeasure || l.uom, quantity: l.dispatchedQuantity || 0 })),
+        lines: transfer.lines.map((l: TransferOrderLine) => ({ itemId: l.itemId, itemName: l.itemName, itemCode: 'NA', uom: l.unitOfMeasure || l.uom || 'Unit', quantity: l.dispatchedQuantity || 0 })),
         requestorName: session.fullName,
         receiverName: transfer.requestedByName,
         vehicleNo,

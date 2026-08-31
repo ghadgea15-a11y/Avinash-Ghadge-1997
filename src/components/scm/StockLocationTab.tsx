@@ -48,6 +48,7 @@ export function StockLocationTab({ session, company }: { session: UserSession, c
                 id: `LOC-${Date.now()}`,
                 companyId: company.companyId,
                 name,
+                code: name.toUpperCase().replace(/\s+/g, '_'),
                 type: 'SITE_STORE',
                 status: 'ACTIVE',
                 createdAt: new Date().toISOString(),

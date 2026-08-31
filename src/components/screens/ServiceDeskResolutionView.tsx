@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   ServiceTicketRecord, 
   ServiceTicketResolutionRecord,
@@ -63,12 +64,15 @@ export const ServiceDeskResolutionView: React.FC<ServiceDeskResolutionViewProps>
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [verificationNotes, setVerificationNotes] = useState<string>('');
   const [showRejectModal, setShowRejectModal] = useState<boolean>(false);
+  useBackNavigation(!!showRejectModal, () => setShowRejectModal(null as any), 'showRejectModal');
   const [rejectionReason, setRejectionReason] = useState<string>('');
   const [reworkNotes, setReworkNotes] = useState<string>('');
   const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [actionError, setActionError] = useState<string>('');
   const [showHistory, setShowHistory] = useState<boolean>(false);
+  useBackNavigation(!!showHistory, () => setShowHistory(null as any), 'showHistory');
   const [showReopenHistory, setShowReopenHistory] = useState<boolean>(true);
+  useBackNavigation(!!showReopenHistory, () => setShowReopenHistory(null as any), 'showReopenHistory');
 
   const canVerify = ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 'SERVICE_DESK', 'MANAGER', 'SUPERVISOR'].includes(userSession.role);
   const isTechnician = ['TECHNICIAN', 'STAFF', 'SUPERVISOR', 'MANAGER', 'OPS_MANAGER', 'SERVICE_DESK', 'COMPANY_ADMIN', 'SUPER_ADMIN'].includes(userSession.role);

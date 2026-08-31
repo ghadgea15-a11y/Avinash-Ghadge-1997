@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   ShieldCheck, 
   Mail, 
@@ -31,6 +32,7 @@ export const PlatformLoginScreen: React.FC<PlatformLoginScreenProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  useBackNavigation(!!showPassword, () => setShowPassword(null as any), 'showPassword');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

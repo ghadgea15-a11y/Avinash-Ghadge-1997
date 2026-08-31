@@ -1,89 +1,88 @@
 import React, { useState, useEffect } from 'react';
-import { UserSession, CompanyTenant, KpiSnapshot, KpiValue, KpiCategory } from '../../types';
-import { BiService } from '../../services/biService';
-import { RefreshCw, TrendingUp, TrendingDown, Minus, AlertTriangle, CheckCircle, Clock, Search, Filter } from 'lucide-react';
 import { format } from 'date-fns';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  Minus, 
+  AlertTriangle, 
+  CheckCircle, 
+  RefreshCw,
+  Clock,
+  BarChart2
+} from 'lucide-react';
+import { CompanyTenant, UserSession } from '../../types';
+import { BiService } from '../../services/biService';
+import { KpiSnapshot } from '../../types';
 import { RbacService } from '../../services/rbacService';
 
-interface ExecutiveBiDashboardProps {
+interface BiDashboardProps {
   session: UserSession;
   company: CompanyTenant;
 }
 
-const CATEGORIES: { id: KpiCategory; label: string }[] = [
-  { id: 'WORKFORCE', label: 'Workforce' },
-  { id: 'OPERATIONS', label: 'Operations' },
-  { id: 'FINANCE', label: 'Finance' },
-  { id: 'ASSETS', label: 'Assets' },
-  { id: 'INVENTORY', label: 'Inventory' },
-  { id: 'CRM', label: 'CRM' }
+const CATEGORIES = [
+  { id: 'WORKFORCE', label: 'Workforce & HCM' },
+  { id: 'ATTENDANCE', label: 'Attendance & Time' },
+  { id: 'FINANCE', label: 'Payroll & Finance' },
+  { id: 'OPERATIONS', label: 'Site Operations' },
+  { id: 'COMPLIANCE', label: 'Compliance & Risk' }
 ];
 
-export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ session, company }) => {
+export const ExecutiveBiDashboard: React.FC<BiDashboardProps> = ({ session, company }) => {
   const [snapshot, setSnapshot] = useState<KpiSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<KpiCategory | 'ALL'>('ALL');
-  
-  const authorityLevel = RbacService.getAuthorityLevel(session) || '';
-  const canGenerate = ['A0_OWNER', 'A1_DIRECTOR_CEO'].includes(authorityLevel);
+  const [activeCategory, setActiveCategory] = useState<string>('ALL');
 
   useEffect(() => {
-    loadLatestSnapshot();
-  }, [company.companyId]);
-
-  const loadLatestSnapshot = async () => {
-    setLoading(true);
-    try {
-      let snap = await BiService.getLatestSnapshot(company.companyId);
-      
-      // Auto-generate today's snapshot if missing (Edge-triggered scheduling fallback)
-      const todayStr = format(new Date(), 'yyyy-MM-dd');
-      if (canGenerate && (!snap || snap.snapshotDate !== todayStr)) {
-        try {
-          snap = await BiService.generateSnapshot(company.companyId, session);
-        } catch (genErr) {
-          console.warn('Auto-generation of daily snapshot failed or was concurrent:', genErr);
-          // If it fails, another client might have just generated it, re-fetch
-          snap = await BiService.getLatestSnapshot(company.companyId);
-        }
+    // 1. Fetch latest snapshot
+    const fetchLatest = async () => {
+      try {
+        const latest = await BiService.getLatestSnapshot(company.companyId);
+        setSnapshot(latest);
+      } catch (err) {
+        console.error('Error fetching BI snapshot:', err);
+      } finally {
+        setLoading(false);
       }
-      
-      setSnapshot(snap);
-    } catch (err) {
-      console.error('Failed to load snapshot:', err);
-    } finally {
-      setLoading(false);
+    };
+    fetchLatest();
+
+    // 2. Poll for updates if generating
+    let interval: NodeJS.Timeout;
+    if (snapshot?.status === 'GENERATING' || snapshot?.status === 'PARTIAL') {
+      interval = setInterval(fetchLatest, 5000);
     }
-  };
+    return () => clearInterval(interval);
+  }, [company.companyId, snapshot?.status]);
 
   const handleGenerateNow = async () => {
     setGenerating(true);
     try {
-      const snap = await BiService.generateSnapshot(company.companyId, session);
-      setSnapshot(snap);
+      await BiService.generateSnapshot(company.companyId, session);
+      // Let polling pick it up
     } catch (err) {
-      console.error('Failed to generate snapshot:', err);
-      alert('Failed to generate snapshot.');
-    } finally {
+      console.error('Generation failed:', err);
       setGenerating(false);
     }
   };
 
-  const renderTrendIcon = (val: KpiValue) => {
-    if (val.trendDirection === 'UP') return <TrendingUp className="w-4 h-4 text-emerald-500" />;
-    if (val.trendDirection === 'DOWN') return <TrendingDown className="w-4 h-4 text-rose-500" />;
+  const canGenerate = ['A0_OWNER', 'A1_DIRECTOR_CEO'].includes(RbacService.getAuthorityLevel(session) as string);
+
+  const renderTrendIcon = (val: any) => {
+    if (val.trendDirection === 'UP') return <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-500" />;
+    if (val.trendDirection === 'DOWN') return <TrendingDown className="w-4 h-4 text-rose-600 dark:text-rose-500" />;
     return <Minus className="w-4 h-4 text-slate-400" />;
   };
 
-  const renderStatusBadge = (val: KpiValue) => {
+  const renderStatusBadge = (val: any) => {
     switch (val.status) {
-      case 'ON_TARGET':
-        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"><CheckCircle className="w-3 h-3" /> Target Met</span>;
+      case 'ON_TRACK':
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"><CheckCircle className="w-3 h-3" /> Target Met</span>;
       case 'WARNING':
-        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"><AlertTriangle className="w-3 h-3" /> Warning</span>;
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"><AlertTriangle className="w-3 h-3" /> Warning</span>;
       case 'CRITICAL':
-        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400"><AlertTriangle className="w-3 h-3" /> Critical</span>;
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400"><AlertTriangle className="w-3 h-3" /> Critical</span>;
       default:
         return null;
     }
@@ -94,21 +93,21 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#fcfcfd] dark:bg-[#0f1115] p-6 rounded-[12px] border border-[#eaebec] dark:border-[#1f2228]">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-black dark:text-white tracking-tight">Executive Telemetry</h2>
+            <h2 className="text-2xl font-black text-black dark:text-white tracking-tight">Executive Telemetry</h2>
             {snapshot && snapshot.status !== 'COMPLETE' && (
-              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[10px] font-bold uppercase tracking-widest
                 ${snapshot.status === 'PARTIAL' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' : ''}
-                ${snapshot.status === 'GENERATING' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : ''}
+                ${snapshot.status === 'GENERATING' ? 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200' : ''}
                 ${snapshot.status === 'FAILED' ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400' : ''}
               `}>
                 {snapshot.status} DATA
               </span>
             )}
           </div>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2 text-sm">
+          <p className="text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-2 text-sm">
             <Clock className="w-4 h-4" /> 
             {snapshot 
               ? `Calculated: ${format(new Date(snapshot.generatedAt), 'PP p')} • v${snapshot.calculationVersion || '1.0'}` 
@@ -119,7 +118,7 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
           <button 
             onClick={handleGenerateNow}
             disabled={generating || snapshot?.status === 'GENERATING'}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors disabled:opacity-70 shadow-sm"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-black hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-black font-bold rounded-lg transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${(generating || snapshot?.status === 'GENERATING') ? 'animate-spin' : ''}`} />
             {generating || snapshot?.status === 'GENERATING' ? 'Calculating...' : (snapshot?.status === 'PARTIAL' ? 'Regenerate Snapshot' : 'Generate Snapshot')}
@@ -131,10 +130,10 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
       <div className="flex overflow-x-auto pb-2 gap-2 hide-scrollbar">
         <button
           onClick={() => setActiveCategory('ALL')}
-          className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
+          className={`px-5 py-2.5 rounded-lg whitespace-nowrap text-xs font-bold uppercase tracking-widest transition-colors ${
             activeCategory === 'ALL' 
-              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' 
-              : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
+              : 'bg-white dark:bg-[#0f1115] text-slate-600 dark:text-slate-400 hover:bg-[#fcfcfd] dark:hover:bg-[#141517] border border-[#eaebec] dark:border-[#1f2228]'
           }`}
         >
           All Metrics
@@ -143,10 +142,10 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
           <button
             key={cat.id}
             onClick={() => setActiveCategory(cat.id)}
-            className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
+            className={`px-5 py-2.5 rounded-lg whitespace-nowrap text-xs font-bold uppercase tracking-widest transition-colors ${
               activeCategory === cat.id 
-                ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' 
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
+                : 'bg-white dark:bg-[#0f1115] text-slate-600 dark:text-slate-400 hover:bg-[#fcfcfd] dark:hover:bg-[#141517] border border-[#eaebec] dark:border-[#1f2228]'
             }`}
           >
             {cat.label}
@@ -156,64 +155,63 @@ export const ExecutiveBiDashboard: React.FC<ExecutiveBiDashboardProps> = ({ sess
 
       {/* KPI Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Loading Telemetry...</p>
+        <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-[#0f1115] rounded-[12px] border border-[#eaebec] dark:border-[#1f2228]">
+          <div className="w-8 h-8 border-4 border-slate-300 dark:border-slate-700 border-t-black dark:border-t-white rounded-full animate-spin mb-4"></div>
+          <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Loading Telemetry...</p>
         </div>
       ) : snapshot ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredValues.map((val: any) => (
-            <div key={val.kpiId} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-              {/* Category indicator line */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-50"></div>
-              
-              <div className="flex justify-between items-start mb-4">
+            <div key={val.kpiId} className="bg-white dark:bg-[#0f1115] p-6 rounded-[12px] border border-[#eaebec] dark:border-[#1f2228] transition-colors">
+              <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider">{val.name}</h3>
-                  <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-black dark:text-white">
+                  <h3 className="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest">{val.name}</h3>
+                  <div className="mt-3 flex items-baseline gap-2">
+                    <span className="text-4xl font-black text-black dark:text-white">
                       {val.currentValue.toLocaleString()}
                     </span>
-                    <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">{val.unit}</span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400 font-bold">{val.unit}</span>
                   </div>
                 </div>
                 {renderStatusBadge(val)}
               </div>
               
-              <div className="flex items-center gap-4 mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/50">
-                <div className="flex items-center gap-1">
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#eaebec] dark:border-[#1f2228]">
+                <div className="flex items-center gap-1.5">
                   {renderTrendIcon(val)}
-                  <span className={`text-sm font-medium ${
-                    val.trendDirection === 'UP' ? 'text-emerald-600 dark:text-emerald-400' :
-                    val.trendDirection === 'DOWN' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'
+                  <span className={`text-sm font-bold ${
+                    val.trendDirection === 'UP' ? 'text-emerald-600 dark:text-emerald-500' :
+                    val.trendDirection === 'DOWN' ? 'text-rose-600 dark:text-rose-500' : 'text-slate-500 dark:text-slate-400'
                   }`}>
                     {val.percentageChange !== null ? `${Math.abs(val.percentageChange).toFixed(1)}%` : '0%'}
                   </span>
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  vs previous ({val.previousValue !== null ? val.previousValue.toLocaleString() : 'N/A'})
+                <div className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  VS PREV: {val.previousValue !== null ? val.previousValue.toLocaleString() : 'N/A'}
                 </div>
               </div>
             </div>
           ))}
+
           {filteredValues.length === 0 && (
-            <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 border-dashed">
-              No KPIs found for this category.
+            <div className="col-span-full py-16 text-center text-slate-500 dark:text-slate-400 bg-[#fcfcfd] dark:bg-[#0f1115] rounded-[12px] border border-[#eaebec] dark:border-[#1f2228] border-dashed">
+              <BarChart2 className="w-10 h-10 mx-auto mb-4 opacity-20" />
+              <p className="font-bold text-sm tracking-wide">NO KPIs FOUND</p>
             </div>
           )}
         </div>
       ) : (
-        <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4 opacity-50" />
-          <h3 className="text-lg font-bold text-black dark:text-white mb-2">No Snapshots Available</h3>
-          <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-6">
+        <div className="text-center py-20 bg-[#fcfcfd] dark:bg-[#0f1115] rounded-[12px] border border-[#eaebec] dark:border-[#1f2228]">
+          <AlertTriangle className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <h3 className="text-xl font-black text-black dark:text-white mb-2 tracking-tight">No Snapshots Available</h3>
+          <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-8 text-sm leading-relaxed">
             There is no KPI snapshot data for this company yet. Generate the first snapshot to populate the dashboard.
           </p>
           {canGenerate && (
             <button 
               onClick={handleGenerateNow}
               disabled={generating}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 px-8 py-3 bg-black hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-black font-bold rounded-lg transition-colors"
             >
               <RefreshCw className={`w-5 h-5 ${generating ? 'animate-spin' : ''}`} />
               {generating ? 'Calculating KPIs...' : 'Generate Initial Snapshot'}

@@ -11,8 +11,8 @@ import {
 /**
  * Enterprise Storage Service
  * 
- * Handles file uploads, downloads, and management for documents, 
- * identity badges, and evidence captures.
+ * Handles file uploads, downloads, and lifecycle management for documents, 
+ * identity badges, candidate records, and profile photos.
  */
 export class StorageService {
   /**
@@ -24,16 +24,45 @@ export class StorageService {
     metadata?: any
   ): Promise<string> {
     const storageRef = ref(storage, path);
-    const uploadTask = await uploadBytesResumable(storageRef, file, typeof metadata === 'object' && metadata?.cacheControl ? metadata : undefined);
+    const uploadTask = await uploadBytesResumable(
+      storageRef, 
+      file, 
+      typeof metadata === 'object' && metadata?.cacheControl ? metadata : undefined
+    );
     return getDownloadURL(uploadTask.ref);
   }
 
   /**
-   * Deletes a file from Firebase Storage.
+   * Deletes a file from Firebase Storage safely by path or download URL.
    */
-  public static async deleteFile(path: string, _session?: any): Promise<void> {
-    const storageRef = ref(storage, path);
-    await deleteObject(storageRef);
+  public static async deleteFile(pathOrUrl: string, _session?: any): Promise<void> {
+    if (!pathOrUrl || typeof pathOrUrl !== 'string') return;
+    try {
+      let storageRef;
+      if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://') || pathOrUrl.startsWith('gs://')) {
+        // Firebase Storage SDK supports ref from full download URL or gs:// URI
+        storageRef = ref(storage, pathOrUrl);
+      } else {
+        storageRef = ref(storage, pathOrUrl);
+      }
+      await deleteObject(storageRef);
+    } catch (err: any) {
+      // If object already does not exist (storage/object-not-found), ignore safely
+      if (err?.code === 'storage/object-not-found') {
+        return;
+      }
+      console.warn(`[StorageService] Warning deleting file: ${pathOrUrl}`, err?.message || err);
+    }
+  }
+
+  /**
+   * Safely cleans up a previously stored file when a new version is uploaded.
+   */
+  public static async cleanupOldFile(oldUrlOrPath?: string): Promise<void> {
+    if (!oldUrlOrPath || typeof oldUrlOrPath !== 'string' || oldUrlOrPath.startsWith('data:')) {
+      return;
+    }
+    await this.deleteFile(oldUrlOrPath);
   }
 
   /**
@@ -50,3 +79,4 @@ export class StorageService {
     return `companies/${companyId}/employees/${employeeId}/${type}/${Date.now()}_${filename}`;
   }
 }
+

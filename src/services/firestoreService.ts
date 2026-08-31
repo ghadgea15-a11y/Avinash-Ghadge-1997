@@ -22,6 +22,7 @@ import { db, auth } from '../firebase';
 import { QueryScopeEngine } from './queryScopeEngine';
 import { SessionManager } from './sessionManager';
 import { AuditTrailService } from './auditTrailService';
+import { RbacService } from './rbacService';
 import { SuspiciousPunchService } from './suspiciousPunchService';
 import { BulkExportGovernanceService } from './bulkExportGovernanceService';
 import { 
@@ -58,6 +59,7 @@ import {
   IncidentSeverity,
   IncidentStatus,
   VisitorLogRecord,
+  VisitorWatchlistRecord,
   MaterialMovementRecord,
   DailySiteLogRecord,
   ApprovalRequestRecord,
@@ -210,7 +212,7 @@ export class FirestoreService {
 
   static async saveVendor(companyId: string, vendor: VendorRecord): Promise<boolean> {
     try {
-      const docRef = doc(db, 'companies', companyId, 'vendors', vendor.id);
+      const docRef = doc(db, 'companies', companyId || '', 'vendors', vendor.id);
       await setDoc(docRef, vendor, { merge: true });
       return true;
     } catch (err) {
@@ -221,7 +223,7 @@ export class FirestoreService {
 
   static async deleteVendor(companyId: string, vendorId: string): Promise<boolean> {
     try {
-      const docRef = doc(db, 'companies', companyId, 'vendors', vendorId);
+      const docRef = doc(db, 'companies', companyId || '', 'vendors', vendorId);
       await deleteDoc(docRef);
       return true;
     } catch (err) {
@@ -333,7 +335,7 @@ export class FirestoreService {
   }): Promise<boolean> {
     try {
       const id = `REQ_${Date.now()}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-      const docRef = doc(db, 'companies', companyId, 'approval_requests', id);
+      const docRef = doc(db, 'companies', companyId || '', 'approval_requests', id);
       await setDoc(docRef, {
         id,
         companyId,
@@ -425,7 +427,7 @@ export class FirestoreService {
     } catch (err: any) {
       console.warn('[FirestoreService] Cloud function inviteEmployee unavailable, using client fallback:', err);
       try {
-        const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+        const empRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
         const empSnap = await getDoc(empRef);
         if (!empSnap.exists()) return { success: false, message: 'Employee record not found.' };
         const emp = empSnap.data() as EmployeeRecord;
@@ -433,7 +435,7 @@ export class FirestoreService {
 
         const email = emp.email.trim().toLowerCase();
         const invId = `INV-${employeeId}-${Date.now().toString(36).toUpperCase()}`;
-        const invRef = doc(db, 'companies', companyId, 'invitations', invId);
+        const invRef = doc(db, 'companies', companyId || '', 'invitations', invId);
         const timestamp = new Date().toISOString();
 
         await setDoc(invRef, {
@@ -503,21 +505,18 @@ export class FirestoreService {
         if (conflictRes.hasBlockers) {
           const blockerMsg = `[CONFLICT BLOCKED]: ${conflictRes.summary} - ${conflictRes.conflicts[0]?.reason}`;
           console.error(blockerMsg);
-          await AuditTrailService.recordEvent(
-            { userId: actor.id, companyId, role: 'SYSTEM' },
+          await (AuditTrailService as any).recordEvent({
+            session: { userId: actor.id, companyId, role: "SYSTEM" },
             companyId,
-            'CONFLICT_GOVERNANCE',
-            'ENTERPRISE_CONFLICT_BLOCKED',
-            'BLOCK',
-            'EmployeeRecord',
-            employee.id,
-            false,
-            'HIGH',
-            undefined,
-            blockerMsg,
-            conflictRes.conflicts[0]?.reason,
-            { ruleCode: conflictRes.conflicts[0]?.ruleCode, conflicts: conflictRes.conflicts }
-          );
+            module: "CONFLICT_GOVERNANCE",
+            action: "ENTERPRISE_CONFLICT_BLOCKED",
+            method: "BLOCK",
+            entity: "EmployeeRecord",
+            entityId: employee.id,
+            success: false,
+            severity: "HIGH",
+            reason: blockerMsg
+          });
           throw new Error(blockerMsg);
         }
       } catch (confErr: any) {
@@ -538,7 +537,7 @@ export class FirestoreService {
       const batch = writeBatch(db);
 
       // 1. Write to modern subcollection (Android & Web app alignment)
-      const refNew = doc(db, 'companies', companyId, 'employees', employee.id);
+      const refNew = doc(db, 'companies', companyId || '', 'employees', employee.id);
       batch.set(refNew, payload, { merge: true });
 
       // 2. If employee is linked to Firebase Auth UID, synchronize profile and membership
@@ -627,10 +626,10 @@ export class FirestoreService {
         const empDoc = snap.docs[0];
         docId = empDoc.id;
         empData = empDoc.data();
-        empDocRef = doc(db, 'companies', companyId, 'employees', docId);
+        empDocRef = doc(db, 'companies', companyId || '', 'employees', docId);
       } else {
         // 2. Try to find by document ID
-        const directRef = doc(db, 'companies', companyId, 'employees', employeeId);
+        const directRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
         const directSnap = await getDoc(directRef);
         if (directSnap.exists()) {
           docId = employeeId;
@@ -725,7 +724,7 @@ export class FirestoreService {
       
       if (ok) {
         // Update candidate stage
-        await setDoc(doc(db, 'companies', companyId, 'candidates', candidate.id), {
+        await setDoc(doc(db, 'companies', companyId || '', 'candidates', candidate.id), {
           stage: 'ONBOARDED', // Using ONBOARDED as requested in Module 12 types
           convertedToEmployeeId: employeeId,
           updatedAt: new Date().toISOString()
@@ -780,7 +779,7 @@ export class FirestoreService {
   ): Promise<boolean> {
     try {
       const eventId = `EVT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-      const ref = doc(db, 'companies', companyId, 'employees', employeeId, 'lifecycleEvents', eventId);
+      const ref = doc(db, 'companies', companyId || '', 'employees', employeeId, 'lifecycleEvents', eventId);
       
       await setDoc(ref, {
         ...event,
@@ -816,7 +815,7 @@ export class FirestoreService {
     actor: { id: string, name: string }
   ): Promise<boolean> {
     try {
-      const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+      const empRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
       const snap = await getDoc(empRef);
       if (!snap.exists()) return false;
 
@@ -885,7 +884,7 @@ export class FirestoreService {
   ): Promise<string | null> {
     try {
       const requestId = `PROM-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'promotions', requestId);
+      const ref = doc(db, 'companies', companyId || '', 'promotions', requestId);
       
       await setDoc(ref, {
         ...request,
@@ -895,7 +894,7 @@ export class FirestoreService {
       });
 
       // Update employee lifecycle status
-      await setDoc(doc(db, 'companies', companyId, 'employees', request.employeeId), {
+      await setDoc(doc(db, 'companies', companyId || '', 'employees', request.employeeId), {
         lifecycleStatus: 'PROMOTION_PENDING'
       }, { merge: true });
 
@@ -925,7 +924,7 @@ export class FirestoreService {
     actor: { id: string, name: string }
   ): Promise<boolean> {
     try {
-      const promoRef = doc(db, 'companies', companyId, 'promotions', requestId);
+      const promoRef = doc(db, 'companies', companyId || '', 'promotions', requestId);
       const now = new Date().toISOString();
       const eventId = `EVT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
       let employeeId = '';
@@ -940,8 +939,8 @@ export class FirestoreService {
         }
         
         employeeId = promo.employeeId;
-        const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
-        const eventRef = doc(db, 'companies', companyId, 'employees', employeeId, 'lifecycleEvents', eventId);
+        const empRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
+        const eventRef = doc(db, 'companies', companyId || '', 'employees', employeeId, 'lifecycleEvents', eventId);
         
         t.set(empRef, {
           designation: promo.newDesignation,
@@ -994,7 +993,7 @@ export class FirestoreService {
       // Enterprise Conflict Pre-Validation
       try {
         const { EnterpriseConflictEngine } = await import('./enterpriseConflictEngine');
-        const empSnap = await getDoc(doc(db, 'companies', companyId, 'employees', request.employeeId));
+        const empSnap = await getDoc(doc(db, 'companies', companyId || '', 'employees', request.employeeId));
         if (empSnap.exists()) {
           const emp = { id: empSnap.id, ...empSnap.data() } as EmployeeRecord;
           const xfersSnap = await getDocs(query(collection(db, 'companies', companyId, 'transfers'), where('employeeId', '==', request.employeeId)));
@@ -1020,7 +1019,7 @@ export class FirestoreService {
       }
 
       const requestId = `XFER-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'transfers', requestId);
+      const ref = doc(db, 'companies', companyId || '', 'transfers', requestId);
       
       await setDoc(ref, {
         ...request,
@@ -1030,7 +1029,7 @@ export class FirestoreService {
       });
 
       // Update employee lifecycle status
-      await setDoc(doc(db, 'companies', companyId, 'employees', request.employeeId), {
+      await setDoc(doc(db, 'companies', companyId || '', 'employees', request.employeeId), {
         lifecycleStatus: 'TRANSFER_PENDING'
       }, { merge: true });
 
@@ -1060,7 +1059,7 @@ export class FirestoreService {
     actor: { id: string, name: string }
   ): Promise<boolean> {
     try {
-      const xferRef = doc(db, 'companies', companyId, 'transfers', requestId);
+      const xferRef = doc(db, 'companies', companyId || '', 'transfers', requestId);
       const now = new Date().toISOString();
       const eventId = `EVT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
       let employeeId = '';
@@ -1075,8 +1074,8 @@ export class FirestoreService {
         }
         
         employeeId = xfer.employeeId;
-        const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
-        const eventRef = doc(db, 'companies', companyId, 'employees', employeeId, 'lifecycleEvents', eventId);
+        const empRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
+        const eventRef = doc(db, 'companies', companyId || '', 'employees', employeeId, 'lifecycleEvents', eventId);
         
         t.set(empRef, {
           assignedSiteId: xfer.newSiteId,
@@ -1127,11 +1126,11 @@ export class FirestoreService {
   ): Promise<string | null> {
     try {
       const requestId = `EXIT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-      const exitRef = doc(db, 'companies', companyId, 'exits', requestId);
-      const empRef = doc(db, 'companies', companyId, 'employees', request.employeeId);
+      const exitRef = doc(db, 'companies', companyId || '', 'exits', requestId);
+      const empRef = doc(db, 'companies', companyId || '', 'employees', request.employeeId);
       const now = new Date().toISOString();
       const eventId = `EVT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-      const eventRef = doc(db, 'companies', companyId, 'employees', request.employeeId, 'lifecycleEvents', eventId);
+      const eventRef = doc(db, 'companies', companyId || '', 'employees', request.employeeId, 'lifecycleEvents', eventId);
 
       await runTransaction(db, async (t) => {
         t.set(exitRef, {
@@ -1182,7 +1181,7 @@ export class FirestoreService {
     actor: { id: string, name: string }
   ): Promise<boolean> {
     try {
-      const exitRef = doc(db, 'companies', companyId, 'exits', requestId);
+      const exitRef = doc(db, 'companies', companyId || '', 'exits', requestId);
       const now = new Date().toISOString();
       const eventId = `EVT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
       let employeeId = '';
@@ -1197,8 +1196,8 @@ export class FirestoreService {
         }
         
         employeeId = exit.employeeId;
-        const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
-        const eventRef = doc(db, 'companies', companyId, 'employees', employeeId, 'lifecycleEvents', eventId);
+        const empRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
+        const eventRef = doc(db, 'companies', companyId || '', 'employees', employeeId, 'lifecycleEvents', eventId);
 
         t.set(empRef, {
           lifecycleStatus: 'EXITED',
@@ -1255,7 +1254,7 @@ export class FirestoreService {
         updatedBy: actor.id
       };
 
-      const refNew = doc(db, 'companies', companyId, 'employees', employeeId);
+      const refNew = doc(db, 'companies', companyId || '', 'employees', employeeId);
       await setDoc(refNew, payload, { merge: true });
 
       const refLegacy = doc(db, 'users', employeeId);
@@ -1289,7 +1288,7 @@ export class FirestoreService {
     actor: { id: string; name: string }
   ): Promise<boolean> {
     try {
-      const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+      const empRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
       const empSnap = await getDoc(empRef);
       if (!empSnap.exists()) return false;
 
@@ -1327,7 +1326,7 @@ export class FirestoreService {
     actor: { id: string; name: string }
   ): Promise<boolean> {
     try {
-      const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+      const empRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
       const empSnap = await getDoc(empRef);
       if (!empSnap.exists()) return false;
 
@@ -1364,7 +1363,7 @@ export class FirestoreService {
     actor: { id: string; name: string }
   ): Promise<boolean> {
     try {
-      const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+      const empRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
       const empSnap = await getDoc(empRef);
       if (!empSnap.exists()) return false;
 
@@ -1403,7 +1402,7 @@ export class FirestoreService {
     actor: { id: string; name: string }
   ): Promise<boolean> {
     try {
-      const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+      const empRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
       const empSnap = await getDoc(empRef);
       if (!empSnap.exists()) return false;
 
@@ -1465,7 +1464,7 @@ export class FirestoreService {
         updatedAt: new Date().toISOString()
       };
 
-      const refNew = doc(db, 'companies', companyId, 'employees', employeeId);
+      const refNew = doc(db, 'companies', companyId || '', 'employees', employeeId);
       await setDoc(refNew, payload, { merge: true });
 
       const refLegacy = doc(db, 'users', employeeId);
@@ -1486,7 +1485,7 @@ export class FirestoreService {
     const newPath = `companies/${companyId}/employees/${employeeId}`;
     try {
       const { deleteDoc } = await import('firebase/firestore');
-      const refNew = doc(db, 'companies', companyId, 'employees', employeeId);
+      const refNew = doc(db, 'companies', companyId || '', 'employees', employeeId);
       await deleteDoc(refNew);
 
       const refLegacy = doc(db, 'users', employeeId);
@@ -1514,7 +1513,7 @@ export class FirestoreService {
    */
   static async checkEmployeeExists(companyId: string, employeeId: string): Promise<boolean> {
     try {
-      const refNew = doc(db, 'companies', companyId, 'employees', employeeId);
+      const refNew = doc(db, 'companies', companyId || '', 'employees', employeeId);
       const snap = await getDoc(refNew);
       if (snap.exists()) return true;
 
@@ -1628,7 +1627,7 @@ export class FirestoreService {
   static async saveShift(companyId: string, shift: ShiftRecord): Promise<boolean> {
     const path = `companies/${companyId}/shifts/${shift.id}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'shifts', shift.id);
+      const ref = doc(db, 'companies', companyId || '', 'shifts', shift.id);
       await setDoc(ref, {
         ...shift,
         companyId,
@@ -1644,7 +1643,7 @@ export class FirestoreService {
   static async updateShiftStatus(companyId: string, shiftId: string, status: 'ACTIVE' | 'INACTIVE'): Promise<boolean> {
     const path = `companies/${companyId}/shifts/${shiftId}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'shifts', shiftId);
+      const ref = doc(db, 'companies', companyId || '', 'shifts', shiftId);
       await setDoc(ref, { status, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) {
@@ -1656,7 +1655,7 @@ export class FirestoreService {
   static async deleteShift(companyId: string, shiftId: string): Promise<boolean> {
     const path = `companies/${companyId}/shifts/${shiftId}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'shifts', shiftId);
+      const ref = doc(db, 'companies', companyId || '', 'shifts', shiftId);
       await deleteDoc(ref);
       return true;
     } catch (err) {
@@ -1747,7 +1746,7 @@ export class FirestoreService {
       }
 
       const rId = roster.id || `ROSTER_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-      const ref = doc(db, 'companies', companyId, 'rosters', rId);
+      const ref = doc(db, 'companies', companyId || '', 'rosters', rId);
       await setDoc(ref, {
         ...roster,
         id: rId,
@@ -1798,7 +1797,7 @@ export class FirestoreService {
         for (const roster of rosters) {
           const rId = roster.id || `ROSTER_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
           roster.id = rId;
-          const ref = doc(db, 'companies', companyId, 'rosters', rId);
+          const ref = doc(db, 'companies', companyId || '', 'rosters', rId);
           transaction.set(ref, {
             ...roster,
             id: rId,
@@ -1811,7 +1810,7 @@ export class FirestoreService {
       // Send Notifications to employees
       for (const roster of rosters) {
         const notifId = `NOTIF_ROSTER_${roster.id}`;
-        const notifRef = doc(db, 'companies', companyId, 'notifications', notifId);
+        const notifRef = doc(db, 'companies', companyId || '', 'notifications', notifId);
         await setDoc(notifRef, {
           id: notifId,
           title: 'Shift Assigned',
@@ -1856,7 +1855,7 @@ export class FirestoreService {
 
   static async deleteRoster(companyId: string, rosterId: string, actor: { id: string; name: string }): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'rosters', rosterId);
+      const ref = doc(db, 'companies', companyId || '', 'rosters', rosterId);
       const snap = await getDoc(ref);
       const rosterData = snap.data() as RosterRecord | undefined;
       
@@ -1864,7 +1863,7 @@ export class FirestoreService {
 
       if (rosterData) {
         const notifId = `NOTIF_ROSTER_DEL_${rosterId}`;
-        const notifRef = doc(db, 'companies', companyId, 'notifications', notifId);
+        const notifRef = doc(db, 'companies', companyId || '', 'notifications', notifId);
         await setDoc(notifRef, {
           id: notifId,
           title: 'Shift Cancelled',
@@ -1919,7 +1918,7 @@ export class FirestoreService {
   static async saveAttendance(companyId: string, record: AttendanceRecord): Promise<boolean> {
     const path = `companies/${companyId}/attendance/${record.id}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'attendance', record.id);
+      const ref = doc(db, 'companies', companyId || '', 'attendance', record.id);
       
       // Ensure data consistency between 'date' and 'attendanceDate'
       const normalizedRecord = { ...record };
@@ -1957,7 +1956,7 @@ export class FirestoreService {
 
   static async getAttendanceById(companyId: string, attendanceId: string): Promise<AttendanceRecord | null> {
     try {
-      const ref = doc(db, 'companies', companyId, 'attendance', attendanceId);
+      const ref = doc(db, 'companies', companyId || '', 'attendance', attendanceId);
       const snap = await getDoc(ref);
       return snap.exists() ? (snap.data() as AttendanceRecord) : null;
     } catch (err) {
@@ -1986,7 +1985,7 @@ export class FirestoreService {
       const now = new Date().toISOString();
       
       const result = await runTransaction(db, async (transaction) => {
-        const ref = doc(db, 'companies', companyId, 'attendance', id);
+        const ref = doc(db, 'companies', companyId || '', 'attendance', id);
         const snap = await transaction.get(ref);
         
         if (snap.exists()) {
@@ -1994,7 +1993,7 @@ export class FirestoreService {
         }
 
         // Verify Employee Status & Get Profile Photo
-        const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+        const empRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
         const empSnap = await transaction.get(empRef);
         if (!empSnap.exists()) {
           return { success: false, message: 'Employee record not found. Cannot punch in.' };
@@ -2017,7 +2016,7 @@ export class FirestoreService {
         
         // Geo-Fence Validation
         let geoVerification: import('../types').GeoVerificationData | undefined = undefined;
-        const siteSnap = await transaction.get(doc(db, 'companies', companyId, 'sites', siteId));
+        const siteSnap = await transaction.get(doc(db, 'companies', companyId || '', 'sites', siteId));
         
         if (siteSnap.exists()) {
           const site = siteSnap.data() as SiteRecord;
@@ -2036,7 +2035,7 @@ export class FirestoreService {
 
               if ((geoResult.result === 'OUTSIDE_GEOFENCE' && !geofenceOverrideRequested) || isVisionFailed) {
                 const anomalyId = `SUSP-PUNCH-${Date.now()}-${employeeId}`;
-                const anomalyRef = doc(db, 'companies', companyId, 'suspicious_punches', anomalyId);
+                const anomalyRef = doc(db, 'companies', companyId || '', 'suspicious_punches', anomalyId);
                 
                 const anomalyData: any = {
                   id: anomalyId,
@@ -2116,7 +2115,7 @@ export class FirestoreService {
           shiftName: shift.shiftName,
           siteId,
           siteName,
-          attendanceDate: date,
+          attendanceDate: date, date: date,
           checkIn: now,
           status: metrics.status,
           lateMinutes: metrics.lateMinutes,
@@ -2180,7 +2179,7 @@ export class FirestoreService {
       const now = new Date().toISOString();
       
       const result = await runTransaction(db, async (transaction) => {
-        const ref = doc(db, 'companies', companyId, 'attendance', attendanceId);
+        const ref = doc(db, 'companies', companyId || '', 'attendance', attendanceId);
         const snap = await transaction.get(ref);
         if (!snap.exists()) {
           return { success: false, message: 'Attendance record not found' };
@@ -2191,20 +2190,20 @@ export class FirestoreService {
           return { success: false, message: 'Already punched out.' };
         }
 
-        const policy = await this.getOvertimePolicy(companyId, record.siteId);
+        const policy = await this.getOvertimePolicy(companyId, record.siteId || '');
         const calcResult = AttendanceCalculationEngine.calculate({
-          workDate: record.attendanceDate,
+          workDate: record.attendanceDate || new Date().toISOString().split('T')[0],
           shift,
           checkInIso: record.checkIn,
           checkOutIso: now,
-          policy,
-          siteId: record.siteId,
+          policy: policy || undefined,
+          siteId: record.siteId || '',
           rosterId: record.rosterId
         });
 
         // Geo-Fence & Biometric Validation
         let geoVerification: import('../types').GeoVerificationData | undefined = undefined;
-        const siteSnap = await transaction.get(doc(db, 'companies', companyId, 'sites', record.siteId));
+        const siteSnap = await transaction.get(doc(db, 'companies', companyId || '', 'sites', record.siteId || ''));
         
         if (siteSnap.exists()) {
         const site = siteSnap.data() as SiteRecord;
@@ -2222,13 +2221,13 @@ export class FirestoreService {
             if (geoResult.result === 'OUTSIDE_GEOFENCE' && !geofenceOverrideRequested) {
               // Log suspicious breach
               const anomalyId = `SUSP-GEO-${Date.now()}-${record.employeeId}`;
-              const anomalyRef = doc(db, 'companies', companyId, 'suspicious_punches', anomalyId);
+              const anomalyRef = doc(db, 'companies', companyId || '', 'suspicious_punches', anomalyId);
               transaction.set(anomalyRef, {
                 id: anomalyId,
                 companyId,
                 employeeId: record.employeeId,
                 employeeName: record.employeeName,
-                siteId: record.siteId,
+                siteId: record.siteId || '' || '' || '',
                 siteName: record.siteName,
                 punchType: 'PUNCH_OUT',
                 punchTimestamp: now,
@@ -2313,7 +2312,7 @@ export class FirestoreService {
             attendanceId,
             employeeId: record.employeeId,
             employeeName: record.employeeName,
-            siteId: record.siteId,
+            siteId: record.siteId || '' || '' || '',
             siteName: record.siteName,
             workDate: record.attendanceDate,
             shiftId: shift.id,
@@ -2375,14 +2374,14 @@ export class FirestoreService {
     const id = `ATT-${rosterId}`;
     try {
       const now = new Date().toISOString();
-      const policy = await this.getOvertimePolicy(companyId, siteId);
+      const policy = await this.getOvertimePolicy(companyId, siteId || '');
       
       if (action === 'IN') {
         const calcResult = AttendanceCalculationEngine.calculate({
           workDate: date,
           shift,
           checkInIso: now,
-          policy,
+          policy: policy || undefined,
           siteId,
           rosterId
         });
@@ -2397,7 +2396,7 @@ export class FirestoreService {
           shiftName: shift.shiftName,
           siteId,
           siteName,
-          attendanceDate: date,
+          attendanceDate: date, date: date,
           checkIn: now,
           status: calcResult.status,
           lateMinutes: calcResult.lateMinutes,
@@ -2422,17 +2421,17 @@ export class FirestoreService {
         };
         return await this.saveAttendance(companyId, record);
       } else {
-        const ref = doc(db, 'companies', companyId, 'attendance', id);
+        const ref = doc(db, 'companies', companyId || '', 'attendance', id);
         const snap = await getDoc(ref);
         if (!snap.exists()) return false;
         
         const record = snap.data() as AttendanceRecord;
         const calcResult = AttendanceCalculationEngine.calculate({
-          workDate: record.attendanceDate,
+          workDate: record.attendanceDate || new Date().toISOString().split('T')[0],
           shift,
           checkInIso: record.checkIn,
           checkOutIso: now,
-          policy,
+          policy: policy || undefined,
           siteId,
           rosterId
         });
@@ -2572,7 +2571,7 @@ export class FirestoreService {
    */
   static async createNotification(companyId: string, notification: AppNotification): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'notifications', notification.id);
+      const ref = doc(db, 'companies', companyId || '', 'notifications', notification.id);
       await setDoc(ref, notification);
       return true;
     } catch (e) {
@@ -2670,7 +2669,7 @@ export class FirestoreService {
 
   static async saveBranch(companyId: string, branch: BranchRecord): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'branches', branch.id);
+      const ref = doc(db, 'companies', companyId || '', 'branches', branch.id);
       await setDoc(ref, {
         ...branch, companyId,
         updatedAt: new Date().toISOString()
@@ -2700,7 +2699,7 @@ export class FirestoreService {
 
   static async saveSite(companyId: string, site: SiteRecord): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'sites', site.id);
+      const ref = doc(db, 'companies', companyId || '', 'sites', site.id);
       
       // Sanitize object to remove undefined values
       const sanitizedSite = Object.fromEntries(
@@ -2735,21 +2734,21 @@ export class FirestoreService {
    * ============================================================
    */
 
-  static async getGroups(companyId: string): Promise<GroupRecord[]> {
+  static async getGroups(companyId: string): Promise<any[]> {
     try {
       const colRef = collection(db, 'companies', companyId, 'groups');
       const q = query(colRef, orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as GroupRecord));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
     } catch (err) {
       console.warn('[FirestoreService] getGroups error:', err);
       return [];
     }
   }
 
-  static async saveGroup(companyId: string, group: GroupRecord): Promise<boolean> {
+  static async saveGroup(companyId: string, group: any): Promise<boolean> {
     try {
-      const docRef = doc(db, 'companies', companyId, 'groups', group.id);
+      const docRef = doc(db, 'companies', companyId || '', 'groups', group.id);
       await setDoc(docRef, {
         ...group,
         updatedAt: new Date().toISOString()
@@ -2771,7 +2770,7 @@ export class FirestoreService {
       }
 
       // 2. Delete group doc
-      const docRef = doc(db, 'companies', companyId, 'groups', groupId);
+      const docRef = doc(db, 'companies', companyId || '', 'groups', groupId);
       await deleteDoc(docRef);
       return true;
     } catch (err: any) {
@@ -2780,11 +2779,11 @@ export class FirestoreService {
     }
   }
 
-  static async getGroupMembers(companyId: string, groupId: string): Promise<GroupMemberRecord[]> {
+  static async getGroupMembers(companyId: string, groupId: string): Promise<any[]> {
     try {
       const colRef = collection(db, 'companies', companyId, 'groups', groupId, 'members');
       const snap = await getDocs(colRef);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as GroupMemberRecord));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
     } catch (err) {
       console.warn('[FirestoreService] getGroupMembers error:', err);
       return [];
@@ -2794,9 +2793,9 @@ export class FirestoreService {
   static async assignEmployeeToGroup(companyId: string, groupId: string, employeeId: string, siteId?: string, departmentId?: string): Promise<boolean> {
     try {
       const memberId = `${groupId}_${employeeId}`;
-      const docRef = doc(db, 'companies', companyId, 'groups', groupId, 'members', memberId);
+      const docRef = doc(db, 'companies', companyId || '', 'groups', groupId, 'members', memberId);
       
-      const memberData: GroupMemberRecord = {
+      const memberData: any = {
         id: memberId,
         companyId,
         groupId,
@@ -2810,14 +2809,14 @@ export class FirestoreService {
       await setDoc(docRef, memberData);
 
       // Also update employee record to reflect primary group
-      const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+      const empRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
       await setDoc(empRef, {
         groupId,
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
       // Update group member count
-      const groupRef = doc(db, 'companies', companyId, 'groups', groupId);
+      const groupRef = doc(db, 'companies', companyId || '', 'groups', groupId);
       const groupSnap = await getDoc(groupRef);
       if (groupSnap.exists()) {
         const currentCount = groupSnap.data().memberCount || 0;
@@ -2834,11 +2833,11 @@ export class FirestoreService {
   static async removeEmployeeFromGroup(companyId: string, groupId: string, employeeId: string): Promise<boolean> {
     try {
       const memberId = `${groupId}_${employeeId}`;
-      const docRef = doc(db, 'companies', companyId, 'groups', groupId, 'members', memberId);
+      const docRef = doc(db, 'companies', companyId || '', 'groups', groupId, 'members', memberId);
       await deleteDoc(docRef);
 
       // Also update employee record
-      const empRef = doc(db, 'companies', companyId, 'employees', employeeId);
+      const empRef = doc(db, 'companies', companyId || '', 'employees', employeeId);
       const empSnap = await getDoc(empRef);
       if (empSnap.exists() && empSnap.data().groupId === groupId) {
         await setDoc(empRef, {
@@ -2848,7 +2847,7 @@ export class FirestoreService {
       }
 
       // Update group member count
-      const groupRef = doc(db, 'companies', companyId, 'groups', groupId);
+      const groupRef = doc(db, 'companies', companyId || '', 'groups', groupId);
       const groupSnap = await getDoc(groupRef);
       if (groupSnap.exists()) {
         const currentCount = groupSnap.data().memberCount || 0;
@@ -2864,7 +2863,7 @@ export class FirestoreService {
 
   static async saveDepartment(companyId: string, dept: DepartmentRecord): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'departments', dept.id);
+      const ref = doc(db, 'companies', companyId || '', 'departments', dept.id);
       await setDoc(ref, {
         ...dept, companyId,
         updatedAt: new Date().toISOString()
@@ -2889,7 +2888,7 @@ export class FirestoreService {
 
   static async saveCostCentre(companyId: string, costCentre: any): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'cost_centres', costCentre.id);
+      const ref = doc(db, 'companies', companyId || '', 'cost_centres', costCentre.id);
       await setDoc(ref, {
         ...costCentre, companyId,
         updatedAt: new Date().toISOString()
@@ -2917,7 +2916,7 @@ export class FirestoreService {
 
   static async saveDesignation(companyId: string, desig: DesignationRecord): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'designations', desig.id);
+      const ref = doc(db, 'companies', companyId || '', 'designations', desig.id);
       await setDoc(ref, {
         ...desig, companyId,
         updatedAt: new Date().toISOString()
@@ -2960,7 +2959,7 @@ export class FirestoreService {
   static async updateUserMembership(session: UserSession | null, companyId: string, membership: UserMembershipRecord): Promise<boolean> {
     try {
       // 1. Update in company employee subcollection
-      const empRef = doc(db, 'companies', companyId, 'employees', membership.userId);
+      const empRef = doc(db, 'companies', companyId || '', 'employees', membership.userId);
       await setDoc(empRef, {
         role: membership.role,
         status: membership.status,
@@ -3057,7 +3056,7 @@ export class FirestoreService {
   static async savePatrolCheckpoint(companyId: string, checkpoint: PatrolCheckpointRecord): Promise<boolean> {
     const path = `companies/${companyId}/patrol_checkpoints/${checkpoint.id}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'patrol_checkpoints', checkpoint.id);
+      const ref = doc(db, 'companies', companyId || '', 'patrol_checkpoints', checkpoint.id);
       await setDoc(ref, {
         ...checkpoint,
         companyId,
@@ -3084,7 +3083,7 @@ export class FirestoreService {
   static async deletePatrolCheckpoint(companyId: string, checkpointId: string, checkpointName?: string): Promise<boolean> {
     const path = `companies/${companyId}/patrol_checkpoints/${checkpointId}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'patrol_checkpoints', checkpointId);
+      const ref = doc(db, 'companies', companyId || '', 'patrol_checkpoints', checkpointId);
       await deleteDoc(ref);
 
       await this.logAuditEvent(
@@ -3146,7 +3145,7 @@ export class FirestoreService {
   static async savePatrolPlan(companyId: string, plan: PatrolPlanRecord): Promise<boolean> {
     const path = `companies/${companyId}/patrol_plans/${plan.id}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'patrol_plans', plan.id);
+      const ref = doc(db, 'companies', companyId || '', 'patrol_plans', plan.id);
       await setDoc(ref, {
         ...plan,
         companyId,
@@ -3171,7 +3170,7 @@ export class FirestoreService {
   static async deletePatrolPlan(companyId: string, planId: string, planName?: string): Promise<boolean> {
     const path = `companies/${companyId}/patrol_plans/${planId}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'patrol_plans', planId);
+      const ref = doc(db, 'companies', companyId || '', 'patrol_plans', planId);
       await deleteDoc(ref);
 
       await this.logAuditEvent(
@@ -3237,7 +3236,7 @@ export class FirestoreService {
   static async savePatrolTour(companyId: string, tour: PatrolTourRecord): Promise<boolean> {
     const path = `companies/${companyId}/patrol_tours/${tour.id}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'patrol_tours', tour.id);
+      const ref = doc(db, 'companies', companyId || '', 'patrol_tours', tour.id);
       await setDoc(ref, {
         ...tour,
         companyId,
@@ -3275,7 +3274,7 @@ export class FirestoreService {
         exceptions.push('OUTSIDE_GEOFENCE_SCAN');
       }
 
-      // 🔍 Operational Intelligence: Anomaly Detection
+      // �� Operational Intelligence: Anomaly Detection
       if (session) {
         const { SuspiciousPatrolService } = await import('./suspiciousPatrolService');
         const anomaly = await SuspiciousPatrolService.evaluateScan(
@@ -3300,7 +3299,7 @@ export class FirestoreService {
         updatedAt: new Date().toISOString()
       };
 
-      const ref = doc(db, 'companies', companyId, 'patrol_tours', tourId);
+      const ref = doc(db, 'companies', companyId || '', 'patrol_tours', tourId);
       await setDoc(ref, updates, { merge: true });
 
       // Audit Log for checkpoint scan
@@ -3343,11 +3342,11 @@ export class FirestoreService {
         updatedAt: new Date().toISOString()
       };
 
-      const ref = doc(db, 'companies', companyId, 'patrol_tours', tourId);
+      const ref = doc(db, 'companies', companyId || '', 'patrol_tours', tourId);
       await setDoc(ref, updates, { merge: true });
 
       // Also persist legacy patrol log for compatibility
-      const legacyLogRef = doc(db, 'companies', companyId, 'patrol_logs', tourId);
+      const legacyLogRef = doc(db, 'companies', companyId || '', 'patrol_logs', tourId);
       await setDoc(legacyLogRef, {
         id: tourId,
         companyId,
@@ -3407,7 +3406,7 @@ export class FirestoreService {
   ): Promise<boolean> {
     const path = `companies/${companyId}/patrol_tours/${tourId}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'patrol_tours', tourId);
+      const ref = doc(db, 'companies', companyId || '', 'patrol_tours', tourId);
       const updates: Partial<PatrolTourRecord> = {
         isOverridden: true,
         overrideReason,
@@ -3442,7 +3441,7 @@ export class FirestoreService {
   static async savePatrolLog(companyId: string, log: PatrolLogRecord): Promise<boolean> {
     const path = `companies/${companyId}/patrol_logs/${log.id}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'patrol_logs', log.id);
+      const ref = doc(db, 'companies', companyId || '', 'patrol_logs', log.id);
       await setDoc(ref, {
         ...log,
         companyId,
@@ -3497,7 +3496,7 @@ export class FirestoreService {
   static async saveIncidentReport(companyId: string, report: IncidentReportRecord): Promise<boolean> {
     const path = `companies/${companyId}/incident_reports/${report.id}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'incident_reports', report.id);
+      const ref = doc(db, 'companies', companyId || '', 'incident_reports', report.id);
       const isNew = !report.createdAt;
       
       const payload: IncidentReportRecord = {
@@ -3546,7 +3545,7 @@ export class FirestoreService {
   ): Promise<boolean> {
     const path = `companies/${companyId}/incident_reports/${reportId}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'incident_reports', reportId);
+      const ref = doc(db, 'companies', companyId || '', 'incident_reports', reportId);
       const snap = await getDoc(ref);
       const current = snap.exists() ? snap.data() as IncidentReportRecord : null;
       
@@ -3603,7 +3602,7 @@ export class FirestoreService {
   ): Promise<boolean> {
     const path = `companies/${companyId}/incident_reports/${reportId}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'incident_reports', reportId);
+      const ref = doc(db, 'companies', companyId || '', 'incident_reports', reportId);
       const snap = await getDoc(ref);
       const current = snap.exists() ? snap.data() as IncidentReportRecord : null;
       
@@ -3652,7 +3651,7 @@ export class FirestoreService {
   ): Promise<boolean> {
     const path = `companies/${companyId}/incident_reports/${reportId}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'incident_reports', reportId);
+      const ref = doc(db, 'companies', companyId || '', 'incident_reports', reportId);
       const snap = await getDoc(ref);
       const current = snap.exists() ? snap.data() as IncidentReportRecord : null;
 
@@ -3725,7 +3724,7 @@ export class FirestoreService {
   static async saveAttendancePolicy(companyId: string, policy: OvertimePolicyRecord): Promise<boolean> {
     const path = `companies/${companyId}/attendance_policies/${policy.id}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'attendance_policies', policy.id);
+      const ref = doc(db, 'companies', companyId || '', 'attendance_policies', policy.id);
       await setDoc(ref, {
         ...policy,
         companyId,
@@ -3773,7 +3772,7 @@ export class FirestoreService {
   static async checkInVisitor(companyId: string, visitor: VisitorLogRecord): Promise<boolean> {
     const path = `companies/${companyId}/visitor_logs/${visitor.id}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'visitor_logs', visitor.id);
+      const ref = doc(db, 'companies', companyId || '', 'visitor_logs', visitor.id);
       await setDoc(ref, {
         ...visitor,
         companyId,
@@ -3801,13 +3800,104 @@ export class FirestoreService {
   static async checkOutVisitor(companyId: string, visitorId: string, checkOutTimeISO?: string, badgeReturned = true, checkoutNotes?: string): Promise<boolean> {
     const path = `companies/${companyId}/visitor_logs/${visitorId}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'visitor_logs', visitorId);
+      const ref = doc(db, 'companies', companyId || '', 'visitor_logs', visitorId);
       await setDoc(ref, {
         checkOutTime: checkOutTimeISO || new Date().toISOString(),
         status: 'CHECKED_OUT',
         badgeReturned,
         ...(checkoutNotes ? { checkoutNotes } : {})
       }, { merge: true });
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, path);
+      return false;
+    }
+  }
+
+  /**
+   * ============================================================
+   * SITE OPERATIONS: VISITOR WATCHLIST & SECURITY BLACKLIST
+   * ============================================================
+   */
+  static subscribeToVisitorWatchlist(
+    session: UserSession,
+    companyId: string,
+    onData: (records: VisitorWatchlistRecord[]) => void
+  ): () => void {
+    try {
+      const colRef = collection(db, 'companies', companyId, 'visitor_watchlist');
+      const q = query(colRef, ...QueryScopeEngine.buildScope(session, 'VISITORS'));
+      return onSnapshot(q, (snap) => {
+        const records = snap.docs.map(d => ({ id: d.id, ...d.data() } as VisitorWatchlistRecord));
+        onData(records);
+      }, (err) => {
+        console.warn('[Firestore] subscribeToVisitorWatchlist error:', err);
+        onData([]);
+      });
+    } catch (e) {
+      console.warn('[Firestore] subscribeToVisitorWatchlist exception:', e);
+      onData([]);
+      return () => {};
+    }
+  }
+
+  static async addToVisitorWatchlist(
+    companyId: string,
+    record: VisitorWatchlistRecord,
+    session: UserSession
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/visitor_watchlist/${record.id}`;
+    try {
+      const ref = doc(db, 'companies', companyId || '', 'visitor_watchlist', record.id);
+      await setDoc(ref, {
+        ...record,
+        companyId,
+        status: 'ACTIVE',
+        blacklistedBy: session.employeeId,
+        blacklistedByName: session.fullName || session.email,
+        blacklistedAt: record.blacklistedAt || new Date().toISOString(),
+        createdAt: record.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        session.employeeId,
+        session.fullName || 'Security Officer',
+        'VISITOR_BLACKLISTED',
+        `Visitor Added to Watchlist: ${record.visitorName} (${record.visitorPhone || 'No Phone'}). Severity: ${record.severity}. Reason: ${record.reason}`
+      );
+      return true;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, path);
+      return false;
+    }
+  }
+
+  static async revokeVisitorWatchlistEntry(
+    companyId: string,
+    entryId: string,
+    session: UserSession,
+    reason: string
+  ): Promise<boolean> {
+    const path = `companies/${companyId}/visitor_watchlist/${entryId}`;
+    try {
+      const ref = doc(db, 'companies', companyId || '', 'visitor_watchlist', entryId);
+      await setDoc(ref, {
+        status: 'REVOKED',
+        revokedAt: new Date().toISOString(),
+        revokedBy: session.employeeId,
+        revocationReason: reason,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      await this.logAuditEvent(
+        companyId,
+        session.employeeId,
+        session.fullName || 'Security Officer',
+        'VISITOR_BLACKLIST_REVOKED',
+        `Visitor Watchlist Entry Revoked: ${entryId}. Reason: ${reason}`
+      );
       return true;
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, path);
@@ -3842,7 +3932,7 @@ export class FirestoreService {
   static async saveMaterialMovementLog(companyId: string, material: MaterialMovementRecord): Promise<boolean> {
     const path = `companies/${companyId}/material_movement_logs/${material.id}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'material_movement_logs', material.id);
+      const ref = doc(db, 'companies', companyId || '', 'material_movement_logs', material.id);
       await setDoc(ref, {
         ...material,
         companyId,
@@ -3875,7 +3965,7 @@ export class FirestoreService {
   ): Promise<boolean> {
     const path = `companies/${companyId}/material_movement_logs/${materialId}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'material_movement_logs', materialId);
+      const ref = doc(db, 'companies', companyId || '', 'material_movement_logs', materialId);
       await setDoc(ref, {
         status,
         approvedById: approverId,
@@ -3915,7 +4005,7 @@ export class FirestoreService {
   static async saveDailySiteLog(companyId: string, log: DailySiteLogRecord): Promise<boolean> {
     const path = `companies/${companyId}/daily_site_logs/${log.id}`;
     try {
-      const ref = doc(db, 'companies', companyId, 'daily_site_logs', log.id);
+      const ref = doc(db, 'companies', companyId || '', 'daily_site_logs', log.id);
       const snap = await getDoc(ref);
       
       let finalLog = { ...log };
@@ -3970,7 +4060,7 @@ export class FirestoreService {
 
   static async saveWorkOrder(companyId: string, workOrder: WorkOrderRecord): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'work_orders', workOrder.id);
+      const ref = doc(db, 'companies', companyId || '', 'work_orders', workOrder.id);
       await setDoc(ref, {
         ...workOrder,
         updatedAt: new Date().toISOString()
@@ -3994,7 +4084,7 @@ export class FirestoreService {
 
   static async saveTask(companyId: string, task: TaskRecord): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'tasks', task.id);
+      const ref = doc(db, 'companies', companyId || '', 'tasks', task.id);
       await setDoc(ref, {
         ...task,
         updatedAt: Date.now()
@@ -4018,7 +4108,7 @@ export class FirestoreService {
 
   static async saveAnnouncement(companyId: string, ann: AnnouncementRecord): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'announcements', ann.id);
+      const ref = doc(db, 'companies', companyId || '', 'announcements', ann.id);
       await setDoc(ref, {
         ...ann,
         updatedAt: Date.now()
@@ -4042,7 +4132,7 @@ export class FirestoreService {
 
   static async deleteAnnouncement(companyId: string, annId: string): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'announcements', annId);
+      const ref = doc(db, 'companies', companyId || '', 'announcements', annId);
       await deleteDoc(ref);
       return true;
     } catch (err) {
@@ -4053,7 +4143,7 @@ export class FirestoreService {
 
   static async saveDocumentRecord(companyId: string, docRec: DocumentRecord): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'documents', docRec.id);
+      const ref = doc(db, 'companies', companyId || '', 'documents', docRec.id);
       await setDoc(ref, {
         ...docRec,
         updatedAt: new Date().toISOString()
@@ -4198,7 +4288,7 @@ export class FirestoreService {
   ): Promise<boolean> {
     try {
       const timestamp = new Date().toISOString();
-      const reqRef = doc(db, 'companies', companyId, 'approval_requests', requestId);
+      const reqRef = doc(db, 'companies', companyId || '', 'approval_requests', requestId);
       const rootReqRef = doc(db, 'approval_requests', requestId);
       
       const reqSnap = await getDoc(reqRef);
@@ -4233,7 +4323,7 @@ export class FirestoreService {
       // Update employee record if active
       if (newAccountStatus === 'ACTIVE') {
         const empId = reqData.employeeId || reqData.uid;
-        const empRef = doc(db, 'companies', companyId, 'employees', empId);
+        const empRef = doc(db, 'companies', companyId || '', 'employees', empId);
         await setDoc(empRef, {
           status: 'ACTIVE',
           role: reqData.requestedRole || 'EMPLOYEE',
@@ -4274,7 +4364,7 @@ export class FirestoreService {
   ): Promise<boolean> {
     try {
       const timestamp = new Date().toISOString();
-      const reqRef = doc(db, 'companies', companyId, 'approval_requests', requestId);
+      const reqRef = doc(db, 'companies', companyId || '', 'approval_requests', requestId);
       const rootReqRef = doc(db, 'approval_requests', requestId);
 
       const reqSnap = await getDoc(reqRef);
@@ -4308,7 +4398,7 @@ export class FirestoreService {
 
       if (newAccountStatus === 'ACTIVE') {
         const empId = reqData.employeeId || reqData.uid;
-        const empRef = doc(db, 'companies', companyId, 'employees', empId);
+        const empRef = doc(db, 'companies', companyId || '', 'employees', empId);
         await setDoc(empRef, {
           status: 'ACTIVE',
           role: reqData.requestedRole || 'EMPLOYEE',
@@ -4349,7 +4439,7 @@ export class FirestoreService {
   ): Promise<boolean> {
     try {
       const timestamp = new Date().toISOString();
-      const reqRef = doc(db, 'companies', companyId, 'approval_requests', requestId);
+      const reqRef = doc(db, 'companies', companyId || '', 'approval_requests', requestId);
       const rootReqRef = doc(db, 'approval_requests', requestId);
 
       const updateData = {
@@ -4456,7 +4546,7 @@ export class FirestoreService {
       
       const actorInfo = { userId: actorId, role: 'SYSTEM', companyId: companyId || 'GLOBAL', employeeId: actorId };
       const [moduleName, ...rest] = action.split('_');
-      await AuditTrailService.recordEvent(
+      await (AuditTrailService as any).recordEvent(
         actorInfo,
         companyId,
         moduleName || 'SYSTEM',
@@ -5021,7 +5111,7 @@ export class FirestoreService {
   static async saveGoodsReceiptNote(companyId: string, grn: any): Promise<boolean> {
     try {
       const id = grn.id || `GRN-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'goods_receipt_notes', id);
+      const ref = doc(db, 'companies', companyId || '', 'goods_receipt_notes', id);
       await setDoc(ref, { ...grn, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) { return false; }
@@ -5029,7 +5119,7 @@ export class FirestoreService {
   static async saveThreeWayMatch(companyId: string, match: any): Promise<boolean> {
     try {
       const id = match.id || `TWM-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'three_way_matches', id);
+      const ref = doc(db, 'companies', companyId || '', 'three_way_matches', id);
       await setDoc(ref, { ...match, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) { return false; }
@@ -5040,26 +5130,38 @@ export class FirestoreService {
       onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }, () => onData([]));
   }
-  static subscribeToTicketComments(companyId: string, ticketId: string, role: string, onData: (items: any[]) => void): () => void {
+  static subscribeToTicketComments(companyId: string, ticketId: string, arg3: any, arg4?: any): () => void {
+    const onData = typeof arg3 === 'function' ? arg3 : arg4;
+    const role = typeof arg3 === 'string' ? arg3 : (typeof arg4 === 'string' ? arg4 : '');
+    if (!companyId || !ticketId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const colRef = collection(db, 'companies', companyId, 'serviceTickets', ticketId, 'comments');
     const q = query(colRef, orderBy('createdAt', 'asc'));
     return onSnapshot(q, (snap) => {
       let list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (!['SUPER_ADMIN', 'COMPANY_ADMIN', 'MANAGER', 'OPS_MANAGER', 'SERVICE_DESK'].includes(role)) {
+      if (role && !['SUPER_ADMIN', 'COMPANY_ADMIN', 'MANAGER', 'OPS_MANAGER', 'SERVICE_DESK'].includes(role)) {
         list = list.filter((c: any) => !c.isInternalOnly && c.visibility !== 'INTERNAL');
       }
-      onData(list);
-    }, () => onData([]));
+      if (typeof onData === 'function') onData(list);
+    }, () => { if (typeof onData === 'function') onData([]); });
   }
-  static subscribeToTicketAttachments(companyId: string, ticketId: string, role: string, onData: (items: any[]) => void): () => void {
+  static subscribeToTicketAttachments(companyId: string, ticketId: string, arg3: any, arg4?: any): () => void {
+    const onData = typeof arg3 === 'function' ? arg3 : arg4;
+    const role = typeof arg3 === 'string' ? arg3 : (typeof arg4 === 'string' ? arg4 : '');
+    if (!companyId || !ticketId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const colRef = collection(db, 'companies', companyId, 'serviceTickets', ticketId, 'attachments');
     return onSnapshot(colRef, (snap) => {
       let list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (!['SUPER_ADMIN', 'COMPANY_ADMIN', 'MANAGER', 'OPS_MANAGER', 'SERVICE_DESK'].includes(role)) {
+      if (role && !['SUPER_ADMIN', 'COMPANY_ADMIN', 'MANAGER', 'OPS_MANAGER', 'SERVICE_DESK'].includes(role)) {
         list = list.filter((a: any) => a.visibility !== 'INTERNAL');
       }
-      onData(list);
-    }, () => onData([]));
+      if (typeof onData === 'function') onData(list);
+    }, () => { if (typeof onData === 'function') onData([]); });
   }
 
   static subscribeToTasks(session: any, companyId: string, onData: (data: any[]) => void): () => void {
@@ -5082,7 +5184,27 @@ export class FirestoreService {
   static subscribeToAnnouncements(session: any, companyId: string, onData: (data: any[]) => void): () => void {
     try {
       const colRef = collection(db, 'companies', companyId, 'announcements');
-      const q = query(colRef); // Announcements are typically company-wide
+      
+      const authority = RbacService.getAuthorityLevel(session);
+      const isGlobal = 
+        session.role === 'SUPER_ADMIN' || 
+        session.role === 'COMPANY_ADMIN' ||
+        session.role === 'HR_ADMIN' ||
+        session.role === 'HR' ||
+        (authority && ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_OFFICIAL_STAFF'].includes(authority));
+
+      let q;
+      if (isGlobal) {
+        q = query(colRef);
+      } else {
+        // Calculate allowed scopes for the current user session
+        const scopes = ['COMPANY_ALL'];
+        if (session.assignedRegionId) scopes.push(`REGION_${session.assignedRegionId}`);
+        if (session.assignedSiteId) scopes.push(`SITE_${session.assignedSiteId}`);
+        if (session.branchId) scopes.push(`SITE_${session.branchId}`); // Fallback
+        q = query(colRef, where('visibilityScope', 'array-contains-any', scopes));
+      }
+      
       return onSnapshot(q, (snap) => {
         const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         onData(items);
@@ -5096,25 +5218,43 @@ export class FirestoreService {
       return () => {};
     }
   }
-  static subscribeToDocuments(companyId: string, onData: (items: any[]) => void): () => void {
+  static subscribeToDocuments(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const onData = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const colRef = collection(db, 'companies', companyId, 'documents');
     return onSnapshot(colRef, (snap) => {
-      onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, () => onData([]));
+      if (typeof onData === 'function') onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof onData === 'function') onData([]); });
   }
 
-  static subscribeToInventoryVendors(companyId: string, onData: (items: any[]) => void): () => void {
+  static subscribeToInventoryVendors(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const onData = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const colRef = collection(db, 'companies', companyId, 'inventoryVendors');
     return onSnapshot(colRef, (snap) => {
-      onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, () => onData([]));
+      if (typeof onData === 'function') onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof onData === 'function') onData([]); });
   }
 
-  static subscribeToSites(companyId: string, onData: (items: SiteRecord[]) => void): () => void {
+  static subscribeToSites(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const onData = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const colRef = collection(db, 'companies', companyId, 'sites');
     return onSnapshot(colRef, (snap) => {
-      onData(snap.docs.map(d => ({ id: d.id, ...d.data() } as SiteRecord)));
-    }, () => onData([]));
+      if (typeof onData === 'function') onData(snap.docs.map(d => ({ id: d.id, ...d.data() } as SiteRecord)));
+    }, () => { if (typeof onData === 'function') onData([]); });
   }
 
   static subscribeToDepartments(companyId: string, onData: (items: any[]) => void): () => void {
@@ -5145,73 +5285,138 @@ export class FirestoreService {
     }, () => onData([]));
   }
 
-  static subscribeToAssets(companyId: string, onData: (items: any[]) => void): () => void {
+  static subscribeToAssets(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const onData = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const colRef = collection(db, 'companies', companyId, 'assets');
     return onSnapshot(colRef, (snap) => {
-      onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, () => onData([]));
+      if (typeof onData === 'function') onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof onData === 'function') onData([]); });
   }
 
-  static subscribeToInventoryItems(companyId: string, onData: (items: any[]) => void): () => void {
+  static subscribeToInventoryItems(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const onData = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const colRef = collection(db, 'companies', companyId, 'inventoryItems');
     return onSnapshot(colRef, (snap) => {
-      onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, () => onData([]));
+      if (typeof onData === 'function') onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof onData === 'function') onData([]); });
   }
 
-  static subscribeToWorkOrders(companyId: string, onData: (items: any[]) => void): () => void {
+  static subscribeToWorkOrders(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const onData = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const colRef = collection(db, 'companies', companyId, 'workOrders');
     return onSnapshot(colRef, (snap) => {
-      onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, () => onData([]));
+      if (typeof onData === 'function') onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof onData === 'function') onData([]); });
   }
 
-  static subscribeToClients(companyId: string, onData: (items: any[]) => void): () => void {
+  static subscribeToClients(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const onData = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const colRef = collection(db, 'companies', companyId, 'clients');
     return onSnapshot(colRef, (snap) => {
-      onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, () => onData([]));
+      if (typeof onData === 'function') onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof onData === 'function') onData([]); });
   }
 
-  static async updateOvertimeRequestStatus(companyId: string, requestId: string, status: string, approvedBy?: string): Promise<boolean> {
+  static async updateOvertimeRequestStatus(
+    companyId: string,
+    requestId: string,
+    status: string,
+    approvedBy?: string | { uid: string; name: string; reason?: string; approvedMinutes?: number }
+  ): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'overtimeRequests', requestId);
-      await updateDoc(ref, {
+      const ref = doc(db, 'companies', companyId || '', 'overtimeRequests', requestId);
+      const updatePayload: Record<string, any> = {
         status,
-        approvedBy,
         updatedAt: new Date().toISOString()
-      });
+      };
+      if (typeof approvedBy === 'string') {
+        updatePayload.approvedBy = approvedBy;
+      } else if (approvedBy) {
+        updatePayload.approvedBy = approvedBy.uid;
+        updatePayload.approvedByName = approvedBy.name;
+        if (approvedBy.reason) updatePayload.approvalReason = approvedBy.reason;
+        if (approvedBy.approvedMinutes !== undefined) updatePayload.approvedMinutes = approvedBy.approvedMinutes;
+      }
+      await updateDoc(ref, updatePayload);
       return true;
     } catch (err) {
       return false;
     }
   }
 
-  static async batchRecalculateAttendance(companyId: string, attendanceIds: string[]): Promise<any> {
+  static async batchRecalculateAttendance(
+    companyId: string,
+    startDateOrIds: string | string[],
+    endDate?: string,
+    siteId?: string,
+    actorId?: string
+  ): Promise<any> {
     const results = { processed: 0, successCount: 0, errorsCount: 0 };
-    for (const id of attendanceIds) {
-      const ok = await this.recalculateAttendanceRecord(companyId, id);
-      results.processed++;
-      if (ok) results.successCount++;
-      else results.errorsCount++;
+    if (Array.isArray(startDateOrIds)) {
+      for (const id of startDateOrIds) {
+        const ok = await this.recalculateAttendanceRecord(companyId, id, undefined, actorId);
+        results.processed++;
+        if (ok) results.successCount++;
+        else results.errorsCount++;
+      }
+    } else {
+      // Date range query or scan
+      try {
+        const attRef = collection(db, 'companies', companyId || '', 'attendance');
+        const q = query(attRef, where('attendanceDate', '>=', startDateOrIds), where('attendanceDate', '<=', endDate || startDateOrIds));
+        const snap = await getDocs(q);
+        for (const d of snap.docs) {
+          const ok = await this.recalculateAttendanceRecord(companyId, d.id, undefined, actorId);
+          results.processed++;
+          if (ok) results.successCount++;
+          else results.errorsCount++;
+        }
+      } catch {
+        results.errorsCount++;
+      }
     }
     return results;
   }
 
-  static async recalculateAttendanceRecord(companyId: string, attendanceId: string): Promise<boolean> {
+  static async recalculateAttendanceRecord(
+    companyId: string,
+    attendanceId: string,
+    customPolicy?: OvertimePolicyRecord,
+    actorId?: string
+  ): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'attendance', attendanceId);
+      const ref = doc(db, 'companies', companyId || '', 'attendance', attendanceId);
       const snap = await getDoc(ref);
       if (!snap.exists()) return false;
       const record = snap.data() as AttendanceRecord;
       if (!record.checkIn || !record.checkOut) return false;
 
-      const shiftSnap = await getDoc(doc(db, 'companies', companyId, 'shifts', record.shiftId));
+      const shiftSnap = await getDoc(doc(db, 'companies', companyId || '', 'shifts', record.shiftId || ''));
       if (!shiftSnap.exists()) return false;
       const shift = shiftSnap.data() as ShiftRecord;
 
-      const policy = await this.getOvertimePolicy(companyId, record.siteId);
-      const metrics = WfmService.calculateAttendanceMetrics(shift, record.attendanceDate, record.checkIn, record.checkOut, policy);
+      const policy = customPolicy || (await this.getOvertimePolicy(companyId, record.siteId || ''));
+      const metrics = WfmService.calculateAttendanceMetrics(shift, record.attendanceDate || new Date().toISOString().split('T')[0], record.checkIn, record.checkOut, policy || undefined);
 
       await updateDoc(ref, {
         status: metrics.status,
@@ -5219,6 +5424,7 @@ export class FirestoreService {
         earlyDepartureMinutes: metrics.earlyDepartureMinutes,
         workedMinutes: metrics.workedMinutes,
         overtimeMinutes: metrics.overtimeMinutes,
+        updatedBy: actorId || record.updatedBy || 'SYSTEM',
         updatedAt: new Date().toISOString()
       });
       return true;
@@ -5230,7 +5436,7 @@ export class FirestoreService {
   static async createOvertimeAdjustment(companyId: string, adjustment: any): Promise<boolean> {
     try {
       const id = adjustment.id || `ADJ-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'overtimeAdjustments', id);
+      const ref = doc(db, 'companies', companyId || '', 'overtimeAdjustments', id);
       await setDoc(ref, { ...adjustment, id, createdAt: new Date().toISOString() });
       return true;
     } catch (err) {
@@ -5238,26 +5444,37 @@ export class FirestoreService {
     }
   }
 
-  static async resolveOvertimeAdjustment(companyId: string, adjustmentId: string, resolvedBy: string): Promise<boolean> {
+  static async resolveOvertimeAdjustment(
+    companyId: string,
+    adjustmentId: string,
+    statusOrResolvedBy: string,
+    approverInfo?: { uid: string; name?: string; reason?: string }
+  ): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'overtimeAdjustments', adjustmentId);
-      await updateDoc(ref, {
-        status: 'RESOLVED',
-        resolvedBy,
+      const ref = doc(db, 'companies', companyId || '', 'overtimeAdjustments', adjustmentId);
+      const payload: Record<string, any> = {
+        status: approverInfo ? statusOrResolvedBy : 'RESOLVED',
+        resolvedBy: approverInfo?.uid || statusOrResolvedBy,
+        resolvedByName: approverInfo?.name || '',
         resolvedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
-      });
+      };
+      await updateDoc(ref, payload);
       return true;
     } catch (err) {
       return false;
     }
   }
 
-  static async saveOvertimePolicy(companyId: string, policy: OvertimePolicyRecord): Promise<boolean> {
+  static async saveOvertimePolicy(
+    companyId: string,
+    policy: OvertimePolicyRecord,
+    actorId?: string
+  ): Promise<boolean> {
     try {
       const id = policy.id || `OTP-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'overtimePolicies', id);
-      await setDoc(ref, { ...policy, id, companyId, updatedAt: new Date().toISOString() }, { merge: true });
+      const ref = doc(db, 'companies', companyId || '', 'overtimePolicies', id);
+      await setDoc(ref, { ...policy, id, companyId, updatedBy: actorId || policy.updatedBy, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) {
       return false;
@@ -5266,7 +5483,7 @@ export class FirestoreService {
 
   static async updateWorkOrderStatus(companyId: string, orderId: string, status: string): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'workOrders', orderId);
+      const ref = doc(db, 'companies', companyId || '', 'workOrders', orderId);
       await updateDoc(ref, { status, updatedAt: new Date().toISOString() });
       return true;
     } catch (err) {
@@ -5276,7 +5493,7 @@ export class FirestoreService {
 
   static async updateOvertimeAdjustmentStatus(companyId: string, adjustmentId: string, status: string): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'overtimeAdjustments', adjustmentId);
+      const ref = doc(db, 'companies', companyId || '', 'overtimeAdjustments', adjustmentId);
       await updateDoc(ref, { status, updatedAt: new Date().toISOString() });
       return true;
     } catch (err) {
@@ -5286,7 +5503,7 @@ export class FirestoreService {
 
   static async updateSalaryAdvanceStatus(companyId: string, advanceId: string, status: string): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'salaryAdvances', advanceId);
+      const ref = doc(db, 'companies', companyId || '', 'salaryAdvances', advanceId);
       await updateDoc(ref, { status, updatedAt: new Date().toISOString() });
       return true;
     } catch (err) {
@@ -5310,11 +5527,11 @@ export class FirestoreService {
     }
   }
 
-  static async createOrSyncOvertimeRequest(companyId: string, request: any): Promise<boolean> {
+  static async createOrSyncOvertimeRequest(companyId: string, request: any, transaction?: any): Promise<boolean> {
     try {
       const id = request.id || `OTR-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'overtimeRequests', id);
-      await setDoc(ref, { ...request, id, updatedAt: new Date().toISOString() }, { merge: true });
+      const ref = doc(db, 'companies', companyId || '', 'overtimeRequests', id);
+      if (transaction) { transaction.set(ref, { ...request, id, updatedAt: new Date().toISOString() }, { merge: true }); } else { await setDoc(ref, { ...request, id, updatedAt: new Date().toISOString() }, { merge: true }); }
       return true;
     } catch (err) {
       return false;
@@ -5324,7 +5541,7 @@ export class FirestoreService {
   static async saveSelectionRecord(companyId: string, record: any): Promise<boolean> {
     try {
       const id = record.id || `SEL-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'recruitment_selections', id);
+      const ref = doc(db, 'companies', companyId || '', 'recruitment_selections', id);
       await setDoc(ref, { ...record, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) { return false; }
@@ -5333,7 +5550,7 @@ export class FirestoreService {
   static async saveVerificationRecord(companyId: string, record: any): Promise<boolean> {
     try {
       const id = record.id || `VER-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'recruitment_verifications', id);
+      const ref = doc(db, 'companies', companyId || '', 'recruitment_verifications', id);
       await setDoc(ref, { ...record, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) { return false; }
@@ -5342,7 +5559,7 @@ export class FirestoreService {
   static async saveJobRequisition(companyId: string, record: any): Promise<boolean> {
     try {
       const id = record.id || `REQ-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'job_requisitions', id);
+      const ref = doc(db, 'companies', companyId || '', 'job_requisitions', id);
       await setDoc(ref, { ...record, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) { return false; }
@@ -5351,7 +5568,7 @@ export class FirestoreService {
   static async saveScreeningRecord(companyId: string, record: any): Promise<boolean> {
     try {
       const id = record.id || `SCR-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'recruitment_screenings', id);
+      const ref = doc(db, 'companies', companyId || '', 'recruitment_screenings', id);
       await setDoc(ref, { ...record, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) { return false; }
@@ -5360,7 +5577,7 @@ export class FirestoreService {
   static async saveInterviewRecord(companyId: string, record: any): Promise<boolean> {
     try {
       const id = record.id || `INT-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'recruitment_interviews', id);
+      const ref = doc(db, 'companies', companyId || '', 'recruitment_interviews', id);
       await setDoc(ref, { ...record, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) { return false; }
@@ -5369,7 +5586,7 @@ export class FirestoreService {
   static async saveCandidate(companyId: string, candidate: any): Promise<boolean> {
     try {
       const id = candidate.id || `CAN-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'candidates', id);
+      const ref = doc(db, 'companies', companyId || '', 'candidates', id);
       await setDoc(ref, { ...candidate, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) { return false; }
@@ -5378,7 +5595,7 @@ export class FirestoreService {
   static async saveCandidateDocument(companyId: string, candidateId: string, docData: any): Promise<boolean> {
     try {
       const id = docData.id || `CDOC-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'candidates', candidateId, 'documents', id);
+      const ref = doc(db, 'companies', companyId || '', 'candidates', candidateId, 'documents', id);
       await setDoc(ref, { ...docData, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) { return false; }
@@ -5386,21 +5603,21 @@ export class FirestoreService {
 
   static async deleteCandidateDocument(companyId: string, candidateId: string, docId: string): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'candidates', candidateId, 'documents', docId);
+      const ref = doc(db, 'companies', companyId || '', 'candidates', candidateId, 'documents', docId);
       await deleteDoc(ref);
       return true;
     } catch (err) { return false; }
   }
 
-  static async updateTaskStatus(companyId: string, taskId: string, status: string): Promise<boolean> {
+  static async updateTaskStatus(companyId: string, taskId: string, status: string, extraData?: Record<string, any>): Promise<boolean> {
     try {
-      const ref = doc(db, 'companies', companyId, 'tasks', taskId);
-      await updateDoc(ref, { status, updatedAt: new Date().toISOString() });
+      const ref = doc(db, 'companies', companyId || '', 'tasks', taskId);
+      await updateDoc(ref, { status, ...(extraData || {}), updatedAt: new Date().toISOString() });
       return true;
     } catch (err) { return false; }
   }
 
-  static async saveSubscriptionPlan(plan: SubscriptionPlan): Promise<boolean> {
+  static async saveany(plan: any): Promise<boolean> {
     try {
       const ref = doc(db, 'plans', plan.planId);
       await setDoc(ref, { ...plan, updatedAt: new Date().toISOString() }, { merge: true });
@@ -5411,7 +5628,7 @@ export class FirestoreService {
   static async savePurchaseOrder(companyId: string, po: any): Promise<boolean> {
     try {
       const id = po.id || `PO-${Date.now()}`;
-      const ref = doc(db, 'companies', companyId, 'purchase_orders', id);
+      const ref = doc(db, 'companies', companyId || '', 'purchase_orders', id);
       await setDoc(ref, { ...po, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (err) { return false; }
@@ -5419,7 +5636,7 @@ export class FirestoreService {
 
   static async saveSafetyChecksheet(companyId: string, checksheet: any): Promise<boolean> {
     const id = checksheet.id || `CHK-${Date.now()}`;
-    const ref = doc(db, 'companies', companyId, 'safety_checksheets', id);
+    const ref = doc(db, 'companies', companyId || '', 'safety_checksheets', id);
     await setDoc(ref, { ...checksheet, id, companyId, updatedAt: new Date().toISOString() }, { merge: true });
     return true;
   }
@@ -5430,34 +5647,34 @@ export class FirestoreService {
   }
 
   static async acknowledgeHandover(companyId: string, handoverId: string, actor: any): Promise<boolean> {
-    const ref = doc(db, 'companies', companyId, 'shift_handovers', handoverId);
+    const ref = doc(db, 'companies', companyId || '', 'shift_handovers', handoverId);
     await updateDoc(ref, { acknowledged: true, acknowledgedBy: actor?.userId || actor?.name || 'User', acknowledgedAt: new Date().toISOString() });
     return true;
   }
 
   static async submitHandover(companyId: string, handover: any): Promise<boolean> {
     const id = handover.id || `HND-${Date.now()}`;
-    const ref = doc(db, 'companies', companyId, 'shift_handovers', id);
+    const ref = doc(db, 'companies', companyId || '', 'shift_handovers', id);
     await setDoc(ref, { ...handover, id, companyId, createdAt: new Date().toISOString() }, { merge: true });
     return true;
   }
 
   static async cancelPaymentBatch(companyId: string, batchId: string, actorId: string, reason: string): Promise<boolean> {
-    const ref = doc(db, 'companies', companyId, 'payment_batches', batchId);
+    const ref = doc(db, 'companies', companyId || '', 'payment_batches', batchId);
     await updateDoc(ref, { status: 'CANCELLED', cancelledById: actorId, cancellationReason: reason, updatedAt: new Date().toISOString() });
     return true;
   }
 
   static async recordPaymentBatchExport(companyId: string, batchId: string, format: string, actorId: string): Promise<boolean> {
-    const ref = doc(db, 'companies', companyId, 'payment_batches', batchId);
+    const ref = doc(db, 'companies', companyId || '', 'payment_batches', batchId);
     await updateDoc(ref, { lastExportedFormat: format, lastExportedAt: new Date().toISOString(), lastExportedBy: actorId });
     return true;
   }
 
-  static async saveCompanyBankAccount(companyId: string, account: any): Promise<boolean> {
+  static async saveCompanyBankAccount(companyId: string, account: any, actor?: any): Promise<boolean> {
     const id = account.id || `ACC-${Date.now()}`;
-    const ref = doc(db, 'companies', companyId, 'bank_accounts', id);
-    await setDoc(ref, { ...account, id, companyId, updatedAt: new Date().toISOString() }, { merge: true });
+    const ref = doc(db, 'companies', companyId || '', 'bank_accounts', id);
+    await setDoc(ref, { ...account, id, companyId, updatedBy: actor?.userId || actor || 'SYSTEM', updatedAt: new Date().toISOString() }, { merge: true });
     return true;
   }
 
@@ -5468,26 +5685,36 @@ export class FirestoreService {
 
   static async createPaymentBatch(companyId: string, batch: any): Promise<boolean> {
     const id = batch.id || `BAT-${Date.now()}`;
-    const ref = doc(db, 'companies', companyId, 'payment_batches', id);
+    const ref = doc(db, 'companies', companyId || '', 'payment_batches', id);
     await setDoc(ref, { ...batch, id, companyId, createdAt: new Date().toISOString() }, { merge: true });
     return true;
   }
 
   static async calculatePayrollCycle(companyId: string, cycleId: string, actor: any): Promise<boolean> {
-    const ref = doc(db, 'companies', companyId, 'payrollCycles', cycleId);
+    const ref = doc(db, 'companies', companyId || '', 'payrollCycles', cycleId);
     await updateDoc(ref, { status: 'CALCULATED', calculatedBy: actor?.userId || 'SYSTEM', calculatedAt: new Date().toISOString() });
     return true;
   }
 
   static async approvePayrollCycle(companyId: string, cycleId: string, actor: any): Promise<boolean> {
-    const ref = doc(db, 'companies', companyId, 'payrollCycles', cycleId);
+    const ref = doc(db, 'companies', companyId || '', 'payrollCycles', cycleId);
     await updateDoc(ref, { status: 'APPROVED', approvedBy: actor?.userId || 'SYSTEM', approvedAt: new Date().toISOString() });
     return true;
   }
 
-  static subscribeToSalaryAdvances(companyId: string, onData: (data: any[]) => void): () => void {
+  static subscribeToSalaryAdvances(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : (arg2?.companyId || arg2);
+    const onData = typeof arg3 === 'function' ? arg3 : (typeof arg2 === 'function' ? arg2 : () => {});
+    if (!companyId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const q = query(collection(db, 'companies', companyId, 'salary_advances'));
-    return onSnapshot(q, snap => onData(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => onData([]));
+    return onSnapshot(q, snap => {
+      if (typeof onData === 'function') onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => {
+      if (typeof onData === 'function') onData([]);
+    });
   }
 
   static async verifyBadge(companyId: string, badgeQuery: string, queryType: 'QR' | 'NUMBER'): Promise<any> {
@@ -5511,7 +5738,7 @@ export class FirestoreService {
 
   static async adjustStock(companyId: string, tx: any, actor: any): Promise<{ success: boolean; newStock: number }> {
     try {
-      const itemRef = doc(db, 'companies', companyId, 'inventory', tx.itemId);
+      const itemRef = doc(db, 'companies', companyId || '', 'inventory', tx.itemId);
       let newStockVal = 0;
       await runTransaction(db, async (t) => {
         const itemSnap = await t.get(itemRef);
@@ -5546,13 +5773,19 @@ export class FirestoreService {
     });
   }
 
-  static subscribeToLeaveRequests(companyId: string, filter: any, onData: (data: any[]) => void): () => void {
+  static subscribeToLeaveRequests(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : (arg2?.companyId || arg2);
+    const onData = typeof arg3 === 'function' ? arg3 : (typeof arg2 === 'function' ? arg2 : () => {});
+    if (!companyId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const q = query(collection(db, 'companies', companyId, 'leaveRequests'));
     return onSnapshot(q, snap => {
-      onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      if (typeof onData === 'function') onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }, err => {
       console.error('subscribeToLeaveRequests error', err);
-      onData([]);
+      if (typeof onData === 'function') onData([]);
     });
   }
 
@@ -5595,7 +5828,7 @@ export class FirestoreService {
   }
 
   static async updateLeaveRequestStatus(companyId: string, requestId: string, status: string, options: any, transaction?: any): Promise<boolean> {
-    const ref = doc(db, 'companies', companyId, 'leaveRequests', requestId);
+    const ref = doc(db, 'companies', companyId || '', 'leaveRequests', requestId);
     const data = {
       status,
       ...options,
@@ -5611,7 +5844,7 @@ export class FirestoreService {
 
   static async saveLeavePolicy(companyId: string, policy: any): Promise<boolean> {
     const id = policy.id || policy.leaveCode || `POL-${Date.now()}`;
-    const ref = doc(db, 'companies', companyId, 'leavePolicies', id);
+    const ref = doc(db, 'companies', companyId || '', 'leavePolicies', id);
     await setDoc(ref, {
       ...policy,
       id
@@ -5651,13 +5884,19 @@ export class FirestoreService {
     });
   }
 
-  static subscribeToPayrollCycles(companyId: string, onData: (data: any[]) => void): () => void {
+  static subscribeToPayrollCycles(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : (arg2?.companyId || arg2);
+    const onData = typeof arg3 === 'function' ? arg3 : (typeof arg2 === 'function' ? arg2 : () => {});
+    if (!companyId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const q = query(collection(db, 'companies', companyId, 'payrollCycles'));
     return onSnapshot(q, snap => {
-      onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      if (typeof onData === 'function') onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }, err => {
       console.error('subscribeToPayrollCycles error', err);
-      onData([]);
+      if (typeof onData === 'function') onData([]);
     });
   }
 
@@ -5673,7 +5912,7 @@ export class FirestoreService {
 
   static async saveSalaryStructure(companyId: string, structure: any): Promise<boolean> {
     const id = structure.id || `STR-${Date.now()}`;
-    const ref = doc(db, 'companies', companyId, 'salaryStructures', id);
+    const ref = doc(db, 'companies', companyId || '', 'salaryStructures', id);
     await setDoc(ref, {
       ...structure,
       id,
@@ -5684,7 +5923,7 @@ export class FirestoreService {
 
   static async saveSalaryProfile(companyId: string, profile: any): Promise<boolean> {
     const id = profile.id || `PRF-${Date.now()}`;
-    const ref = doc(db, 'companies', companyId, 'salaryProfiles', id);
+    const ref = doc(db, 'companies', companyId || '', 'salaryProfiles', id);
     await setDoc(ref, {
       ...profile,
       id,
@@ -5696,7 +5935,7 @@ export class FirestoreService {
 
   static async markNotificationRead(companyId: string, notifId: string, isRead: boolean): Promise<void> {
     try {
-      const docRef = doc(db, 'companies', companyId, 'notifications', notifId);
+      const docRef = doc(db, 'companies', companyId || '', 'notifications', notifId);
       await updateDoc(docRef, {
         isRead,
         updatedAt: new Date().toISOString()
@@ -5736,7 +5975,7 @@ export class FirestoreService {
 
   static async deleteNotification(companyId: string, notifId: string): Promise<void> {
     try {
-      const docRef = doc(db, 'companies', companyId, 'notifications', notifId);
+      const docRef = doc(db, 'companies', companyId || '', 'notifications', notifId);
       await deleteDoc(docRef);
     } catch (error) {
       console.error('[FirestoreService] Error deleting notification:', error);
@@ -5752,7 +5991,7 @@ export class FirestoreService {
   static async saveDocumentType(companyId: string, data: any): Promise<boolean> {
     try {
       const id = data.id || `DT-${Date.now()}`;
-      await setDoc(doc(db, 'companies', companyId, 'documentTypes', id), { ...data, id, updatedAt: new Date().toISOString() }, { merge: true });
+      await setDoc(doc(db, 'companies', companyId || '', 'documentTypes', id), { ...data, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch { return false; }
   }
@@ -5767,7 +6006,7 @@ export class FirestoreService {
       const employeeId = data.employeeId;
       if (!employeeId) return false;
       const id = data.id || `ED-${Date.now()}`;
-      await setDoc(doc(db, 'companies', companyId, 'employees', employeeId, 'documents', id), { 
+      await setDoc(doc(db, 'companies', companyId || '', 'employees', employeeId, 'documents', id), { 
         ...data, 
         id, 
         updatedAt: new Date().toISOString(),
@@ -5779,7 +6018,7 @@ export class FirestoreService {
   }
   static async verifyDocument(companyId: string, employeeId: string, docId: string, statusData: any, reviewer: any): Promise<boolean> {
     try {
-      await updateDoc(doc(db, 'companies', companyId, 'employees', employeeId, 'documents', docId), { 
+      await updateDoc(doc(db, 'companies', companyId || '', 'employees', employeeId, 'documents', docId), { 
         ...statusData, 
         verifiedBy: reviewer, 
         verifiedAt: new Date().toISOString() 
@@ -5787,40 +6026,61 @@ export class FirestoreService {
       return true;
     } catch { return false; }
   }
-  static subscribeToActiveSos(companyId: string, onData: (data: any[]) => void): () => void {
+  static subscribeToActiveSos(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const onData = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof onData === 'function') onData([]);
+      return () => {};
+    }
     const q = query(collection(db, 'companies', companyId, 'sos_alerts'), where('status', '==', 'ACTIVE'));
-    return onSnapshot(q, (snap) => onData(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => onData([]));
+    return onSnapshot(q, (snap) => {
+      if (typeof onData === 'function') onData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof onData === 'function') onData([]); });
   }
   static async triggerSos(companyId: string, data: any): Promise<boolean> {
     try {
       const id = `SOS-${Date.now()}`;
-      await setDoc(doc(db, 'companies', companyId, 'sos_alerts', id), { ...data, id, status: 'ACTIVE', createdAt: new Date().toISOString() });
+      await setDoc(doc(db, 'companies', companyId || '', 'sos_alerts', id), { ...data, id, status: 'ACTIVE', createdAt: new Date().toISOString() });
       return true;
     } catch { return false; }
   }
-  static async updateSosStatus(companyId: string, sosId: string, status: string, notes: string): Promise<boolean> {
+  static async updateSosStatus(companyId: string, sosId: string, status: string, notesOrUpdates?: string | Record<string, any>): Promise<boolean> {
     try {
-      await updateDoc(doc(db, 'companies', companyId, 'sos_alerts', sosId), { status, resolutionNotes: notes, updatedAt: new Date().toISOString() });
+      const payload: Record<string, any> = { status, updatedAt: new Date().toISOString() };
+      if (typeof notesOrUpdates === 'string') {
+        payload.resolutionNotes = notesOrUpdates;
+      } else if (notesOrUpdates) {
+        Object.assign(payload, notesOrUpdates);
+      }
+      await updateDoc(doc(db, 'companies', companyId || '', 'sos_alerts', sosId), payload);
       return true;
     } catch { return false; }
   }
-  static async startTrackingSession(companyId: string, employeeId: string): Promise<string> {
+  static async startTrackingSession(companyId: string, sessionOrEmpId: string | any): Promise<string | boolean> {
     try {
+      if (typeof sessionOrEmpId === 'object' && sessionOrEmpId !== null) {
+        const id = sessionOrEmpId.id || `GPS-${Date.now()}`;
+        await setDoc(doc(db, 'companies', companyId || '', 'gps_sessions', id), { ...sessionOrEmpId, id, status: 'ACTIVE' });
+        return true;
+      }
       const id = `GPS-${Date.now()}`;
-      await setDoc(doc(db, 'companies', companyId, 'gps_sessions', id), { employeeId, startTime: new Date().toISOString(), status: 'ACTIVE' });
+      await setDoc(doc(db, 'companies', companyId || '', 'gps_sessions', id), { employeeId: sessionOrEmpId, startTime: new Date().toISOString(), status: 'ACTIVE' });
       return id;
-    } catch { return 'error-session'; }
+    } catch { return false; }
   }
-  static async endTrackingSession(companyId: string, sessionId: string): Promise<boolean> {
+  static async endTrackingSession(companyId: string, sessionId: string, endedBy?: string): Promise<boolean> {
     try {
-      await updateDoc(doc(db, 'companies', companyId, 'gps_sessions', sessionId), { endTime: new Date().toISOString(), status: 'COMPLETED' });
+      await updateDoc(doc(db, 'companies', companyId || '', 'gps_sessions', sessionId), { endTime: new Date().toISOString(), status: 'COMPLETED', endedBy: endedBy || 'USER' });
       return true;
     } catch { return false; }
   }
-  static async recordGpsEvent(companyId: string, sessionId: string, data: any): Promise<boolean> {
+  static async recordGpsEvent(companyId: string, arg2: any, arg3?: any): Promise<boolean> {
     try {
-      const id = `EV-${Date.now()}`;
-      await setDoc(doc(db, 'companies', companyId, 'gps_sessions', sessionId, 'events', id), { ...data, timestamp: new Date().toISOString() });
+      const sessionId = typeof arg2 === 'string' ? arg2 : (arg2?.trackingSessionId || 'default');
+      const data = typeof arg2 === 'object' && arg2 !== null ? arg2 : arg3;
+      const id = data?.id || `EV-${Date.now()}`;
+      await setDoc(doc(db, 'companies', companyId || '', 'gps_sessions', sessionId, 'events', id), { ...data, id, timestamp: data?.timestamp || new Date().toISOString() });
       return true;
     } catch { return false; }
   }
@@ -5830,66 +6090,131 @@ export class FirestoreService {
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch { return []; }
   }
-  static subscribeToDeployments(companyId: string, cb: (data: any[]) => void): () => void {
-    return onSnapshot(collection(db, 'companies', companyId, 'deployments'), (snap) => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => cb([]));
+  static subscribeToDeployments(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const cb = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof cb === 'function') cb([]);
+      return () => {};
+    }
+    return onSnapshot(collection(db, 'companies', companyId, 'deployments'), (snap) => {
+      if (typeof cb === 'function') cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof cb === 'function') cb([]); });
   }
-  static async saveDeployment(companyId: string, data: any): Promise<boolean> {
+  static async saveDeployment(arg1: any, arg2: any, arg3?: any, arg4?: any): Promise<boolean> {
     try {
-      const id = data.id || `DEP-${Date.now()}`;
-      await setDoc(doc(db, 'companies', companyId, 'deployments', id), { ...data, id, updatedAt: new Date().toISOString() }, { merge: true });
+      const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+      const data = typeof arg2 === 'object' && arg2 !== null ? arg2 : arg3;
+      const id = data?.id || `DEP-${Date.now()}`;
+      await setDoc(doc(db, 'companies', companyId || '', 'deployments', id), { ...data, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch { return false; }
   }
-  static subscribeToBadges(companyId: string, cb: (data: any[]) => void): () => void {
-    return onSnapshot(collection(db, 'companies', companyId, 'badges'), (snap) => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => cb([]));
+  static subscribeToBadges(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const cb = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof cb === 'function') cb([]);
+      return () => {};
+    }
+    return onSnapshot(collection(db, 'companies', companyId, 'badges'), (snap) => {
+      if (typeof cb === 'function') cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof cb === 'function') cb([]); });
   }
-  static async issueBadge(companyId: string, data: any): Promise<boolean> {
+  static async issueBadge(companyId: string, data: any, actor?: any): Promise<boolean> {
     try {
       const id = data.id || `BDG-${Date.now()}`;
-      await setDoc(doc(db, 'companies', companyId, 'badges', id), { ...data, id, issuedAt: new Date().toISOString(), status: 'ACTIVE' });
+      await setDoc(doc(db, 'companies', companyId || '', 'badges', id), {
+        ...data,
+        id,
+        issuedAt: new Date().toISOString(),
+        status: data.status || 'ACTIVE',
+        issuedBy: actor?.id || actor?.userId || data.issuedBy || 'SYSTEM'
+      });
       return true;
     } catch { return false; }
   }
-  static async updateBadgeStatus(companyId: string, id: string, status: string): Promise<boolean> {
+  static async updateBadgeStatus(companyId: string, id: string, status: string, reason?: string, actor?: any): Promise<boolean> {
     try {
-      await updateDoc(doc(db, 'companies', companyId, 'badges', id), { status, updatedAt: new Date().toISOString() });
+      await updateDoc(doc(db, 'companies', companyId || '', 'badges', id), {
+        status,
+        statusReason: reason || '',
+        updatedBy: actor?.id || actor?.userId || actor || 'SYSTEM',
+        updatedAt: new Date().toISOString()
+      });
       return true;
     } catch { return false; }
   }
-  static subscribeToStockTransactions(companyId: string, cb: (data: any[]) => void): () => void {
+  static subscribeToStockTransactions(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const cb = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof cb === 'function') cb([]);
+      return () => {};
+    }
     const q = query(collection(db, 'companies', companyId, 'inventory_transactions'), orderBy('createdAt', 'desc'), limit(100));
-    return onSnapshot(q, (snap) => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => cb([]));
+    return onSnapshot(q, (snap) => {
+      if (typeof cb === 'function') cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof cb === 'function') cb([]); });
   }
-  static async saveInventoryItem(companyId: string, data: any): Promise<boolean> {
+  static async saveInventoryItem(companyId: string, data: any, actor?: any): Promise<boolean> {
     try {
       const id = data.id || `INV-${Date.now()}`;
-      await setDoc(doc(db, 'companies', companyId, 'inventoryItems', id), { ...data, id, updatedAt: new Date().toISOString() }, { merge: true });
+      await setDoc(doc(db, 'companies', companyId || '', 'inventoryItems', id), {
+        ...data,
+        id,
+        updatedBy: actor?.uid || actor?.userId || actor || 'SYSTEM',
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
       return true;
     } catch { return false; }
   }
-  static async deleteInventoryItem(companyId: string, id: string): Promise<boolean> {
+  static async deleteInventoryItem(companyId: string, id: string, actor?: any): Promise<boolean> {
     try {
-      await deleteDoc(doc(db, 'companies', companyId, 'inventoryItems', id));
+      await deleteDoc(doc(db, 'companies', companyId || '', 'inventoryItems', id));
       return true;
     } catch { return false; }
   }
-  static async recordStockTransaction(companyId: string, data: any): Promise<boolean> {
+  static async recordStockTransaction(companyId: string, data: any, actor?: any): Promise<{ success: boolean; newStock?: number }> {
     try {
       const id = `STK-${Date.now()}`;
-      await setDoc(doc(db, 'companies', companyId, 'inventory_transactions', id), { ...data, id, createdAt: new Date().toISOString() });
-      return true;
-    } catch { return false; }
+      await setDoc(doc(db, 'companies', companyId || '', 'inventory_transactions', id), {
+        ...data,
+        id,
+        performedBy: actor?.uid || actor?.userId || actor || 'SYSTEM',
+        createdAt: new Date().toISOString()
+      });
+      // Update item current stock if itemId is provided
+      let newStock = data.quantity || 0;
+      if (data.itemId) {
+        const itemRef = doc(db, 'companies', companyId || '', 'inventoryItems', data.itemId);
+        const itemSnap = await getDoc(itemRef);
+        if (itemSnap.exists()) {
+          const itemData = itemSnap.data();
+          const curr = Number(itemData.currentStock) || 0;
+          const delta = (data.transactionType === 'STOCK_OUT' || data.transactionType === 'DAMAGE' || data.transactionType === 'SCRAP') ? -Number(data.quantity) : Number(data.quantity);
+          newStock = Math.max(0, curr + delta);
+          await updateDoc(itemRef, { currentStock: newStock, updatedAt: new Date().toISOString() });
+        }
+      }
+      return { success: true, newStock };
+    } catch { return { success: false }; }
   }
-  static async saveInventoryVendor(companyId: string, data: any): Promise<boolean> {
+  static async saveInventoryVendor(companyId: string, data: any, actor?: any): Promise<boolean> {
     try {
       const id = data.id || `VEN-${Date.now()}`;
-      await setDoc(doc(db, 'companies', companyId, 'inventoryVendors', id), { ...data, id, updatedAt: new Date().toISOString() }, { merge: true });
+      await setDoc(doc(db, 'companies', companyId || '', 'inventoryVendors', id), {
+        ...data,
+        id,
+        updatedBy: actor?.uid || actor?.userId || actor || 'SYSTEM',
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
       return true;
     } catch { return false; }
   }
-  static async deleteInventoryVendor(companyId: string, id: string): Promise<boolean> {
+  static async deleteInventoryVendor(companyId: string, id: string, actor?: any): Promise<boolean> {
     try {
-      await deleteDoc(doc(db, 'companies', companyId, 'inventoryVendors', id));
+      await deleteDoc(doc(db, 'companies', companyId || '', 'inventoryVendors', id));
       return true;
     } catch { return false; }
   }
@@ -5899,31 +6224,76 @@ export class FirestoreService {
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch { return []; }
   }
-  static subscribeToProcurementRequisitions(companyId: string, cb: (data: any[]) => void): () => void {
-    return onSnapshot(collection(db, 'companies', companyId, 'procurement_requisitions'), (snap) => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => cb([]));
+  static subscribeToProcurementRequisitions(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const cb = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof cb === 'function') cb([]);
+      return () => {};
+    }
+    return onSnapshot(collection(db, 'companies', companyId, 'procurement_requisitions'), (snap) => {
+      if (typeof cb === 'function') cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof cb === 'function') cb([]); });
   }
-  static subscribeToPurchaseOrders(companyId: string, cb: (data: any[]) => void): () => void {
-    return onSnapshot(collection(db, 'companies', companyId, 'purchase_orders'), (snap) => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => cb([]));
+  static subscribeToPurchaseOrders(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const cb = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof cb === 'function') cb([]);
+      return () => {};
+    }
+    return onSnapshot(collection(db, 'companies', companyId, 'purchase_orders'), (snap) => {
+      if (typeof cb === 'function') cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof cb === 'function') cb([]); });
   }
-  static subscribeToGoodsReceiptNotes(companyId: string, cb: (data: any[]) => void): () => void {
-    return onSnapshot(collection(db, 'companies', companyId, 'goods_receipt_notes'), (snap) => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => cb([]));
+  static subscribeToGoodsReceiptNotes(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const cb = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof cb === 'function') cb([]);
+      return () => {};
+    }
+    return onSnapshot(collection(db, 'companies', companyId, 'goods_receipt_notes'), (snap) => {
+      if (typeof cb === 'function') cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof cb === 'function') cb([]); });
   }
-  static subscribeToThreeWayMatches(companyId: string, cb: (data: any[]) => void): () => void {
-    return onSnapshot(collection(db, 'companies', companyId, 'three_way_matches'), (snap) => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => cb([]));
+  static subscribeToThreeWayMatches(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const cb = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof cb === 'function') cb([]);
+      return () => {};
+    }
+    return onSnapshot(collection(db, 'companies', companyId, 'three_way_matches'), (snap) => {
+      if (typeof cb === 'function') cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof cb === 'function') cb([]); });
   }
-  static subscribeToVendors(companyId: string, cb: (data: any[]) => void): () => void {
-    return onSnapshot(collection(db, 'companies', companyId, 'inventoryVendors'), (snap) => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => cb([]));
+  static subscribeToVendors(arg1: any, arg2: any, arg3?: any): () => void {
+    const companyId = typeof arg1 === 'string' ? arg1 : arg2;
+    const cb = typeof arg2 === 'function' ? arg2 : arg3;
+    if (!companyId) {
+      if (typeof cb === 'function') cb([]);
+      return () => {};
+    }
+    return onSnapshot(collection(db, 'companies', companyId, 'inventoryVendors'), (snap) => {
+      if (typeof cb === 'function') cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => { if (typeof cb === 'function') cb([]); });
   }
   static async saveProcurementRequisition(companyId: string, data: any): Promise<boolean> {
     try {
       const id = data.id || `PR-${Date.now()}`;
-      await setDoc(doc(db, 'companies', companyId, 'procurement_requisitions', id), { ...data, id, updatedAt: new Date().toISOString() }, { merge: true });
+      await setDoc(doc(db, 'companies', companyId || '', 'procurement_requisitions', id), { ...data, id, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch { return false; }
   }
-  static async resolveLifecycleApproval(companyId: string, id: string, status: string): Promise<boolean> {
+  static async resolveLifecycleApproval(companyId: string, id: string, status: string, actor?: any, reason?: string): Promise<boolean> {
     try {
-      await updateDoc(doc(db, 'companies', companyId, 'lifecycle_approvals', id), { status, resolvedAt: new Date().toISOString() });
+      await updateDoc(doc(db, 'companies', companyId || '', 'lifecycle_approvals', id), {
+        status,
+        resolvedAt: new Date().toISOString(),
+        resolvedBy: actor?.userId || actor?.uid || actor || 'SYSTEM',
+        resolutionReason: reason || ''
+      });
       return true;
     } catch { return false; }
   }

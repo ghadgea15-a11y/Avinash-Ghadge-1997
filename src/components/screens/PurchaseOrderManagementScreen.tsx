@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { PurchaseOrderRecord, PoLineItem } from '../../types';
 import { db, functions } from '../../firebase';
 import { collection, query, onSnapshot, doc, setDoc, updateDoc } from 'firebase/firestore';
@@ -26,10 +27,13 @@ export const PurchaseOrderManagementScreen: React.FC<PurchaseOrderManagementScre
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [selectedPO, setSelectedPO] = useState<PurchaseOrderRecord | null>(null);
+  useBackNavigation(!!selectedPO, () => setSelectedPO(null as any), 'selectedPO');
   const [showForm, setShowForm] = useState(false);
+  useBackNavigation(!!showForm, () => setShowForm(null as any), 'showForm');
   
   // For Approval Drawer
   const [showApprovalDrawer, setShowApprovalDrawer] = useState(false);
+  useBackNavigation(!!showApprovalDrawer, () => setShowApprovalDrawer(null as any), 'showApprovalDrawer');
   const [approvalComment, setApprovalComment] = useState('');
   
   const [generatingPdf, setGeneratingPdf] = useState(false);

@@ -45,23 +45,19 @@ export class EnterpriseConflictTestRunner {
   private static getFixtures() {
     const sites: SiteRecord[] = [
       {
-        id: 'SITE-ALPHA',
+        id: 'SITE-ALPHA', code: 'A', updatedAt: '',
         companyId: 'COMP-DEMO',
         name: 'Alpha Tech Park',
-        siteName: 'Alpha Tech Park',
         branchId: 'BRANCH-01',
-        clientName: 'Alpha Global Corp',
         address: 'Sector 62, Electronic City, Bengaluru',
         status: 'ACTIVE',
         createdAt: '2024-01-01T00:00:00Z'
       },
       {
-        id: 'SITE-OMEGA',
+        id: 'SITE-OMEGA', code: 'O', updatedAt: '',
         companyId: 'COMP-DEMO',
         name: 'Omega Logistics Hub',
-        siteName: 'Omega Logistics Hub',
         branchId: 'BRANCH-01',
-        clientName: 'Omega Cargo Ltd',
         address: 'Plot 44, Industrial Corridor, Bengaluru',
         status: 'ACTIVE',
         createdAt: '2024-01-01T00:00:00Z'
@@ -441,7 +437,7 @@ export class EnterpriseConflictTestRunner {
           employeeId: 'EMP-RAJESH-101',
           employeeName: 'Rajesh Kumar',
           siteId: 'SITE-ALPHA',
-          siteName: 'Alpha Tech Park',
+          name: 'Alpha Tech Park',
           shiftId: 'SHIFT-MORNING', // 08:00 - 16:00
           shiftName: 'Morning Shift',
           date: targetDate,
@@ -458,7 +454,7 @@ export class EnterpriseConflictTestRunner {
           employeeId: 'EMP-RAJESH-101',
           employeeName: 'Rajesh Kumar',
           siteId: 'SITE-ALPHA',
-          siteName: 'Alpha Tech Park',
+          name: 'Alpha Tech Park',
           shiftId: 'SHIFT-AFTERNOON', // 14:00 - 22:00 (Overlap 14:00-16:00 = 120 mins)
           shiftName: 'Afternoon Shift',
           date: targetDate,
@@ -530,7 +526,7 @@ export class EnterpriseConflictTestRunner {
           employeeId: 'EMP-RAJESH-101',
           employeeName: 'Rajesh Kumar',
           siteId: 'SITE-ALPHA',
-          siteName: 'Alpha Tech Park',
+          name: 'Alpha Tech Park',
           shiftId: 'SHIFT-MORNING', // 08:00 - 16:00
           shiftName: 'Morning Shift',
           date: targetDate,
@@ -547,7 +543,7 @@ export class EnterpriseConflictTestRunner {
           employeeId: 'EMP-RAJESH-101',
           employeeName: 'Rajesh Kumar',
           siteId: 'SITE-OMEGA',
-          siteName: 'Omega Logistics Hub',
+          name: 'Omega Logistics Hub',
           shiftId: 'SHIFT-MORNING', // 08:00 - 16:00 simultaneously
           shiftName: 'Morning Shift',
           date: targetDate,
@@ -763,7 +759,7 @@ export class EnterpriseConflictTestRunner {
           employeeId: 'EMP-RAJESH-101',
           employeeName: 'Rajesh Kumar',
           siteId: 'SITE-ALPHA',
-          siteName: 'Alpha Tech Park',
+          name: 'Alpha Tech Park',
           shiftId: 'SHIFT-MORNING', // 08:00 - 16:00
           shiftName: 'Morning Shift',
           date: targetDate,
@@ -780,7 +776,7 @@ export class EnterpriseConflictTestRunner {
           employeeId: 'EMP-RAJESH-101',
           employeeName: 'Rajesh Kumar',
           siteId: 'SITE-ALPHA',
-          siteName: 'Alpha Tech Park',
+          name: 'Alpha Tech Park',
           shiftId: 'SHIFT-AFTERNOON', // 14:00 - 22:00
           shiftName: 'Afternoon Handover Shift',
           date: targetDate,

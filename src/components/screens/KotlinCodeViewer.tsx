@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { Code2, Copy, Check, FileCode, Folder, Search, ArrowLeft } from 'lucide-react';
 
 interface KotlinCodeViewerProps {
@@ -158,6 +159,7 @@ class SessionManager @Inject constructor(
 
 export const KotlinCodeViewer: React.FC<KotlinCodeViewerProps> = ({ onBack }) => {
   const [selectedFileIdx, setSelectedFileIdx] = useState(0);
+  useBackNavigation(!!selectedFileIdx, () => setSelectedFileIdx(null as any), 'selectedFileIdx');
   const [copied, setCopied] = useState(false);
 
   const selectedFile = KOTLIN_FILES[selectedFileIdx];

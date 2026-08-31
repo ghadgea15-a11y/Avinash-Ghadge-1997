@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Pagination } from '../common/Pagination';
@@ -52,7 +53,9 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
   
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'SUSPENDED'>('ALL');
   const [editingCompany, setEditingCompany] = useState<CompanyTenant | null>(null);
+  useBackNavigation(!!editingCompany, () => setEditingCompany(null as any), 'editingCompany');
   const [deletingCompany, setDeletingCompany] = useState<CompanyTenant | null>(null);
+  useBackNavigation(!!deletingCompany, () => setDeletingCompany(null as any), 'deletingCompany');
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [saving, setSaving] = useState(false);

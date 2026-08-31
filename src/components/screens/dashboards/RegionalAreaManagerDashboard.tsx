@@ -89,12 +89,6 @@ export const RegionalAreaManagerDashboard: React.FC<DashboardProps> = ({ userSes
           Welcome to the Regional Dashboard. You are viewing operational data scoped strictly to your assigned region.
         </p>
       </div>
-
-      <EnterpriseIntelligenceDashboard 
-        session={userSession} 
-        company={company} 
-        onDrillDown={(mod, data) => {}} 
-      />
     </div>
   );
 };

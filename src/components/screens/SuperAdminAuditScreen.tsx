@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   History, 
   Search, 
@@ -40,7 +41,9 @@ export const SuperAdminAuditScreen: React.FC<SuperAdminAuditScreenProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAction, setSelectedAction] = useState<string>('ALL');
+  useBackNavigation(!!selectedAction, () => setSelectedAction(null as any), 'selectedAction');
   const [selectedLog, setSelectedLog] = useState<PlatformAuditLog | null>(null);
+  useBackNavigation(!!selectedLog, () => setSelectedLog(null as any), 'selectedLog');
 
   const fetchAuditLogs = async () => {
     setLoading(true);

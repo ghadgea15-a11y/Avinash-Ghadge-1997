@@ -1,0 +1,55 @@
+{
+  "lifecycle": {
+    "rule": [
+      {
+        "action": {
+          "type": "Delete"
+        },
+        "condition": {
+          "age": 30,
+          "matchesPrefix": [
+            "temp/",
+            "exports/",
+            "staging/",
+            "bulk-exports/",
+            "tmp/"
+          ]
+        }
+      },
+      {
+        "action": {
+          "type": "Delete"
+        },
+        "condition": {
+          "daysSinceNoncurrentTime": 30,
+          "numNewerVersions": 1,
+          "isLive": false
+        }
+      },
+      {
+        "action": {
+          "type": "Delete"
+        },
+        "condition": {
+          "age": 60,
+          "matchesPrefix": [
+            "deleted_archives/",
+            "trash/"
+          ]
+        }
+      },
+      {
+        "action": {
+          "type": "SetStorageClass",
+          "storageClass": "NEARLINE"
+        },
+        "condition": {
+          "age": 90,
+          "matchesPrefix": [
+            "companies/"
+          ]
+        }
+      }
+    ]
+  }
+}

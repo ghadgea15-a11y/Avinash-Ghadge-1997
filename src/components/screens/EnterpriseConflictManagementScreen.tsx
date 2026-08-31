@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   ShieldAlert, 
   AlertTriangle, 
@@ -60,6 +61,7 @@ export const EnterpriseConflictManagementScreen: React.FC<Props> = ({
 
   // Override Modal state
   const [selectedConflictForOverride, setSelectedConflictForOverride] = useState<DetectedConflict | null>(null);
+  useBackNavigation(!!selectedConflictForOverride, () => setSelectedConflictForOverride(null as any), 'selectedConflictForOverride');
   const [overrideReasonCategory, setOverrideReasonCategory] = useState<OverrideReasonCode>('BUSINESS_CRITICAL_RELIEF');
   const [overrideJustification, setOverrideJustification] = useState('');
   const [overrideSubmitting, setOverrideSubmitting] = useState(false);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   IdCard, 
@@ -55,10 +56,15 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBadge, setSelectedBadge] = useState<IdentityBadgeRecord | null>(null);
+  useBackNavigation(!!selectedBadge, () => setSelectedBadge(null as any), 'selectedBadge');
   const [showIssueModal, setShowIssueModal] = useState(false);
+  useBackNavigation(!!showIssueModal, () => setShowIssueModal(null as any), 'showIssueModal');
   const [showVerifyModal, setShowVerifyModal] = useState(false);
+  useBackNavigation(!!showVerifyModal, () => setShowVerifyModal(null as any), 'showVerifyModal');
   const [showScannerModal, setShowScannerModal] = useState(false);
+  useBackNavigation(!!showScannerModal, () => setShowScannerModal(null as any), 'showScannerModal');
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  useBackNavigation(!!showHistoryModal, () => setShowHistoryModal(null as any), 'showHistoryModal');
   const [badgeHistory, setBadgeHistory] = useState<BadgeLifecycleEvent[]>([]);
   const [verificationResult, setVerificationResult] = useState<any>(null);
   const [verifyInput, setVerifyInput] = useState('');

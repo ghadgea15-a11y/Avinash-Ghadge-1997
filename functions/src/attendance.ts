@@ -27,6 +27,7 @@ export interface ServerPunchRequest {
     latitude: number;
     longitude: number;
     accuracy?: number;
+    isMocked?: boolean;
   };
   shiftId?: string;
   rosterId?: string;
@@ -120,6 +121,51 @@ export const markAttendancePunch = https.onCall(async (request) => {
         );
       }
 
+      // --- ENTERPRISE GPS SPOOFING & MOCK LOCATION DETECTION ---
+      let spoofingReason: string | null = null;
+      if (gps.isMocked) {
+        spoofingReason = 'Mock Location Provider Detected';
+      } else if (Math.abs(gps.latitude) < 0.0001 && Math.abs(gps.longitude) < 0.0001) {
+        spoofingReason = 'Null Island (0,0) Coordinates Detected';
+      } else if (gps.latitude < -90 || gps.latitude > 90 || gps.longitude < -180 || gps.longitude > 180) {
+        spoofingReason = 'Out of Bounds GPS Coordinates';
+      }
+
+      if (spoofingReason) {
+        const anomalyId = `SUSP-SPOOF-${Date.now()}-${employeeId}`;
+        const anomalyRef = db.collection('companies').doc(companyId).collection('suspicious_punches').doc(anomalyId);
+        await anomalyRef.set({
+          id: anomalyId,
+          companyId,
+          employeeId,
+          employeeName: empData.fullName || empData.name || employeeId,
+          siteId,
+          siteName: siteData.name || siteData.siteName || siteId,
+          punchType,
+          punchTimestamp: nowIso,
+          anomalyType: 'GPS_SPOOFING',
+          severity: 'CRITICAL',
+          riskScore: 99,
+          status: 'UNRESOLVED',
+          evidence: `Punch rejected due to GPS tampering: ${spoofingReason}`,
+          gpsCoordinates: {
+            latitude: gps.latitude,
+            longitude: gps.longitude,
+            accuracy: gps.accuracy || 0,
+            isMocked: gps.isMocked || false
+          },
+          deviceInfo: deviceInfo || 'Client Web/Mobile',
+          callerUid: auth.uid,
+          createdAt: nowIso
+        });
+
+        throw new https.HttpsError(
+          "permission-denied",
+          `PUNCH_REJECTED_TAMPERING: Security systems detected location tampering (${spoofingReason}). This incident has been logged.`
+        );
+      }
+      // --------------------------------------------------------
+
       distanceMeters = calculateDistanceInMeters(gps.latitude, gps.longitude, siteLat, siteLon);
       const accuracyCushion = Math.min(gps.accuracy ? gps.accuracy * 0.5 : 0, 15);
       const maxAllowedDistance = geofenceRadius + accuracyCushion;
@@ -130,7 +176,8 @@ export const markAttendancePunch = https.onCall(async (request) => {
         // Check if supervisor override is permitted
         const callerAuthority = callerClaims.aLvl || 'A9_SUPPORT';
         const isManager = ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER', 'A3_OFFICIAL_STAFF', 'A4_REGIONAL_AREA_MANAGER', 'A5_SITE_IN_CHARGE', 'A6_SUPERVISOR'].includes(callerAuthority);
-        const isSupervisorOverride = isManager && geofenceOverrideRequested && geofenceOverrideReason && geofenceOverrideReason.trim().length > 3;
+        const isSelf = auth.uid === empData.authUid;
+        const isSupervisorOverride = isManager && !isSelf && geofenceOverrideRequested && geofenceOverrideReason && geofenceOverrideReason.trim().length > 3;
 
         if (!isSupervisorOverride) {
           // Log suspicious punch attempt for security governance

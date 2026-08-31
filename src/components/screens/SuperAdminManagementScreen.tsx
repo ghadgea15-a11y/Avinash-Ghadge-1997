@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { ShieldCheck, Plus, Search, UserCheck, ShieldAlert, Lock, AlertCircle, RefreshCw, EyeOff, Eye } from 'lucide-react';
 import { UserSession } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
@@ -16,6 +17,7 @@ export const SuperAdminManagementScreen: React.FC<SuperAdminManagementScreenProp
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  useBackNavigation(!!showAddModal, () => setShowAddModal(null as any), 'showAddModal');
   const { showSuccess, handleError, showLoading } = useFeedback();
 
   // Add Admin form state
@@ -42,11 +44,11 @@ export const SuperAdminManagementScreen: React.FC<SuperAdminManagementScreenProp
 
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAdminEmail || !newAdminUid || !newAdminName) return;
+    if (!newAdminEmail || !newAdminName) return;
 
     const dismiss = showLoading('Provisioning Super Admin...');
     try {
-      const docRef = doc(db, 'super_admins', newAdminUid);
+      const docRef = doc(db, 'super_admins', '');
       await setDoc(docRef, {
         email: newAdminEmail,
         name: newAdminName,
@@ -63,7 +65,7 @@ export const SuperAdminManagementScreen: React.FC<SuperAdminManagementScreenProp
       setNewAdminEmail('');
       setNewAdminName('');
       setNewAdminPhone('');
-      setNewAdminUid('');
+      const noop = ('');
       loadAdmins();
     } catch (err) {
       dismiss();
@@ -240,8 +242,8 @@ export const SuperAdminManagementScreen: React.FC<SuperAdminManagementScreenProp
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Auth UID</label>
                 <input 
                   type="text" 
-                  value={newAdminUid}
-                  onChange={e => setNewAdminUid(e.target.value)}
+                  value={''}
+                  onChange={e => {}}
                   className="w-full px-4 py-2.5 border-2 border-slate-200 rounded-xl focus:border-black outline-none font-mono text-sm"
                   placeholder="e.g. j2K4...lP9"
                   required

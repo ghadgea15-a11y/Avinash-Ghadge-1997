@@ -241,7 +241,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
   };
 
   const handleConfirmRevoke = async () => {
-    if (!showRevokeModal) return;
+    if (!showRevokeModal || !showRevokeModal.delegationId) return;
     setRevoking(true);
     const dismiss = showLoading('Revoking proxy delegation...');
     try {

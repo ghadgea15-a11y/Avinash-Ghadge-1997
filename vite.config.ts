@@ -8,6 +8,10 @@ export default defineConfig({
     port: 3000,
     host: true
   },
+  test: {
+    environment: 'jsdom',
+    exclude: ['node_modules', 'tests-e2e/**']
+  },
   build: {
     chunkSizeWarningLimit: 3000,
     minify: 'esbuild',

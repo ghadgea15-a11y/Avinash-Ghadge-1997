@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { Pagination } from '../common/Pagination';
 import {
   Users,
@@ -93,8 +94,13 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
   const [activeTab, setActiveTab] = useState<'DIRECTORY' | 'REGISTER' | 'APPROVALS'>('DIRECTORY');
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeRecord | null>(null);
+  useBackNavigation(!!selectedEmployee, () => setSelectedEmployee(null as any), 'selectedEmployee');
+  const closeEmployeeDetail = () => setSelectedEmployee(null);
+  const handleBack = useBackNavigation(!!selectedEmployee, closeEmployeeDetail, "employeeDetail");
   const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
+  useBackNavigation(!!editingEmployeeId, () => setEditingEmployeeId(null as any), 'editingEmployeeId');
   const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(null);
+  useBackNavigation(!!deletingEmployeeId, () => setDeletingEmployeeId(null as any), 'deletingEmployeeId');
   
 
   const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
@@ -104,15 +110,23 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
   // Document upload modal state
   const [showAddDocModal, setShowAddDocModal] = useState<boolean>(false);
+  useBackNavigation(!!showAddDocModal, () => setShowAddDocModal(null as any), 'showAddDocModal');
   const [lifecycleHistory, setLifecycleHistory] = useState<LifecycleHistoryRecord[]>([]);
   const [activeLifecycleTab, setActiveLifecycleTab] = useState<'TIMELINE' | 'ONBOARDING' | 'ACTIONS'>('TIMELINE');
   const [showPromotionModal, setShowPromotionModal] = useState(false);
+  useBackNavigation(!!showPromotionModal, () => setShowPromotionModal(null as any), 'showPromotionModal');
   const [showTransferModal, setShowTransferModal] = useState(false);
+  useBackNavigation(!!showTransferModal, () => setShowTransferModal(null as any), 'showTransferModal');
   const [showExitModal, setShowExitModal] = useState(false);
+  useBackNavigation(!!showExitModal, () => setShowExitModal(null as any), 'showExitModal');
   const [showSuspensionModal, setShowSuspensionModal] = useState(false);
+  useBackNavigation(!!showSuspensionModal, () => setShowSuspensionModal(null as any), 'showSuspensionModal');
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  useBackNavigation(!!showConfirmationModal, () => setShowConfirmationModal(null as any), 'showConfirmationModal');
   const [showSettlementModal, setShowSettlementModal] = useState(false);
+  useBackNavigation(!!showSettlementModal, () => setShowSettlementModal(null as any), 'showSettlementModal');
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  useBackNavigation(!!showDeactivateModal, () => setShowDeactivateModal(null as any), 'showDeactivateModal');
 
   const [suspendForm, setSuspendForm] = useState({ reason: '', effectiveDate: new Date().toISOString().split('T')[0] });
   const [confirmationForm, setConfirmationForm] = useState({ effectiveDate: new Date().toISOString().split('T')[0], reason: '' });
@@ -367,6 +381,21 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
     if (!formData.departmentId) {
       errors.departmentId = 'Department assignment is required';
+    }
+
+    if (formData.dateOfBirth) {
+      const dob = new Date(formData.dateOfBirth);
+      if (!isNaN(dob.getTime())) {
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+          age--;
+        }
+        if (age < 18) {
+          errors.dateOfBirth = `Child Labor Violation (CONF-AGE-001): Employee age (${age} yrs) is under statutory 18 yrs limit.`;
+        }
+      }
     }
 
     if (!formData.emergencyName.trim()) errors.emergencyName = 'Emergency contact name required';
@@ -718,13 +747,19 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     const dismiss = showLoading(actionLabel);
 
     setUploadingFile(true);
-    let finalProfileUrl = editingEmployeeId 
-        ? (employees.find(e => e.id === empId)?.profilePictureUrl || ``)
-        : ``;
+    const existingEmployee = editingEmployeeId ? employees.find(e => e.id === empId) : null;
+    const oldProfileUrl = existingEmployee?.profilePictureUrl || '';
+    let finalProfileUrl = oldProfileUrl;
 
     if (profilePictureFile) {
       try {
         finalProfileUrl = await StorageService.uploadFile(`companies/${currentCompanyId}/employees/${empId}/profile/profile_${Date.now()}`, profilePictureFile);
+        // Automatically cleanup orphaned prior photo from Cloud Storage
+        if (oldProfileUrl && oldProfileUrl !== finalProfileUrl) {
+          StorageService.cleanupOldFile(oldProfileUrl).catch(err => 
+            console.warn('[EmployeeModule] Old profile cleanup notice:', err)
+          );
+        }
       } catch (err) {
         console.error('Failed to upload profile picture', err);
       }
@@ -1747,6 +1782,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
+              {formErrors.dateOfBirth && <p className="text-[10px] text-rose-400 font-semibold mt-1">{formErrors.dateOfBirth}</p>}
             </div>
 
             {/* Gender */}
@@ -2197,7 +2233,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 </div>
               </div>
               <button
-                onClick={() => setSelectedEmployee(null)}
+                onClick={handleBack}
                 className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white"
               >
                 <XCircle className="w-5 h-5" />
@@ -2525,7 +2561,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               </div>
 
               <button
-                onClick={() => setSelectedEmployee(null)}
+                onClick={handleBack}
                 className="px-4 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold"
               >
                 Close

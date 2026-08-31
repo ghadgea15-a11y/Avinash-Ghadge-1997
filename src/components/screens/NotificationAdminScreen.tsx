@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   Bell, 
   Mail, 
@@ -36,6 +37,7 @@ export const NotificationAdminScreen: React.FC<NotificationAdminScreenProps> = (
   // States for Templates
   const [templates, setTemplates] = useState<any[]>([]);
   const [editingTemplate, setEditingTemplate] = useState<any | null>(null);
+  useBackNavigation(!!editingTemplate, () => setEditingTemplate(null as any), 'editingTemplate');
 
   // States for Audits
   const [auditLogs, setAuditLogs] = useState<any[]>([]);

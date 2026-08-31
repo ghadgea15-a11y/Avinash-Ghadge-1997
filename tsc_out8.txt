@@ -1,0 +1,40 @@
+src/components/wfm/SupervisorRollCall.tsx(36,57): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(36,60): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(36,63): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(36,80): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(36,83): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(36,86): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(36,103): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(36,106): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(45,70): error TS1005: ')' expected.
+src/components/wfm/SupervisorRollCall.tsx(45,80): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(45,83): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(45,87): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(45,109): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(45,132): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(46,24): error TS1005: '(' expected.
+src/components/wfm/SupervisorRollCall.tsx(46,28): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(46,29): error TS1109: Expression expected.
+src/components/wfm/SupervisorRollCall.tsx(47,15): error TS1005: ';' expected.
+src/components/wfm/SupervisorRollCall.tsx(48,24): error TS1005: ';' expected.
+src/components/wfm/SupervisorRollCall.tsx(49,17): error TS1005: ';' expected.
+src/components/wfm/SupervisorRollCall.tsx(50,15): error TS1005: ';' expected.
+src/components/wfm/SupervisorRollCall.tsx(51,8): error TS1472: 'catch' or 'finally' expected.
+src/components/wfm/SupervisorRollCall.tsx(58,7): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(119,61): error TS1005: ',' expected.
+src/components/wfm/SupervisorRollCall.tsx(119,78): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/wfm/SupervisorRollCall.tsx(122,23): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/wfm/SupervisorRollCall.tsx(124,25): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/components/wfm/SupervisorRollCall.tsx(132,23): error TS17002: Expected corresponding JSX closing tag for 'td'.
+src/components/wfm/SupervisorRollCall.tsx(133,21): error TS17002: Expected corresponding JSX closing tag for 'tr'.
+src/components/wfm/SupervisorRollCall.tsx(134,17): error TS1005: ')' expected.
+src/components/wfm/SupervisorRollCall.tsx(134,19): error TS17002: Expected corresponding JSX closing tag for 'tbody'.
+src/components/wfm/SupervisorRollCall.tsx(135,17): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/wfm/SupervisorRollCall.tsx(136,15): error TS17002: Expected corresponding JSX closing tag for 'table'.
+src/components/wfm/SupervisorRollCall.tsx(137,11): error TS1005: ')' expected.
+src/components/wfm/SupervisorRollCall.tsx(137,13): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/components/wfm/SupervisorRollCall.tsx(138,10): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/wfm/SupervisorRollCall.tsx(140,5): error TS1005: ')' expected.
+src/components/wfm/SupervisorRollCall.tsx(141,3): error TS1109: Expression expected.
+src/components/wfm/SupervisorRollCall.tsx(142,1): error TS1128: Declaration or statement expected.
+FAILED

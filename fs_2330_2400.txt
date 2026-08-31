@@ -1,0 +1,71 @@
+            roundedOvertimeMinutes: calcResult.calculatedOvertimeMinutes,
+            approvedOvertimeMinutes: calcResult.approvedOvertimeMinutes,
+            status: calcResult.approvedOvertimeMinutes > 0 ? 'APPROVED' : 'PENDING_APPROVAL',
+            calculationBreakdown: calcResult.breakdownSteps.join('\n'),
+            exceptionFlags: calcResult.exceptions,
+            requestedBy: record.employeeId,
+            requestedByName: record.employeeName,
+            requestedAt: now
+          }, transaction);
+        }
+
+        return { success: true, message: 'Check-out successful' };
+      });
+
+      // Module 10 / Point 5: GRC Compliance Evaluation for Attendance Punch Out & Overtime
+      if (result.success) {
+        try {
+          const { CompliancePolicyEngine } = await import('./compliancePolicyEngine');
+          // Fetch the final record to get metrics if needed, or pass from result
+          // For compliance, we can use the same metrics calculated above
+        } catch (compErr) {
+          console.warn('[Compliance] Punch out compliance evaluation error:', compErr);
+        }
+      }
+
+      return { success: result.success, message: result.message };
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `attendance/${attendanceId}`);
+      return { success: false, message: 'Internal error during check-out' };
+    }
+  }
+
+  static async supervisorPunch(
+    companyId: string,
+    employeeId: string,
+    employeeName: string,
+    rosterId: string,
+    shift: ShiftRecord,
+    siteId: string,
+    siteName: string,
+    action: 'IN' | 'OUT',
+    supervisorId: string,
+    remarks?: string
+  ): Promise<boolean> {
+    const date = new Date().toISOString().split('T')[0];
+    const id = `ATT-${rosterId}`;
+    try {
+      const now = new Date().toISOString();
+      const policy = await this.getOvertimePolicy(companyId, siteId);
+      
+      if (action === 'IN') {
+        const calcResult = AttendanceCalculationEngine.calculate({
+          workDate: date,
+          shift,
+          checkInIso: now,
+          policy,
+          siteId,
+          rosterId
+        });
+
+        const record: AttendanceRecord = {
+          id,
+          companyId,
+          employeeId,
+          employeeName,
+          rosterId,
+          shiftId: shift.id,
+          shiftName: shift.shiftName,
+          siteId,
+          siteName,
+          attendanceDate: date,

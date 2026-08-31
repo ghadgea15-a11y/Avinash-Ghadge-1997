@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   Building2, 
   Sliders, 
@@ -34,6 +35,7 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
   const [saving, setSaving] = useState(false);
   const [companies, setCompanies] = useState<CompanyTenant[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
+  useBackNavigation(!!selectedCompanyId, () => setSelectedCompanyId(null as any), 'selectedCompanyId');
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const [searchFilter, setSearchFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');

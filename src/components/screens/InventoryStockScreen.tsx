@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   Boxes, 
   Plus, 
@@ -89,16 +90,24 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  useBackNavigation(!!selectedCategory, () => setSelectedCategory(null as any), 'selectedCategory');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
+  useBackNavigation(!!selectedStatus, () => setSelectedStatus(null as any), 'selectedStatus');
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<string>('ALL');
+  useBackNavigation(!!selectedSiteFilter, () => setSelectedSiteFilter(null as any), 'selectedSiteFilter');
 
   // Modals
   const [showItemModal, setShowItemModal] = useState(false);
+  useBackNavigation(!!showItemModal, () => setShowItemModal(null as any), 'showItemModal');
   const [editingItem, setEditingItem] = useState<InventoryItemRecord | null>(null);
+  useBackNavigation(!!editingItem, () => setEditingItem(null as any), 'editingItem');
   const [showTxModal, setShowTxModal] = useState(false);
+  useBackNavigation(!!showTxModal, () => setShowTxModal(null as any), 'showTxModal');
   const [txTargetItem, setTxTargetItem] = useState<InventoryItemRecord | null>(null);
   const [showVendorModal, setShowVendorModal] = useState(false);
+  useBackNavigation(!!showVendorModal, () => setShowVendorModal(null as any), 'showVendorModal');
   const [editingVendor, setEditingVendor] = useState<InventoryVendorRecord | null>(null);
+  useBackNavigation(!!editingVendor, () => setEditingVendor(null as any), 'editingVendor');
   const [actionProcessing, setActionProcessing] = useState(false);
 
   // Form States
@@ -210,7 +219,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
     const lowStockCount = items.filter(i => i.status === 'LOW_STOCK').length;
     const outOfStockCount = items.filter(i => i.status === 'OUT_OF_STOCK').length;
     const inStockCount = items.filter(i => i.status === 'IN_STOCK').length;
-    const totalValuation = items.reduce((acc, curr) => acc + (curr.currentStock * (curr.unitCost || 0)), 0);
+    const totalValuation = items.reduce((acc, curr) => acc + ((curr.currentStock || 0) * (curr.unitCost || 0)), 0);
 
     const todayStr = new Date().toISOString().slice(0, 10);
     const todayInward = transactions
@@ -262,10 +271,10 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
       category: item.category,
       description: item.description || '',
       unit: item.unit,
-      currentStock: item.currentStock,
-      minStockThreshold: item.minStockThreshold,
+      currentStock: item.currentStock || 0,
+      minStockThreshold: item.minStockThreshold || 0,
       maxStockLimit: item.maxStockLimit || 100,
-      unitCost: item.unitCost,
+      unitCost: item.unitCost || 0,
       warehouseLocation: item.warehouseLocation || '',
       siteId: item.siteId || '',
       supplierVendorId: item.supplierVendorId || '',
@@ -554,11 +563,11 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
       item.itemCode,
       `"${item.itemName.replace(/"/g, '""')}"`,
       item.category,
-      item.currentStock,
+      item.currentStock || 0,
       item.unit,
-      item.minStockThreshold,
-      item.unitCost,
-      item.currentStock * item.unitCost,
+      item.minStockThreshold || 0,
+      item.unitCost || 0,
+      (item.currentStock || 0) * (item.unitCost || 0),
       `"${(item.warehouseLocation || '').replace(/"/g, '""')}"`,
       `"${(item.siteName || '').replace(/"/g, '""')}"`,
       item.status
@@ -882,8 +891,8 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {filteredItems.map((item) => {
                       const catInfo = CATEGORY_LABELS[item.category] || CATEGORY_LABELS.OTHER;
-                      const isLow = item.currentStock <= item.minStockThreshold;
-                      const isOut = item.currentStock <= 0;
+                      const isLow = (item.currentStock || 0) <= (item.minStockThreshold || 0);
+                      const isOut = (item.currentStock || 0) <= 0;
 
                       return (
                         <tr key={item.id} className="hover:bg-white dark:bg-slate-950/70 dark:hover:bg-slate-800/40 transition-colors">
@@ -913,12 +922,12 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                                 isLow ? 'text-amber-600 dark:text-amber-400' :
                                 'text-black dark:text-white'
                               }`}>
-                                {item.currentStock}
+                                {item.currentStock || 0}
                               </span>
                               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{item.unit}</span>
                             </div>
                             <div className="text-[10px] text-slate-400 font-medium">
-                              Min Alert: {item.minStockThreshold} {item.unit}
+                              Min Alert: {item.minStockThreshold || 0} {item.unit}
                             </div>
                           </td>
 
@@ -928,7 +937,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                               ₹{item.unitCost?.toLocaleString('en-IN')} <span className="text-[10px] text-slate-400 font-normal">/ {item.unit}</span>
                             </div>
                             <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                              Val: ₹{(item.currentStock * (item.unitCost || 0)).toLocaleString('en-IN')}
+                              Val: ₹{((item.currentStock || 0) * (item.unitCost || 0)).toLocaleString('en-IN')}
                             </div>
                           </td>
 

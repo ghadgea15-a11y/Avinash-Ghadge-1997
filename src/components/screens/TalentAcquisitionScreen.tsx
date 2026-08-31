@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   UserSession, 
   CompanyTenant, 
@@ -70,14 +71,21 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDeptFilter, setSelectedDeptFilter] = useState('ALL');
+  useBackNavigation(!!selectedDeptFilter, () => setSelectedDeptFilter(null as any), 'selectedDeptFilter');
   const [selectedStageFilter, setSelectedStageFilter] = useState<string>('ALL');
+  useBackNavigation(!!selectedStageFilter, () => setSelectedStageFilter(null as any), 'selectedStageFilter');
 
   // Modal states
   const [showReqModal, setShowReqModal] = useState(false);
+  useBackNavigation(!!showReqModal, () => setShowReqModal(null as any), 'showReqModal');
   const [showCandidateModal, setShowCandidateModal] = useState(false);
+  useBackNavigation(!!showCandidateModal, () => setShowCandidateModal(null as any), 'showCandidateModal');
   const [showInterviewModal, setShowInterviewModal] = useState(false);
+  useBackNavigation(!!showInterviewModal, () => setShowInterviewModal(null as any), 'showInterviewModal');
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateRecord | null>(null);
+  useBackNavigation(!!selectedCandidate, () => setSelectedCandidate(null as any), 'selectedCandidate');
   const [selectedReq, setSelectedReq] = useState<JobRequisitionRecord | null>(null);
+  useBackNavigation(!!selectedReq, () => setSelectedReq(null as any), 'selectedReq');
 
   // Form states
   const [reqForm, setReqForm] = useState({

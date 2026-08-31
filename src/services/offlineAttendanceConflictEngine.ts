@@ -96,21 +96,21 @@ export class OfflineAttendanceConflictEngine {
     const employeeId = recordA.employeeId || recordB.employeeId || 'UNKNOWN';
     const targetDate = recordA.attendanceDate || recordB.attendanceDate || new Date().toISOString().split('T')[0];
 
-    const ctxA = recordA.supervisorContext || {
+    const ctxA = (recordA.supervisorContext || {
       supervisorId: recordA.createdBy || 'SUPERVISOR_A',
       siteId: recordA.siteId || 'SITE_A',
       punchTimestamp: action === 'PUNCH_IN' ? (recordA.checkIn || '') : (recordA.checkOut || ''),
       action,
       authorityLevel: 'A6_SUPERVISOR'
-    };
+    } as SupervisorPunchContext);
 
-    const ctxB = recordB.supervisorContext || {
+    const ctxB = (recordB.supervisorContext || {
       supervisorId: recordB.createdBy || 'SUPERVISOR_B',
       siteId: recordB.siteId || 'SITE_B',
       punchTimestamp: action === 'PUNCH_IN' ? (recordB.checkIn || '') : (recordB.checkOut || ''),
       action,
       authorityLevel: 'A6_SUPERVISOR'
-    };
+    } as SupervisorPunchContext);
 
     // Identical record check (idempotent noop)
     if (

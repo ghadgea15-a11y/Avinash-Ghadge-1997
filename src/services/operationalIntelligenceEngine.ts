@@ -87,7 +87,8 @@ export class OperationalIntelligenceEngine {
       incidentsSnap,
       contractsSnap,
       inventorySnap,
-      patrolAnomaliesSnap
+      patrolAnomaliesSnap,
+      dailySiteLogsSnap
     ] = await Promise.all([
       getDocs(collection(db, `companies/${companyId}/salary_slips`)),
       getDocs(collection(db, `companies/${companyId}/attendance`)),
@@ -98,7 +99,8 @@ export class OperationalIntelligenceEngine {
       getDocs(collection(db, `companies/${companyId}/incident_reports`)),
       getDocs(collection(db, `companies/${companyId}/contracts`)),
       getDocs(collection(db, `companies/${companyId}/inventory_items`)),
-      getDocs(collection(db, `companies/${companyId}/suspicious_patrol_scans`))
+      getDocs(collection(db, `companies/${companyId}/suspicious_patrol_scans`)),
+      getDocs(collection(db, `companies/${companyId}/daily_site_logs`))
     ]);
 
     const salarySlips: SalarySlipRecord[] = salarySlipsSnap.docs.map(d => ({ id: d.id, ...d.data() } as SalarySlipRecord));
@@ -111,6 +113,7 @@ export class OperationalIntelligenceEngine {
     const contracts: ContractRecord[] = contractsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ContractRecord));
     const inventoryItems: InventoryItemRecord[] = inventorySnap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItemRecord));
     const patrolAnomalies: any[] = patrolAnomaliesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const dailySiteLogs: any[] = dailySiteLogsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
     // 3. Create index lookups for fast attribution
     const employeeMap = new Map<string, EmployeeRecord>();
@@ -384,8 +387,8 @@ export class OperationalIntelligenceEngine {
     sites.forEach(site => {
       const siteEmps = employees.filter(e => e.assignedSiteId === site.id);
       const siteTx = allTransactions.filter(t => t.siteId === site.id);
-      const siteAssets = assets.filter(a => a.siteId === site.id);
-      const siteInventory = inventoryItems.filter(i => i.siteId === site.id);
+      const siteAssets = assets.filter(a => (a as any).siteId === site.id);
+      const siteInventory = inventoryItems.filter(i => (i as any).siteId === site.id);
       const siteContracts = contracts.filter(c => (c as any).siteId === site.id);
 
       // Child department nodes under this site
@@ -418,7 +421,7 @@ export class OperationalIntelligenceEngine {
         code: site.id.slice(0, 6).toUpperCase(),
         level: 'SITE',
         parentId: site.branchId,
-        parentName: branchMap.get(site.branchId)?.name,
+        parentName: branchMap.get(site.branchId || '')?.name,
         metrics: siteMetrics,
         children: siteChildDepts
       };
@@ -434,7 +437,7 @@ export class OperationalIntelligenceEngine {
       const branchEmps = employees.filter(e => e.assignedBranchId === branch.id || branchSites.some(s => s.id === e.assignedSiteId));
       const branchTx = allTransactions.filter(t => t.branchId === branch.id || branchSites.some(s => s.id === t.siteId));
       const branchAssets = assets.filter(a => branchSites.some(s => s.id === a.siteId));
-      const branchInventory = inventoryItems.filter(i => branchSites.some(s => s.id === i.siteId));
+      const branchInventory = inventoryItems.filter(i => branchSites.some(s => s.id === (i as any).siteId));
       const branchContracts = contracts.filter(c => branchSites.some(s => s.id === (c as any).siteId));
 
       const branchMetrics = this.computeMetrics(branchEmps, branchTx, branchAssets, branchInventory, branchContracts);
@@ -466,7 +469,7 @@ export class OperationalIntelligenceEngine {
       const regionEmps = employees.filter(e => e.assignedRegionId === region.id || regionSites.some(s => s.id === e.assignedSiteId));
       const regionTx = allTransactions.filter(t => t.regionId === region.id || regionSites.some(s => s.id === t.siteId));
       const regionAssets = assets.filter(a => regionSites.some(s => s.id === a.siteId));
-      const regionInventory = inventoryItems.filter(i => regionSites.some(s => s.id === i.siteId));
+      const regionInventory = inventoryItems.filter(i => regionSites.some(s => s.id === (i as any).siteId));
       const regionContracts = contracts.filter(c => regionSites.some(s => s.id === (c as any).siteId));
 
       const regionMetrics = this.computeMetrics(regionEmps, regionTx, regionAssets, regionInventory, regionContracts);
@@ -679,8 +682,8 @@ export class OperationalIntelligenceEngine {
       const unitPatrolAnoms = patrolAnomalies.filter(a => 
         (node.level === 'SITE' && a.siteId === node.id) ||
         (node.level === 'COMPANY') ||
-        (node.level === 'REGION' && regionSites.some(s => s.id === a.siteId)) ||
-        (node.level === 'BRANCH' && branchSites.some(s => s.id === a.siteId))
+        (node.level === 'REGION' && (node.children || []).some((b: any) => (b.children || []).some((s: any) => s.id === a.siteId))) ||
+        (node.level === 'BRANCH' && (node.children || []).some((s: any) => s.id === a.siteId))
       );
 
       unitPatrolAnoms.forEach(pa => {
@@ -721,6 +724,50 @@ export class OperationalIntelligenceEngine {
       // Attach anomalies to node
       node.metrics.anomalies = nodeAnomalies;
       allAnomalies.push(...nodeAnomalies);
+
+      
+      // 8. INCIDENT & DAILY LOG DISCREPANCY DETECTOR (Cross-Referencing)
+      if (node.level === 'SITE') {
+        const siteDailyLogs = dailySiteLogs.filter(l => l.siteId === node.id);
+        const siteIncidents = incidents.filter(i => (i as any).siteId === node.id);
+        
+        siteDailyLogs.forEach(log => {
+          if (!log.date) return;
+          // Extract date part (YYYY-MM-DD)
+          const logDateStr = typeof log.date === 'string' && log.date.includes('T') ? log.date.split('T')[0] : log.date;
+          
+          // Count incidents for this specific site and date
+          const incidentsOnDate = siteIncidents.filter(inc => {
+             const incDate = inc.date || inc.incidentDate || inc.createdAt;
+             if (!incDate) return false;
+             const incDateStr = typeof incDate === 'string' && incDate.includes('T') ? incDate.split('T')[0] : incDate;
+             return incDateStr === logDateStr;
+          });
+          
+          // Check for discrepancies: Daily Log reports a different number of incidents than what actually exists in Incident Reports
+          const reportedInLog = log.totalIncidentsReported || 0;
+          const actualIncidents = incidentsOnDate.length;
+          
+          if (reportedInLog !== actualIncidents) {
+            nodeAnomalies.push({
+              id: 'DISC_' + log.id,
+              type: 'SECURITY_ANOMALY',
+              severity: 'HIGH',
+              title: 'Incident & Daily Log Discrepancy',
+              description: `Cross-reference mismatch on ${logDateStr}: Daily Log reported ${reportedInLog} incidents, but ${actualIncidents} official incident reports exist for this site.`,
+              timestamp: new Date().toISOString(),
+              
+              /*resourceType*/
+              financialImpact: 0,
+              metricsContext: {
+                 reported: reportedInLog,
+                 actual: actualIncidents,
+                 date: logDateStr
+              }
+            });
+          }
+        });
+      }
 
       // Re-calculate Risk Score based on real anomaly weights
       node.metrics.riskScorecard = this.calculateRiskScorecard(node.metrics, nodeAnomalies);

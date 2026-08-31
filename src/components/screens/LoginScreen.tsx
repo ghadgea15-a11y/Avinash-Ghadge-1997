@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   Building2, 
   Lock, 
@@ -24,6 +25,9 @@ import { FirebaseAuthService } from '../../services/firebaseAuthService';
 import { SessionManager } from '../../services/sessionManager';
 import { AppLogo } from '../common/AppLogo';
 import { useTheme } from '../../context/ThemeContext';
+import { LanguageSelector } from '../common/LanguageSelector';
+import { NumericKeypadModal } from '../common/NumericKeypadModal';
+import { LanguageService } from '../../services/voiceFeedbackService';
 
 interface LoginScreenProps {
   activeCompany?: CompanyTenant | null;
@@ -48,12 +52,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [emailOrId, setEmailOrId] = useState('');
   const [passwordOrPin, setPasswordOrPin] = useState('');
   const [showSecret, setShowSecret] = useState(false);
+  useBackNavigation(!!showSecret, () => setShowSecret(null as any), 'showSecret');
   const [rememberMe, setRememberMe] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showKeypadModal, setShowKeypadModal] = useState(false);
+  useBackNavigation(!!showKeypadModal, () => setShowKeypadModal(null as any), 'showKeypadModal');
   
   // MFA States
   const [mfaResolver, setMfaResolver] = useState<any | null>(null);
@@ -521,8 +528,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   return (
     <div className={`flex-1 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'} flex flex-col justify-between p-6 relative`}>
-      {/* Top Navigation Bar: Back to Home & Menu */}
-      <div className="flex items-center justify-between w-full mb-2">
+      {/* Top Navigation Bar: Back to Home, Language Selector & Menu */}
+      <div className="flex items-center justify-between w-full mb-2 gap-2">
         <button
           type="button"
           onClick={() => onNavigate('LANDING')}
@@ -535,8 +542,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           <span>← Back to Website</span>
         </button>
 
-        {/* Top Right Menu */}
-        <div className="relative">
+        <div className="flex items-center gap-2">
+          {/* Language Selector Component */}
+          <LanguageSelector compact showVoiceToggle />
+
+          {/* Top Right Menu */}
+          <div className="relative">
           <button
             type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -632,6 +643,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
 
@@ -745,15 +757,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                  Password or PIN
+                  {LanguageService.translate('ENTER_PIN')} / Password
                 </label>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('FORGOT_PASSWORD')}
-                  className="text-[11px] font-semibold text-indigo-500 hover:text-indigo-600"
-                >
-                  Forgot?
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowKeypadModal(true)}
+                    className="text-[11px] font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 px-2 py-0.5 rounded-lg flex items-center gap-1 transition"
+                  >
+                    <KeyRound className="w-3 h-3" />
+                    <span>Touch Keypad</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('FORGOT_PASSWORD')}
+                    className="text-[11px] font-semibold text-indigo-500 hover:text-indigo-600"
+                  >
+                    Forgot?
+                  </button>
+                </div>
               </div>
               <div className="relative">
                 <input
@@ -833,6 +855,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           </form>
         )}
       </div>
+
+      {/* Numeric Touch Keypad Modal for Workers */}
+      <NumericKeypadModal
+        isOpen={showKeypadModal}
+        onClose={() => setShowKeypadModal(false)}
+        onSubmitPin={(pin) => {
+          setPasswordOrPin(pin);
+          setShowKeypadModal(false);
+        }}
+      />
     </div>
   );
 };

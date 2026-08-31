@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   UserSession, 
   CompanyTenant, 
@@ -56,11 +57,15 @@ export const HistoricalTraceabilityScreen: React.FC<HistoricalTraceabilityScreen
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedModule, setSelectedModule] = useState('ALL');
+  useBackNavigation(!!selectedModule, () => setSelectedModule(null as any), 'selectedModule');
   const [selectedAction, setSelectedAction] = useState('ALL');
+  useBackNavigation(!!selectedAction, () => setSelectedAction(null as any), 'selectedAction');
   const [selectedTimeRange, setSelectedTimeRange] = useState<'TODAY' | '7DAYS' | '30DAYS' | 'ALL'>('30DAYS');
+  useBackNavigation(!!selectedTimeRange, () => setSelectedTimeRange(null as any), 'selectedTimeRange');
 
   // Selected Log for Diff Modal
   const [selectedLog, setSelectedLog] = useState<AuditLogRecord | null>(null);
+  useBackNavigation(!!selectedLog, () => setSelectedLog(null as any), 'selectedLog');
 
   // Fetch audit logs
   useEffect(() => {

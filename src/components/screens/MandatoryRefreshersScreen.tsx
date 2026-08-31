@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   UserSession, 
   CompanyTenant, 
@@ -29,7 +30,8 @@ import {
   RefreshCw,
   Send,
   Eye,
-  Check
+  Check,
+  AlertCircle
 } from 'lucide-react';
 import { collection, onSnapshot, setDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -114,12 +116,17 @@ export const MandatoryRefreshersScreen: React.FC<MandatoryRefreshersScreenProps>
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProgramFilter, setSelectedProgramFilter] = useState('ALL');
+  useBackNavigation(!!selectedProgramFilter, () => setSelectedProgramFilter(null as any), 'selectedProgramFilter');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<'ALL' | 'UP_TO_DATE' | 'EXPIRING_SOON' | 'OVERDUE'>('ALL');
+  useBackNavigation(!!selectedStatusFilter, () => setSelectedStatusFilter(null as any), 'selectedStatusFilter');
 
   // Modal / Batch States
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  useBackNavigation(!!showScheduleModal, () => setShowScheduleModal(null as any), 'showScheduleModal');
   const [showCertifyModal, setShowCertifyModal] = useState(false);
+  useBackNavigation(!!showCertifyModal, () => setShowCertifyModal(null as any), 'showCertifyModal');
   const [selectedStatusRecord, setSelectedStatusRecord] = useState<EmployeeRefresherStatus | null>(null);
+  useBackNavigation(!!selectedStatusRecord, () => setSelectedStatusRecord(null as any), 'selectedStatusRecord');
 
   const [batchForm, setBatchForm] = useState({
     programId: DEFAULT_REFRESHER_PROGRAMS[0].id,

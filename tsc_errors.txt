@@ -1,0 +1,54 @@
+src/components/screens/ExecutiveOperationalIntelligenceScreen.tsx(270,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | number'.
+  Type 'undefined' is not assignable to type 'string | number'.
+src/components/screens/ExecutiveOperationalIntelligenceScreen.tsx(271,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | number'.
+  Type 'undefined' is not assignable to type 'string | number'.
+src/components/screens/ExecutiveOperationalIntelligenceScreen.tsx(272,9): error TS18048: 'a.currentValue' is possibly 'undefined'.
+src/components/screens/ExecutiveOperationalIntelligenceScreen.tsx(274,9): error TS18048: 'a.financialImpact' is possibly 'undefined'.
+src/components/screens/ExecutiveOperationalIntelligenceScreen.tsx(275,13): error TS18048: 'a.rootCause' is possibly 'undefined'.
+src/components/screens/ExecutiveOperationalIntelligenceScreen.tsx(276,13): error TS18048: 'a.recommendedAction' is possibly 'undefined'.
+src/components/screens/ExecutiveOperationalIntelligenceScreen.tsx(636,24): error TS18048: 'anomaly.financialImpact' is possibly 'undefined'.
+src/components/screens/ExecutiveOperationalIntelligenceScreen.tsx(639,58): error TS18048: 'anomaly.financialImpact' is possibly 'undefined'.
+src/components/screens/ExecutiveOperationalIntelligenceScreen.tsx(644,96): error TS2345: Argument of type 'OperationalSourceTransaction[] | undefined' is not assignable to parameter of type 'OperationalSourceTransaction[]'.
+  Type 'undefined' is not assignable to type 'OperationalSourceTransaction[]'.
+src/components/screens/ExecutiveOperationalIntelligenceScreen.tsx(648,55): error TS18048: 'anomaly.sourceTransactions' is possibly 'undefined'.
+src/components/screens/IdentityBadgeScreen.tsx(109,93): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/IdentityBadgeScreen.tsx(149,9): error TS2554: Expected 3 arguments, but got 5.
+src/components/screens/InventoryStockScreen.tsx(193,95): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/InventoryStockScreen.tsx(317,13): error TS2740: Type '{ id: string; companyId: string; itemCode: string; itemName: string; category: string; description: string; unit: string; currentStock: number; minStockThreshold: number; maxStockLimit: number; ... 9 more ...; updatedAt: string; }' is missing the following properties from type 'InventoryItemRecord': serialTracking, batchTracking, criticalStockLevel, reorderLevel, and 2 more.
+src/components/screens/InventoryStockScreen.tsx(340,84): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/InventoryStockScreen.tsx(378,80): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/InventoryStockScreen.tsx(454,9): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/InventoryStockScreen.tsx(458,15): error TS2339: Property 'success' does not exist on type 'boolean'.
+src/components/screens/InventoryStockScreen.tsx(460,117): error TS2339: Property 'newStock' does not exist on type 'boolean'.
+src/components/screens/InventoryStockScreen.tsx(501,86): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/InventoryStockScreen.tsx(1323,91): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/MandatoryRefreshersScreen.tsx(383,87): error TS2304: Cannot find name 'AlertCircle'.
+src/components/screens/OrgControlScreen.tsx(49,5): error TS2322: Type '"TEAM"' is not assignable to type '"SECURITY" | "MAINTENANCE" | "OPERATIONAL" | "ADMINISTRATIVE" | undefined'.
+src/components/screens/OrgControlScreen.tsx(333,31): error TS2367: This comparison appears to be unintentional because the types '"APPROVED" | "REJECTED" | "EXPIRED" | "PENDING"' and '"PENDING_APPROVAL"' have no overlap.
+src/components/screens/OrgControlScreen.tsx(361,87): error TS2322: Type '"TEAM"' is not assignable to type '"SECURITY" | "MAINTENANCE" | "OPERATIONAL" | "ADMINISTRATIVE" | undefined'.
+src/components/screens/ReportsAnalyticsScreen.tsx(169,79): error TS2367: This comparison appears to be unintentional because the types '"SCHEDULED" | "ON_LEAVE" | "ABSENT" | "LATE" | "HALFDAY" | "OFF_DUTY" | "EARLY_DEPARTURE"' and '"HALF_DAY"' have no overlap.
+src/components/screens/ReportsAnalyticsScreen.tsx(285,15): error TS2367: This comparison appears to be unintentional because the types '"SCHEDULED" | "ON_LEAVE" | "ABSENT" | "LATE" | "HALFDAY" | "OFF_DUTY" | "EARLY_DEPARTURE"' and '"HALF_DAY"' have no overlap.
+src/components/screens/ReportsAnalyticsScreen.tsx(742,29): error TS2367: This comparison appears to be unintentional because the types '"SCHEDULED" | "ON_LEAVE" | "ABSENT" | "LATE" | "HALFDAY" | "OFF_DUTY" | "EARLY_DEPARTURE"' and '"HALF_DAY"' have no overlap.
+src/components/screens/ServiceDeskScreen.tsx(247,7): error TS2345: Argument of type '(cList: any) => void' is not assignable to parameter of type 'string'.
+src/components/screens/ServiceDeskScreen.tsx(254,7): error TS2345: Argument of type '(aList: any) => void' is not assignable to parameter of type 'string'.
+src/components/screens/SiteOperationsScreen.tsx(2493,31): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/screens/SiteOperationsScreen.tsx(2506,31): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/screens/SuperAdminAdminsScreen.tsx(64,43): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/components/screens/SuperAdminAdminsScreen.tsx(65,47): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/components/screens/SuperAdminSupportScreen.tsx(94,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/screens/WorkforceCapacityPlanningScreen.tsx(122,57): error TS2345: Argument of type 'string' is not assignable to parameter of type 'UserSession'.
+src/components/screens/WorkforceCapacityPlanningScreen.tsx(124,63): error TS2345: Argument of type 'UserSession' is not assignable to parameter of type 'string'.
+src/components/screens/dashboards/RegionalAreaManagerDashboard.tsx(94,9): error TS2322: Type '{ session: UserSession; company: CompanyTenant; onDrillDown: (mod: any, data: any) => void; }' is not assignable to type 'DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>'.
+  Property 'session' does not exist on type 'DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>'.
+src/components/screens/dashboards/official/DepartmentGenericDashboard.tsx(26,89): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/dashboards/official/FinanceDashboard.tsx(19,98): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/dashboards/official/FinanceDashboard.tsx(20,100): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/dashboards/official/ProcurementDashboard.tsx(18,101): error TS2554: Expected 2 arguments, but got 3.
+src/services/transferService.ts(154,9): error TS2322: Type '{ itemId: string; itemName: string; itemCode: string; uom: string | undefined; quantity: number; }[]' is not assignable to type 'GatePassLine[]'.
+  Type '{ itemId: string; itemName: string; itemCode: string; uom: string | undefined; quantity: number; }' is not assignable to type 'GatePassLine'.
+    Types of property 'uom' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.

@@ -407,6 +407,46 @@ export class EnterpriseConflictEngine {
       }
     }
 
+    // 5. Check STATUTORY CHILD LABOR PROTECTION (Underage Check: Age < 18)
+    const dobStr = employee.dateOfBirth;
+    if (dobStr) {
+      const dob = new Date(dobStr);
+      if (!isNaN(dob.getTime())) {
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+          age--;
+        }
+        if (age < 18) {
+          const ruleCode = 'CONF-AGE-001';
+          const hasOverride = activeOverrides.some(o => o.ruleCode === ruleCode && o.conflictId.includes(employee.id));
+
+          conflicts.push({
+            id: `CONF-UNDERAGE-${employee.id}`,
+            ruleCode,
+            category: 'STATUTORY_COMPLIANCE_VIOLATION',
+            severity: 'CRITICAL_BLOCKING',
+            title: 'Statutory Child Labor Protection Violation',
+            reason: `Employee age (${age} years, DOB: ${dobStr}) is below statutory minimum employment age of 18 years.`,
+            detailedExplanation: `Statutory labor regulations (Child and Adolescent Labour Prohibition Act) strictly forbid onboarding personnel under 18 years in enterprise facilities. Registration is blocked.`,
+            entityType: 'EMPLOYEE_RECORD',
+            entityId: employee.id,
+            employeeId: employee.id,
+            employeeName: empName,
+            resolutionSteps: [
+              'Verify DOB entry against government identity documents (Aadhaar / Passport).',
+              'Personnel under 18 years of age cannot be registered in workforce master records.'
+            ],
+            isBlocker: !hasOverride,
+            isOverrideAllowed: false,
+            requiredOverrideRoles: ['SUPER_ADMIN'],
+            detectedAt: new Date().toISOString()
+          });
+        }
+      }
+    }
+
     const blockingCount = conflicts.filter(c => c.isBlocker).length;
     const overridableCount = conflicts.filter(c => c.isOverrideAllowed).length;
 
@@ -560,7 +600,8 @@ export class EnterpriseConflictEngine {
         CONFLICTING_SUPERVISORS: 0,
         DUPLICATE_RESPONSIBILITY_SOD: 0,
         INVALID_TRANSFER_DATES: 0,
-        INVALID_EFFECTIVE_DATES: 0
+        INVALID_EFFECTIVE_DATES: 0,
+        STATUTORY_COMPLIANCE_VIOLATION: 0
       };
 
       const siteConflictMap = new Map<string, number>();
@@ -602,7 +643,8 @@ export class EnterpriseConflictEngine {
           CONFLICTING_SUPERVISORS: 0,
           DUPLICATE_RESPONSIBILITY_SOD: 0,
           INVALID_TRANSFER_DATES: 0,
-          INVALID_EFFECTIVE_DATES: 0
+          INVALID_EFFECTIVE_DATES: 0,
+          STATUTORY_COMPLIANCE_VIOLATION: 0
         },
         topConflictedSites: [],
         recentIncidents: []

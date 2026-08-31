@@ -320,6 +320,32 @@ export class StatutoryRulesService {
   }
 
   /**
+   * Rule STAT-AGE-58: EPS (Employees Pension Scheme) Senior Exemption
+   * Employees aged 58 years or above are exempt from EPS contribution per statutory EPF guidelines.
+   */
+  static checkEpsSeniorExemption(dateOfBirth?: string, asOfDate: Date = new Date()): { isExempt: boolean; age: number; note?: string } {
+    if (!dateOfBirth) return { isExempt: false, age: 0 };
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) return { isExempt: false, age: 0 };
+
+    let age = asOfDate.getFullYear() - dob.getFullYear();
+    const m = asOfDate.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && asOfDate.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    if (age >= 58) {
+      return {
+        isExempt: true,
+        age,
+        note: `STAT-AGE-58: EPS Exemption Applied (Employee Age: ${age} yrs >= 58)`
+      };
+    }
+
+    return { isExempt: false, age };
+  }
+
+  /**
    * Normalize state names to standard enum key
    */
   static normalizeStateKey(stateStr?: string): string {

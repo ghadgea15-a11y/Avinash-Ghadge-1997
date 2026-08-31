@@ -1,0 +1,2264 @@
+src/services/firestoreService.ts(3730,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(3730,27): error TS1005: ',' expected.
+src/services/firestoreService.ts(3732,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(3733,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(3733,8): error TS1472: 'catch' or 'finally' expected.
+src/services/firestoreService.ts(3733,25): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3754,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3754,40): error TS1005: ',' expected.
+src/services/firestoreService.ts(3754,64): error TS1005: ',' expected.
+src/services/firestoreService.ts(3754,80): error TS1005: ',' expected.
+src/services/firestoreService.ts(3755,3): error TS1109: Expression expected.
+src/services/firestoreService.ts(3755,4): error TS1005: ';' expected.
+src/services/firestoreService.ts(3756,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(3757,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3757,76): error TS1005: ',' expected.
+src/services/firestoreService.ts(3758,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3758,83): error TS1005: ',' expected.
+src/services/firestoreService.ts(3759,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(3765,9): error TS1005: ',' expected.
+src/services/firestoreService.ts(3766,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(3773,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3773,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(3773,40): error TS1005: ',' expected.
+src/services/firestoreService.ts(3773,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(3773,76): error TS1005: ';' expected.
+src/services/firestoreService.ts(3774,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(3774,69): error TS1005: ',' expected.
+src/services/firestoreService.ts(3775,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(3776,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3776,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(3777,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(3780,17): error TS1003: Identifier expected.
+src/services/firestoreService.ts(3780,26): error TS1005: ':' expected.
+src/services/firestoreService.ts(3781,27): error TS1005: ',' expected.
+src/services/firestoreService.ts(3783,10): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(3783,25): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3795,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3795,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(3799,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3801,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3801,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(3801,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(3801,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(3801,86): error TS1109: Expression expected.
+src/services/firestoreService.ts(3801,132): error TS1109: Expression expected.
+src/services/firestoreService.ts(3801,141): error TS1005: ';' expected.
+src/services/firestoreService.ts(3802,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(3802,68): error TS1005: ',' expected.
+src/services/firestoreService.ts(3803,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(3804,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3804,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(3805,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(3806,39): error TS1005: ',' expected.
+src/services/firestoreService.ts(3810,25): error TS1005: ';' expected.
+src/services/firestoreService.ts(3812,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3812,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(3816,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3823,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3823,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(3823,65): error TS1005: ',' expected.
+src/services/firestoreService.ts(3823,81): error TS1005: ',' expected.
+src/services/firestoreService.ts(3824,3): error TS1109: Expression expected.
+src/services/firestoreService.ts(3824,4): error TS1005: ';' expected.
+src/services/firestoreService.ts(3825,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(3826,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3826,86): error TS1005: ',' expected.
+src/services/firestoreService.ts(3827,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3827,84): error TS1005: ',' expected.
+src/services/firestoreService.ts(3828,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(3834,9): error TS1005: ',' expected.
+src/services/firestoreService.ts(3835,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(3842,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3842,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(3842,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(3842,67): error TS1005: ',' expected.
+src/services/firestoreService.ts(3842,92): error TS1005: ';' expected.
+src/services/firestoreService.ts(3843,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(3843,80): error TS1005: ',' expected.
+src/services/firestoreService.ts(3844,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(3845,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3845,89): error TS1005: ',' expected.
+src/services/firestoreService.ts(3846,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(3849,28): error TS1005: ',' expected.
+src/services/firestoreService.ts(3851,10): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(3851,25): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3863,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3863,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(3867,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3869,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3869,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(3870,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(3871,15): error TS1005: ',' expected.
+src/services/firestoreService.ts(3872,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(3873,16): error TS1109: Expression expected.
+src/services/firestoreService.ts(3874,18): error TS1109: Expression expected.
+src/services/firestoreService.ts(3875,4): error TS1005: ';' expected.
+src/services/firestoreService.ts(3876,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(3876,79): error TS1005: ',' expected.
+src/services/firestoreService.ts(3877,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(3878,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3878,88): error TS1005: ',' expected.
+src/services/firestoreService.ts(3879,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(3883,19): error TS1359: Identifier expected. 'true' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(3883,24): error TS1005: ':' expected.
+src/services/firestoreService.ts(3884,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(3884,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(3884,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(3885,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(3896,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3896,42): error TS1005: ',' expected.
+src/services/firestoreService.ts(3896,66): error TS1005: ',' expected.
+src/services/firestoreService.ts(3896,82): error TS1005: ',' expected.
+src/services/firestoreService.ts(3897,3): error TS1109: Expression expected.
+src/services/firestoreService.ts(3897,4): error TS1005: ';' expected.
+src/services/firestoreService.ts(3898,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(3899,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3899,79): error TS1005: ',' expected.
+src/services/firestoreService.ts(3900,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3900,79): error TS1005: ',' expected.
+src/services/firestoreService.ts(3901,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(3907,9): error TS1005: ',' expected.
+src/services/firestoreService.ts(3908,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(3915,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3915,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(3915,42): error TS1005: ',' expected.
+src/services/firestoreService.ts(3915,55): error TS1005: ',' expected.
+src/services/firestoreService.ts(3915,76): error TS1005: ';' expected.
+src/services/firestoreService.ts(3916,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(3916,68): error TS1005: ',' expected.
+src/services/firestoreService.ts(3917,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(3918,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3918,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(3919,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3919,37): error TS1005: ',' expected.
+src/services/firestoreService.ts(3921,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(3921,32): error TS1005: ',' expected.
+src/services/firestoreService.ts(3923,15): error TS1005: ',' expected.
+src/services/firestoreService.ts(3923,24): error TS1005: ',' expected.
+src/services/firestoreService.ts(3923,26): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(3943,9): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3965,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3965,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(3969,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3971,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3971,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(3971,39): error TS1005: ',' expected.
+src/services/firestoreService.ts(3971,58): error TS1005: ',' expected.
+src/services/firestoreService.ts(3971,76): error TS1005: ';' expected.
+src/services/firestoreService.ts(3972,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(3973,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3973,79): error TS1005: ',' expected.
+src/services/firestoreService.ts(3974,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(3976,20): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(3976,24): error TS1005: ':' expected.
+src/services/firestoreService.ts(3976,28): error TS1005: ',' expected.
+src/services/firestoreService.ts(3977,25): error TS1005: ';' expected.
+src/services/firestoreService.ts(3989,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3989,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(3993,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3995,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(3995,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(3995,34): error TS1005: ',' expected.
+src/services/firestoreService.ts(3995,48): error TS1005: ',' expected.
+src/services/firestoreService.ts(3995,61): error TS1005: ';' expected.
+src/services/firestoreService.ts(3996,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(3997,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(3997,68): error TS1005: ',' expected.
+src/services/firestoreService.ts(3998,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4000,24): error TS1005: ',' expected.
+src/services/firestoreService.ts(4001,10): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4001,25): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4013,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4013,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4017,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4019,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4019,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4019,42): error TS1005: ',' expected.
+src/services/firestoreService.ts(4019,55): error TS1005: ',' expected.
+src/services/firestoreService.ts(4019,76): error TS1005: ';' expected.
+src/services/firestoreService.ts(4020,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4021,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4021,75): error TS1005: ',' expected.
+src/services/firestoreService.ts(4022,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4024,24): error TS1005: ',' expected.
+src/services/firestoreService.ts(4025,10): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4025,25): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4037,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4037,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4041,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4043,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4043,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4043,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(4043,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(4043,68): error TS1005: ';' expected.
+src/services/firestoreService.ts(4044,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4045,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4045,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(4046,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4047,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4047,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(4047,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(4048,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4054,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4054,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4054,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(4054,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(4054,77): error TS1005: ';' expected.
+src/services/firestoreService.ts(4055,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4056,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4056,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(4057,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4059,20): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(4059,24): error TS1005: ':' expected.
+src/services/firestoreService.ts(4059,28): error TS1005: ',' expected.
+src/services/firestoreService.ts(4060,25): error TS1005: ';' expected.
+src/services/firestoreService.ts(4062,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4062,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4066,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4073,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4073,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4073,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(4073,56): error TS1005: ';' expected.
+src/services/firestoreService.ts(4073,83): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(4074,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4076,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4076,75): error TS1005: ',' expected.
+src/services/firestoreService.ts(4077,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4077,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(4078,11): error TS1003: Identifier expected.
+src/services/firestoreService.ts(4078,16): error TS1005: ',' expected.
+src/services/firestoreService.ts(4078,22): error TS1005: ',' expected.
+src/services/firestoreService.ts(4078,24): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4088,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4088,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4102,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4109,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4110,8): error TS1005: ',' expected.
+src/services/firestoreService.ts(4111,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(4112,3): error TS1109: Expression expected.
+src/services/firestoreService.ts(4112,4): error TS1005: ';' expected.
+src/services/firestoreService.ts(4113,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4114,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4114,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(4115,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(4124,9): error TS1005: ',' expected.
+src/services/firestoreService.ts(4125,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4132,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4132,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4132,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(4132,67): error TS1005: ';' expected.
+src/services/firestoreService.ts(4133,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4135,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4135,63): error TS1005: ',' expected.
+src/services/firestoreService.ts(4136,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4136,47): error TS1359: Identifier expected. 'true' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(4136,52): error TS1005: ':' expected.
+src/services/firestoreService.ts(4138,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4138,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(4138,28): error TS1005: ',' expected.
+src/services/firestoreService.ts(4138,30): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4143,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4143,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4147,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4149,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4149,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(4149,69): error TS1005: ',' expected.
+src/services/firestoreService.ts(4149,85): error TS1005: ',' expected.
+src/services/firestoreService.ts(4150,3): error TS1109: Expression expected.
+src/services/firestoreService.ts(4150,4): error TS1005: ';' expected.
+src/services/firestoreService.ts(4151,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4152,21): error TS1005: ',' expected.
+src/services/firestoreService.ts(4152,39): error TS1005: ',' expected.
+src/services/firestoreService.ts(4152,41): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4186,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4186,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4191,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4193,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4193,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4194,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(4195,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(4196,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4197,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(4198,4): error TS1005: ';' expected.
+src/services/firestoreService.ts(4199,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4200,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4200,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(4201,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4201,85): error TS1005: ',' expected.
+src/services/firestoreService.ts(4202,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4202,65): error TS1005: ',' expected.
+src/services/firestoreService.ts(4204,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4204,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(4205,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4205,142): error TS1005: ',' expected.
+src/services/firestoreService.ts(4207,11): error TS1003: Identifier expected.
+src/services/firestoreService.ts(4207,21): error TS1005: '{' expected.
+src/services/firestoreService.ts(4207,27): error TS1005: ':' expected.
+src/services/firestoreService.ts(4207,73): error TS1005: ',' expected.
+src/services/firestoreService.ts(4209,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4209,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(4210,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4210,98): error TS1005: ',' expected.
+src/services/firestoreService.ts(4211,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4211,29): error TS1005: ',' expected.
+src/services/firestoreService.ts(4211,110): error TS1005: ',' expected.
+src/services/firestoreService.ts(4213,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4219,8): error TS1005: ',' expected.
+src/services/firestoreService.ts(4221,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4221,49): error TS1359: Identifier expected. 'true' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(4221,54): error TS1005: ':' expected.
+src/services/firestoreService.ts(4222,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4222,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4222,53): error TS1359: Identifier expected. 'true' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(4222,58): error TS1005: ':' expected.
+src/services/firestoreService.ts(4225,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4225,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4225,52): error TS1005: ',' expected.
+src/services/firestoreService.ts(4226,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4227,31): error TS1003: Identifier expected.
+src/services/firestoreService.ts(4227,41): error TS1005: ':' expected.
+src/services/firestoreService.ts(4229,12): error TS1003: Identifier expected.
+src/services/firestoreService.ts(4231,25): error TS1005: ';' expected.
+src/services/firestoreService.ts(4263,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4263,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4267,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4269,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4269,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4270,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(4271,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(4272,10): error TS1005: ',' expected.
+src/services/firestoreService.ts(4273,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(4274,4): error TS1005: ';' expected.
+src/services/firestoreService.ts(4275,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4276,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4276,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(4277,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4277,85): error TS1005: ',' expected.
+src/services/firestoreService.ts(4278,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4278,65): error TS1005: ',' expected.
+src/services/firestoreService.ts(4280,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4280,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(4281,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4281,142): error TS1005: ',' expected.
+src/services/firestoreService.ts(4283,11): error TS1003: Identifier expected.
+src/services/firestoreService.ts(4283,21): error TS1005: '{' expected.
+src/services/firestoreService.ts(4283,27): error TS1005: ':' expected.
+src/services/firestoreService.ts(4283,73): error TS1005: ',' expected.
+src/services/firestoreService.ts(4285,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4285,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(4286,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4286,98): error TS1005: ',' expected.
+src/services/firestoreService.ts(4287,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4287,29): error TS1005: ',' expected.
+src/services/firestoreService.ts(4287,110): error TS1005: ',' expected.
+src/services/firestoreService.ts(4289,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4295,8): error TS1005: ',' expected.
+src/services/firestoreService.ts(4297,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4297,49): error TS1359: Identifier expected. 'true' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(4297,54): error TS1005: ':' expected.
+src/services/firestoreService.ts(4298,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4298,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4298,53): error TS1359: Identifier expected. 'true' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(4298,58): error TS1005: ':' expected.
+src/services/firestoreService.ts(4301,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4301,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4301,52): error TS1005: ',' expected.
+src/services/firestoreService.ts(4302,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4303,21): error TS1003: Identifier expected.
+src/services/firestoreService.ts(4303,31): error TS1005: ':' expected.
+src/services/firestoreService.ts(4305,12): error TS1003: Identifier expected.
+src/services/firestoreService.ts(4307,25): error TS1005: ';' expected.
+src/services/firestoreService.ts(4338,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4338,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4342,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4344,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4344,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4345,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(4346,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(4347,16): error TS1005: ',' expected.
+src/services/firestoreService.ts(4348,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(4349,4): error TS1005: ';' expected.
+src/services/firestoreService.ts(4350,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4351,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4351,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(4352,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4352,85): error TS1005: ',' expected.
+src/services/firestoreService.ts(4353,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4353,65): error TS1005: ',' expected.
+src/services/firestoreService.ts(4355,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4361,8): error TS1005: ',' expected.
+src/services/firestoreService.ts(4363,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4363,49): error TS1359: Identifier expected. 'true' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(4363,54): error TS1005: ':' expected.
+src/services/firestoreService.ts(4364,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4364,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4364,53): error TS1359: Identifier expected. 'true' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(4364,58): error TS1005: ':' expected.
+src/services/firestoreService.ts(4366,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4366,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4366,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(4367,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(4367,27): error TS1005: ',' expected.
+src/services/firestoreService.ts(4367,29): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4387,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4387,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4391,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4398,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4398,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4398,33): error TS1005: ';' expected.
+src/services/firestoreService.ts(4399,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4400,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4400,51): error TS1005: ',' expected.
+src/services/firestoreService.ts(4401,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4401,40): error TS1005: ',' expected.
+src/services/firestoreService.ts(4402,15): error TS1005: ',' expected.
+src/services/firestoreService.ts(4402,24): error TS1005: ',' expected.
+src/services/firestoreService.ts(4402,26): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4405,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4405,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4409,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4411,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4411,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4411,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(4411,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(4411,70): error TS1005: ';' expected.
+src/services/firestoreService.ts(4412,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4413,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4413,51): error TS1005: ',' expected.
+src/services/firestoreService.ts(4414,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4414,51): error TS1005: ',' expected.
+src/services/firestoreService.ts(4416,19): error TS1005: ',' expected.
+src/services/firestoreService.ts(4416,51): error TS1005: ',' expected.
+src/services/firestoreService.ts(4416,53): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4435,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4435,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4439,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4446,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4446,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4447,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(4448,12): error TS1005: ',' expected.
+src/services/firestoreService.ts(4449,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(4450,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(4451,12): error TS1005: ',' expected.
+src/services/firestoreService.ts(4452,16): error TS1109: Expression expected.
+src/services/firestoreService.ts(4453,4): error TS1005: ';' expected.
+src/services/firestoreService.ts(4454,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4455,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4455,88): error TS1005: ',' expected.
+src/services/firestoreService.ts(4457,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4457,115): error TS1005: ',' expected.
+src/services/firestoreService.ts(4458,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4458,54): error TS1005: ',' expected.
+src/services/firestoreService.ts(4459,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4459,30): error TS1005: ',' expected.
+src/services/firestoreService.ts(4473,8): error TS1005: ',' expected.
+src/services/firestoreService.ts(4475,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(4475,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(4476,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4492,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4492,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4492,33): error TS1005: ';' expected.
+src/services/firestoreService.ts(4492,57): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(4493,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4494,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4494,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(4495,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4495,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(4496,11): error TS1003: Identifier expected.
+src/services/firestoreService.ts(4496,16): error TS1005: ',' expected.
+src/services/firestoreService.ts(4496,22): error TS1005: ',' expected.
+src/services/firestoreService.ts(4496,24): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4538,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4538,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4564,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4569,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4569,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4569,39): error TS1005: ',' expected.
+src/services/firestoreService.ts(4569,48): error TS1005: ';' expected.
+src/services/firestoreService.ts(4569,76): error TS1005: ',' expected.
+src/services/firestoreService.ts(4570,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4571,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4571,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(4572,11): error TS1003: Identifier expected.
+src/services/firestoreService.ts(4575,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4575,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4575,58): error TS1005: ',' expected.
+src/services/firestoreService.ts(4576,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4581,9): error TS1005: ',' expected.
+src/services/firestoreService.ts(4582,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4582,36): error TS1005: ',' expected.
+src/services/firestoreService.ts(4583,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(4583,33): error TS1005: ',' expected.
+src/services/firestoreService.ts(4583,35): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4587,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4587,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4591,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4596,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4596,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4596,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(4596,53): error TS1005: ';' expected.
+src/services/firestoreService.ts(4597,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(4597,55): error TS1005: ',' expected.
+src/services/firestoreService.ts(4598,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4599,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4599,54): error TS1005: ',' expected.
+src/services/firestoreService.ts(4600,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4600,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(4601,15): error TS1005: ',' expected.
+src/services/firestoreService.ts(4601,24): error TS1005: ',' expected.
+src/services/firestoreService.ts(4601,26): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4630,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4630,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4634,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4639,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4639,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4639,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(4639,70): error TS1005: ',' expected.
+src/services/firestoreService.ts(4639,79): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(4639,81): error TS1005: ';' expected.
+src/services/firestoreService.ts(4640,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4641,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4641,53): error TS1005: ',' expected.
+src/services/firestoreService.ts(4642,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4642,52): error TS1005: ',' expected.
+src/services/firestoreService.ts(4643,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4643,58): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(4643,62): error TS1005: ':' expected.
+src/services/firestoreService.ts(4643,66): error TS1005: ',' expected.
+src/services/firestoreService.ts(4643,101): error TS1005: ';' expected.
+src/services/firestoreService.ts(4645,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4645,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4649,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4654,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4654,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4654,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(4654,63): error TS1005: ',' expected.
+src/services/firestoreService.ts(4654,88): error TS1005: ';' expected.
+src/services/firestoreService.ts(4655,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4656,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4656,53): error TS1005: ',' expected.
+src/services/firestoreService.ts(4657,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4657,52): error TS1005: ',' expected.
+src/services/firestoreService.ts(4658,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4658,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(4659,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4659,76): error TS1359: Identifier expected. 'true' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(4659,81): error TS1005: ':' expected.
+src/services/firestoreService.ts(4662,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4662,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(4662,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(4662,48): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4674,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4674,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4678,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4683,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4683,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4683,29): error TS1005: ';' expected.
+src/services/firestoreService.ts(4683,43): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(4684,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4685,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4685,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(4686,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4686,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(4687,15): error TS1005: ',' expected.
+src/services/firestoreService.ts(4687,21): error TS1005: ',' expected.
+src/services/firestoreService.ts(4687,30): error TS1005: ':' expected.
+src/services/firestoreService.ts(4687,32): error TS1005: ',' expected.
+src/services/firestoreService.ts(4688,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(4688,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(4689,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4698,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4698,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4698,46): error TS1109: Expression expected.
+src/services/firestoreService.ts(4698,55): error TS1005: ';' expected.
+src/services/firestoreService.ts(4698,87): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(4699,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4700,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4700,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(4701,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4701,86): error TS1005: ',' expected.
+src/services/firestoreService.ts(4702,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4702,36): error TS1005: ',' expected.
+src/services/firestoreService.ts(4703,15): error TS1005: ',' expected.
+src/services/firestoreService.ts(4703,21): error TS1005: ',' expected.
+src/services/firestoreService.ts(4703,30): error TS1005: ':' expected.
+src/services/firestoreService.ts(4703,32): error TS1005: ',' expected.
+src/services/firestoreService.ts(4704,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(4704,86): error TS1005: ',' expected.
+src/services/firestoreService.ts(4705,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4714,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4714,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4714,36): error TS1005: ';' expected.
+src/services/firestoreService.ts(4715,27): error TS1005: ',' expected.
+src/services/firestoreService.ts(4716,28): error TS1005: ',' expected.
+src/services/firestoreService.ts(4717,29): error TS1005: ',' expected.
+src/services/firestoreService.ts(4718,23): error TS1005: ',' expected.
+src/services/firestoreService.ts(4719,33): error TS1005: ',' expected.
+src/services/firestoreService.ts(4720,24): error TS1005: ',' expected.
+src/services/firestoreService.ts(4721,26): error TS1005: ',' expected.
+src/services/firestoreService.ts(4722,27): error TS1005: ',' expected.
+src/services/firestoreService.ts(4724,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4725,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4725,53): error TS1005: ',' expected.
+src/services/firestoreService.ts(4726,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4726,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(4727,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4727,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(4729,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4729,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(4730,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4730,82): error TS1005: ',' expected.
+src/services/firestoreService.ts(4731,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4731,118): error TS1005: ',' expected.
+src/services/firestoreService.ts(4733,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4733,38): error TS1005: ',' expected.
+src/services/firestoreService.ts(4734,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4734,103): error TS1005: ',' expected.
+src/services/firestoreService.ts(4736,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(4745,8): error TS1005: ',' expected.
+src/services/firestoreService.ts(4746,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4765,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4765,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4765,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(4766,27): error TS1005: ',' expected.
+src/services/firestoreService.ts(4767,34): error TS1005: ',' expected.
+src/services/firestoreService.ts(4767,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(4767,72): error TS1005: ',' expected.
+src/services/firestoreService.ts(4767,93): error TS1005: ',' expected.
+src/services/firestoreService.ts(4768,28): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(4768,29): error TS1005: ',' expected.
+src/services/firestoreService.ts(4769,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(4770,26): error TS1005: ',' expected.
+src/services/firestoreService.ts(4771,5): error TS1005: ';' expected.
+src/services/firestoreService.ts(4771,33): error TS1005: ',' expected.
+src/services/firestoreService.ts(4771,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(4771,69): error TS1005: ',' expected.
+src/services/firestoreService.ts(4771,114): error TS1005: ',' expected.
+src/services/firestoreService.ts(4772,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4773,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4773,80): error TS1005: ',' expected.
+src/services/firestoreService.ts(4774,11): error TS1003: Identifier expected.
+src/services/firestoreService.ts(4779,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4779,11): error TS1003: Identifier expected.
+src/services/firestoreService.ts(4779,12): error TS1138: Parameter declaration expected.
+src/services/firestoreService.ts(4779,13): error TS1109: Expression expected.
+src/services/firestoreService.ts(4779,21): error TS6188: Numeric separators are not allowed here.
+src/services/firestoreService.ts(4779,23): error TS1109: Expression expected.
+src/services/firestoreService.ts(4779,24): error TS1005: ',' expected.
+src/services/firestoreService.ts(4779,32): error TS1109: Expression expected.
+src/services/firestoreService.ts(4779,50): error TS1005: ';' expected.
+src/services/firestoreService.ts(4875,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4875,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4883,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4888,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4888,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4888,52): error TS1005: ',' expected.
+src/services/firestoreService.ts(4888,73): error TS1109: Expression expected.
+src/services/firestoreService.ts(4888,82): error TS1005: ';' expected.
+src/services/firestoreService.ts(4888,110): error TS1005: ',' expected.
+src/services/firestoreService.ts(4889,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4890,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4890,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(4891,11): error TS1003: Identifier expected.
+src/services/firestoreService.ts(4894,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4894,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4894,55): error TS1005: ',' expected.
+src/services/firestoreService.ts(4895,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4905,9): error TS1005: ',' expected.
+src/services/firestoreService.ts(4907,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4907,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(4908,19): error TS1005: ',' expected.
+src/services/firestoreService.ts(4908,38): error TS1005: ',' expected.
+src/services/firestoreService.ts(4908,40): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4919,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4919,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4926,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4936,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4937,12): error TS1005: ',' expected.
+src/services/firestoreService.ts(4938,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(4939,15): error TS1005: ',' expected.
+src/services/firestoreService.ts(4940,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(4941,3): error TS1109: Expression expected.
+src/services/firestoreService.ts(4941,4): error TS1005: ';' expected.
+src/services/firestoreService.ts(4942,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(4942,75): error TS1005: ',' expected.
+src/services/firestoreService.ts(4943,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(4943,67): error TS1005: ',' expected.
+src/services/firestoreService.ts(4944,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(4949,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4957,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4957,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4957,31): error TS1005: ',' expected.
+src/services/firestoreService.ts(4957,37): error TS1005: ';' expected.
+src/services/firestoreService.ts(4958,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4959,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4959,96): error TS1005: ',' expected.
+src/services/firestoreService.ts(4960,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4960,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(4961,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4961,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(4962,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(4965,21): error TS1005: ',' expected.
+src/services/firestoreService.ts(4968,10): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(4968,25): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4970,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4970,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(4974,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4976,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4976,33): error TS1005: ',' expected.
+src/services/firestoreService.ts(4976,56): error TS1109: Expression expected.
+src/services/firestoreService.ts(4976,57): error TS1005: ';' expected.
+src/services/firestoreService.ts(4977,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4978,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4978,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(4979,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4979,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(4980,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(4989,9): error TS1005: ',' expected.
+src/services/firestoreService.ts(4990,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(4997,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(4997,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(4997,26): error TS1005: ';' expected.
+src/services/firestoreService.ts(4997,40): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(4998,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(4999,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(4999,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5000,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5000,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(5001,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(5001,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5002,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5008,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5008,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5008,33): error TS1005: ',' expected.
+src/services/firestoreService.ts(5008,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5008,56): error TS1005: ';' expected.
+src/services/firestoreService.ts(5009,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5010,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5010,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(5011,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5013,20): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5013,24): error TS1005: ':' expected.
+src/services/firestoreService.ts(5013,28): error TS1005: ',' expected.
+src/services/firestoreService.ts(5014,8): error TS1005: ';' expected.
+src/services/firestoreService.ts(5016,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5016,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5020,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5021,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5021,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5021,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(5021,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(5021,65): error TS1005: ';' expected.
+src/services/firestoreService.ts(5022,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5023,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5023,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5024,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5024,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(5025,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5025,50): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5025,54): error TS1005: ':' expected.
+src/services/firestoreService.ts(5025,58): error TS1005: ',' expected.
+src/services/firestoreService.ts(5025,93): error TS1005: ';' expected.
+src/services/firestoreService.ts(5027,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5027,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5028,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5029,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5029,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5029,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(5029,58): error TS1005: ',' expected.
+src/services/firestoreService.ts(5029,64): error TS1005: ';' expected.
+src/services/firestoreService.ts(5030,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5031,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5031,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(5032,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5032,75): error TS1005: ',' expected.
+src/services/firestoreService.ts(5033,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5033,52): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5033,56): error TS1005: ':' expected.
+src/services/firestoreService.ts(5033,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(5033,95): error TS1005: ';' expected.
+src/services/firestoreService.ts(5035,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5035,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5036,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5037,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5037,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5037,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5037,85): error TS1109: Expression expected.
+src/services/firestoreService.ts(5037,86): error TS1005: ';' expected.
+src/services/firestoreService.ts(5038,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5038,76): error TS1005: ',' expected.
+src/services/firestoreService.ts(5039,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5041,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5043,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5043,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5043,63): error TS1005: ',' expected.
+src/services/firestoreService.ts(5043,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(5043,93): error TS1005: ',' expected.
+src/services/firestoreService.ts(5043,117): error TS1109: Expression expected.
+src/services/firestoreService.ts(5043,118): error TS1005: ';' expected.
+src/services/firestoreService.ts(5044,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5044,98): error TS1005: ',' expected.
+src/services/firestoreService.ts(5045,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5045,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5046,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5052,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5054,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5054,48): error TS1005: ',' expected.
+src/services/firestoreService.ts(5054,66): error TS1005: ',' expected.
+src/services/firestoreService.ts(5054,80): error TS1005: ',' expected.
+src/services/firestoreService.ts(5054,96): error TS1005: ',' expected.
+src/services/firestoreService.ts(5054,120): error TS1109: Expression expected.
+src/services/firestoreService.ts(5054,121): error TS1005: ';' expected.
+src/services/firestoreService.ts(5055,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5055,101): error TS1005: ',' expected.
+src/services/firestoreService.ts(5056,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5062,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5065,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5065,34): error TS1005: ',' expected.
+src/services/firestoreService.ts(5065,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5065,66): error TS1005: ',' expected.
+src/services/firestoreService.ts(5065,89): error TS1109: Expression expected.
+src/services/firestoreService.ts(5065,90): error TS1005: ';' expected.
+src/services/firestoreService.ts(5066,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5067,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5067,69): error TS1005: ',' expected.
+src/services/firestoreService.ts(5068,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5068,80): error TS1005: ',' expected.
+src/services/firestoreService.ts(5069,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(5075,9): error TS1005: ',' expected.
+src/services/firestoreService.ts(5076,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5082,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5082,42): error TS1005: ',' expected.
+src/services/firestoreService.ts(5082,58): error TS1005: ',' expected.
+src/services/firestoreService.ts(5082,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(5082,97): error TS1109: Expression expected.
+src/services/firestoreService.ts(5082,98): error TS1005: ';' expected.
+src/services/firestoreService.ts(5083,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5084,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5084,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(5085,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5085,30): error TS1005: ',' expected.
+src/services/firestoreService.ts(5086,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(5092,9): error TS1005: ',' expected.
+src/services/firestoreService.ts(5093,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5099,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5099,40): error TS1005: ',' expected.
+src/services/firestoreService.ts(5099,56): error TS1005: ',' expected.
+src/services/firestoreService.ts(5099,80): error TS1109: Expression expected.
+src/services/firestoreService.ts(5099,81): error TS1005: ';' expected.
+src/services/firestoreService.ts(5100,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5100,71): error TS1005: ',' expected.
+src/services/firestoreService.ts(5101,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5103,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5106,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5106,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5106,63): error TS1005: ',' expected.
+src/services/firestoreService.ts(5106,87): error TS1109: Expression expected.
+src/services/firestoreService.ts(5106,88): error TS1005: ';' expected.
+src/services/firestoreService.ts(5107,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5107,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5108,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5110,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5113,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5113,36): error TS1005: ',' expected.
+src/services/firestoreService.ts(5113,52): error TS1005: ',' expected.
+src/services/firestoreService.ts(5113,83): error TS1109: Expression expected.
+src/services/firestoreService.ts(5113,84): error TS1005: ';' expected.
+src/services/firestoreService.ts(5114,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5114,67): error TS1005: ',' expected.
+src/services/firestoreService.ts(5115,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5117,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5120,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5120,42): error TS1005: ',' expected.
+src/services/firestoreService.ts(5120,58): error TS1005: ',' expected.
+src/services/firestoreService.ts(5120,82): error TS1109: Expression expected.
+src/services/firestoreService.ts(5120,83): error TS1005: ';' expected.
+src/services/firestoreService.ts(5121,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5121,73): error TS1005: ',' expected.
+src/services/firestoreService.ts(5122,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5124,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5127,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5127,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5127,63): error TS1005: ',' expected.
+src/services/firestoreService.ts(5127,104): error TS1109: Expression expected.
+src/services/firestoreService.ts(5127,105): error TS1005: ';' expected.
+src/services/firestoreService.ts(5128,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5128,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5129,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5131,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5134,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5134,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5134,63): error TS1005: ',' expected.
+src/services/firestoreService.ts(5134,87): error TS1109: Expression expected.
+src/services/firestoreService.ts(5134,88): error TS1005: ';' expected.
+src/services/firestoreService.ts(5135,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5135,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5136,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5138,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5141,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5141,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5141,66): error TS1005: ',' expected.
+src/services/firestoreService.ts(5141,90): error TS1109: Expression expected.
+src/services/firestoreService.ts(5141,91): error TS1005: ';' expected.
+src/services/firestoreService.ts(5142,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5142,81): error TS1005: ',' expected.
+src/services/firestoreService.ts(5143,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5145,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5148,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5148,37): error TS1005: ',' expected.
+src/services/firestoreService.ts(5148,53): error TS1005: ',' expected.
+src/services/firestoreService.ts(5148,77): error TS1109: Expression expected.
+src/services/firestoreService.ts(5148,78): error TS1005: ';' expected.
+src/services/firestoreService.ts(5149,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5149,68): error TS1005: ',' expected.
+src/services/firestoreService.ts(5150,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5152,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5155,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5155,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5155,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5155,85): error TS1109: Expression expected.
+src/services/firestoreService.ts(5155,86): error TS1005: ';' expected.
+src/services/firestoreService.ts(5156,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5156,76): error TS1005: ',' expected.
+src/services/firestoreService.ts(5157,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5159,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5162,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5162,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(5162,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5162,81): error TS1109: Expression expected.
+src/services/firestoreService.ts(5162,82): error TS1005: ';' expected.
+src/services/firestoreService.ts(5163,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5163,72): error TS1005: ',' expected.
+src/services/firestoreService.ts(5164,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5166,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5169,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5169,38): error TS1005: ',' expected.
+src/services/firestoreService.ts(5169,54): error TS1005: ',' expected.
+src/services/firestoreService.ts(5169,78): error TS1109: Expression expected.
+src/services/firestoreService.ts(5169,79): error TS1005: ';' expected.
+src/services/firestoreService.ts(5170,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5170,69): error TS1005: ',' expected.
+src/services/firestoreService.ts(5171,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5173,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5176,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5176,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5176,53): error TS1005: ',' expected.
+src/services/firestoreService.ts(5176,72): error TS1005: ',' expected.
+src/services/firestoreService.ts(5176,88): error TS1005: ',' expected.
+src/services/firestoreService.ts(5176,109): error TS1109: Expression expected.
+src/services/firestoreService.ts(5176,118): error TS1005: ';' expected.
+src/services/firestoreService.ts(5177,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5178,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5178,81): error TS1005: ',' expected.
+src/services/firestoreService.ts(5179,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5182,20): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5182,24): error TS1005: ':' expected.
+src/services/firestoreService.ts(5182,28): error TS1005: ',' expected.
+src/services/firestoreService.ts(5183,8): error TS1005: ';' expected.
+src/services/firestoreService.ts(5185,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5185,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5188,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5190,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5190,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5190,52): error TS1005: ',' expected.
+src/services/firestoreService.ts(5190,75): error TS1005: ',' expected.
+src/services/firestoreService.ts(5190,84): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(5190,86): error TS1005: ';' expected.
+src/services/firestoreService.ts(5191,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5191,70): error TS1005: ',' expected.
+src/services/firestoreService.ts(5192,10): error TS1359: Identifier expected. 'const' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5192,16): error TS1005: ',' expected.
+src/services/firestoreService.ts(5192,19): error TS1005: ',' expected.
+src/services/firestoreService.ts(5192,22): error TS1005: ',' expected.
+src/services/firestoreService.ts(5198,5): error TS1005: ',' expected.
+src/services/firestoreService.ts(5198,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5198,19): error TS1005: ',' expected.
+src/services/firestoreService.ts(5201,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5201,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5201,53): error TS1005: ',' expected.
+src/services/firestoreService.ts(5201,75): error TS1005: ',' expected.
+src/services/firestoreService.ts(5201,84): error TS1005: ';' expected.
+src/services/firestoreService.ts(5202,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5203,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5203,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5204,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5204,37): error TS1005: ',' expected.
+src/services/firestoreService.ts(5205,11): error TS1003: Identifier expected.
+src/services/firestoreService.ts(5205,16): error TS1005: ',' expected.
+src/services/firestoreService.ts(5205,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5205,34): error TS1005: ':' expected.
+src/services/firestoreService.ts(5205,39): error TS1005: ',' expected.
+src/services/firestoreService.ts(5206,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5206,53): error TS1005: ',' expected.
+src/services/firestoreService.ts(5207,11): error TS1003: Identifier expected.
+src/services/firestoreService.ts(5207,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(5207,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(5207,55): error TS1005: ':' expected.
+src/services/firestoreService.ts(5207,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(5209,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5209,96): error TS1005: ',' expected.
+src/services/firestoreService.ts(5210,11): error TS1003: Identifier expected.
+src/services/firestoreService.ts(5210,21): error TS1005: ',' expected.
+src/services/firestoreService.ts(5210,30): error TS1005: ',' expected.
+src/services/firestoreService.ts(5210,39): error TS1005: ':' expected.
+src/services/firestoreService.ts(5210,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(5211,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5211,52): error TS1005: ',' expected.
+src/services/firestoreService.ts(5213,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5213,76): error TS1005: ',' expected.
+src/services/firestoreService.ts(5214,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5214,131): error TS1005: ',' expected.
+src/services/firestoreService.ts(5216,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5217,24): error TS1005: ',' expected.
+src/services/firestoreService.ts(5223,8): error TS1005: ',' expected.
+src/services/firestoreService.ts(5223,9): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5224,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(5224,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(5225,7): error TS1005: ';' expected.
+src/services/firestoreService.ts(5228,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5230,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5230,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5230,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5230,70): error TS1005: ',' expected.
+src/services/firestoreService.ts(5230,76): error TS1005: ';' expected.
+src/services/firestoreService.ts(5231,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5232,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5232,54): error TS1005: ',' expected.
+src/services/firestoreService.ts(5233,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5233,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(5234,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5234,57): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5234,61): error TS1005: ':' expected.
+src/services/firestoreService.ts(5234,65): error TS1005: ',' expected.
+src/services/firestoreService.ts(5234,83): error TS1005: ';' expected.
+src/services/firestoreService.ts(5236,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5236,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5239,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5241,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5241,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5241,51): error TS1005: ',' expected.
+src/services/firestoreService.ts(5241,73): error TS1005: ',' expected.
+src/services/firestoreService.ts(5241,93): error TS1005: ',' expected.
+src/services/firestoreService.ts(5241,102): error TS1005: ';' expected.
+src/services/firestoreService.ts(5242,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5243,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5243,87): error TS1005: ',' expected.
+src/services/firestoreService.ts(5244,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5245,17): error TS1003: Identifier expected.
+src/services/firestoreService.ts(5245,27): error TS1005: ':' expected.
+src/services/firestoreService.ts(5247,21): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5247,25): error TS1005: ':' expected.
+src/services/firestoreService.ts(5247,29): error TS1005: ',' expected.
+src/services/firestoreService.ts(5249,8): error TS1005: ';' expected.
+src/services/firestoreService.ts(5251,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5251,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5254,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5256,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5256,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5256,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(5256,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(5256,83): error TS1005: ';' expected.
+src/services/firestoreService.ts(5257,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5258,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5258,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5259,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5259,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(5260,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5260,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5260,128): error TS1005: ';' expected.
+src/services/firestoreService.ts(5262,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5262,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5265,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5267,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5267,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5267,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5267,64): error TS1005: ',' expected.
+src/services/firestoreService.ts(5267,80): error TS1005: ',' expected.
+src/services/firestoreService.ts(5267,89): error TS1005: ';' expected.
+src/services/firestoreService.ts(5268,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5269,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5269,73): error TS1005: ',' expected.
+src/services/firestoreService.ts(5270,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5270,49): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5270,53): error TS1005: ':' expected.
+src/services/firestoreService.ts(5270,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5270,75): error TS1005: ';' expected.
+src/services/firestoreService.ts(5272,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5272,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5275,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5277,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5277,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5277,56): error TS1005: ',' expected.
+src/services/firestoreService.ts(5277,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5277,94): error TS1005: ',' expected.
+src/services/firestoreService.ts(5277,103): error TS1005: ';' expected.
+src/services/firestoreService.ts(5278,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5279,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5279,87): error TS1005: ',' expected.
+src/services/firestoreService.ts(5280,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5280,49): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5280,53): error TS1005: ':' expected.
+src/services/firestoreService.ts(5280,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5280,75): error TS1005: ';' expected.
+src/services/firestoreService.ts(5282,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5282,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5285,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5287,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5287,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5287,51): error TS1005: ',' expected.
+src/services/firestoreService.ts(5287,70): error TS1005: ',' expected.
+src/services/firestoreService.ts(5287,86): error TS1005: ',' expected.
+src/services/firestoreService.ts(5287,95): error TS1005: ';' expected.
+src/services/firestoreService.ts(5288,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5289,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5289,79): error TS1005: ',' expected.
+src/services/firestoreService.ts(5290,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5290,49): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5290,53): error TS1005: ':' expected.
+src/services/firestoreService.ts(5290,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5290,75): error TS1005: ';' expected.
+src/services/firestoreService.ts(5292,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5292,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5295,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5297,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5297,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5297,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(5297,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(5297,68): error TS1005: ';' expected.
+src/services/firestoreService.ts(5298,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5299,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5304,8): error TS1005: ',' expected.
+src/services/firestoreService.ts(5305,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5305,36): error TS1005: ',' expected.
+src/services/firestoreService.ts(5306,15): error TS1005: ',' expected.
+src/services/firestoreService.ts(5306,21): error TS1005: ',' expected.
+src/services/firestoreService.ts(5306,30): error TS1005: ':' expected.
+src/services/firestoreService.ts(5306,34): error TS1005: ',' expected.
+src/services/firestoreService.ts(5307,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(5307,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5308,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5313,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5313,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5313,53): error TS1005: ',' expected.
+src/services/firestoreService.ts(5313,70): error TS1005: ',' expected.
+src/services/firestoreService.ts(5313,89): error TS1109: Expression expected.
+src/services/firestoreService.ts(5313,95): error TS1005: ';' expected.
+src/services/firestoreService.ts(5314,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5315,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5315,51): error TS1005: ',' expected.
+src/services/firestoreService.ts(5316,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5316,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(5317,124): error TS1005: ',' expected.
+src/services/firestoreService.ts(5317,129): error TS1005: ':' expected.
+src/services/firestoreService.ts(5317,137): error TS1005: ',' expected.
+src/services/firestoreService.ts(5317,178): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5317,182): error TS1005: ':' expected.
+src/services/firestoreService.ts(5317,186): error TS1005: ',' expected.
+src/services/firestoreService.ts(5317,206): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5317,221): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5317,224): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5319,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5319,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5322,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5324,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5324,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5324,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5324,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5324,67): error TS1005: ';' expected.
+src/services/firestoreService.ts(5325,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5326,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5326,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5327,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5327,80): error TS1005: ',' expected.
+src/services/firestoreService.ts(5328,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5328,53): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5328,57): error TS1005: ':' expected.
+src/services/firestoreService.ts(5328,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5328,96): error TS1005: ';' expected.
+src/services/firestoreService.ts(5330,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5330,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5331,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5333,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5333,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5333,48): error TS1005: ',' expected.
+src/services/firestoreService.ts(5333,64): error TS1005: ',' expected.
+src/services/firestoreService.ts(5333,70): error TS1005: ';' expected.
+src/services/firestoreService.ts(5334,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5335,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5335,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5336,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5336,83): error TS1005: ',' expected.
+src/services/firestoreService.ts(5337,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5337,53): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5337,57): error TS1005: ':' expected.
+src/services/firestoreService.ts(5337,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5337,96): error TS1005: ';' expected.
+src/services/firestoreService.ts(5339,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5339,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5340,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5342,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5342,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5342,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(5342,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(5342,66): error TS1005: ';' expected.
+src/services/firestoreService.ts(5343,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5344,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5344,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5345,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5345,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(5346,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5346,53): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5346,57): error TS1005: ':' expected.
+src/services/firestoreService.ts(5346,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5346,96): error TS1005: ';' expected.
+src/services/firestoreService.ts(5348,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5348,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5349,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5351,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5351,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5351,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5351,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5351,67): error TS1005: ';' expected.
+src/services/firestoreService.ts(5352,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5353,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5353,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5354,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5354,80): error TS1005: ',' expected.
+src/services/firestoreService.ts(5355,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5355,53): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5355,57): error TS1005: ':' expected.
+src/services/firestoreService.ts(5355,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5355,96): error TS1005: ';' expected.
+src/services/firestoreService.ts(5357,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5357,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5358,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5360,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5360,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5360,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5360,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5360,67): error TS1005: ';' expected.
+src/services/firestoreService.ts(5361,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5362,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5362,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5363,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5363,80): error TS1005: ',' expected.
+src/services/firestoreService.ts(5364,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5364,53): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5364,57): error TS1005: ':' expected.
+src/services/firestoreService.ts(5364,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5364,96): error TS1005: ';' expected.
+src/services/firestoreService.ts(5366,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5366,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5367,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5369,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5369,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5369,39): error TS1005: ',' expected.
+src/services/firestoreService.ts(5369,58): error TS1005: ',' expected.
+src/services/firestoreService.ts(5369,64): error TS1005: ';' expected.
+src/services/firestoreService.ts(5370,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5371,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5371,53): error TS1005: ',' expected.
+src/services/firestoreService.ts(5372,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5372,68): error TS1005: ',' expected.
+src/services/firestoreService.ts(5373,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5373,56): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5373,60): error TS1005: ':' expected.
+src/services/firestoreService.ts(5373,64): error TS1005: ',' expected.
+src/services/firestoreService.ts(5373,99): error TS1005: ';' expected.
+src/services/firestoreService.ts(5375,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5375,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5376,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5378,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5378,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5378,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5378,68): error TS1005: ',' expected.
+src/services/firestoreService.ts(5378,85): error TS1005: ',' expected.
+src/services/firestoreService.ts(5378,91): error TS1005: ';' expected.
+src/services/firestoreService.ts(5379,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5380,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5380,52): error TS1005: ',' expected.
+src/services/firestoreService.ts(5381,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5381,94): error TS1005: ',' expected.
+src/services/firestoreService.ts(5382,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5382,54): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5382,58): error TS1005: ':' expected.
+src/services/firestoreService.ts(5382,62): error TS1005: ',' expected.
+src/services/firestoreService.ts(5382,97): error TS1005: ';' expected.
+src/services/firestoreService.ts(5384,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5384,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5385,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5387,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5387,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5387,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(5387,70): error TS1005: ',' expected.
+src/services/firestoreService.ts(5387,85): error TS1005: ',' expected.
+src/services/firestoreService.ts(5387,94): error TS1005: ';' expected.
+src/services/firestoreService.ts(5388,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5389,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5389,97): error TS1005: ',' expected.
+src/services/firestoreService.ts(5390,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5391,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5391,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(5391,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(5392,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5395,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5395,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5395,42): error TS1005: ',' expected.
+src/services/firestoreService.ts(5395,58): error TS1005: ',' expected.
+src/services/firestoreService.ts(5395,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(5395,83): error TS1005: ';' expected.
+src/services/firestoreService.ts(5396,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5397,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5397,67): error TS1005: ',' expected.
+src/services/firestoreService.ts(5398,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5398,49): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5398,53): error TS1005: ':' expected.
+src/services/firestoreService.ts(5398,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5398,75): error TS1005: ';' expected.
+src/services/firestoreService.ts(5400,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5400,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5401,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5403,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5403,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5403,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(5403,60): error TS1005: ';' expected.
+src/services/firestoreService.ts(5404,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5405,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5405,48): error TS1005: ',' expected.
+src/services/firestoreService.ts(5406,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5406,47): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5406,51): error TS1005: ':' expected.
+src/services/firestoreService.ts(5406,55): error TS1005: ',' expected.
+src/services/firestoreService.ts(5406,90): error TS1005: ';' expected.
+src/services/firestoreService.ts(5408,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5408,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5409,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5411,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5411,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5411,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(5411,55): error TS1005: ',' expected.
+src/services/firestoreService.ts(5411,61): error TS1005: ';' expected.
+src/services/firestoreService.ts(5412,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5413,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5413,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5414,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5414,73): error TS1005: ',' expected.
+src/services/firestoreService.ts(5415,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5415,49): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5415,53): error TS1005: ':' expected.
+src/services/firestoreService.ts(5415,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5415,92): error TS1005: ';' expected.
+src/services/firestoreService.ts(5417,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5417,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5418,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5420,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5420,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5420,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(5420,66): error TS1005: ',' expected.
+src/services/firestoreService.ts(5420,72): error TS1005: ';' expected.
+src/services/firestoreService.ts(5421,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5421,52): error TS1005: ',' expected.
+src/services/firestoreService.ts(5422,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5422,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(5423,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5423,66): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5423,70): error TS1005: ':' expected.
+src/services/firestoreService.ts(5423,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(5423,91): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5423,92): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5423,109): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5425,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5427,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5427,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(5427,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(5427,75): error TS1005: ',' expected.
+src/services/firestoreService.ts(5427,98): error TS1109: Expression expected.
+src/services/firestoreService.ts(5427,99): error TS1005: ';' expected.
+src/services/firestoreService.ts(5428,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5428,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(5429,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5429,113): error TS1005: ',' expected.
+src/services/firestoreService.ts(5432,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5432,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5432,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5432,65): error TS1005: ',' expected.
+src/services/firestoreService.ts(5432,80): error TS1005: ',' expected.
+src/services/firestoreService.ts(5432,86): error TS1005: ';' expected.
+src/services/firestoreService.ts(5433,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5433,79): error TS1005: ',' expected.
+src/services/firestoreService.ts(5434,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5434,42): error TS1359: Identifier expected. 'true' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5434,46): error TS1005: ':' expected.
+src/services/firestoreService.ts(5434,69): error TS1005: ',' expected.
+src/services/firestoreService.ts(5434,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5434,118): error TS1005: ';' expected.
+src/services/firestoreService.ts(5434,145): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5434,146): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5436,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5438,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5438,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5438,40): error TS1005: ',' expected.
+src/services/firestoreService.ts(5438,58): error TS1005: ',' expected.
+src/services/firestoreService.ts(5438,64): error TS1005: ';' expected.
+src/services/firestoreService.ts(5439,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5439,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5440,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5440,71): error TS1005: ',' expected.
+src/services/firestoreService.ts(5441,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5441,64): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5441,68): error TS1005: ':' expected.
+src/services/firestoreService.ts(5441,72): error TS1005: ',' expected.
+src/services/firestoreService.ts(5441,89): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5441,90): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5441,107): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5443,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5445,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5445,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5445,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(5445,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5445,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5445,94): error TS1005: ',' expected.
+src/services/firestoreService.ts(5445,103): error TS1005: ';' expected.
+src/services/firestoreService.ts(5446,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5446,76): error TS1005: ',' expected.
+src/services/firestoreService.ts(5447,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5447,36): error TS1003: Identifier expected.
+src/services/firestoreService.ts(5447,47): error TS1005: ':' expected.
+src/services/firestoreService.ts(5447,112): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5447,116): error TS1005: ':' expected.
+src/services/firestoreService.ts(5447,120): error TS1005: ',' expected.
+src/services/firestoreService.ts(5447,137): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5447,138): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5449,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5451,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5451,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5451,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5451,67): error TS1005: ',' expected.
+src/services/firestoreService.ts(5451,83): error TS1005: ',' expected.
+src/services/firestoreService.ts(5451,100): error TS1005: ',' expected.
+src/services/firestoreService.ts(5451,109): error TS1005: ';' expected.
+src/services/firestoreService.ts(5452,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5452,76): error TS1005: ',' expected.
+src/services/firestoreService.ts(5453,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5453,72): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5453,76): error TS1005: ':' expected.
+src/services/firestoreService.ts(5453,80): error TS1005: ',' expected.
+src/services/firestoreService.ts(5453,112): error TS1005: ';' expected.
+src/services/firestoreService.ts(5453,122): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5453,123): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5455,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5457,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5457,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5457,48): error TS1005: ',' expected.
+src/services/firestoreService.ts(5457,65): error TS1005: ',' expected.
+src/services/firestoreService.ts(5457,71): error TS1005: ';' expected.
+src/services/firestoreService.ts(5458,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5458,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(5459,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5459,69): error TS1005: ',' expected.
+src/services/firestoreService.ts(5460,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5460,63): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5460,67): error TS1005: ':' expected.
+src/services/firestoreService.ts(5460,71): error TS1005: ',' expected.
+src/services/firestoreService.ts(5460,88): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5460,89): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5460,106): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5462,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5464,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5464,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5464,40): error TS1005: ',' expected.
+src/services/firestoreService.ts(5464,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5464,66): error TS1005: ';' expected.
+src/services/firestoreService.ts(5464,80): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(5465,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5465,127): error TS1005: ',' expected.
+src/services/firestoreService.ts(5466,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5466,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(5469,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5469,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5469,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(5469,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(5469,65): error TS1005: ';' expected.
+src/services/firestoreService.ts(5470,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5470,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5471,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5471,71): error TS1005: ',' expected.
+src/services/firestoreService.ts(5472,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5472,61): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5472,65): error TS1005: ':' expected.
+src/services/firestoreService.ts(5472,69): error TS1005: ',' expected.
+src/services/firestoreService.ts(5472,86): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5472,87): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5472,104): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5474,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5476,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5476,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5476,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5476,64): error TS1005: ',' expected.
+src/services/firestoreService.ts(5476,79): error TS1005: ',' expected.
+src/services/firestoreService.ts(5476,85): error TS1005: ';' expected.
+src/services/firestoreService.ts(5477,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5477,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(5478,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5478,36): error TS1003: Identifier expected.
+src/services/firestoreService.ts(5478,48): error TS1005: ':' expected.
+src/services/firestoreService.ts(5478,69): error TS1005: ',' expected.
+src/services/firestoreService.ts(5478,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5478,103): error TS1005: ';' expected.
+src/services/firestoreService.ts(5478,130): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5478,131): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5480,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5482,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5482,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5482,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5482,62): error TS1005: ',' expected.
+src/services/firestoreService.ts(5482,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(5482,83): error TS1005: ';' expected.
+src/services/firestoreService.ts(5483,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5483,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(5484,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5484,36): error TS1003: Identifier expected.
+src/services/firestoreService.ts(5484,46): error TS1005: ':' expected.
+src/services/firestoreService.ts(5484,65): error TS1005: ',' expected.
+src/services/firestoreService.ts(5484,74): error TS1005: ',' expected.
+src/services/firestoreService.ts(5484,97): error TS1005: ';' expected.
+src/services/firestoreService.ts(5484,124): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5484,125): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5486,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5488,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5488,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5488,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5488,84): error TS1109: Expression expected.
+src/services/firestoreService.ts(5488,85): error TS1005: ';' expected.
+src/services/firestoreService.ts(5489,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5489,79): error TS1005: ',' expected.
+src/services/firestoreService.ts(5490,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5490,108): error TS1005: ',' expected.
+src/services/firestoreService.ts(5493,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5493,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5493,37): error TS1005: ',' expected.
+src/services/firestoreService.ts(5493,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5493,76): error TS1005: ',' expected.
+src/services/firestoreService.ts(5493,94): error TS1005: ';' expected.
+src/services/firestoreService.ts(5494,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5494,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(5495,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5495,68): error TS1005: ',' expected.
+src/services/firestoreService.ts(5496,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5496,64): error TS1005: ',' expected.
+src/services/firestoreService.ts(5497,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5497,34): error TS1005: ',' expected.
+src/services/firestoreService.ts(5498,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5498,19): error TS1005: ',' expected.
+src/services/firestoreService.ts(5498,21): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5504,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5506,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5506,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5506,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(5506,58): error TS1005: ',' expected.
+src/services/firestoreService.ts(5506,67): error TS1005: ';' expected.
+src/services/firestoreService.ts(5506,81): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(5507,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5507,97): error TS1005: ',' expected.
+src/services/firestoreService.ts(5508,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5508,39): error TS1005: ',' expected.
+src/services/firestoreService.ts(5509,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5509,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(5512,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5512,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5512,37): error TS1005: ',' expected.
+src/services/firestoreService.ts(5512,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(5512,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5512,67): error TS1005: ';' expected.
+src/services/firestoreService.ts(5512,95): error TS1005: ',' expected.
+src/services/firestoreService.ts(5513,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5514,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5514,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5515,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5515,26): error TS1005: ',' expected.
+src/services/firestoreService.ts(5516,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5516,38): error TS1005: ',' expected.
+src/services/firestoreService.ts(5516,42): error TS1005: ',' expected.
+src/services/firestoreService.ts(5516,45): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5530,8): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5532,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5532,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5536,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5539,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5539,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(5539,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(5539,83): error TS1109: Expression expected.
+src/services/firestoreService.ts(5539,84): error TS1005: ';' expected.
+src/services/firestoreService.ts(5540,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5540,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(5541,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5546,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5549,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5549,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(5549,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(5549,73): error TS1005: ',' expected.
+src/services/firestoreService.ts(5549,96): error TS1109: Expression expected.
+src/services/firestoreService.ts(5549,97): error TS1005: ';' expected.
+src/services/firestoreService.ts(5550,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5550,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(5551,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5556,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5559,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5559,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5559,37): error TS1005: ',' expected.
+src/services/firestoreService.ts(5559,51): error TS1005: ',' expected.
+src/services/firestoreService.ts(5559,60): error TS1005: ';' expected.
+src/services/firestoreService.ts(5559,74): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(5560,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5560,72): error TS1005: ',' expected.
+src/services/firestoreService.ts(5561,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5561,34): error TS1005: ',' expected.
+src/services/firestoreService.ts(5562,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5562,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(5565,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5565,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5565,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(5565,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5565,70): error TS1005: ';' expected.
+src/services/firestoreService.ts(5566,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5566,116): error TS1005: ',' expected.
+src/services/firestoreService.ts(5567,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5567,34): error TS1005: ',' expected.
+src/services/firestoreService.ts(5568,9): error TS1003: Identifier expected.
+src/services/firestoreService.ts(5568,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(5568,20): error TS1005: ',' expected.
+src/services/firestoreService.ts(5568,22): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5572,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5574,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5574,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5574,36): error TS1005: ',' expected.
+src/services/firestoreService.ts(5574,55): error TS1005: ',' expected.
+src/services/firestoreService.ts(5574,64): error TS1005: ';' expected.
+src/services/firestoreService.ts(5574,78): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(5575,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5575,103): error TS1005: ',' expected.
+src/services/firestoreService.ts(5576,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5576,34): error TS1005: ',' expected.
+src/services/firestoreService.ts(5577,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5577,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(5580,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5580,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5580,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(5580,65): error TS1005: ',' expected.
+src/services/firestoreService.ts(5580,74): error TS1005: ';' expected.
+src/services/firestoreService.ts(5580,88): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(5581,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5581,106): error TS1005: ',' expected.
+src/services/firestoreService.ts(5582,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5582,34): error TS1005: ',' expected.
+src/services/firestoreService.ts(5583,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5583,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(5586,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5586,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5586,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(5586,58): error TS1005: ',' expected.
+src/services/firestoreService.ts(5586,64): error TS1005: ';' expected.
+src/services/firestoreService.ts(5587,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5587,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(5588,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5590,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(5593,6): error TS1005: ';' expected.
+src/services/firestoreService.ts(5595,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5597,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5597,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5597,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5597,69): error TS1005: ',' expected.
+src/services/firestoreService.ts(5597,85): error TS1005: ',' expected.
+src/services/firestoreService.ts(5597,102): error TS1005: ',' expected.
+src/services/firestoreService.ts(5597,121): error TS1109: Expression expected.
+src/services/firestoreService.ts(5597,127): error TS1005: ';' expected.
+src/services/firestoreService.ts(5598,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5598,76): error TS1005: ',' expected.
+src/services/firestoreService.ts(5599,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5603,6): error TS1005: ',' expected.
+src/services/firestoreService.ts(5606,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5606,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5607,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5609,5): error TS1005: ',' expected.
+src/services/firestoreService.ts(5609,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5609,16): error TS1005: ',' expected.
+src/services/firestoreService.ts(5612,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5612,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5612,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(5612,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5612,63): error TS1005: ';' expected.
+src/services/firestoreService.ts(5613,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5613,68): error TS1005: ',' expected.
+src/services/firestoreService.ts(5614,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5614,69): error TS1005: ',' expected.
+src/services/firestoreService.ts(5615,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5616,25): error TS1005: ',' expected.
+src/services/firestoreService.ts(5618,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5618,6): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5618,23): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5620,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5622,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5622,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5622,53): error TS1005: ',' expected.
+src/services/firestoreService.ts(5622,67): error TS1005: ',' expected.
+src/services/firestoreService.ts(5622,73): error TS1005: ';' expected.
+src/services/firestoreService.ts(5623,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5623,86): error TS1005: ',' expected.
+src/services/firestoreService.ts(5624,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5626,14): error TS1005: ',' expected.
+src/services/firestoreService.ts(5629,6): error TS1005: ';' expected.
+src/services/firestoreService.ts(5631,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5634,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5634,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5634,63): error TS1005: ',' expected.
+src/services/firestoreService.ts(5634,86): error TS1109: Expression expected.
+src/services/firestoreService.ts(5634,87): error TS1005: ';' expected.
+src/services/firestoreService.ts(5635,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5635,80): error TS1005: ',' expected.
+src/services/firestoreService.ts(5636,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5641,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5644,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5644,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5644,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5644,84): error TS1109: Expression expected.
+src/services/firestoreService.ts(5644,85): error TS1005: ';' expected.
+src/services/firestoreService.ts(5645,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5645,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5646,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5651,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5654,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5654,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(5654,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(5654,83): error TS1109: Expression expected.
+src/services/firestoreService.ts(5654,84): error TS1005: ';' expected.
+src/services/firestoreService.ts(5655,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5655,77): error TS1005: ',' expected.
+src/services/firestoreService.ts(5656,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5661,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5664,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5664,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5664,62): error TS1005: ',' expected.
+src/services/firestoreService.ts(5664,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5664,101): error TS1109: Expression expected.
+src/services/firestoreService.ts(5664,102): error TS1005: ';' expected.
+src/services/firestoreService.ts(5665,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5665,111): error TS1005: ',' expected.
+src/services/firestoreService.ts(5666,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5671,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5674,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5674,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5674,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5674,64): error TS1005: ',' expected.
+src/services/firestoreService.ts(5674,70): error TS1005: ';' expected.
+src/services/firestoreService.ts(5675,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5675,51): error TS1005: ',' expected.
+src/services/firestoreService.ts(5676,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5676,72): error TS1005: ',' expected.
+src/services/firestoreService.ts(5677,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5681,17): error TS1359: Identifier expected. 'true' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5681,22): error TS1005: ':' expected.
+src/services/firestoreService.ts(5682,5): error TS1005: ',' expected.
+src/services/firestoreService.ts(5682,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5682,16): error TS1005: ',' expected.
+src/services/firestoreService.ts(5685,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5685,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5685,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(5685,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(5685,66): error TS1005: ';' expected.
+src/services/firestoreService.ts(5686,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5686,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(5687,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5687,70): error TS1005: ',' expected.
+src/services/firestoreService.ts(5688,11): error TS1005: ',' expected.
+src/services/firestoreService.ts(5692,17): error TS1359: Identifier expected. 'true' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5692,22): error TS1005: ':' expected.
+src/services/firestoreService.ts(5693,5): error TS1005: ',' expected.
+src/services/firestoreService.ts(5693,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5693,16): error TS1005: ',' expected.
+src/services/firestoreService.ts(5697,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5697,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5697,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(5697,63): error TS1005: ',' expected.
+src/services/firestoreService.ts(5697,79): error TS1005: ',' expected.
+src/services/firestoreService.ts(5697,89): error TS1005: ';' expected.
+src/services/firestoreService.ts(5697,103): error TS1109: Expression expected.
+src/services/firestoreService.ts(5698,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5699,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5699,79): error TS1005: ',' expected.
+src/services/firestoreService.ts(5700,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5702,20): error TS1359: Identifier expected. 'new' is a reserved word that cannot be used here.
+src/services/firestoreService.ts(5702,24): error TS1005: ':' expected.
+src/services/firestoreService.ts(5702,28): error TS1005: ',' expected.
+src/services/firestoreService.ts(5703,8): error TS1005: ';' expected.
+src/services/firestoreService.ts(5704,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5704,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5708,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5710,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5710,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5710,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5710,64): error TS1005: ',' expected.
+src/services/firestoreService.ts(5710,75): error TS1005: ';' expected.
+src/services/firestoreService.ts(5710,89): error TS1109: Expression expected.
+src/services/firestoreService.ts(5711,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5712,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5715,8): error TS1005: ',' expected.
+src/services/firestoreService.ts(5717,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5717,40): error TS1005: ',' expected.
+src/services/firestoreService.ts(5718,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5718,35): error TS1005: ',' expected.
+src/services/firestoreService.ts(5720,15): error TS1005: ',' expected.
+src/services/firestoreService.ts(5728,9): error TS1005: ',' expected.
+src/services/firestoreService.ts(5730,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5730,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(5730,27): error TS1005: ',' expected.
+src/services/firestoreService.ts(5731,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5737,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5737,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5737,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(5737,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5737,70): error TS1005: ';' expected.
+src/services/firestoreService.ts(5737,84): error TS1109: Expression expected.
+src/services/firestoreService.ts(5738,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5739,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5739,79): error TS1005: ',' expected.
+src/services/firestoreService.ts(5740,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5741,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5746,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5746,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5746,42): error TS1005: ',' expected.
+src/services/firestoreService.ts(5746,51): error TS1005: ';' expected.
+src/services/firestoreService.ts(5746,65): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(5747,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5748,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5748,90): error TS1005: ',' expected.
+src/services/firestoreService.ts(5749,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(5749,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5750,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5750,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5750,22): error TS1005: ':' expected.
+src/services/firestoreService.ts(5750,24): error TS1005: ',' expected.
+src/services/firestoreService.ts(5752,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5752,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5752,42): error TS1005: ',' expected.
+src/services/firestoreService.ts(5752,56): error TS1005: ',' expected.
+src/services/firestoreService.ts(5752,62): error TS1005: ';' expected.
+src/services/firestoreService.ts(5753,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5754,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5754,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5755,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5755,23): error TS1005: ',' expected.
+src/services/firestoreService.ts(5755,74): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5755,76): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5755,98): error TS1005: ';' expected.
+src/services/firestoreService.ts(5755,126): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5755,143): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5757,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5757,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5758,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5759,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5759,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5759,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(5759,66): error TS1005: ',' expected.
+src/services/firestoreService.ts(5759,75): error TS1005: ';' expected.
+src/services/firestoreService.ts(5759,89): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(5760,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5761,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5761,111): error TS1005: ',' expected.
+src/services/firestoreService.ts(5762,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(5762,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5763,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5763,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5763,22): error TS1005: ':' expected.
+src/services/firestoreService.ts(5763,24): error TS1005: ',' expected.
+src/services/firestoreService.ts(5765,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5765,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5765,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(5765,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(5765,72): error TS1005: ',' expected.
+src/services/firestoreService.ts(5765,78): error TS1005: ';' expected.
+src/services/firestoreService.ts(5766,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5767,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5767,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(5768,11): error TS1003: Identifier expected.
+src/services/firestoreService.ts(5768,24): error TS1005: '{' expected.
+src/services/firestoreService.ts(5768,31): error TS1005: ':' expected.
+src/services/firestoreService.ts(5768,36): error TS1005: ',' expected.
+src/services/firestoreService.ts(5769,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5769,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5770,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5770,23): error TS1005: ',' expected.
+src/services/firestoreService.ts(5770,95): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5771,9): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5773,18): error TS1005: ';' expected.
+src/services/firestoreService.ts(5774,18): error TS1005: ';' expected.
+src/services/firestoreService.ts(5775,22): error TS1005: ';' expected.
+src/services/firestoreService.ts(5776,8): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5776,25): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5778,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5778,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5779,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5780,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5780,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5780,40): error TS1005: ',' expected.
+src/services/firestoreService.ts(5780,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(5780,75): error TS1005: ',' expected.
+src/services/firestoreService.ts(5780,95): error TS1005: ',' expected.
+src/services/firestoreService.ts(5780,110): error TS1005: ',' expected.
+src/services/firestoreService.ts(5780,116): error TS1005: ';' expected.
+src/services/firestoreService.ts(5781,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5782,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5782,26): error TS1005: ',' expected.
+src/services/firestoreService.ts(5782,101): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5783,9): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5784,19): error TS1005: ';' expected.
+src/services/firestoreService.ts(5785,19): error TS1005: ';' expected.
+src/services/firestoreService.ts(5786,8): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5788,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5788,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5789,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5790,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5790,40): error TS1005: ',' expected.
+src/services/firestoreService.ts(5790,56): error TS1005: ',' expected.
+src/services/firestoreService.ts(5790,79): error TS1109: Expression expected.
+src/services/firestoreService.ts(5790,80): error TS1005: ';' expected.
+src/services/firestoreService.ts(5791,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5791,107): error TS1005: ',' expected.
+src/services/firestoreService.ts(5792,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5792,110): error TS1005: ',' expected.
+src/services/firestoreService.ts(5794,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5794,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5794,36): error TS1005: ',' expected.
+src/services/firestoreService.ts(5794,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5794,56): error TS1005: ';' expected.
+src/services/firestoreService.ts(5795,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5796,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5796,37): error TS1005: ',' expected.
+src/services/firestoreService.ts(5797,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5797,23): error TS1005: ',' expected.
+src/services/firestoreService.ts(5797,71): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5797,73): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5797,92): error TS1005: ';' expected.
+src/services/firestoreService.ts(5797,113): error TS1005: ';' expected.
+src/services/firestoreService.ts(5797,141): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5799,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5799,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5800,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5801,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5801,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5801,41): error TS1005: ',' expected.
+src/services/firestoreService.ts(5801,56): error TS1005: ',' expected.
+src/services/firestoreService.ts(5801,72): error TS1005: ',' expected.
+src/services/firestoreService.ts(5801,87): error TS1005: ',' expected.
+src/services/firestoreService.ts(5801,96): error TS1005: ';' expected.
+src/services/firestoreService.ts(5802,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5803,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5803,26): error TS1005: ',' expected.
+src/services/firestoreService.ts(5803,77): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5803,102): error TS1005: ';' expected.
+src/services/firestoreService.ts(5803,120): error TS1005: ';' expected.
+src/services/firestoreService.ts(5803,148): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5805,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5805,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5806,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5807,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5807,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5807,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(5807,66): error TS1005: ',' expected.
+src/services/firestoreService.ts(5807,75): error TS1005: ';' expected.
+src/services/firestoreService.ts(5808,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5809,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5809,37): error TS1005: ',' expected.
+src/services/firestoreService.ts(5810,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5810,23): error TS1005: ',' expected.
+src/services/firestoreService.ts(5810,73): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5810,96): error TS1005: ';' expected.
+src/services/firestoreService.ts(5810,130): error TS1005: ';' expected.
+src/services/firestoreService.ts(5810,142): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5812,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5812,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5813,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5814,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5814,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5814,44): error TS1005: ',' expected.
+src/services/firestoreService.ts(5814,63): error TS1005: ',' expected.
+src/services/firestoreService.ts(5814,72): error TS1005: ';' expected.
+src/services/firestoreService.ts(5815,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5816,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5816,26): error TS1005: ',' expected.
+src/services/firestoreService.ts(5816,83): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5816,126): error TS1005: ';' expected.
+src/services/firestoreService.ts(5816,141): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5818,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5818,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5819,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5820,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5820,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5820,40): error TS1005: ',' expected.
+src/services/firestoreService.ts(5820,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(5820,73): error TS1005: ',' expected.
+src/services/firestoreService.ts(5820,79): error TS1005: ';' expected.
+src/services/firestoreService.ts(5821,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5822,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5822,36): error TS1005: ',' expected.
+src/services/firestoreService.ts(5823,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5823,23): error TS1005: ',' expected.
+src/services/firestoreService.ts(5823,94): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5823,96): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5823,114): error TS1005: ';' expected.
+src/services/firestoreService.ts(5823,142): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5825,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5825,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5826,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5827,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5827,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5827,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(5827,55): error TS1005: ';' expected.
+src/services/firestoreService.ts(5827,69): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(5828,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5829,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5829,95): error TS1005: ',' expected.
+src/services/firestoreService.ts(5830,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(5830,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5831,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5831,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5831,22): error TS1005: ':' expected.
+src/services/firestoreService.ts(5831,24): error TS1005: ',' expected.
+src/services/firestoreService.ts(5833,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5833,42): error TS1005: ',' expected.
+src/services/firestoreService.ts(5833,54): error TS1005: ',' expected.
+src/services/firestoreService.ts(5833,77): error TS1109: Expression expected.
+src/services/firestoreService.ts(5833,78): error TS1005: ';' expected.
+src/services/firestoreService.ts(5834,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5834,154): error TS1005: ',' expected.
+src/services/firestoreService.ts(5836,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5836,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5836,40): error TS1005: ',' expected.
+src/services/firestoreService.ts(5836,54): error TS1005: ',' expected.
+src/services/firestoreService.ts(5836,60): error TS1005: ';' expected.
+src/services/firestoreService.ts(5837,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5838,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5838,48): error TS1005: ',' expected.
+src/services/firestoreService.ts(5839,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5839,23): error TS1005: ',' expected.
+src/services/firestoreService.ts(5839,72): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5839,74): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5839,96): error TS1005: ';' expected.
+src/services/firestoreService.ts(5839,124): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5839,141): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5841,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5841,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5842,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5843,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5843,37): error TS1005: ',' expected.
+src/services/firestoreService.ts(5843,49): error TS1005: ',' expected.
+src/services/firestoreService.ts(5843,72): error TS1109: Expression expected.
+src/services/firestoreService.ts(5843,73): error TS1005: ';' expected.
+src/services/firestoreService.ts(5844,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5844,149): error TS1005: ',' expected.
+src/services/firestoreService.ts(5846,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5846,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5846,36): error TS1005: ',' expected.
+src/services/firestoreService.ts(5846,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5846,56): error TS1005: ';' expected.
+src/services/firestoreService.ts(5847,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5848,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5848,48): error TS1005: ',' expected.
+src/services/firestoreService.ts(5849,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5849,23): error TS1005: ',' expected.
+src/services/firestoreService.ts(5849,67): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5849,69): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5849,90): error TS1005: ';' expected.
+src/services/firestoreService.ts(5849,124): error TS1005: ';' expected.
+src/services/firestoreService.ts(5849,136): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5851,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5851,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5852,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5853,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5853,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5853,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(5853,55): error TS1005: ',' expected.
+src/services/firestoreService.ts(5853,71): error TS1005: ',' expected.
+src/services/firestoreService.ts(5853,80): error TS1005: ';' expected.
+src/services/firestoreService.ts(5854,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5855,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5855,26): error TS1005: ',' expected.
+src/services/firestoreService.ts(5855,70): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5855,89): error TS1005: ';' expected.
+src/services/firestoreService.ts(5855,117): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5857,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5857,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5858,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5859,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5859,48): error TS1005: ',' expected.
+src/services/firestoreService.ts(5859,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(5859,83): error TS1109: Expression expected.
+src/services/firestoreService.ts(5859,84): error TS1005: ';' expected.
+src/services/firestoreService.ts(5860,11): error TS1005: ':' expected.
+src/services/firestoreService.ts(5860,128): error TS1005: ',' expected.
+src/services/firestoreService.ts(5861,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5861,102): error TS1005: ',' expected.
+src/services/firestoreService.ts(5863,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5863,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5863,43): error TS1005: ',' expected.
+src/services/firestoreService.ts(5863,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5863,63): error TS1005: ';' expected.
+src/services/firestoreService.ts(5864,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5865,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5865,48): error TS1005: ',' expected.
+src/services/firestoreService.ts(5866,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5866,23): error TS1005: ',' expected.
+src/services/firestoreService.ts(5866,75): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5866,77): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5866,99): error TS1005: ';' expected.
+src/services/firestoreService.ts(5866,127): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5866,144): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5868,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5868,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5869,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5870,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5870,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5870,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5870,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5870,66): error TS1005: ';' expected.
+src/services/firestoreService.ts(5871,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5872,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5872,26): error TS1005: ',' expected.
+src/services/firestoreService.ts(5872,76): error TS1005: ',' expected.
+src/services/firestoreService.ts(5872,77): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5873,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(5873,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(5874,7): error TS1005: ';' expected.
+src/services/firestoreService.ts(5875,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5876,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5876,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5876,48): error TS1005: ',' expected.
+src/services/firestoreService.ts(5876,62): error TS1005: ',' expected.
+src/services/firestoreService.ts(5876,68): error TS1005: ';' expected.
+src/services/firestoreService.ts(5877,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5878,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5878,37): error TS1005: ',' expected.
+src/services/firestoreService.ts(5879,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5879,23): error TS1005: ',' expected.
+src/services/firestoreService.ts(5879,83): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5879,85): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5879,107): error TS1005: ';' expected.
+src/services/firestoreService.ts(5879,135): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5881,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5881,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5882,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5883,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5883,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5883,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5883,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(5883,65): error TS1005: ';' expected.
+src/services/firestoreService.ts(5884,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5885,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5885,48): error TS1005: ',' expected.
+src/services/firestoreService.ts(5886,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5886,23): error TS1005: ',' expected.
+src/services/firestoreService.ts(5886,77): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5886,79): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5886,101): error TS1005: ';' expected.
+src/services/firestoreService.ts(5886,129): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5886,146): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5888,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5888,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5889,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5890,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5890,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5890,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5890,59): error TS1005: ',' expected.
+src/services/firestoreService.ts(5890,68): error TS1005: ';' expected.
+src/services/firestoreService.ts(5891,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5892,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5892,26): error TS1005: ',' expected.
+src/services/firestoreService.ts(5892,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5892,79): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5893,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(5893,18): error TS1005: ',' expected.
+src/services/firestoreService.ts(5894,7): error TS1005: ';' expected.
+src/services/firestoreService.ts(5895,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5896,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5896,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5896,36): error TS1005: ',' expected.
+src/services/firestoreService.ts(5896,45): error TS1005: ';' expected.
+src/services/firestoreService.ts(5896,59): error TS1011: An element access expression should take an argument.
+src/services/firestoreService.ts(5897,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5898,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5898,84): error TS1005: ',' expected.
+src/services/firestoreService.ts(5899,14): error TS1005: ':' expected.
+src/services/firestoreService.ts(5899,61): error TS1005: ',' expected.
+src/services/firestoreService.ts(5900,7): error TS1005: ',' expected.
+src/services/firestoreService.ts(5900,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5900,22): error TS1005: ':' expected.
+src/services/firestoreService.ts(5900,24): error TS1005: ',' expected.
+src/services/firestoreService.ts(5902,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5902,54): error TS1005: ',' expected.
+src/services/firestoreService.ts(5902,66): error TS1005: ',' expected.
+src/services/firestoreService.ts(5902,89): error TS1109: Expression expected.
+src/services/firestoreService.ts(5902,90): error TS1005: ';' expected.
+src/services/firestoreService.ts(5903,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5903,167): error TS1005: ',' expected.
+src/services/firestoreService.ts(5905,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5905,45): error TS1005: ',' expected.
+src/services/firestoreService.ts(5905,57): error TS1005: ',' expected.
+src/services/firestoreService.ts(5905,80): error TS1109: Expression expected.
+src/services/firestoreService.ts(5905,81): error TS1005: ';' expected.
+src/services/firestoreService.ts(5906,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5906,158): error TS1005: ',' expected.
+src/services/firestoreService.ts(5908,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5908,48): error TS1005: ',' expected.
+src/services/firestoreService.ts(5908,60): error TS1005: ',' expected.
+src/services/firestoreService.ts(5908,83): error TS1109: Expression expected.
+src/services/firestoreService.ts(5908,84): error TS1005: ';' expected.
+src/services/firestoreService.ts(5909,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5909,162): error TS1005: ',' expected.
+src/services/firestoreService.ts(5911,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5911,46): error TS1005: ',' expected.
+src/services/firestoreService.ts(5911,58): error TS1005: ',' expected.
+src/services/firestoreService.ts(5911,81): error TS1109: Expression expected.
+src/services/firestoreService.ts(5911,82): error TS1005: ';' expected.
+src/services/firestoreService.ts(5912,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5912,160): error TS1005: ',' expected.
+src/services/firestoreService.ts(5914,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5914,38): error TS1005: ',' expected.
+src/services/firestoreService.ts(5914,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5914,73): error TS1109: Expression expected.
+src/services/firestoreService.ts(5914,74): error TS1005: ';' expected.
+src/services/firestoreService.ts(5915,12): error TS1005: ':' expected.
+src/services/firestoreService.ts(5915,159): error TS1005: ',' expected.
+src/services/firestoreService.ts(5917,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5917,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5917,52): error TS1005: ',' expected.
+src/services/firestoreService.ts(5917,66): error TS1005: ',' expected.
+src/services/firestoreService.ts(5917,72): error TS1005: ';' expected.
+src/services/firestoreService.ts(5918,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5919,13): error TS1005: ':' expected.
+src/services/firestoreService.ts(5919,47): error TS1005: ',' expected.
+src/services/firestoreService.ts(5920,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5920,23): error TS1005: ',' expected.
+src/services/firestoreService.ts(5920,85): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5920,87): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5920,109): error TS1005: ';' expected.
+src/services/firestoreService.ts(5920,137): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5920,154): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5922,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5922,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5923,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5924,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5924,10): error TS1434: Unexpected keyword or identifier.
+src/services/firestoreService.ts(5924,50): error TS1005: ',' expected.
+src/services/firestoreService.ts(5924,62): error TS1005: ',' expected.
+src/services/firestoreService.ts(5924,78): error TS1005: ',' expected.
+src/services/firestoreService.ts(5924,87): error TS1005: ';' expected.
+src/services/firestoreService.ts(5925,9): error TS1005: ':' expected.
+src/services/firestoreService.ts(5926,13): error TS1005: ',' expected.
+src/services/firestoreService.ts(5926,26): error TS1005: ',' expected.
+src/services/firestoreService.ts(5926,83): error TS1136: Property assignment expected.
+src/services/firestoreService.ts(5926,103): error TS1005: ';' expected.
+src/services/firestoreService.ts(5926,131): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5928,5): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5928,7): error TS1005: 'try' expected.
+src/services/firestoreService.ts(5929,3): error TS1128: Declaration or statement expected.
+src/services/firestoreService.ts(5930,1): error TS1128: Declaration or statement expected.

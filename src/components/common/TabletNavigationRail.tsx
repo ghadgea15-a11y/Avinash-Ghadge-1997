@@ -17,8 +17,7 @@ interface TabletNavigationRailProps {
   onNavigate: (screen: PhaseAScreen) => void;
   onOpenDrawer: () => void;
   unreadNotifCount: number;
-  userSession,
-  activeCompany: UserSession | null;
+  userSession: UserSession | null;
   activeCompany?: import('../../types').CompanyTenant | null;
 }
 
@@ -31,7 +30,6 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
   activeCompany,
 }) => {
   const { setThemeMode, isDark } = useTheme();
-
   const isSuperAdmin = userSession?.role === 'SUPER_ADMIN';
 
   // Get primary top rail destinations for quick access
@@ -78,17 +76,17 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
     .filter((item): item is NavigationItemDef => Boolean(item));
 
   return (
-    <aside className={`w-20 border-r py-3 px-1 flex flex-col items-center justify-between shrink-0 z-20 ${
+    <aside className={`w-[84px] border-r py-4 px-2 flex flex-col items-center justify-between shrink-0 z-20 ${
       isDark 
-        ? isSuperAdmin ? 'bg-slate-950 border-amber-900/40 text-slate-100' : 'bg-slate-900 border-slate-800 text-slate-100' 
-        : isSuperAdmin ? 'bg-amber-50/30 border-amber-200 text-black' : 'bg-white border-slate-200 text-black'
+        ? isSuperAdmin ? 'bg-[#0a0a0b] border-amber-900/30 text-slate-100' : 'bg-[#0a0a0b] border-[#1f2228] text-slate-100' 
+        : isSuperAdmin ? 'bg-amber-50/50 border-amber-200/50 text-slate-900' : 'bg-[#fcfcfd] border-[#eaebec] text-slate-900'
     }`}>
       {/* Top Section: Menu Trigger & Logo */}
-      <div className="flex flex-col items-center gap-2.5 w-full">
+      <div className="flex flex-col items-center gap-3 w-full">
         <button
           onClick={onOpenDrawer}
-          className={`p-2 rounded-xl transition ${
-            isDark ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-900'
+          className={`p-2.5 rounded-lg transition-colors ${
+            isDark ? 'hover:bg-[#1f2228] text-slate-400 hover:text-slate-200' : 'hover:bg-[#f1f2f4] text-slate-500 hover:text-slate-900'
           }`}
           title="Open All 15 Enterprise Modules"
         >
@@ -98,14 +96,14 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
         <div className="flex flex-col items-center">
           <AppLogo size="sm" variant="icon-only" />
           {isSuperAdmin && (
-            <span className="text-[8px] font-extrabold uppercase tracking-wider text-amber-500 mt-1 bg-amber-500/10 px-1.5 py-0.5 rounded">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-amber-600 mt-1.5 bg-amber-500/10 px-1.5 py-0.5 rounded-sm">
               Global
             </span>
           )}
         </div>
 
         {/* Primary Rail Destinations */}
-        <div className="flex flex-col items-center gap-1 w-full mt-1 max-h-[calc(100vh-220px)] overflow-y-auto scrollbar-none">
+        <div className="flex flex-col items-center gap-1.5 w-full mt-2 max-h-[calc(100vh-220px)] overflow-y-auto scrollbar-none">
           {activeDestinations.map(item => {
             const Icon = item.icon;
             const isActive = currentScreen === item.screen;
@@ -115,28 +113,28 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
               <button
                 key={item.screen}
                 onClick={() => onNavigate(item.screen)}
-                className={`relative w-14 py-2 rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${
+                className={`relative w-full py-2.5 rounded-lg flex flex-col items-center justify-center gap-1.5 transition-colors ${
                   isActive
                     ? isSuperAdmin
-                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30 font-bold scale-102'
-                      : 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold scale-102'
+                      ? 'bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 font-semibold'
+                      : 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold'
                     : isDark
-                      ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/80'
+                      ? 'text-slate-400 hover:text-slate-200 hover:bg-[#1f2228]'
                       : isSuperAdmin
-                        ? 'text-amber-900/80 hover:text-amber-600 hover:bg-amber-100/50'
-                        : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                        ? 'text-amber-900/70 hover:text-amber-900 hover:bg-amber-900/5'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-[#f1f2f4]'
                 }`}
                 title={`${item.label} (${item.dataType})`}
               >
                 <div className="relative">
                   <Icon className="w-4 h-4" />
                   {badge !== undefined && (
-                    <span className="absolute -top-1 -right-2 bg-rose-500 text-white text-[8px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-1.5 -right-2 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white dark:border-[#0a0a0b]">
                       {badge}
                     </span>
                   )}
                 </div>
-                <span className="text-[9px] font-medium tracking-tight truncate w-full text-center px-0.5">
+                <span className="text-[10px] leading-tight font-medium tracking-tight truncate w-full text-center px-1">
                   {item.shortLabel || item.label}
                 </span>
               </button>
@@ -146,11 +144,11 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
       </div>
 
       {/* Bottom User Avatar & Theme Switcher */}
-      <div className="flex flex-col items-center gap-2.5">
+      <div className="flex flex-col items-center gap-3">
         <button
           onClick={() => setThemeMode(isDark ? 'LIGHT' : 'DARK')}
-          className={`p-2 rounded-xl border transition ${
-            isDark ? 'bg-slate-950 border-slate-800 text-amber-400' : 'bg-slate-100 border-slate-200 text-indigo-600'
+          className={`p-2.5 rounded-lg border transition-colors ${
+            isDark ? 'bg-[#141517] border-[#1f2228] hover:border-[#2f333a] text-slate-400 hover:text-slate-200' : 'bg-white border-[#eaebec] hover:border-[#d0d3d7] text-slate-500 hover:text-slate-900 shadow-sm'
           }`}
           title="Toggle Theme Mode"
         >
@@ -160,14 +158,14 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
         {userSession && activeCompany && (
           <button
             onClick={() => onNavigate('PROFILE')}
-            className="relative"
+            className="relative p-0.5 rounded-full transition-opacity hover:opacity-80"
             title={`${userSession?.fullName} (${userSession?.role})`}
           >
             <img
               src={userSession?.avatarUrl || undefined}
               alt="Avatar"
-              className={`w-9 h-9 rounded-full object-cover border-2 shadow ${
-                isSuperAdmin ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-indigo-500'
+              className={`w-9 h-9 rounded-full object-cover border-2 ${
+                isSuperAdmin ? 'border-amber-500/50' : 'border-[#eaebec] dark:border-[#1f2228]'
               }`}
             />
           </button>

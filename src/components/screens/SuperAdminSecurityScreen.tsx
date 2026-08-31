@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   ShieldAlert, 
   ArrowLeft, 
@@ -39,6 +40,7 @@ export const SuperAdminSecurityScreen: React.FC<SuperAdminSecurityScreenProps> =
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSeverity, setSelectedSeverity] = useState<string>('ALL');
+  useBackNavigation(!!selectedSeverity, () => setSelectedSeverity(null as any), 'selectedSeverity');
 
   const loadSecurityEvents = async () => {
     setLoading(true);

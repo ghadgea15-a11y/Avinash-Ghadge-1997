@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   UserSession, 
   CompanyTenant, 
@@ -29,8 +30,10 @@ import {
   X, 
   RefreshCw, 
   Layers, 
-  ClipboardList
+  ClipboardList,
+  Sparkles
 } from 'lucide-react';
+import { UnifiedProcurementCommandHub } from '../procurement/UnifiedProcurementCommandHub';
 
 interface ProcurementSrmScreenProps {
   userSession: UserSession | null;
@@ -44,7 +47,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
   onNavigate
 }) => {
   const { isDark } = useTheme();
-  const [activeTab, setActiveTab] = useState<'REQUISITIONS' | 'ORDERS' | 'GRN' | 'THREE_WAY_MATCH'>('REQUISITIONS');
+  const [activeTab, setActiveTab] = useState<'UNIFIED_HUB' | 'REQUISITIONS' | 'ORDERS' | 'GRN' | 'THREE_WAY_MATCH'>('UNIFIED_HUB');
   
   const [requisitions, setRequisitions] = useState<ProcurementRequisitionRecord[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderRecord[]>([]);
@@ -60,6 +63,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
   const [isPoModalOpen, setIsPoModalOpen] = useState<boolean>(false);
   const [isGrnModalOpen, setIsGrnModalOpen] = useState<boolean>(false);
   const [selectedPR, setSelectedPR] = useState<ProcurementRequisitionRecord | null>(null);
+  useBackNavigation(!!selectedPR, () => setSelectedPR(null as any), 'selectedPR');
 
   // PR Form
   const [prFormData, setPrFormData] = useState({
@@ -429,10 +433,24 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800">
+      <div className="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('UNIFIED_HUB')}
+          className={`px-5 py-3 text-sm font-bold border-b-2 transition flex items-center gap-2 shrink-0 ${
+            activeTab === 'UNIFIED_HUB'
+              ? 'border-amber-500 text-amber-500 bg-amber-500/10'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-amber-400" />
+          <span>3-in-1 Procurement Hub (स्टॉक + वेंडर + तुलना)</span>
+          <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            NEW
+          </span>
+        </button>
         <button
           onClick={() => setActiveTab('REQUISITIONS')}
-          className={`px-5 py-3 text-sm font-bold border-b-2 transition ${
+          className={`px-5 py-3 text-sm font-bold border-b-2 transition shrink-0 ${
             activeTab === 'REQUISITIONS'
               ? 'border-amber-600 text-amber-600 dark:text-amber-400'
               : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -442,7 +460,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
         </button>
         <button
           onClick={() => setActiveTab('ORDERS')}
-          className={`px-5 py-3 text-sm font-bold border-b-2 transition ${
+          className={`px-5 py-3 text-sm font-bold border-b-2 transition shrink-0 ${
             activeTab === 'ORDERS'
               ? 'border-amber-600 text-amber-600 dark:text-amber-400'
               : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -452,7 +470,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
         </button>
         <button
           onClick={() => setActiveTab('GRN')}
-          className={`px-5 py-3 text-sm font-bold border-b-2 transition ${
+          className={`px-5 py-3 text-sm font-bold border-b-2 transition shrink-0 ${
             activeTab === 'GRN'
               ? 'border-amber-600 text-amber-600 dark:text-amber-400'
               : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -462,7 +480,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
         </button>
         <button
           onClick={() => setActiveTab('THREE_WAY_MATCH')}
-          className={`px-5 py-3 text-sm font-bold border-b-2 transition ${
+          className={`px-5 py-3 text-sm font-bold border-b-2 transition shrink-0 ${
             activeTab === 'THREE_WAY_MATCH'
               ? 'border-amber-600 text-amber-600 dark:text-amber-400'
               : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -471,6 +489,16 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
           3-Way Match Audit ({threeWayMatches.length})
         </button>
       </div>
+
+      {/* Tab 0: Unified Procurement Command Hub (Stock + Vendor + Price Comparison) */}
+      {activeTab === 'UNIFIED_HUB' && userSession && (
+        <UnifiedProcurementCommandHub
+          userSession={userSession}
+          onGeneratePOFromL1={(item, vendor) => {
+            setIsPoModalOpen(true);
+          }}
+        />
+      )}
 
       {/* Tab 1: Requisitions */}
       {activeTab === 'REQUISITIONS' && (

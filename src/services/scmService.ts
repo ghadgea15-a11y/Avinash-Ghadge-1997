@@ -2,53 +2,41 @@
 import { db } from '../firebase';
 import { FirestoreService } from './firestoreService';
 import { 
-  collection, query, where, getDocs, addDoc, serverTimestamp, 
+  collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, 
   doc, runTransaction, getDoc, setDoc 
 } from 'firebase/firestore';
+import {
+  StockBalanceRecord,
+  GatePassRecord,
+  StockLocationRecord,
+  InventoryItemRecord,
+  TransferOrderRecord,
+  StockTransactionRecord
+} from '../types/scm';
 
-export interface StockBalanceRecord {
-  id?: string;
-  companyId: string;
-  locationId: string;
-  itemId: string;
-  quantity: number;
-}
-
-export interface GatePassRecord {
-  id?: string;
-  companyId: string;
-  type: string;
-  status: string;
-  referenceNo: string;
-  lines: any[];
-  [key: string]: any;
-}
+export type {
+  StockBalanceRecord,
+  GatePassRecord,
+  StockLocationRecord,
+  InventoryItemRecord,
+  TransferOrderRecord,
+  StockTransactionRecord
+};
 
 export interface StockLedgerRecord { [key: string]: any; }
-export interface StockTransactionRecord { [key: string]: any; }
 export interface InventoryVendorRecord { [key: string]: any; }
 export interface PaymentBatchItemRecord { [key: string]: any; }
 export interface PoLineItem { [key: string]: any; }
-export interface StockLocationRecord { 
-  id?: string;
-  companyId: string;
-  [key: string]: any;
-}
-export interface InventoryItemRecord { 
-  id?: string;
-  companyId: string;
-  [key: string]: any;
-}
 
 /**
  * Enterprise Supply Chain Management (SCM) Service
  */
 export class ScmService {
 
-  public static async getGatePasses(companyId: string) {
+  public static async getGatePasses(companyId: string): Promise<GatePassRecord[]> {
     const q = query(collection(db, `companies/${companyId}/gate_passes`), where('companyId', '==', companyId));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as GatePassRecord));
   }
 
   public static async approveGatePass(session: any, passId: string, companyId: string) {
@@ -98,10 +86,10 @@ export class ScmService {
     return { success: true };
   }
 
-  public static async getBalances(companyId: string) {
+  public static async getBalances(companyId: string): Promise<StockBalanceRecord[]> {
     const q = query(collection(db, `companies/${companyId}/stock_balances`), where('companyId', '==', companyId));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as StockBalanceRecord));
   }
 
   public static async saveLocation(companyId: string, loc: any) {
@@ -114,10 +102,10 @@ export class ScmService {
     return { success: true };
   }
 
-  public static async getLocations(companyId: string) {
+  public static async getLocations(companyId: string): Promise<StockLocationRecord[]> {
     const q = query(collection(db, `companies/${companyId}/stock_locations`), where('companyId', '==', companyId));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as StockLocationRecord));
   }
 
   public static async issueStock(session: any, companyId: string, locId: string, itemId: string, quantity: number, reason: string) {
@@ -208,10 +196,10 @@ export class ScmService {
     return { success: true };
   }
 
-  public static async getItems(companyId: string) {
+  public static async getItems(companyId: string): Promise<InventoryItemRecord[]> {
     const q = query(collection(db, `companies/${companyId}/inventory_items`), where('companyId', '==', companyId));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItemRecord));
   }
 
   public static async getRfqs(session: any, companyId: string) { 
@@ -233,7 +221,7 @@ export class ScmService {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 
-  public static async getInventoryItems(companyId: string) {
+  public static async getInventoryItems(companyId: string): Promise<InventoryItemRecord[]> {
     return this.getItems(companyId);
   }
 

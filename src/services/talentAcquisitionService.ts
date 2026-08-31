@@ -1409,8 +1409,12 @@ export class TalentAcquisitionService {
         if (resumeFile.size > 5 * 1024 * 1024) {
           return { success: false, error: 'Resume exceeds 5MB limit.' };
         }
+        const oldResume = existingData.resumeUrl;
         const resumePath = `companies/${companyId}/candidates/${candidateId}/resumes/${Date.now()}_${resumeFile.name}`;
         resumeUrl = await StorageService.uploadFile(resumePath, resumeFile, session);
+        if (oldResume && oldResume !== resumeUrl) {
+          StorageService.cleanupOldFile(oldResume).catch(() => {});
+        }
       }
 
       // 3. Photo Update
@@ -1421,8 +1425,12 @@ export class TalentAcquisitionService {
         if (photoFile.size > 2 * 1024 * 1024) {
           return { success: false, error: 'Photo exceeds 2MB limit.' };
         }
+        const oldPhoto = existingData.profilePhotoUrl;
         const photoPath = `companies/${companyId}/candidates/${candidateId}/photos/${Date.now()}_profile.jpg`;
         profilePhotoUrl = await StorageService.uploadFile(photoPath, photoFile, session);
+        if (oldPhoto && oldPhoto !== profilePhotoUrl) {
+          StorageService.cleanupOldFile(oldPhoto).catch(() => {});
+        }
       }
 
       // 4. Assemble Final Update
@@ -1620,7 +1628,7 @@ export class TalentAcquisitionService {
       }
 
       // 8. Save Document Record
-      await FirestoreService.saveCandidateDocument(companyId, docRecord);
+      await FirestoreService.saveCandidateDocument(companyId, candidateId, docRecord);
 
       // 9. Sync specific document URLs to candidate record if applicable
       const candidateUpdates: Partial<CandidateRecord> = {};
@@ -1741,7 +1749,7 @@ export class TalentAcquisitionService {
         updatedAt: timestamp
       };
 
-      await FirestoreService.saveCandidateDocument(companyId, updatedDoc);
+      await FirestoreService.saveCandidateDocument(companyId, existingDoc.candidateId, updatedDoc);
 
       // 7. Audit Trail
       const actionType = decision === 'VERIFIED' 
@@ -1819,7 +1827,7 @@ export class TalentAcquisitionService {
       }
 
       // Delete firestore record
-      await FirestoreService.deleteCandidateDocument(companyId, documentId);
+      await FirestoreService.deleteCandidateDocument(companyId, docData.candidateId, documentId);
 
       // Audit Trail
       await AuditTrailService.logAction(
@@ -1881,7 +1889,7 @@ export class TalentAcquisitionService {
         expired.push(docRec);
         if (!docRec.isExpired) {
           // Update isExpired status flag
-          await FirestoreService.saveCandidateDocument(companyId, {
+          await FirestoreService.saveCandidateDocument(companyId, docRec.candidateId || '', {
             ...docRec,
             isExpired: true,
             updatedAt: new Date().toISOString()

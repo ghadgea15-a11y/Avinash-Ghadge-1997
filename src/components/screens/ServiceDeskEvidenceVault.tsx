@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   UserSession, 
   CompanyTenant, 
@@ -64,7 +65,9 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
 
   // Upload Modal State
   const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
+  useBackNavigation(!!showUploadModal, () => setShowUploadModal(null as any), 'showUploadModal');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  useBackNavigation(!!selectedFile, () => setSelectedFile(null as any), 'selectedFile');
   const [evidenceType, setEvidenceType] = useState<TicketEvidenceType>('PHOTO');
   const [visibility, setVisibility] = useState<'CLIENT_VISIBLE' | 'INTERNAL'>('CLIENT_VISIBLE');
   const [notes, setNotes] = useState<string>('');
@@ -82,6 +85,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
 
   // Edit Metadata Modal State
   const [editingAttachment, setEditingAttachment] = useState<TicketAttachmentRecord | null>(null);
+  useBackNavigation(!!editingAttachment, () => setEditingAttachment(null as any), 'editingAttachment');
   const [editNotes, setEditNotes] = useState<string>('');
   const [editType, setEditType] = useState<TicketEvidenceType>('PHOTO');
   const [editVisibility, setEditVisibility] = useState<'CLIENT_VISIBLE' | 'INTERNAL'>('CLIENT_VISIBLE');

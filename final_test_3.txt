@@ -1,0 +1,2 @@
+src/components/screens/SuperAdminManagementScreen.tsx(45,44): error TS1109: Expression expected.
+src/services/operationalIntelligenceEngine.ts(759,34): error TS1005: ',' expected.

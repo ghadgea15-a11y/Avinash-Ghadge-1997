@@ -32,7 +32,7 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ userSession, company,
   }
 
   const activeAssets = assets.filter(a => a.status === 'AVAILABLE' || a.status === 'ASSIGNED').length;
-  const lowStockItems = inventory.filter(i => i.currentStock <= i.minStockThreshold).length;
+  const lowStockItems = inventory.filter(i => (i.currentStock || 0) <= (i.minStockThreshold || 0)).length;
 
   return (
     <div className="space-y-6">

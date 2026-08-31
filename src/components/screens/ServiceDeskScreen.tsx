@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   UserSession, 
   CompanyTenant, 
@@ -95,6 +96,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
   // Modals & Sub-views
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [selectedTicket, setSelectedTicket] = useState<ServiceTicketRecord | null>(null);
+  useBackNavigation(!!selectedTicket, () => setSelectedTicket(null as any), 'selectedTicket');
   const [comments, setComments] = useState<TicketCommentRecord[]>([]);
   const [newComment, setNewComment] = useState<string>('');
   const [isInternalComment, setIsInternalComment] = useState<boolean>(false);
@@ -103,6 +105,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
   const [commentFilter, setCommentFilter] = useState<'ALL' | 'CLIENT' | 'INTERNAL'>('ALL');
   const [commentSearch, setCommentSearch] = useState<string>('');
   const [editingComment, setEditingComment] = useState<TicketCommentRecord | null>(null);
+  useBackNavigation(!!editingComment, () => setEditingComment(null as any), 'editingComment');
   const [editCommentText, setEditCommentText] = useState<string>('');
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
   const [archivingComment, setArchivingComment] = useState<TicketCommentRecord | null>(null);
@@ -112,14 +115,18 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [isDispatching, setIsDispatching] = useState<boolean>(false);
   const [selectedAssignee, setSelectedAssignee] = useState<string>('');
+  useBackNavigation(!!selectedAssignee, () => setSelectedAssignee(null as any), 'selectedAssignee');
   const [declineReason, setDeclineReason] = useState<string>('');
   const [isDeclining, setIsDeclining] = useState<boolean>(false);
   const [actionLoading, setActionLoading] = useState<boolean>(false);
 
   // SLA Management Modals & State
   const [showSlaPolicyManager, setShowSlaPolicyManager] = useState<boolean>(false);
+  useBackNavigation(!!showSlaPolicyManager, () => setShowSlaPolicyManager(null as any), 'showSlaPolicyManager');
   const [showSlaAnalytics, setShowSlaAnalytics] = useState<boolean>(false);
+  useBackNavigation(!!showSlaAnalytics, () => setShowSlaAnalytics(null as any), 'showSlaAnalytics');
   const [showSatisfactionAnalytics, setShowSatisfactionAnalytics] = useState<boolean>(false);
+  useBackNavigation(!!showSatisfactionAnalytics, () => setShowSatisfactionAnalytics(null as any), 'showSatisfactionAnalytics');
   const [isPausingSla, setIsPausingSla] = useState<boolean>(false);
   const [pauseReason, setPauseReason] = useState<TicketSlaPauseReason>('WAITING_ON_CLIENT');
   const [pauseNotes, setPauseNotes] = useState<string>('');
@@ -164,6 +171,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
   const [closeRating, setCloseRating] = useState<number>(5);
   const [categories, setCategories] = useState<TicketCategoryRecord[]>([]);
   const [showCategoryManager, setShowCategoryManager] = useState<boolean>(false);
+  useBackNavigation(!!showCategoryManager, () => setShowCategoryManager(null as any), 'showCategoryManager');
   const [priorityConfigs, setPriorityConfigs] = useState<import('../../types').ServicePriorityConfigRecord[]>([]);
   const [isChangingPriority, setIsChangingPriority] = useState<boolean>(false);
   const [priorityChangeReason, setPriorityChangeReason] = useState<string>('');

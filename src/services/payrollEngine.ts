@@ -8,7 +8,7 @@ import {
   StatutoryConfigRecord
 } from '../types';
 import { isWeekend } from 'date-fns';
-import { StatutoryRulesService } from './statutoryRulesService';
+import { StatutoryRulesService, DEFAULT_STATE_STATUTORY_CONFIGS } from './statutoryRulesService';
 
 export class PayrollEngine {
   static calculate(
@@ -56,7 +56,7 @@ export class PayrollEngine {
         } else {
           lopDays += 1;
         }
-      } else if (att && (att.status === 'ABSENT' || att.status === 'HALF_DAY')) {
+      } else if (att && (att.status === 'ABSENT' || att.status === 'HALFDAY')) {
          // Even if an attendance record says ABSENT, if it's a Weekend or Holiday, 
          // we shouldn't penalize unless it's a specific shift requirement
          if (isDayOff || isHoliday) {
@@ -65,7 +65,7 @@ export class PayrollEngine {
 
          if (att.status === 'ABSENT' && (!leave || leave.status !== 'APPROVED')) {
            lopDays += 1;
-         } else if (att.status === 'HALF_DAY' && (!leave || leave.status !== 'APPROVED')) {
+         } else if (att.status === 'HALFDAY' && (!leave || leave.status !== 'APPROVED')) {
            lopDays += 0.5;
          }
       }
@@ -95,9 +95,10 @@ export class PayrollEngine {
 
     // Resolve or fallback statutory configuration dynamically
     const stateKey = (emp as any).state || emp.assignedRegionId || 'DEFAULT';
-    const activeStatutory = statutoryConfig || StatutoryRulesService.DEFAULT_STATE_STATUTORY_CONFIGS[StatutoryRulesService.normalizeStateKey(stateKey)] || StatutoryRulesService.DEFAULT_STATE_STATUTORY_CONFIGS.DEFAULT;
+    const activeStatutory = statutoryConfig || DEFAULT_STATE_STATUTORY_CONFIGS[StatutoryRulesService.normalizeStateKey(stateKey)] || DEFAULT_STATE_STATUTORY_CONFIGS.DEFAULT;
 
     // Dynamic Deductions
+    const epsCheck = StatutoryRulesService.checkEpsSeniorExemption(emp.dateOfBirth, new Date(year, month - 1, 1));
     const pf = StatutoryRulesService.calculatePf(basic, activeStatutory);
     const esic = StatutoryRulesService.calculateEsi(totalGross, activeStatutory);
     const pt = StatutoryRulesService.calculatePt(totalGross, activeStatutory, month, (emp as any).gender || 'ALL');
@@ -112,6 +113,8 @@ export class PayrollEngine {
       totalGross: Math.round(totalGross),
       totalDeductions: Math.round(totalDeductions),
       netPay: Math.round(netPay),
+      isEpsExempt: epsCheck.isExempt,
+      epsExemptionFlag: epsCheck.isExempt ? epsCheck.note : undefined,
       earnings: {
         basic: Math.round(basic),
         hra: Math.round(hra),
@@ -125,7 +128,9 @@ export class PayrollEngine {
         pt: Math.round(pt),
         tds: Math.round(tds),
         lopDeduction: Math.round(lopDeduction),
-        advanceDeduction: Math.round(advance)
+        advanceDeduction: Math.round(advance),
+        epsExemptionApplied: epsCheck.isExempt,
+        epsExemptionNote: epsCheck.note
       }
     };
   }

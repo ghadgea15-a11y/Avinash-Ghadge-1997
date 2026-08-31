@@ -1,0 +1,24 @@
+src/components/screens/InventoryStockScreen.tsx(213,63): error TS18048: 'curr.currentStock' is possibly 'undefined'.
+src/components/screens/InventoryStockScreen.tsx(265,7): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/components/screens/InventoryStockScreen.tsx(266,7): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/components/screens/InventoryStockScreen.tsx(268,7): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/components/screens/InventoryStockScreen.tsx(561,7): error TS18048: 'item.currentStock' is possibly 'undefined'.
+src/components/screens/InventoryStockScreen.tsx(561,27): error TS18048: 'item.unitCost' is possibly 'undefined'.
+src/components/screens/InventoryStockScreen.tsx(885,37): error TS18048: 'item.currentStock' is possibly 'undefined'.
+src/components/screens/InventoryStockScreen.tsx(885,58): error TS18048: 'item.minStockThreshold' is possibly 'undefined'.
+src/components/screens/InventoryStockScreen.tsx(886,37): error TS18048: 'item.currentStock' is possibly 'undefined'.
+src/components/screens/InventoryStockScreen.tsx(931,39): error TS18048: 'item.currentStock' is possibly 'undefined'.
+src/components/screens/ReportsAnalyticsScreen.tsx(1058,63): error TS18048: 'curr.currentStock' is possibly 'undefined'.
+src/components/screens/ReportsAnalyticsScreen.tsx(1058,83): error TS18048: 'curr.unitCost' is possibly 'undefined'.
+src/components/screens/dashboards/SiteInChargeDashboard.tsx(85,42): error TS18048: 'i.currentStock' is possibly 'undefined'.
+src/components/screens/dashboards/SiteInChargeDashboard.tsx(85,60): error TS18048: 'i.minStockThreshold' is possibly 'undefined'.
+src/components/screens/dashboards/official/AdminDashboard.tsx(35,47): error TS18048: 'i.currentStock' is possibly 'undefined'.
+src/components/screens/dashboards/official/AdminDashboard.tsx(35,65): error TS18048: 'i.minStockThreshold' is possibly 'undefined'.
+src/services/transferService.ts(154,9): error TS2322: Type '{ itemId: string; itemName: string; itemCode: string; uom: string | undefined; quantity: number; }[]' is not assignable to type 'GatePassLine[]'.
+  Type '{ itemId: string; itemName: string; itemCode: string; uom: string | undefined; quantity: number; }' is not assignable to type 'GatePassLine'.
+    Types of property 'uom' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.

@@ -1,6 +1,7 @@
 // @ts-nocheck
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   CalendarDays, 
   RefreshCw, 
@@ -58,6 +59,7 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [showApplyModal, setShowApplyModal] = useState<boolean>(false);
+  useBackNavigation(!!showApplyModal, () => setShowApplyModal(null as any), 'showApplyModal');
 
   // Data State
   const [policies, setPolicies] = useState<LeavePolicyRecord[]>([]);

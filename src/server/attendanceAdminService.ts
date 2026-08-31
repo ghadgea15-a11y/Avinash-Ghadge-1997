@@ -51,7 +51,7 @@ export class AttendanceAdminService {
         return;
       }
 
-      const db = getFirebaseAdminDb();
+      const db = require('../firebaseAdmin').db;
       const now = new Date();
       const nowIso = now.toISOString();
       const todayDate = nowIso.split('T')[0];

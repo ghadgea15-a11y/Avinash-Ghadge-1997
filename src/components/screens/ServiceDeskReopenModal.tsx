@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   X, 
   RotateCcw, 
@@ -75,7 +76,9 @@ export const ServiceDeskReopenModal: React.FC<ServiceDeskReopenModalProps> = ({
   const [slaMode, setSlaMode] = useState<'NEW_CYCLE' | 'RESUME' | 'CUSTOM'>('NEW_CYCLE');
   const [customSlaMinutes, setCustomSlaMinutes] = useState<number>(ticket.resolutionTargetMinutes || 1440);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  useBackNavigation(!!selectedFiles, () => setSelectedFiles(null as any), 'selectedFiles');
   const [showPrevResolution, setShowPrevResolution] = useState<boolean>(false);
+  useBackNavigation(!!showPrevResolution, () => setShowPrevResolution(null as any), 'showPrevResolution');
 
   // Status & Validation States
   const [loading, setLoading] = useState<boolean>(false);

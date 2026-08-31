@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   ShieldCheck, AlertTriangle, FileCheck, Target, Activity, CheckCircle2, 
   XCircle, Clock, Plus, Filter, Download, ChevronRight, BookOpen, 
@@ -34,6 +35,7 @@ export const ComplianceDashboardScreen: React.FC<ComplianceDashboardScreenProps>
   const [isRiskModalOpen, setIsRiskModalOpen] = useState(false);
   const [isCapaModalOpen, setIsCapaModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  useBackNavigation(!!editingItem, () => setEditingItem(null as any), 'editingItem');
 
   useEffect(() => {
     if (!activeCompany) return;

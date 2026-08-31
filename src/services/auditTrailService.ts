@@ -1,6 +1,7 @@
 import { db } from '../firebase';
 import { 
   collection, 
+  doc,
   addDoc, 
   serverTimestamp, 
   query, 
@@ -147,24 +148,44 @@ export class AuditTrailService {
    * Helper to build a standard audit record object for cross-module consistency.
    */
   public static buildAuditRecord(
-    session: UserSession,
-    module: string,
-    action: string,
-    resourceType: string,
-    resourceId: string,
-    success: boolean,
-    severity: string,
-    message: string,
-    metadata?: any
+    session: any,
+    ...args: any[]
   ): any {
+    const id = doc(collection(db, 'audit_trails')).id;
+    if (args.length >= 8) {
+      const module = args[1] || args[0] || 'SYSTEM';
+      const action = args[2] || args[1] || 'ACTION';
+      const resourceType = args[4] || args[2] || 'RESOURCE';
+      const resourceId = args[5] || args[3] || 'ID';
+      const success = args[6] !== false;
+      const severity = args[7] || 'INFO';
+      const message = args[9] || args[8] || args[6] || '';
+      const metadata = args[11] || args[10] || args[7] || {};
+      return {
+        id,
+        companyId: session?.companyId || args[0] || 'UNKNOWN',
+        userId: session?.userId || session?.employeeId || 'SYSTEM',
+        userName: session?.fullName || 'System',
+        role: session?.role || 'USER',
+        action: `${action}:${resourceType}:${resourceId}`,
+        module,
+        resourceId,
+        metadata: { ...metadata, success, severity, message },
+        status: success ? 'SUCCESS' : 'FAILURE',
+        timestamp: new Date().toISOString(),
+        clientSource: 'WEB_APP'
+      };
+    }
+    const [module, action, resourceType, resourceId, success, severity, message, metadata] = args;
     return {
-      companyId: session.companyId,
-      userId: session.userId,
-      userName: session.fullName || 'Unknown',
-      role: session.role,
+      id,
+      companyId: session?.companyId || 'UNKNOWN',
+      userId: session?.userId || 'UNKNOWN',
+      userName: session?.fullName || 'Unknown',
+      role: session?.role || 'USER',
       action: `${action}:${resourceType}:${resourceId}`,
-      module,
-      resourceId,
+      module: module || 'SYSTEM',
+      resourceId: resourceId || 'ID',
       metadata: { ...metadata, success, severity, message },
       status: success ? 'SUCCESS' : 'FAILURE',
       timestamp: new Date().toISOString(),

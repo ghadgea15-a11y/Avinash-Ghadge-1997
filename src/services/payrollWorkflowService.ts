@@ -1,8 +1,9 @@
 import { db } from '../firebase';
 import { collection, doc, getDoc, getDocs, setDoc, query, where, writeBatch, Timestamp, updateDoc, runTransaction } from 'firebase/firestore';
+
 import { EmployeeRecord, AttendanceRecord, PayrollCycleRecord, LeaveRequestRecord, ShiftRecord, CompanyTenant, AttendanceStatus, StatutoryConfigRecord } from '../types';
 import { PayrollEngine } from './payrollEngine';
-import { StatutoryRulesService } from './statutoryRulesService';
+import { StatutoryRulesService, DEFAULT_STATE_STATUTORY_CONFIGS } from './statutoryRulesService';
 
 export interface AttendanceAdjustmentRequest {
   attendanceId: string;
@@ -31,7 +32,7 @@ export class PayrollWorkflowService {
       const att = attSnap.data() as AttendanceRecord;
 
       // 1. Check if payroll for this month is already locked
-      const date = new Date(att.attendanceDate);
+      const date = new Date(att.date || att.attendanceDate || "");
       const cycleId = `CYC-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       const cycleRef = doc(db, 'companies', companyId, 'payrollCycles', cycleId);
       const cycleSnap = await transaction.get(cycleRef);
@@ -101,150 +102,28 @@ export class PayrollWorkflowService {
     year: number,
     actor: { id: string; name: string }
   ): Promise<string> {
-    const cycleId = `CYC-${year}-${String(month).padStart(2, '0')}`;
-    const cycleRef = doc(db, 'companies', companyId, 'payrollCycles', cycleId);
-
-    // Fetch all necessary data outside transaction to avoid limits (Firestore transactions limit read/writes)
-    // First transaction: Lock the cycle as PROCESSING
-    await runTransaction(db, async (t) => {
-      const snap = await t.get(cycleRef);
-      if (snap.exists()) {
-        const cycle = snap.data() as PayrollCycleRecord;
-        if (['PROCESSING', 'APPROVED', 'LOCKED', 'DISBURSED'].includes(cycle.status)) {
-          throw new Error(`Cycle is currently ${cycle.status}. Cannot recalculate.`);
-        }
-      }
-      
-      const newCycle: Partial<PayrollCycleRecord> = {
-        id: cycleId,
-        companyId,
-        month,
-        year,
-        cycleLabel: `${month.toString().padStart(2, '0')}/${year}`,
-        status: 'PROCESSING',
-        createdAt: new Date().toISOString()
-      };
-      t.set(cycleRef, newCycle, { merge: true });
-    });
-
     try {
-      // Fetch Data
-      const empsSnap = await getDocs(query(collection(db, 'companies', companyId, 'employees'), where('status', '==', 'ACTIVE')));
-      const employees = empsSnap.docs.map(d => d.data() as EmployeeRecord);
-
-      // Date range for the month
-      const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-      const lastDay = new Date(year, month, 0).getDate();
-      const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
-
-      const attsSnap = await getDocs(query(collection(db, 'companies', companyId, 'attendance'), 
-        where('attendanceDate', '>=', startDate),
-        where('attendanceDate', '<=', endDate)
-      ));
-      const attendances = attsSnap.docs.map(d => d.data() as AttendanceRecord);
-
-      const leavesSnap = await getDocs(query(collection(db, 'companies', companyId, 'leaves'),
-        where('startDate', '<=', endDate),
-        where('status', 'in', ['APPROVED', 'ACCEPTED']) // Filter approved leaves
-      ));
-      // Manual filtering for month overlap since firestore inequality on two fields is limited
-      const leaves = leavesSnap.docs.map(d => d.data() as LeaveRequestRecord).filter(l => l.endDate >= startDate);
-
-      const salariesSnap = await getDocs(collection(db, 'companies', companyId, 'salaryProfiles'));
-      const salaries = salariesSnap.docs.map(d => d.data() as any);
-
-      const structuresSnap = await getDocs(collection(db, 'companies', companyId, 'salaryStructures'));
-      const structures = structuresSnap.docs.map(d => d.data() as any);
-
-      const statutoryConfigs = await StatutoryRulesService.getCompanyStatutoryConfigs(companyId);
-      const defaultStatutory = statutoryConfigs.find(c => c.state === 'DEFAULT') || StatutoryRulesService.DEFAULT_STATE_STATUTORY_CONFIGS.DEFAULT;
-
-      const holidaysSnap = await getDocs(query(collection(db, 'companies', companyId, 'holidays'),
-        where('date', '>=', startDate),
-        where('date', '<=', endDate)
-      ));
-      const holidays = holidaysSnap.docs.map(d => d.data());
-
-      let totalGross = 0;
-      let totalDeductions = 0;
-      let totalNetPay = 0;
-
-      const payrollChunks: any[][] = [];
-      const CHUNK_SIZE = 450; // Safety margin for batch limits
-      for (let i = 0; i < employees.length; i += CHUNK_SIZE) {
-        payrollChunks.push(employees.slice(i, i + CHUNK_SIZE));
-      }
-
-      for (const chunk of payrollChunks) {
-        const batch = writeBatch(db);
-        for (const emp of chunk) {
-          const empAtts = attendances.filter(a => a.employeeId === emp.id);
-          const empLeaves = leaves.filter(l => l.employeeId === emp.id);
-          const profile = salaries.find(s => s.employeeId === emp.id) || { baseMonthlySalary: 18000 };
-          const structure = structures.find(s => s.id === profile.structureId) || { basicPercentage: 50 };
-
-          // Dynamic state matching
-          const empStateKey = StatutoryRulesService.normalizeStateKey((emp as any).state || emp.assignedRegionId || (emp as any).workLocation);
-          const empStatutory = statutoryConfigs.find(c => c.state === empStateKey) || 
-                               StatutoryRulesService.DEFAULT_STATE_STATUTORY_CONFIGS[empStateKey] || 
-                               defaultStatutory;
-
-          const calc = PayrollEngine.calculate(month, year, emp, profile, structure, holidays, empLeaves, empAtts, 0, empStatutory);
-
-          const prId = `PR-${cycleId}-${emp.id}`;
-          const prRef = doc(db, 'companies', companyId, 'payrollRecords', prId);
-          
-          batch.set(prRef, {
-            id: prId,
-            companyId,
-            cycleId,
-            employeeId: emp.id,
-            employeeName: `${emp.firstName} ${emp.lastName}`,
-            month,
-            year,
-            calculations: calc,
-            status: 'CALCULATED',
-            statutoryState: empStatutory.state,
-            createdAt: new Date().toISOString()
-          });
-
-          totalGross += calc.totalGross;
-          totalDeductions += calc.totalDeductions;
-          totalNetPay += calc.netPay;
-        }
-        await batch.commit();
-      }
-
-      // Update cycle status and metrics separately to avoid batch limits
-      await updateDoc(cycleRef, {
-        status: 'CALCULATED',
-        totalEmployees: employees.length,
-        totalGrossPay: totalGross,
-        totalDeductions,
-        totalNetPay,
-        processedAt: new Date().toISOString(),
-        processedBy: actor.id,
-        processedByName: actor.name
+      const response = await fetch('/api/payroll/calculate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          companyId,
+          month,
+          year,
+          actorId: actor.id,
+          actorName: actor.name
+        })
       });
-
-      // Audit Log (Separate doc)
-      const auditRef = doc(collection(db, 'companies', companyId, 'audit_logs'));
-      await setDoc(auditRef, {
-        id: auditRef.id,
-        companyId,
-        action: 'PAYROLL_CALCULATED',
-        entityId: cycleId,
-        entityType: 'PAYROLL_CYCLE',
-        userId: actor.id,
-        userName: actor.name,
-        details: `Calculated payroll for ${employees.length} employees for ${month}/${year} using dynamic statutory state rules`,
-        timestamp: new Date().toISOString()
-      });
-
-      return cycleId;
+      
+      const data = await response.json();
+      if (data && data.success && data.cycleId) {
+        return data.cycleId;
+      }
+      throw new Error(data.error || 'Failed to generate payroll cycle');
     } catch (error) {
-      // Revert processing status
-      await updateDoc(cycleRef, { status: 'DRAFT' });
+      console.error('[PayrollWorkflowService] Error calling calculateMonthlyPayroll API:', error);
       throw error;
     }
   }

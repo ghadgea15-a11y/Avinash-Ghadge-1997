@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   User, 
   Phone, 
@@ -60,6 +61,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   // TOTP MFA State
   const [mfaEnabled, setMfaEnabled] = useState<boolean>(false);
   const [showMfaModal, setShowMfaModal] = useState<boolean>(false);
+  useBackNavigation(!!showMfaModal, () => setShowMfaModal(null as any), 'showMfaModal');
   const [mfaSetupData, setMfaSetupData] = useState<TotpSetupResult | null>(null);
   const [mfaVerifyCode, setMfaVerifyCode] = useState<string>('');
   const [mfaVerifyError, setMfaVerifyError] = useState<string | null>(null);
@@ -68,6 +70,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [copiedBackupCodes, setCopiedBackupCodes] = useState<boolean>(false);
   const [existingBackupCodes, setExistingBackupCodes] = useState<string[]>([]);
   const [showBackupCodes, setShowBackupCodes] = useState<boolean>(false);
+  useBackNavigation(!!showBackupCodes, () => setShowBackupCodes(null as any), 'showBackupCodes');
 
   useEffect(() => {
     FirestoreService.getUserProfile(userSession.userId).then((data) => {

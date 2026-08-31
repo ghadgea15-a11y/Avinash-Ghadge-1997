@@ -6,18 +6,26 @@ export interface InventoryItemRecord {
   itemName: string;
   category: string;
   unit: string;
-  serialTracking: boolean;
-  batchTracking: boolean;
-  minStockThreshold: number;
-  criticalStockLevel: number;
-  reorderLevel: number;
-  thresholdEnabled: boolean;
-  notificationEnabled: boolean;
-  unitCost: number;
-  currentStock: number;
-  status: 'IN_STOCK' | 'LOW_STOCK' | 'CRITICAL_STOCK' | 'OUT_OF_STOCK';
-  createdAt: string;
-  updatedAt: string;
+  description?: string;
+  barcode?: string;
+  siteId?: string;
+  siteName?: string;
+  warehouseLocation?: string;
+  supplierVendorId?: string;
+  supplierVendorName?: string;
+  maxStockLimit?: number;
+  serialTracking?: boolean;
+  batchTracking?: boolean;
+  minStockThreshold?: number;
+  criticalStockLevel?: number;
+  reorderLevel?: number;
+  thresholdEnabled?: boolean;
+  notificationEnabled?: boolean;
+  unitCost?: number;
+  currentStock?: number;
+  status?: 'IN_STOCK' | 'LOW_STOCK' | 'CRITICAL_STOCK' | 'OUT_OF_STOCK' | 'DISCONTINUED' | string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface StockLocationRecord {
@@ -26,7 +34,7 @@ export interface StockLocationRecord {
   name: string;
   code: string;
   description?: string;
-  type: 'WAREHOUSE' | 'STORE' | 'SITE_OFFICE' | 'TRANSIT';
+  type: 'WAREHOUSE' | 'STORE' | 'SITE_OFFICE' | 'TRANSIT' | 'SITE_STORE';
   status: 'ACTIVE' | 'INACTIVE';
   createdAt: string;
   updatedAt: string;
@@ -74,24 +82,36 @@ export interface GatePassRecord {
   id: string;
   companyId: string;
   type: 'INWARD' | 'OUTWARD' | 'RETURNABLE' | 'NON_RETURNABLE';
-  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'DISPATCHED' | 'RECEIVED' | 'VERIFIED' | 'CANCELLED';
+  status: 'DRAFT' | 'PENDING' | 'SUBMITTED' | 'APPROVED' | 'DISPATCHED' | 'RECEIVED' | 'VERIFIED' | 'GATE_VERIFIED' | 'RETURN_PENDING' | 'CANCELLED';
   referenceNo: string;
-  requestorName: string;
+  passNumber?: string;
+  passType?: string;
+  sourceLocationId?: string;
+  destinationLocationId?: string;
+  sourceLocationName?: string;
+  destinationLocationName?: string;
+  requestorName?: string;
+  requesterName?: string;
+  requesterId?: string;
   requestorDepartment?: string;
   receiverName?: string;
+  recipientName?: string;
   receiverContact?: string;
+  purpose?: string;
   vehicleNo?: string;
   driverName?: string;
   securityGuardName?: string;
   lines: GatePassLine[];
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
   updatedBy?: string;
 }
 
 export interface GatePassLine {
   itemId: string;
+  itemCode?: string;
   itemName: string;
+  unit?: string;
   quantity: number;
   uom: string;
   remarks?: string;
@@ -100,26 +120,34 @@ export interface GatePassLine {
 export interface TransferOrderRecord {
   id: string;
   companyId: string;
-  fromLocationId: string;
-  toLocationId: string;
+  fromLocationId?: string;
+  toLocationId?: string;
   sourceLocationId?: string; // fallback alias
   destinationLocationId?: string; // fallback alias
-  status: 'DRAFT' | 'PENDING' | 'RESERVED' | 'DISPATCHED' | 'IN_TRANSIT' | 'RECEIVED' | 'CANCELLED';
-  requestedBy: string;
+  sourceLocationName?: string;
+  destinationLocationName?: string;
+  transferNumber?: string;
+  transferOrderNumber?: string;
+  expectedDeliveryDate?: string;
+  status: 'DRAFT' | 'PENDING' | 'SUBMITTED' | 'APPROVED' | 'RESERVED' | 'DISPATCHED' | 'IN_TRANSIT' | 'RECEIVED' | 'CANCELLED';
+  requestedBy?: string;
+  requestedByUid?: string;
   requestedByName?: string;
   approvedByUid?: string;
   approvedByName?: string;
   gatePassId?: string;
+  purpose?: string;
+  priority?: string;
   lines: TransferOrderLine[];
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface TransferOrderLine {
   itemId: string;
   itemName: string;
   itemCode?: string;
-  quantity: number;
+  quantity?: number;
   requestedQuantity?: number;
   approvedQuantity?: number;
   reservedQuantity?: number;
@@ -127,6 +155,6 @@ export interface TransferOrderLine {
   receivedQuantity?: number;
   damagedQuantity?: number;
   missingQuantity?: number;
-  uom: string;
+  uom?: string;
   unitOfMeasure?: string;
 }

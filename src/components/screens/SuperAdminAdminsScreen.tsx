@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   UserCog, 
   ArrowLeft, 
@@ -44,6 +45,7 @@ export const SuperAdminAdminsScreen: React.FC<SuperAdminAdminsScreenProps> = ({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  useBackNavigation(!!showModal, () => setShowModal(null as any), 'showModal');
 
   // Form states
   const [email, setEmail] = useState('');
@@ -61,8 +63,8 @@ export const SuperAdminAdminsScreen: React.FC<SuperAdminAdminsScreenProps> = ({
         email: a.email,
         role: (a.role as any) || 'SUPER_ADMIN',
         displayName: a.displayName || a.name || 'Platform Administrator',
-        createdAt: a.createdAt?.seconds ? new Date(a.createdAt.seconds * 1000).toISOString() : (typeof a.createdAt === 'string' ? a.createdAt : undefined),
-        lastLoginAt: a.lastLoginAt?.seconds ? new Date(a.lastLoginAt.seconds * 1000).toISOString() : (typeof a.lastLoginAt === 'string' ? a.lastLoginAt : undefined),
+        createdAt: typeof a.createdAt === 'number' ? new Date(a.createdAt * 1000).toISOString() : (typeof a.createdAt === 'string' ? a.createdAt : undefined),
+        lastLoginAt: typeof a.lastLoginAt === 'number' ? new Date(a.lastLoginAt * 1000).toISOString() : (typeof a.lastLoginAt === 'string' ? a.lastLoginAt : undefined),
         mfaEnabled: a.mfaEnabled ?? true
       })));
     } catch (err) {

@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { UserSession, CompanyTenant, SiteRecord, ShiftRecord } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { useFeedback } from '../../context/ActionFeedbackContext';
-import { MapPin, Clock, LogIn, LogOut, ShieldAlert, CheckCircle2, Navigation, AlertCircle } from 'lucide-react';
+import { MapPin, Clock, LogIn, LogOut, ShieldAlert, CheckCircle2, Navigation, AlertCircle, PhoneCall, RefreshCw } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { GeoUtils } from '../../utils/geoUtils';
+import { LanguageSelector } from '../common/LanguageSelector';
+import { LanguageService, VoiceFeedbackService } from '../../services/voiceFeedbackService';
 
 interface Props {
   userSession: UserSession;
@@ -167,7 +169,7 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
         res = await FirestoreService.punchIn(
           activeCompany.companyId,
           userSession.employeeId || userSession.userId,
-          userSession.displayName || userSession.fullName || 'Employee',
+          userSession.fullName || userSession.fullName || 'Employee',
           rosterId,
           selectedShift,
           selectedSiteId,
@@ -194,16 +196,22 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
 
       dismiss();
       if (res.success) {
-        showSuccess(res.message || `${action === 'PUNCH_IN' ? 'Punch-In' : 'Punch-Out'} recorded successfully!`);
+        const msg = res.message || `${action === 'PUNCH_IN' ? 'Punch-In' : 'Punch-Out'} recorded successfully!`;
+        showSuccess(msg);
+        VoiceFeedbackService.speakKey('SUCCESS_PUNCH');
         setShowOverrideModal(false);
         setOverrideReason('');
         setPendingAction(null);
       } else {
-        showError(res.message || 'Attendance punch was rejected by server security rules.');
+        const errMsg = res.message || 'Attendance punch was rejected by server security rules.';
+        showError(errMsg);
+        VoiceFeedbackService.speakKey('FAILED_PUNCH');
       }
     } catch (err: any) {
       dismiss();
-      showError(err.message || 'Error communicating with attendance server.');
+      const errMsg = err.message || 'Error communicating with attendance server.';
+      showError(errMsg);
+      VoiceFeedbackService.speakKey('FAILED_PUNCH');
     }
   };
 
@@ -211,6 +219,17 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
 
   return (
     <div className={`max-w-xl mx-auto p-6 md:p-8 rounded-3xl border shadow-xl ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+      {/* Top Language & Voice Control */}
+      <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-4">
+        <div className="flex items-center gap-2">
+          <Navigation className="w-4 h-4 text-indigo-500" />
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+            {LanguageService.translate('PUNCH_IN')} / Kiosk
+          </span>
+        </div>
+        <LanguageSelector compact showVoiceToggle />
+      </div>
+
       <div className="text-center space-y-2">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
           <Navigation className="w-3.5 h-3.5" />
@@ -368,31 +387,39 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
         <div className="grid grid-cols-2 gap-4 pt-2">
           <button 
             onClick={() => handlePunchClick('PUNCH_IN')}
-            className={`flex flex-col items-center justify-center p-4 h-32 rounded-2xl text-white shadow-lg transition-all active:scale-95 ${
+            className={`flex flex-col items-center justify-center p-4 h-36 rounded-3xl text-white shadow-xl transition-all active:scale-95 border-2 border-emerald-400/30 ${
               geofenceEval?.result === 'OUTSIDE_GEOFENCE' && !isSupervisorOrAbove
-                ? 'bg-slate-400 cursor-not-allowed opacity-75'
-                : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20'
+                ? 'bg-slate-500 cursor-not-allowed opacity-75'
+                : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/30'
             }`}
           >
-            <LogIn className="w-8 h-8 mb-2" />
-            <span className="font-bold text-sm uppercase tracking-wider">Punch In</span>
+            <LogIn className="w-10 h-10 mb-2 animate-pulse" />
+            <span className="font-extrabold text-base tracking-wide text-center">
+              {LanguageService.translate('PUNCH_IN')}
+            </span>
             {geofenceEval?.result === 'OUTSIDE_GEOFENCE' && !isSupervisorOrAbove && (
-              <span className="text-[10px] text-white/80 font-normal mt-1">Blocked (Off-site)</span>
+              <span className="text-[11px] bg-red-800/80 px-2 py-0.5 rounded-full text-white font-medium mt-1">
+                {LanguageService.translate('OUT_OF_GEOFENCE')}
+              </span>
             )}
           </button>
           
           <button 
             onClick={() => handlePunchClick('PUNCH_OUT')}
-            className={`flex flex-col items-center justify-center p-4 h-32 rounded-2xl text-white shadow-lg transition-all active:scale-95 ${
+            className={`flex flex-col items-center justify-center p-4 h-36 rounded-3xl text-white shadow-xl transition-all active:scale-95 border-2 border-rose-400/30 ${
               geofenceEval?.result === 'OUTSIDE_GEOFENCE' && !isSupervisorOrAbove
-                ? 'bg-slate-400 cursor-not-allowed opacity-75'
-                : 'bg-rose-600 hover:bg-rose-500 shadow-rose-500/20'
+                ? 'bg-slate-500 cursor-not-allowed opacity-75'
+                : 'bg-rose-600 hover:bg-rose-500 shadow-rose-500/30'
             }`}
           >
-            <LogOut className="w-8 h-8 mb-2" />
-            <span className="font-bold text-sm uppercase tracking-wider">Punch Out</span>
+            <LogOut className="w-10 h-10 mb-2" />
+            <span className="font-extrabold text-base tracking-wide text-center">
+              {LanguageService.translate('PUNCH_OUT')}
+            </span>
             {geofenceEval?.result === 'OUTSIDE_GEOFENCE' && !isSupervisorOrAbove && (
-              <span className="text-[10px] text-white/80 font-normal mt-1">Blocked (Off-site)</span>
+              <span className="text-[11px] bg-red-800/80 px-2 py-0.5 rounded-full text-white font-medium mt-1">
+                {LanguageService.translate('OUT_OF_GEOFENCE')}
+              </span>
             )}
           </button>
         </div>

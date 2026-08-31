@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   Server, 
   Database, 
@@ -42,10 +43,12 @@ interface Props {
 export const EnterpriseScalabilityAssessmentScreen: React.FC<Props> = ({ session, companyId }) => {
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'DOMAINS' | 'LIVE_TESTER' | 'ANDROID_CACHE' | 'AUDIT_REPORT'>('OVERVIEW');
   const [selectedDomain, setSelectedDomain] = useState<ScalabilityDomain | 'ALL'>('ALL');
+  useBackNavigation(!!selectedDomain, () => setSelectedDomain(null as any), 'selectedDomain');
   const [metrics, setMetrics] = useState<ScalabilityMetric[]>([]);
   const [benchmarkResult, setBenchmarkResult] = useState<ScalabilityBenchmarkResult | null>(null);
   const [isRunningBenchmark, setIsRunningBenchmark] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<ScalabilityMetric | null>(null);
+  useBackNavigation(!!selectedMetric, () => setSelectedMetric(null as any), 'selectedMetric');
 
   // Live Pagination Tester State
   const [paginationTestLoading, setPaginationTestLoading] = useState(false);

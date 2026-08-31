@@ -82,7 +82,7 @@ export const SiteInChargeDashboard: React.FC<DashboardProps> = ({ userSession, c
   const openIncidents = incidents.filter(i => i.status === 'OPEN' || i.status === 'UNDER_INVESTIGATION').length;
   const activeVisitors = visitors.filter(v => v.status === 'CHECKED_IN').length;
   const pendingMaterials = materials.filter(m => m.status === 'PENDING_APPROVAL').length;
-  const lowStock = inventory.filter(i => i.currentStock <= i.minStockThreshold).length;
+  const lowStock = inventory.filter(i => (i.currentStock || 0) <= (i.minStockThreshold || 0)).length;
 
   return (
     <div className="space-y-6">

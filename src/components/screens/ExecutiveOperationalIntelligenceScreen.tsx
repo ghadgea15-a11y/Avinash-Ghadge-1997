@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -76,8 +77,11 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
 
   // Filters State
   const [selectedPeriod, setSelectedPeriod] = useState<'CURRENT_MONTH' | 'LAST_30_DAYS' | 'LAST_90_DAYS' | 'YTD'>('CURRENT_MONTH');
+  useBackNavigation(!!selectedPeriod, () => setSelectedPeriod(null as any), 'selectedPeriod');
   const [selectedAnomalyType, setSelectedAnomalyType] = useState<OperationalAnomalyType | 'ALL'>('ALL');
+  useBackNavigation(!!selectedAnomalyType, () => setSelectedAnomalyType(null as any), 'selectedAnomalyType');
   const [selectedSeverity, setSelectedSeverity] = useState<OperationalAnomalySeverity | 'ALL'>('ALL');
+  useBackNavigation(!!selectedSeverity, () => setSelectedSeverity(null as any), 'selectedSeverity');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Source Transaction Drawer State
@@ -91,6 +95,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
     title: '',
     transactions: []
   });
+  useBackNavigation(!!selectedTransactionModal.isOpen, () => setSelectedTransactionModal(prev => ({ ...prev, isOpen: false })), "selectedTransactionModal");
 
   const [activeModuleFilter, setActiveModuleFilter] = useState<OperationalModuleSource | 'ALL'>('ALL');
 
@@ -196,9 +201,9 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
       const q = searchQuery.toLowerCase();
       list = list.filter(a => 
         a.title.toLowerCase().includes(q) || 
-        a.entityName.toLowerCase().includes(q) ||
+        (a.entityName && a.entityName.toLowerCase().includes(q)) ||
         a.description.toLowerCase().includes(q) ||
-        a.rootCause.toLowerCase().includes(q)
+        (a.rootCause && a.rootCause.toLowerCase().includes(q))
       );
     }
 
@@ -267,13 +272,13 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
       rows.push([
         a.severity,
         a.type,
-        a.entityName,
-        a.metricName,
-        a.currentValue.toString(),
-        `+${a.deviationPercent}%`,
-        a.financialImpact.toString(),
-        `"${a.rootCause.replace(/"/g, '""')}"`,
-        `"${a.recommendedAction.replace(/"/g, '""')}"`
+        a.entityName || '',
+        a.metricName || '',
+        (a.currentValue ?? 0).toString(),
+        `+${a.deviationPercent ?? 0}%`,
+        (a.financialImpact ?? 0).toString(),
+        `"${(a.rootCause || '').replace(/"/g, '""')}"`,
+        `"${(a.recommendedAction || '').replace(/"/g, '""')}"`
       ]);
     });
 
@@ -633,19 +638,19 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                         <p className="text-slate-900 dark:text-slate-300 text-[11px] font-medium">{anomaly.recommendedAction}</p>
                       </div>
 
-                      {anomaly.financialImpact > 0 && (
+                      {(anomaly.financialImpact ?? 0) > 0 && (
                         <div className="flex justify-between items-center bg-rose-50 dark:bg-rose-950/30 px-3 py-1.5 rounded-xl text-rose-800 dark:text-rose-300 font-semibold text-[11px]">
                           <span>Financial Exposure:</span>
-                          <span className="font-black">₹{anomaly.financialImpact.toLocaleString()}</span>
+                          <span className="font-black">₹{(anomaly.financialImpact ?? 0).toLocaleString()}</span>
                         </div>
                       )}
 
                       <button
-                        onClick={() => openTransactionLedger(`Evidence for: ${anomaly.title}`, anomaly.sourceTransactions)}
+                        onClick={() => openTransactionLedger(`Evidence for: ${anomaly.title}`, anomaly.sourceTransactions || [])}
                         className="w-full py-2 bg-white dark:bg-slate-900 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-indigo-600 dark:text-indigo-300 rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-600"
                       >
                         <FileText className="w-3.5 h-3.5" />
-                        Inspect Source Transactions ({anomaly.sourceTransactions.length})
+                        Inspect Source Transactions ({(anomaly.sourceTransactions || []).length})
                       </button>
                     </div>
                   </div>

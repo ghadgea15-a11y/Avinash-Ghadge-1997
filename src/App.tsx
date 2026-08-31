@@ -11,6 +11,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ActionFeedbackProvider } from './context/ActionFeedbackContext';
 import { getCurrentPathname, ROUTE_PATH_MAP, navigateToUrl } from './utils/publicRouter';
 import { updatePageSEO } from './utils/seo';
+import { useAppNavigation } from "./hooks/useAppNavigation";
 import { NavigationDrawer } from './components/common/NavigationDrawer';
 import { MobileTopHeader } from './components/common/MobileTopHeader';
 import { TabletNavigationRail } from './components/common/TabletNavigationRail';
@@ -98,7 +99,7 @@ import { ApprovalCenter } from './components/bpm/ApprovalCenter';
 import { FirebaseAuthService } from './services/firebaseAuthService';
 import { Loader2 } from 'lucide-react';
 
-export function App() {
+function MainApp() {
   // Initialize current screen from URL if landing on legal, auth, or public route
   const getInitialScreen = (): PhaseAScreen => {
     const path = getCurrentPathname();
@@ -109,7 +110,17 @@ export function App() {
     return 'LANDING';
   };
 
-  const [currentScreen, setCurrentScreen] = useState<PhaseAScreen>(getInitialScreen);
+  const { currentScreen, navigate: setCurrentScreen } = useNavigation();
+
+  useEffect(() => {
+  }, []);
+
+  useEffect(() => {
+  }, []);
+  useEffect(() => {
+    if (import.meta.env.DEV || (window as any).PLAYWRIGHT_TEST) {
+    }
+  }, []);
   const [activeCompany, setActiveCompany] = useState<CompanyTenant | null>(null);
   const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(OfflineSyncService.isOnline());
@@ -413,7 +424,7 @@ export function App() {
       ) : currentScreen === 'LEGAL_POLICIES' ? (
         /* Standalone Legal & Compliance Policy Center */
         <div className="min-h-screen w-full font-sans transition-colors duration-200">
-          <LegalPoliciesScreen onNavigate={setCurrentScreen} />
+          <LegalPoliciesScreen onNavigate={(screen: any) => setCurrentScreen(screen)} />
         </div>
       ) : currentScreen === 'KOTLIN_CODE_VIEWER' ? (
         /* Standalone Kotlin Code Viewer */
@@ -429,7 +440,7 @@ export function App() {
           className={`min-h-screen w-full flex flex-col justify-center items-center font-sans transition-colors duration-200 p-4 ${!activeCompany?.loginBackgroundUrl ? 'bg-white dark:bg-slate-950' : ''}`}>
           <div className="w-full max-w-xl">
             {currentScreen === 'LOGIN' && (
-              <LoginScreen activeCompany={activeCompany}
+              <LoginScreen activeCompany={activeCompany as any}
                 onLoginSuccess={(session, company) => {
                   setActiveCompany(company);
                   setUserSession(session);
@@ -443,7 +454,7 @@ export function App() {
                     setCurrentScreen('APPROVAL_PENDING');
                   }
                 }}
-                onNavigate={setCurrentScreen}
+                onNavigate={(screen: any) => setCurrentScreen(screen)}
               />
             )}
 
@@ -457,7 +468,7 @@ export function App() {
                     setCurrentScreen('APPROVAL_PENDING');
                   }
                 }}
-                onNavigate={setCurrentScreen}
+                onNavigate={(screen: any) => setCurrentScreen(screen)}
               />
             )}
 
@@ -476,14 +487,14 @@ export function App() {
                     setCurrentScreen('APPROVAL_PENDING');
                   }
                 }}
-                onNavigate={setCurrentScreen}
+                onNavigate={(screen: any) => setCurrentScreen(screen)}
               />
             )}
 
             {currentScreen === 'FORGOT_PASSWORD' && (
               <ForgotPasswordScreen
-                activeCompany={activeCompany}
-                onNavigate={setCurrentScreen}
+                activeCompany={activeCompany as any}
+                onNavigate={(screen: any) => setCurrentScreen(screen)}
               />
             )}
 
@@ -491,7 +502,7 @@ export function App() {
               <SplashScreen
                 onComplete={(nextScreen) => setCurrentScreen(nextScreen)}
                 isOnline={isOnline}
-                activeCompany={activeCompany}
+                activeCompany={activeCompany as any}
                 userSession={userSession}
               />
             )}
@@ -503,7 +514,7 @@ export function App() {
                   SessionManager.setActiveCompany(company);
                   setCurrentScreen('LOGIN');
                 }}
-                onNavigate={setCurrentScreen}
+                onNavigate={(screen: any) => setCurrentScreen(screen)}
               />
             )}
 
@@ -527,7 +538,7 @@ export function App() {
               setIsDrawerOpen(false);
             }}
             userSession={userSession}
-            activeCompany={activeCompany}
+            activeCompany={activeCompany as any}
             unreadNotifCount={unreadNotifCount}
             
             onLockSession={handleLockSession}
@@ -541,7 +552,7 @@ export function App() {
               {/* Mobile Top Header */}
               {viewportMode === 'PHONE' && isMainAppScreen && (
                 <MobileTopHeader
-                  activeCompany={activeCompany}
+                  activeCompany={activeCompany as any}
                   onOpenDrawer={() => setIsDrawerOpen(true)}
                   unreadNotifCount={unreadNotifCount}
                   onNavigateNotifications={() => setCurrentScreen('NOTIFICATIONS')}
@@ -553,7 +564,7 @@ export function App() {
                 {(viewportMode === 'TABLET' || viewportMode === 'FULLSCREEN') && isMainAppScreen && (
                   <TabletNavigationRail
                     currentScreen={currentScreen}
-                    onNavigate={setCurrentScreen}
+                    onNavigate={(screen: any) => setCurrentScreen(screen)}
                     onOpenDrawer={() => setIsDrawerOpen(true)}
                     unreadNotifCount={unreadNotifCount}
                     userSession={userSession}
@@ -569,13 +580,13 @@ export function App() {
     {currentScreen === 'SUPER_ADMIN_DASHBOARD' && (
       <SuperAdminDashboard 
         currentSession={userSession!} 
-        onNavigate={setCurrentScreen} 
+        onNavigate={(screen: any) => setCurrentScreen(screen)} 
       />
     )}
     {currentScreen === 'SUPER_ADMIN_CREATE_COMPANY' && (
       <SuperAdminCreateCompany
         currentSession={userSession!}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
         onCompanyCreated={(companyId) => {
           setCurrentScreen('SUPER_ADMIN_COMPANIES');
         }}
@@ -584,25 +595,25 @@ export function App() {
     {currentScreen === 'SUPER_ADMIN_MODULES' && (
       <SuperAdminModulesScreen
         currentSession={userSession}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
     )}
     {currentScreen === 'SUPER_ADMIN_COMPANIES' && (
       <SuperAdminCompaniesScreen
         currentSession={userSession}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
     )}
     {currentScreen === 'SUPER_ADMIN_SUBSCRIPTIONS' && (
       <SuperAdminSubscriptionsScreen
         userSession={userSession!}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
     )}
     {currentScreen === 'SUPER_ADMIN_MANAGEMENT' && (
       <SuperAdminManagementScreen
         currentSession={userSession!}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
     )}
     {currentScreen === 'SUPER_ADMIN_PENDING_APPROVALS' && (
@@ -614,49 +625,49 @@ export function App() {
     {currentScreen === 'SUPER_ADMIN_LEADS' && (
       <SuperAdminLeadsScreen
         currentSession={userSession!}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
     )}
     {currentScreen === 'SUPER_ADMIN_AUDIT' && (
       <SuperAdminAuditScreen
         currentSession={userSession!}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
     )}
     {currentScreen === 'SUPER_ADMIN_MONITORING' && (
       <SuperAdminMonitoringScreen
         currentSession={userSession!}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
     )}
     {currentScreen === 'SUPER_ADMIN_SUPPORT' && (
       <SuperAdminSupportScreen
         currentSession={userSession!}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
     )}
     {currentScreen === 'SUPER_ADMIN_CONFIG' && (
       <SuperAdminConfigScreen
         currentSession={userSession!}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
     )}
     {currentScreen === 'SUPER_ADMIN_SECURITY' && (
       <SuperAdminSecurityScreen
         currentSession={userSession!}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
     )}
     {currentScreen === 'SUPER_ADMIN_REPORTS' && (
       <SuperAdminReportsScreen
         currentSession={userSession!}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
     )}
     {currentScreen === 'SUPER_ADMIN_ADMINS' && (
       <SuperAdminAdminsScreen
         currentSession={userSession!}
-        onNavigate={setCurrentScreen}
+        onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
     )}
   </SuperAdminGate>
@@ -680,7 +691,7 @@ export function App() {
                         <EnterpriseDashboardScreen
                           userSession={userSession}
                           company={activeCompany}
-                          onNavigate={setCurrentScreen}
+                          onNavigate={(screen: any) => setCurrentScreen(screen)}
                           onLogout={handleLogout}
                         />
                       ) : (
@@ -703,7 +714,7 @@ export function App() {
                     {currentScreen === 'SESSION_LOCK' && (
                       <SessionLockScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         onUnlockSuccess={() => setCurrentScreen('EMPLOYEES')}
                         onSwitchAccount={handleLogout}
                       />
@@ -719,42 +730,42 @@ export function App() {
                     {currentScreen === 'DEPLOYMENT_MANAGEMENT' && activeCompany && (
                       <DeploymentManagementScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                       />
                     )}
                     {currentScreen === 'SHIFT_ROSTER' && activeCompany && (
                       <ShiftRosterScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'EMPLOYEES' && (
                       <EmployeeModuleScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'ATTENDANCE_SHIFTS' && (
                       <AttendanceShiftsScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'LEAVE_MANAGEMENT' && (
                       <LeaveManagementScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
@@ -767,12 +778,10 @@ export function App() {
                     {currentScreen === 'PAYROLL_COMPENSATION' && activeCompany && (
                       <PayrollCompensationScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
-                        onNavigate={setCurrentScreen}
-                      />
+                        />
                     )}
-
                     {currentScreen === 'INVENTORY_STOCK' && activeCompany && (
                       <ScmModule session={userSession} company={activeCompany} />
                     )}
@@ -782,47 +791,47 @@ export function App() {
                       <TaskManagementScreen
                         userSession={userSession}
                         company={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'ID_BADGES' && activeCompany && (
                       <IdentityBadgeScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'COMPLIANCE' && activeCompany && (
                       <ComplianceDashboardScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                       />
                     )}
 
                     {currentScreen === 'DOCUMENT_LIFECYCLE' && activeCompany && (
                       <DocumentLifecycleScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'OPERATIONAL_INTELLIGENCE' && activeCompany && (
                       <ExecutiveOperationalIntelligenceScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'WORKFORCE_CAPACITY' && activeCompany && (
                       <WorkforceCapacityPlanningScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
                       />
                     )}
@@ -830,7 +839,7 @@ export function App() {
                     {currentScreen === 'CONFLICT_DETECTION' && activeCompany && (
                       <EnterpriseConflictManagementScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
                       />
                     )}
@@ -838,7 +847,7 @@ export function App() {
                     {currentScreen === 'AI_ASSISTANT' && activeCompany && (
                       <AiAssistantScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                       />
                     )}
 
@@ -860,7 +869,7 @@ export function App() {
                       <AnnouncementsScreen
                         userSession={userSession}
                         company={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
@@ -868,53 +877,53 @@ export function App() {
                       <MyTasksScreen
                         userSession={userSession}
                         company={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'ASSET_TRACKING' && (
                       <AssetTrackingScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'SERVICE_DESK' && (
                       <ServiceDeskScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'TALENT_ACQUISITION' && (
                       <TalentAcquisitionScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'CERTIFICATION_TRACKING' && (
                       <CertificationTrackingScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
                     {currentScreen === 'MANDATORY_REFRESHERS' && activeCompany && (
                       <MandatoryRefreshersScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
                     {currentScreen === 'TRAINING_LMS' && (
                       <TrainingLmsScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
@@ -957,18 +966,18 @@ export function App() {
                     {currentScreen === 'SITE_OPERATIONS' && (
                       <SiteOperationsScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'SAFETY_MANAGEMENT' && (
                       <SiteOperationsScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                         initialTab="SAFETY_CHECKS"
                       />
                     )}
@@ -984,30 +993,30 @@ export function App() {
                     {currentScreen === 'REPORTS_ANALYTICS' && activeCompany && (
                       <ReportsAnalyticsScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'COMPANY_BILLING' && (
                       <CompanyBillingScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'NOTIFICATION_ADMIN' && (
                       <NotificationAdminScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                       />
                     )}
                     {currentScreen === 'COMPANY_MANAGEMENT' && (
                       <CompanyManagementScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         onCompanyUpdated={(updated) => {
                           setActiveCompany(updated);
                           SessionManager.setActiveCompany(updated);
@@ -1018,24 +1027,24 @@ export function App() {
                     {currentScreen === 'PROFILE' && (
                       <ProfileScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                       />
                     )}
 
                     {(currentScreen === 'BIOMETRIC_DEVICES' || currentScreen === 'DEVICE_INTEGRATION_HUB') && (
                       <BiometricHubScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
-                        onNavigate={setCurrentScreen}
+                        activeCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
 
                     {currentScreen === 'SETTINGS' && (
                       <SettingsScreen
                         userSession={userSession}
-                        activeCompany={activeCompany}
+                        activeCompany={activeCompany as any}
                         isOnline={isOnline}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                         onClearCache={() => {
                           SessionManager.clearUserSession();
                           setUserSession(null);
@@ -1052,7 +1061,7 @@ export function App() {
                     {currentScreen === 'NOTIFICATIONS' && (
                       <NotificationsScreen
                         userSession={userSession}
-                        onNavigate={setCurrentScreen}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
                   </div>
@@ -1067,3 +1076,23 @@ export function App() {
   );
 }
 
+
+import { NavigationProvider, useNavigation } from './context/NavigationContext';
+
+export function App() {
+  const getInitialScreen = (): PhaseAScreen => {
+    const path = window.location.pathname;
+    
+    const routeMatch = ROUTE_PATH_MAP[path];
+    if (routeMatch) {
+      return routeMatch.screen;
+    }
+    return 'LANDING';
+  };
+
+  return (
+    <NavigationProvider initialScreen={getInitialScreen()}>
+      <MainApp />
+    </NavigationProvider>
+  );
+}

@@ -261,7 +261,14 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({ record, company, onC
               {/* Deductions Column */}
               <div className="p-4 space-y-3 bg-white">
                 <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                  <span className="text-slate-700">Provident Fund (PF - 12%)</span>
+                  <div>
+                    <span className="text-slate-700">Provident Fund (PF - 12%)</span>
+                    {(calc.isEpsExempt || calc.epsExemptionFlag || deductions.epsExemptionApplied) && (
+                      <span className="block text-[10px] text-amber-700 font-semibold mt-0.5">
+                        {calc.epsExemptionFlag || deductions.epsExemptionNote || 'STAT-AGE-58: EPS Exemption Applied (Age ≥ 58)'}
+                      </span>
+                    )}
+                  </div>
                   <span className="font-mono font-semibold text-slate-900">₹{pf.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between items-center py-1 border-b border-slate-100">

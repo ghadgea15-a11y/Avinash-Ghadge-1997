@@ -75,7 +75,7 @@ export const EmployeeSelfServiceDashboard: React.FC<DashboardProps> = ({ userSes
             <UserCircle className="w-10 h-10 text-white/80" />
           </div>
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{userSession.displayName || 'Employee'}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{userSession.fullName || 'Employee'}</h2>
             <p className="text-indigo-200 mt-1 flex items-center gap-2 text-sm">
               <span className="font-mono bg-black/20 px-2 py-0.5 rounded text-xs">{userSession.employeeId}</span>
               <span>{userSession.role.replace(/_/g, ' ')}</span>

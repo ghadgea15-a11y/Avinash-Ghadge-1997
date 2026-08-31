@@ -20,6 +20,7 @@ import {
   NavigationItemDef, 
   NavigationCategoryDef 
 } from '../../config/navigationArchitecture';
+import { AppLogo } from './AppLogo';
 
 interface NavigationDrawerProps {
   isOpen: boolean;

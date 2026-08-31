@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   X, 
   Star, 
@@ -71,9 +72,11 @@ export const ServiceDeskFeedbackModal: React.FC<ServiceDeskFeedbackModalProps> =
   const [communicationScore, setCommunicationScore] = useState<number>(5);
   const [qualityScore, setQualityScore] = useState<number>(5);
   const [showDetailedBreakdown, setShowDetailedBreakdown] = useState<boolean>(false);
+  useBackNavigation(!!showDetailedBreakdown, () => setShowDetailedBreakdown(null as any), 'showDetailedBreakdown');
 
   const [comment, setComment] = useState<string>('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  useBackNavigation(!!selectedTags, () => setSelectedTags(null as any), 'selectedTags');
   
   // Follow-up
   const [followUpRequested, setFollowUpRequested] = useState<boolean>(false);

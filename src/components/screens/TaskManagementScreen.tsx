@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   CompanyTenant, 
   UserSession, 
@@ -74,7 +75,9 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
+  useBackNavigation(!!showCreateModal, () => setShowCreateModal(null as any), 'showCreateModal');
   const [selectedTaskForReview, setSelectedTaskForReview] = useState<TaskRecord | null>(null);
+  useBackNavigation(!!selectedTaskForReview, () => setSelectedTaskForReview(null as any), 'selectedTaskForReview');
   const [reviewNotes, setReviewNotes] = useState('');
   const [actionProcessing, setActionProcessing] = useState(false);
 
@@ -170,7 +173,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
         const descMatch = (t.description || '').toLowerCase().includes(q);
         const assigneeMatch = (t.assignedToName || '').toLowerCase().includes(q) ||
           employees.some(e => e.id === t.assignedTo && (`${e.firstName} ${e.lastName}`).toLowerCase().includes(q));
-        const siteMatch = (t.siteName || '').toLowerCase().includes(q);
+        const siteMatch = (t || '').toLowerCase().includes(q);
         if (!titleMatch && !descMatch && !assigneeMatch && !siteMatch) return false;
       }
 
@@ -199,7 +202,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
         id: taskId,
         companyId,
         siteId: newTask.siteId || userSession.assignedSiteId || '',
-        siteName: selectedSite ? (selectedSite.siteName || selectedSite.name) : '',
+        siteName: selectedSite ? (selectedSite.name || selectedSite.siteName || '') : '',
         departmentTag: newTask.departmentTag,
         assignedTo: newTask.assignedTo,
         assignedToName: assignedEmp ? `${assignedEmp.firstName} ${assignedEmp.lastName}` : newTask.assignedTo,
@@ -248,7 +251,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
     const dismiss = showLoading('Approving task completion...');
     try {
       setActionProcessing(true);
-      await FirestoreService.updateTaskStatus(task.id, companyId, 'COMPLETED', {
+      await FirestoreService.updateTaskStatus(companyId, task.id, 'COMPLETED', {
         completionNotes: reviewNotes ? `${task.completionNotes || ''}\n[Reviewer Approval]: ${reviewNotes}`.trim() : task.completionNotes
       });
       dismiss();
@@ -271,7 +274,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
     const dismiss = showLoading('Submitting revision request...');
     try {
       setActionProcessing(true);
-      await FirestoreService.updateTaskStatus(task.id, companyId, 'IN_PROGRESS', {
+      await FirestoreService.updateTaskStatus(companyId, task.id, 'IN_PROGRESS', {
         completionNotes: `${task.completionNotes || ''}\n[Revision Requested]: ${reviewNotes}`.trim()
       });
       dismiss();
@@ -314,7 +317,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
         t.priority,
         t.status,
         `"${(t.assignedToName || '').replace(/"/g, '""')}"`,
-        `"${(t.siteName || '').replace(/"/g, '""')}"`,
+        `"${(t || '').replace(/"/g, '""')}"`,
         t.slaDeadline || '',
         new Date(t.createdAt).toISOString()
       ]);

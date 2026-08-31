@@ -1,3 +1,4 @@
+export interface TenantData { id: string; companyCode: string; name: string; subscriptionPlan: string; enabledModules: string[]; status: string; adminEmail: string; adminName: string; maxEmployees: number; maxSites: number; currentEmployeesCount: number; currentSitesCount: number; createdAt: string; updatedAt: string; }
 import { 
   collection, 
   onSnapshot, 
@@ -386,7 +387,7 @@ export class SuperAdminService {
   static async getAllTenants(): Promise<TenantData[]> {
     try {
       const companies = await FirestoreService.getAllCompanies();
-      return companies.map(c => ({
+      return companies.map((c: any) => ({
         id: c.companyId,
         companyCode: c.companyId,
         name: c.brandName || c.companyLegalName || c.companyId,
@@ -646,7 +647,7 @@ export class SuperAdminService {
       scope = ((param1 as any).scope === 'SUPPORT_MUTATION' || (param1 as any).scope === 'MUTATION') ? 'MUTATION' : 'READ_ONLY';
     } else {
       const session = param1 as UserSession;
-      superAdminUid = session.userId || session.uid;
+      superAdminUid = session.userId || session.uid || "";
       superAdminEmail = session.email || 'superadmin@platform.system';
       targetCompanyId = targetCompanyIdParam || '';
       reason = reasonParam || '';
@@ -719,7 +720,7 @@ export class SuperAdminService {
     } else {
       const session = param1 as UserSession;
       sessionId = param2 || '';
-      revokedByUid = session.userId || session.uid;
+      revokedByUid = session.userId || session.uid || "SYSTEM";
       reason = param3 || reason;
     }
 

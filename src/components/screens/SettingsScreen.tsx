@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   Settings, 
   Sun, 
@@ -87,9 +88,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [testSuiteReport, setTestSuiteReport] = useState<{ passedCount: number; failedCount: number; results: TestResult[] } | null>(null);
   const [isTesting, setIsTesting] = useState<boolean>(false);
   const [showPinSetup, setShowPinSetup] = useState(false);
+  useBackNavigation(!!showPinSetup, () => setShowPinSetup(null as any), 'showPinSetup');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [showPin, setShowPin] = useState(false);
+  useBackNavigation(!!showPin, () => setShowPin(null as any), 'showPin');
   const [pinError, setPinError] = useState<string | null>(null);
   const [isUpdatingPin, setIsUpdatingPin] = useState(false);
 

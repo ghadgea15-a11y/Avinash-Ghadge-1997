@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ExecutiveBiDashboard } from "../../bi/ExecutiveBiDashboard";
 import { EnterpriseIntelligenceDashboard } from "../../bi/EnterpriseIntelligenceDashboard";
-import { PredictiveAnalyticsDashboard } from "../../bi/PredictiveAnalyticsDashboard";
-import { Users, ShieldCheck, Activity } from 'lucide-react';
+import { Users, ShieldCheck } from 'lucide-react';
 import { CompanyTenant, UserSession, PhaseAScreen, EmployeeRecord, ApprovalRequestRecord } from '../../../types';
 import { FirestoreService } from '../../../services/firestoreService';
 import { RbacService } from '../../../services/rbacService';
@@ -49,8 +48,8 @@ export const OwnerDashboard: React.FC<DashboardProps> = ({ userSession, company,
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-slate-500 dark:text-slate-400">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p>Loading Owner Metrics...</p>
+        <div className="w-8 h-8 border-4 border-slate-300 dark:border-slate-700 border-t-black dark:border-t-white rounded-full animate-spin mb-4"></div>
+        <p className="font-medium text-sm">Loading Owner Metrics...</p>
       </div>
     );
   }
@@ -59,27 +58,27 @@ export const OwnerDashboard: React.FC<DashboardProps> = ({ userSession, company,
   const pendingApprovals = approvals.filter(a => a.status === 'PENDING').length;
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-slate-900 dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-[#0f1115] p-6 rounded-[12px] border border-[#eaebec] dark:border-[#1f2228]">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Total Workforce</h3>
-            <Users className="w-5 h-5 text-indigo-500" />
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Total Workforce</h3>
+            <Users className="w-5 h-5 text-slate-800 dark:text-slate-200" />
           </div>
-          <p className="text-3xl font-black text-black dark:text-white">{activeEmployees}</p>
-          <p className="text-xs text-green-600 mt-2 font-medium">Enterprise Scope</p>
+          <p className="text-4xl font-black text-black dark:text-white">{activeEmployees}</p>
+          <p className="text-sm text-emerald-600 dark:text-emerald-500 mt-2 font-medium">Enterprise Scope</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+        <div className="bg-white dark:bg-[#0f1115] p-6 rounded-[12px] border border-[#eaebec] dark:border-[#1f2228]">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400">Action Required</h3>
-            <ShieldCheck className="w-5 h-5 text-amber-500" />
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Action Required</h3>
+            <ShieldCheck className="w-5 h-5 text-slate-800 dark:text-slate-200" />
           </div>
-          <p className="text-3xl font-black text-black dark:text-white">{pendingApprovals}</p>
+          <p className="text-4xl font-black text-black dark:text-white">{pendingApprovals}</p>
           {RbacService.hasModuleAccess(userSession, 'APPROVAL_MANAGEMENT') && (
             <button 
               onClick={() => onNavigate('APPROVAL_MANAGEMENT')}
-              className="text-xs text-indigo-600 hover:text-indigo-700 mt-2 font-semibold flex items-center"
+              className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 mt-2 font-bold flex items-center transition-colors"
             >
               Review Approvals &rarr;
             </button>
@@ -87,9 +86,9 @@ export const OwnerDashboard: React.FC<DashboardProps> = ({ userSession, company,
         </div>
       </div>
       
-      <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
-        <h3 className="text-lg font-bold text-black dark:text-white mb-2">Executive Summary</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+      <div className="bg-[#fcfcfd] dark:bg-[#141517] p-8 rounded-[12px] border border-[#eaebec] dark:border-[#1f2228]">
+        <h3 className="text-xl font-black text-black dark:text-white mb-2 tracking-tight">Executive Summary</h3>
+        <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl">
           Welcome to the Enterprise Owner Dashboard. All telemetry and analytics below are powered by real-time Firestore synchronization.
         </p>
       </div>
@@ -97,7 +96,7 @@ export const OwnerDashboard: React.FC<DashboardProps> = ({ userSession, company,
       <div className="flex gap-4">
         <button 
           onClick={() => onNavigate('SECURITY_AUDIT')}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium shadow-sm transition-colors flex items-center gap-2"
+          className="bg-black hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-black text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center gap-2"
         >
           <ShieldCheck className="w-5 h-5" />
           Security Audit & Anomalies
@@ -109,8 +108,8 @@ export const OwnerDashboard: React.FC<DashboardProps> = ({ userSession, company,
         company={company} 
         onDrillDown={(mod, data) => onNavigate(mod as PhaseAScreen)} 
       />
+      
       <ExecutiveBiDashboard session={userSession} company={company} />
-      {/* PredictiveAnalyticsDashboard removed to avoid stub displays without ML logic */}
     </div>
   );
 };

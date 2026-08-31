@@ -217,7 +217,7 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ userSessio
             </div>
           )}
 
-          {activeTab === 'PREDICTIVE' && (
+          {activeTab === 'PREDICTIVE' && userSession && activeCompany && (
              <div className="-mt-8">
                <PredictiveAnalyticsDashboard session={userSession} company={activeCompany} />
              </div>

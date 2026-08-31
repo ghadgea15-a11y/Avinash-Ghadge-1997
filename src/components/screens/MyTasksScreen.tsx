@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { CompanyTenant, UserSession, PhaseAScreen, TaskRecord } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { StorageService } from '../../services/storageService';
@@ -38,6 +39,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
   const [activeTaskForAction, setActiveTaskForAction] = useState<TaskRecord | null>(null);
   const [actionNotes, setActionNotes] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  useBackNavigation(!!selectedFile, () => setSelectedFile(null as any), 'selectedFile');
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 

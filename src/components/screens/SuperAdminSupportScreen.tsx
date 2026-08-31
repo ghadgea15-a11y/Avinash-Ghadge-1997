@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   LifeBuoy, 
   ArrowLeft, 
@@ -41,6 +42,7 @@ export const SuperAdminSupportScreen: React.FC<SuperAdminSupportScreenProps> = (
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  useBackNavigation(!!showModal, () => setShowModal(null as any), 'showModal');
 
   // New session state
   const [targetCompanyId, setTargetCompanyId] = useState('');
@@ -91,7 +93,7 @@ export const SuperAdminSupportScreen: React.FC<SuperAdminSupportScreenProps> = (
     try {
       const selectedTenant = tenants.find(t => t.id === targetCompanyId);
       await SuperAdminService.createSupportAccessSession({
-        superAdminUid: currentSession.uid,
+        superAdminUid: currentSession.uid || (currentSession as any).userId || 'PLATFORM_SUPER_ADMIN',
         superAdminEmail: currentSession.email || 'superadmin@platform.com',
         targetCompanyId,
         targetCompanyName: selectedTenant?.name || targetCompanyId,

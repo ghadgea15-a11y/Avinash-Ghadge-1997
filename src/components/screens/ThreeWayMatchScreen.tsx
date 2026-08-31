@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { db, functions } from '../../firebase';
 import { collection, query, onSnapshot, doc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
@@ -24,6 +25,7 @@ export const ThreeWayMatchScreen: React.FC<ThreeWayMatchScreenProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
+  useBackNavigation(!!selectedMatch, () => setSelectedMatch(null as any), 'selectedMatch');
   const [resolutionComment, setResolutionComment] = useState('');
 
   useEffect(() => {

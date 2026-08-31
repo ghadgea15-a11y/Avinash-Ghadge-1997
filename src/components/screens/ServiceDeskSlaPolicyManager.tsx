@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   Plus, 
   Edit2, 
@@ -49,6 +50,7 @@ export function ServiceDeskSlaPolicyManager({
   const [policies, setPolicies] = useState<ServiceSlaPolicyRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [editingPolicy, setEditingPolicy] = useState<Partial<ServiceSlaPolicyRecord> | null>(null);
+  useBackNavigation(!!editingPolicy, () => setEditingPolicy(null as any), 'editingPolicy');
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState<string>('');

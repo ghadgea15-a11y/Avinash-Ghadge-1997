@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   Network, 
   Users, 
@@ -75,7 +76,9 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
   // --- Active State ---
   const [targetDate, setTargetDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<string>('ALL');
+  useBackNavigation(!!selectedSiteFilter, () => setSelectedSiteFilter(null as any), 'selectedSiteFilter');
   const [selectedAnomalyFilter, setSelectedAnomalyFilter] = useState<string>('ALL');
+  useBackNavigation(!!selectedAnomalyFilter, () => setSelectedAnomalyFilter(null as any), 'selectedAnomalyFilter');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'INCIDENTS' | 'REQUIREMENTS' | 'KOTLIN_SPEC'>('DASHBOARD');
 
@@ -99,6 +102,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
   const [replacementModalIncident, setReplacementModalIncident] = useState<WorkforceShortageIncident | null>(null);
   const [replacementCandidates, setReplacementCandidates] = useState<ReplacementCandidate[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<ReplacementCandidate | null>(null);
+  useBackNavigation(!!selectedCandidate, () => setSelectedCandidate(null as any), 'selectedCandidate');
   const [candidateSourceType, setCandidateSourceType] = useState<'STANDBY_POOL' | 'OVERTIME_EXTENSION' | 'CROSS_SITE_TRANSFER' | 'AGENCY_RELIEF'>('STANDBY_POOL');
   const [isLoadingCandidates, setIsLoadingCandidates] = useState<boolean>(false);
   const [isDeployingReplacement, setIsDeployingReplacement] = useState<boolean>(false);
@@ -672,7 +676,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                   >
                     <option value="ALL">All Sites ({sites.length})</option>
                     {sites.map(s => (
-                      <option key={s.id} value={s.id}>{s.name} ({(s as any).siteCode || s.clientName || 'Site'})</option>
+                      <option key={s.id} value={s.id}>{s.name} ({(s as any).siteCode || s.name || 'Site'})</option>
                     ))}
                   </select>
                 </div>

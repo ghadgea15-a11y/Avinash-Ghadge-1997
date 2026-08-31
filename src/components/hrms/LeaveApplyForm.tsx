@@ -9,7 +9,11 @@ import {
   Check, 
   Info,
   Paperclip,
-  Clock
+  Clock,
+  Home,
+  Stethoscope,
+  Palmtree,
+  ShieldAlert
 } from 'lucide-react';
 import { 
   LeavePolicyRecord, 
@@ -19,6 +23,7 @@ import {
   LeaveRequestRecord
 } from '../../types';
 import { LeaveService } from '../../services/leaveService';
+import { LanguageService, VoiceFeedbackService } from '../../services/voiceFeedbackService';
 
 interface LeaveApplyFormProps {
   userSession: UserSession;
@@ -73,9 +78,10 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
       formData.isHalfDay,
       weeklyOffDays,
       holidays,
-      selectedPolicy
+      selectedPolicy,
+      userSession.assignedRegionId
     );
-  }, [formData.startDate, formData.endDate, formData.isHalfDay, holidays, selectedPolicy]);
+  }, [formData.startDate, formData.endDate, formData.isHalfDay, holidays, selectedPolicy, userSession.assignedRegionId]);
 
   const validate = (): boolean => {
     const errs: string[] = [];
@@ -294,14 +300,96 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
               </div>
             </div>
 
-            {/* Reason */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Reason for Leave *</label>
+            {/* Reason with Pictograms for Ground Workforce */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">
+                {LanguageService.translate('LEAVE_SICK').split('(')[0]} / Reason for Leave *
+              </label>
+
+              {/* Icon / Pictogram Quick Buttons */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const txt = LanguageService.translate('LEAVE_SICK');
+                    setFormData({ ...formData, reason: txt });
+                    VoiceFeedbackService.speak(txt);
+                  }}
+                  className={`p-2.5 rounded-xl border flex items-center gap-2 text-xs font-bold transition-all ${
+                    formData.reason === LanguageService.translate('LEAVE_SICK')
+                      ? 'bg-rose-500/20 border-rose-500 text-rose-300 ring-2 ring-rose-500/30'
+                      : 'bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <div className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400">
+                    <Stethoscope className="w-4 h-4" />
+                  </div>
+                  <span className="truncate">{LanguageService.translate('LEAVE_SICK')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const txt = LanguageService.translate('LEAVE_CASUAL');
+                    setFormData({ ...formData, reason: txt });
+                    VoiceFeedbackService.speak(txt);
+                  }}
+                  className={`p-2.5 rounded-xl border flex items-center gap-2 text-xs font-bold transition-all ${
+                    formData.reason === LanguageService.translate('LEAVE_CASUAL')
+                      ? 'bg-amber-500/20 border-amber-500 text-amber-300 ring-2 ring-amber-500/30'
+                      : 'bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400">
+                    <Home className="w-4 h-4" />
+                  </div>
+                  <span className="truncate">{LanguageService.translate('LEAVE_CASUAL')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const txt = LanguageService.translate('LEAVE_ANNUAL');
+                    setFormData({ ...formData, reason: txt });
+                    VoiceFeedbackService.speak(txt);
+                  }}
+                  className={`p-2.5 rounded-xl border flex items-center gap-2 text-xs font-bold transition-all ${
+                    formData.reason === LanguageService.translate('LEAVE_ANNUAL')
+                      ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 ring-2 ring-emerald-500/30'
+                      : 'bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
+                    <Palmtree className="w-4 h-4" />
+                  </div>
+                  <span className="truncate">{LanguageService.translate('LEAVE_ANNUAL')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const txt = LanguageService.translate('LEAVE_EMERGENCY');
+                    setFormData({ ...formData, reason: txt });
+                    VoiceFeedbackService.speak(txt);
+                  }}
+                  className={`p-2.5 rounded-xl border flex items-center gap-2 text-xs font-bold transition-all ${
+                    formData.reason === LanguageService.translate('LEAVE_EMERGENCY')
+                      ? 'bg-purple-500/20 border-purple-500 text-purple-300 ring-2 ring-purple-500/30'
+                      : 'bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <div className="p-1.5 rounded-lg bg-purple-500/20 text-purple-400">
+                    <ShieldAlert className="w-4 h-4" />
+                  </div>
+                  <span className="truncate">{LanguageService.translate('LEAVE_EMERGENCY')}</span>
+                </button>
+              </div>
+
               <textarea
                 value={formData.reason}
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                rows={3}
-                placeholder="Brief description of your leave request..."
+                rows={2}
+                placeholder="किंवा येथे लिहा / Type reason..."
                 className="w-full p-3 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 dark:bg-slate-900 text-black dark:text-white outline-none focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all resize-none"
               />
             </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   ServiceTicketRecord, 
   UserSession, 
@@ -53,6 +54,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
   // Evidence attachments
   const [existingEvidence, setExistingEvidence] = useState<TicketAttachmentRecord[]>([]);
   const [selectedEvidenceIds, setSelectedEvidenceIds] = useState<string[]>([]);
+  useBackNavigation(!!selectedEvidenceIds, () => setSelectedEvidenceIds(null as any), 'selectedEvidenceIds');
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState<boolean>(false);
 

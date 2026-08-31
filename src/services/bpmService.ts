@@ -207,7 +207,7 @@ export class BpmService {
       }
 
       proxyDetails = {
-        asProxy: authCheck.asProxy,
+        asProxy: Boolean(authCheck.asProxy),
         delegatorId: authCheck.delegatorId,
         delegatorName: authCheck.delegatorName,
         delegationId: authCheck.delegationId

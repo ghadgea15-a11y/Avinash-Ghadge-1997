@@ -96,7 +96,7 @@ export class CompliancePolicyEngine {
     activePolicies?: any[];
     skipPersistence?: boolean;
   }): Promise<any[]> {
-    const results = [];
+    const results: any[] = [];
     let isViolated = false;
 
     // Simple rule engine
@@ -143,7 +143,7 @@ export class CompliancePolicyEngine {
       workflowType: 'COMPLIANCE_REVIEW'
     };
 
-    await BpmService.submitRequest(session, companyId, requestData);
+    await (BpmService as any).submitRequest(session, companyId, requestData);
     return true;
   }
 

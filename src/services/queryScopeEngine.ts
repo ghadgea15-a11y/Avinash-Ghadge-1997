@@ -17,8 +17,8 @@ export class QueryScopeEngine {
     // Global overrides for top management and HR/Admin (Official Staff mapped to global)
     const isGlobal = 
       session.role === 'SUPER_ADMIN' || 
-      ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER'].includes(authority) ||
-      (authority === 'A3_OFFICIAL_STAFF' && ['COMPANY_ADMIN', 'HR_ADMIN', 'FINANCE', 'OPERATIONS_OFFICE'].includes(session.role));
+      (authority && ['A0_OWNER', 'A1_DIRECTOR_CEO', 'A2_GENERAL_MANAGER'].includes(authority)) ||
+      (authority === 'A3_OFFICIAL_STAFF' && ['COMPANY_ADMIN', 'HR_ADMIN', 'FINANCE', 'OPERATIONS_OFFICE'].includes(session.role || ''));
 
     if (isGlobal) {
       return constraints; // No additional where clauses, full company scope applies.
@@ -59,7 +59,7 @@ export class QueryScopeEngine {
     }
 
     // Ground Workforce (A7, A8, A9)
-    if (['A7_SKILLED', 'A8_SEMI_SKILLED', 'A9_SUPPORT'].includes(authority) && session.employeeId) {
+    if (authority && ['A7_SKILLED', 'A8_SEMI_SKILLED', 'A9_SUPPORT'].includes(authority) && session.employeeId) {
       if (['EMPLOYEES', 'ATTENDANCE', 'LEAVES', 'PAYROLL', 'REFRESHER_STATUSES'].includes(collectionType)) {
         constraints.push(where('employeeId', '==', session.employeeId));
       } else if (collectionType === 'ASSETS') {
@@ -79,7 +79,7 @@ export class QueryScopeEngine {
         }
       } else if (collectionType === 'APPROVALS') {
         // Approval doesn't have employeeId, it has 'uid'
-        constraints.push(where('uid', '==', session.userId));
+        constraints.push(where('uid', '==', (((session.userId || session.uid || '') || session.uid || '') || session.uid || '') || ''));
       } else if (collectionType === 'CLIENTS') {
         // Ground staff do not need full client records usually, but if needed, we can restrict to their assignedSiteId? 
         // For now, no access to CLIENTS collection directly for A7-A9

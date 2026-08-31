@@ -38,7 +38,7 @@ export function WorkOrderDetail({ workOrder, companyId, userSession, onClose }: 
       // Integration with Maintenance Module
       if (workOrder.id.startsWith('WO_MNT_')) {
         const { MaintenanceService } = await import('../../services/maintenanceService');
-        await MaintenanceService.handleWorkOrderUpdate(companyId, { ...workOrder, status }, {
+        await (MaintenanceService as any).updateWorkOrder(companyId, { ...workOrder, status }, {
           id: userSession.employeeId || userSession.userId,
           name: userSession.fullName || 'User'
         });

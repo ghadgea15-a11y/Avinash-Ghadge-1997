@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { UserSession, CompanyTenant, WorkOrderRecord, WorkOrderStatus } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { Plus, ListTodo, Search, Filter, AlertCircle, Clock, CheckCircle2, ChevronRight } from 'lucide-react';
@@ -17,6 +18,7 @@ export function WorkOrdersScreen({ userSession, activeCompany, isOnline }: WorkO
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'LIST' | 'CREATE' | 'DETAIL'>('LIST');
   const [selectedOrder, setSelectedOrder] = useState<WorkOrderRecord | null>(null);
+  useBackNavigation(!!selectedOrder, () => setSelectedOrder(null as any), 'selectedOrder');
 
   useEffect(() => {
     if (!userSession || !activeCompany) return;

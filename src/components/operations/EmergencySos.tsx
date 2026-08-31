@@ -59,8 +59,8 @@ export function EmergencySos({ session, sites, employees, selectedSiteId }: Emer
       console.warn("Failed to get live location, falling back to site origin.", e);
       const site = sites.find(s => s.id === selectedSiteId);
       if (site) {
-         latitude = site.latitude || site.geoCoordinates?.latitude || 19.0760;
-         longitude = site.longitude || site.geoCoordinates?.longitude || 72.8777;
+         latitude = site.latitude || (site as any).geoCoordinates?.latitude || 19.0760;
+         longitude = site.longitude || (site as any).geoCoordinates?.longitude || 72.8777;
       }
     }
 

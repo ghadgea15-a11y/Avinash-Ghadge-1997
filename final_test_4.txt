@@ -1,0 +1,4 @@
+src/components/screens/SuperAdminAdminsScreen.tsx(64,33): error TS1109: Expression expected.
+src/components/screens/SuperAdminAdminsScreen.tsx(64,139): error TS1005: ':' expected.
+src/components/screens/SuperAdminAdminsScreen.tsx(65,37): error TS1109: Expression expected.
+src/components/screens/SuperAdminAdminsScreen.tsx(65,149): error TS1005: ':' expected.

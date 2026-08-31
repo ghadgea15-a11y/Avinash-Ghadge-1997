@@ -1,6 +1,8 @@
 import { Edit3 } from "lucide-react";
 import { Pagination } from "../common/Pagination";
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
+import { SessionManager } from '../../services/sessionManager';
 import { 
   Building2, 
   MapPin, 
@@ -77,11 +79,17 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
   const paginatedMemberships = filteredMemberships.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   
   const [editingBranch, setEditingBranch] = useState<Partial<BranchRecord> | null>(null);
+  useBackNavigation(!!editingBranch, () => setEditingBranch(null as any), 'editingBranch');
   const [editingSite, setEditingSite] = useState<Partial<SiteRecord> | null>(null);
+  useBackNavigation(!!editingSite, () => setEditingSite(null as any), 'editingSite');
   const [editingDept, setEditingDept] = useState<Partial<DepartmentRecord> | null>(null);
+  useBackNavigation(!!editingDept, () => setEditingDept(null as any), 'editingDept');
   const [editingDesig, setEditingDesig] = useState<Partial<DesignationRecord> | null>(null);
+  useBackNavigation(!!editingDesig, () => setEditingDesig(null as any), 'editingDesig');
   const [editingVendor, setEditingVendor] = useState<Partial<VendorRecord> | null>(null);
+  useBackNavigation(!!editingVendor, () => setEditingVendor(null as any), 'editingVendor');
   const [editingCostCentre, setEditingCostCentre] = useState<Partial<CostCentreRecord> | null>(null);
+  useBackNavigation(!!editingCostCentre, () => setEditingCostCentre(null as any), 'editingCostCentre');
 
   const companyId = activeCompany?.companyId || userSession.companyId;
 
@@ -144,12 +152,16 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
   const handleSaveBranch = async () => {
     if (!editingBranch?.name || !editingBranch?.code) return;
     const bRecord: BranchRecord = {
-      companyId: companyId, id: editingBranch.id || `BR-${Date.now().toString(36)}`,
+      companyId: companyId,
+      id: editingBranch.id || `BR-${Date.now().toString(36)}`,
       name: editingBranch.name,
       code: editingBranch.code.toUpperCase(),
       city: editingBranch.city || 'Mumbai',
       address: editingBranch.address || 'HQ',
-      status: editingBranch.status || 'ACTIVE'
+      status: editingBranch.status || 'ACTIVE',
+      regionId: editingBranch.regionId || 'default-region',
+      createdAt: editingBranch.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     const success = await FirestoreService.saveBranch(companyId, bRecord);
@@ -174,14 +186,18 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
     if (!editingSite?.name || !editingSite?.branchId) return;
     const sRecord: SiteRecord = {
       id: editingSite.id || `SITE-${Date.now().toString(36)}`,
+      companyId: companyId,
       name: editingSite.name,
+      code: editingSite.code || editingSite.name.toUpperCase().replace(/\s+/g, '_'),
       branchId: editingSite.branchId,
       clientName: editingSite.clientName || 'Corporate Client',
       address: editingSite.address || 'Site Premises',
       status: editingSite.status || 'ACTIVE',
       latitude: editingSite.latitude,
       longitude: editingSite.longitude,
-      geofenceRadius: editingSite.geofenceRadius || 100
+      geofenceRadius: editingSite.geofenceRadius || 100,
+      createdAt: editingSite.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     const success = await FirestoreService.saveSite(companyId, sRecord);
@@ -205,10 +221,14 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
   const handleSaveDept = async () => {
     if (!editingDept?.name || !editingDept?.code) return;
     const dRecord: DepartmentRecord = {
-      companyId: companyId, id: editingDept.id || `DEPT-${Date.now().toString(36)}`,
+      companyId: companyId,
+      id: editingDept.id || `DEPT-${Date.now().toString(36)}`,
       name: editingDept.name,
       code: editingDept.code.toUpperCase(),
-      description: editingDept.description || ''
+      description: editingDept.description || '',
+      status: editingDept.status || 'ACTIVE',
+      createdAt: editingDept.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     const success = await FirestoreService.saveDepartment(companyId, dRecord);

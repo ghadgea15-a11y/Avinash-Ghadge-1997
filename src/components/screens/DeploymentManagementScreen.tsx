@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { CompanyTenant, UserSession, DeploymentRecord, ClientRecord, EmployeeRecord, SiteRecord } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
 import { Layers, Plus, MapPin, Edit } from 'lucide-react';
@@ -19,6 +20,7 @@ export const DeploymentManagementScreen: React.FC<Props> = ({ userSession, activ
   
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  useBackNavigation(!!showCreate, () => setShowCreate(null as any), 'showCreate');
   
   const [formData, setFormData] = useState<Partial<DeploymentRecord>>({
     employeeId: '', employeeName: '', siteId: '', siteName: '', clientId: '', clientName: '',

@@ -1,3 +1,4 @@
+import { MaterialAnomalyDetector, VehicleAnomalyCheckResult } from '../../services/materialAnomalyDetector';
 import { Pagination } from '../common/Pagination';
 import { IncidentResolutionModal } from './IncidentResolutionModal';
 import { IncidentWorkflowEngine } from '../../services/incidentWorkflowEngine';
@@ -7,6 +8,7 @@ import { EmergencySos } from '../operations/EmergencySos';
 import { GpsTracking } from '../operations/GpsTracking';
 import { ArrowRightLeft } from 'lucide-react';
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   ShieldAlert, 
   QrCode, 
@@ -107,6 +109,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
   const [materials, setMaterials] = useState<MaterialMovementRecord[]>([]);
   const [dailySiteLogs, setDailySiteLogs] = useState<DailySiteLogRecord[]>([]);
   const [editingLog, setEditingLog] = useState<DailySiteLogRecord | null>(null);
+  useBackNavigation(!!editingLog, () => setEditingLog(null as any), 'editingLog');
   
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [statusMsg, setStatusMsg] = useState<{ type: 'SUCCESS' | 'ERROR' | 'INFO'; text: string } | null>(null);
@@ -120,17 +123,20 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
   // Filters
   const [selectedSiteId, setSelectedSiteId] = useState<string>('ALL');
+  useBackNavigation(!!selectedSiteId, () => setSelectedSiteId(null as any), 'selectedSiteId');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  useBackNavigation(!!selectedDate, () => setSelectedDate(null as any), 'selectedDate');
   useEffect(() => { setCurrentPage(1); }, [activeTab, searchQuery, selectedSiteId, selectedDate]);
 
   // Modals & Form States
   // 1. Checkpoint Modal
   const [isCheckpointModalOpen, setIsCheckpointModalOpen] = useState<boolean>(false);
   const [editingCheckpoint, setEditingCheckpoint] = useState<PatrolCheckpointRecord | null>(null);
+  useBackNavigation(!!editingCheckpoint, () => setEditingCheckpoint(null as any), 'editingCheckpoint');
   const [checkpointForm, setCheckpointForm] = useState<{
     id?: string;
     siteId: string;
@@ -151,15 +157,18 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
   const [isPatrolPlanModalOpen, setIsPatrolPlanModalOpen] = useState<boolean>(false);
   const [selectedPlanForEdit, setSelectedPlanForEdit] = useState<PatrolPlanRecord | null>(null);
+  useBackNavigation(!!selectedPlanForEdit, () => setSelectedPlanForEdit(null as any), 'selectedPlanForEdit');
 
   const [isTourRunnerModalOpen, setIsTourRunnerModalOpen] = useState<boolean>(false);
   const [activeTour, setActiveTour] = useState<PatrolTourRecord | null>(null);
 
   const [isTourDetailModalOpen, setIsTourDetailModalOpen] = useState<boolean>(false);
   const [selectedTourForDetail, setSelectedTourForDetail] = useState<PatrolTourRecord | null>(null);
+  useBackNavigation(!!selectedTourForDetail, () => setSelectedTourForDetail(null as any), 'selectedTourForDetail');
 
   const [isCheckpointQrModalOpen, setIsCheckpointQrModalOpen] = useState<boolean>(false);
   const [selectedCheckpointForQr, setSelectedCheckpointForQr] = useState<PatrolCheckpointRecord | null>(null);
+  useBackNavigation(!!selectedCheckpointForQr, () => setSelectedCheckpointForQr(null as any), 'selectedCheckpointForQr');
 
   // 2. Incident Modal
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState<boolean>(false);
@@ -219,10 +228,14 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     driverName: '', 
     driverPhone: '' 
   });
+  const [vehicleAnomalyResult, setVehicleAnomalyResult] = useState<VehicleAnomalyCheckResult>({ isAnomaly: false, todayTripCount: 0, recentTrips: [] });
+  const [overrideVehicleAnomaly, setOverrideVehicleAnomaly] = useState<boolean>(false);
+  const [vehicleAnomalyOverrideReason, setVehicleAnomalyOverrideReason] = useState<string>('');
 
   // 5. Visitor Check-Out Modal (Gate Pass Return Validation)
   const [isVisitorCheckoutModalOpen, setIsVisitorCheckoutModalOpen] = useState<boolean>(false);
   const [selectedVisitorForCheckout, setSelectedVisitorForCheckout] = useState<VisitorLogRecord | null>(null);
+  useBackNavigation(!!selectedVisitorForCheckout, () => setSelectedVisitorForCheckout(null as any), 'selectedVisitorForCheckout');
   const [visitorCheckoutForm, setVisitorCheckoutForm] = useState<{
     badgeReturned: boolean;
     notes: string;
@@ -336,6 +349,29 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
       }
     }
   }, [patrolTours]);
+
+  // Real-time Vehicle & Driver Frequency Anomaly Screening
+  useEffect(() => {
+    if (!isMaterialModalOpen) {
+      setVehicleAnomalyResult({ isAnomaly: false, todayTripCount: 0, recentTrips: [] });
+      setOverrideVehicleAnomaly(false);
+      setVehicleAnomalyOverrideReason('');
+      return;
+    }
+
+    const check = MaterialAnomalyDetector.checkFrequencyAnomaly({
+      vehicleNumber: materialForm.vehicleNumber,
+      driverPhone: materialForm.driverPhone,
+      driverName: materialForm.driverName,
+      siteId: materialForm.siteId,
+      allMaterialLogs: materials
+    });
+
+    setVehicleAnomalyResult(check);
+    if (!check.isAnomaly) {
+      setOverrideVehicleAnomaly(false);
+    }
+  }, [materialForm.vehicleNumber, materialForm.driverPhone, materialForm.driverName, materialForm.siteId, materials, isMaterialModalOpen]);
 
   // ----------------------------------------------------
   // HANDLERS: CHECKPOINTS & PATROL PLANS & TOURS
@@ -1055,6 +1091,14 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     const siteObj = sites.find(s => s.id === finalSiteId);
     const gatePassNumber = materialForm.gatePassNumber || `GP-${Math.floor(1000 + Math.random() * 9000)}`;
 
+    if (vehicleAnomalyResult.isAnomaly && !overrideVehicleAnomaly) {
+      setStatusMsg({
+        type: 'ERROR',
+        text: `Cannot generate gate pass: Suspicious vehicle frequency detected (${vehicleAnomalyResult.warningMessage}). Please check anomaly warnings or provide supervisor override.`
+      });
+      return;
+    }
+
     const newMat: MaterialMovementRecord = {
       id: `MAT-${Date.now()}`,
       companyId,
@@ -1074,6 +1118,14 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
       driverName: materialForm.driverName.trim(),
       driverPhone: materialForm.driverPhone.trim(),
       status: 'PENDING_APPROVAL',
+      isAnomalyFlagged: vehicleAnomalyResult.isAnomaly,
+      anomalySeverity: vehicleAnomalyResult.severity,
+      anomalyType: vehicleAnomalyResult.anomalyType,
+      anomalyReason: vehicleAnomalyResult.warningMessage,
+      anomalyOverridden: overrideVehicleAnomaly,
+      anomalyOverrideReason: vehicleAnomalyOverrideReason || undefined,
+      anomalyOverriddenBy: overrideVehicleAnomaly ? userSession.employeeId : undefined,
+      todayTripSequence: vehicleAnomalyResult.todayTripCount,
       createdAt: new Date().toISOString(),
       createdBy: userSession.employeeId
     };
@@ -2322,6 +2374,17 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                           RGP (Returnable)
                         </span>
                       )}
+
+                      {m.isAnomalyFlagged && (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1 ${
+                          m.anomalySeverity === 'CRITICAL' ? 'bg-rose-600 text-white animate-pulse' :
+                          m.anomalySeverity === 'HIGH' ? 'bg-amber-500 text-white' :
+                          'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300'
+                        }`}>
+                          <AlertTriangle className="w-3 h-3" />
+                          Trip #{m.todayTripSequence || 'Multi'} • {m.anomalyType === 'RAPID_TURNAROUND' ? 'Rapid Turnaround' : 'High Frequency'}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1.5">
@@ -2354,6 +2417,16 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                       </p>
                     )}
                     <p>Created: {new Date(m.createdAt).toLocaleString()}</p>
+                    {m.isAnomalyFlagged && (
+                      <div className="mt-1 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-[10px] text-amber-900 dark:text-amber-200">
+                        <p className="font-semibold">{m.anomalyReason}</p>
+                        {m.anomalyOverridden && (
+                          <p className="text-emerald-700 dark:text-emerald-400 mt-0.5 font-mono">
+                            ✓ Override Reason: {m.anomalyOverrideReason || 'Supervisor Authorized'} (Approved by {m.anomalyOverriddenBy})
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {m.status === 'PENDING_APPROVAL' && isManager && (
@@ -2490,7 +2563,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                               fireSafetyOk: log.checklistData?.find((c: any) => c.item === 'Fire & Emergency Systems')?.passed || false,
                               turnoutOk: log.checklistData?.find((c: any) => c.item === 'Guard Turnout & Grooming')?.passed || false,
                               score: log.score || 0,
-                              notes: log.notes
+                              notes: log.notes || ''
                             });
                             setIsInspectionModalOpen(true);
                           } else {
@@ -2503,7 +2576,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                               radiosTransferred: log.inventoryStatus?.radiosTransferred || false,
                               logbooksTransferred: log.inventoryStatus?.logbooksTransferred || false,
                               musterVerified: log.inventoryStatus?.musterVerified || false,
-                              notes: log.notes
+                              notes: log.notes || ''
                             });
                             setIsHandoverModalOpen(true);
                           }
@@ -3017,6 +3090,94 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   required
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Driver Name</label>
+                  <input
+                    type="text"
+                    value={materialForm.driverName}
+                    onChange={e => setMaterialForm({ ...materialForm, driverName: e.target.value })}
+                    placeholder="e.g. Rajesh Patil"
+                    className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'}`}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Driver Phone / Mobile</label>
+                  <input
+                    type="tel"
+                    value={materialForm.driverPhone}
+                    onChange={e => setMaterialForm({ ...materialForm, driverPhone: e.target.value })}
+                    placeholder="e.g. 9876543210"
+                    className={`w-full mt-1 p-2.5 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-black'}`}
+                  />
+                </div>
+              </div>
+
+              {/* REAL-TIME VEHICLE & DRIVER ANOMALY SCREENING ALERT */}
+              {vehicleAnomalyResult.isAnomaly && (
+                <div className={`p-3.5 rounded-2xl border ${
+                  vehicleAnomalyResult.severity === 'CRITICAL' ? 'bg-rose-50 border-rose-300 dark:bg-rose-950/40 dark:border-rose-800 text-rose-900 dark:text-rose-200' :
+                  vehicleAnomalyResult.severity === 'HIGH' ? 'bg-amber-50 border-amber-300 dark:bg-amber-950/40 dark:border-amber-800 text-amber-900 dark:text-amber-200' :
+                  'bg-yellow-50 border-yellow-300 dark:bg-yellow-950/40 dark:border-yellow-800 text-yellow-900 dark:text-yellow-200'
+                } space-y-2.5`}>
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                      vehicleAnomalyResult.severity === 'CRITICAL' ? 'text-rose-600 animate-bounce' : 'text-amber-600'
+                    }`} />
+                    <div className="space-y-1 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded-full bg-rose-600 text-white">
+                          ANOMALY FLAGGED: {vehicleAnomalyResult.anomalyType}
+                        </span>
+                        <span className="text-[10px] font-semibold">
+                          Today's Trip #{vehicleAnomalyResult.todayTripCount}
+                        </span>
+                      </div>
+                      <p className="font-medium leading-relaxed">{vehicleAnomalyResult.warningMessage}</p>
+                    </div>
+                  </div>
+
+                  {/* Recent Trips Log */}
+                  {vehicleAnomalyResult.recentTrips.length > 0 && (
+                    <div className="bg-white/60 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 text-[11px]">
+                      <p className="font-bold text-slate-700 dark:text-slate-300">Previous Gate Passes Today:</p>
+                      {vehicleAnomalyResult.recentTrips.map((trip, idx) => (
+                        <div key={trip.id || idx} className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                          <span>Pass #{trip.gatePassNumber} ({trip.movementType}): {trip.materialDescription}</span>
+                          <span className="font-mono">{new Date(trip.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Supervisor Override Mechanism */}
+                  <div className="pt-1 border-t border-rose-200 dark:border-rose-900/50 space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={overrideVehicleAnomaly}
+                        onChange={e => setOverrideVehicleAnomaly(e.target.checked)}
+                        className="w-4 h-4 text-amber-600 rounded"
+                      />
+                      <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                        Supervisor Authorization Override (Acknowledge high frequency anomaly)
+                      </span>
+                    </label>
+
+                    {overrideVehicleAnomaly && (
+                      <input
+                        type="text"
+                        value={vehicleAnomalyOverrideReason}
+                        onChange={e => setVehicleAnomalyOverrideReason(e.target.value)}
+                        placeholder="Reason for frequent trip (e.g., Authorized shuttle / Multiple batch delivery)"
+                        className={`w-full p-2 rounded-xl text-xs border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-black'}`}
+                        required
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setIsMaterialModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400">Cancel</button>

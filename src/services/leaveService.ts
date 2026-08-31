@@ -24,7 +24,8 @@ export class LeaveService {
     isHalfDay: boolean,
     weeklyOffDays: number[], // 0 = Sunday, 1 = Monday...
     holidays: HolidayRecord[],
-    policy: LeavePolicyRecord
+    policy: LeavePolicyRecord,
+    employeeRegionId?: string
   ): number {
     if (isHalfDay) return 0.5;
 
@@ -32,14 +33,16 @@ export class LeaveService {
     const end = new Date(endDate);
     let count = 0;
 
-    const holidayDates = new Set(holidays.map(h => h.date));
-
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dateStr = d.toISOString().split('T')[0];
       const dayOfWeek = d.getDay();
 
       const isWeeklyOff = weeklyOffDays.includes(dayOfWeek);
-      const isHoliday = holidayDates.has(dateStr);
+      const isHoliday = holidays.some(h => {
+        if (h.date !== dateStr) return false;
+        if (!h.applicableRegions || h.applicableRegions.length === 0) return true; // Global holiday
+        return employeeRegionId && h.applicableRegions.includes(employeeRegionId);
+      });
 
       if (isWeeklyOff || isHoliday) {
         // Only count if policy explicitly says to include non-working days
@@ -202,7 +205,40 @@ export class LeaveService {
   }
 
   /**
-   * Processes end-of-month accruals for all employees
+   * Server-Authoritative Leave Accruals Processing
+   * Calls the centralized server API to compute and persist accruals and auditable ledger records.
+   */
+  static async triggerServerAccrualProcess(
+    companyId: string,
+    month: number = new Date().getMonth() + 1,
+    year: number = new Date().getFullYear(),
+    actor: { id: string; name: string } = { id: 'SYSTEM', name: 'Admin' }
+  ): Promise<{ success: boolean; processedCount: number }> {
+    try {
+      const res = await fetch('/api/leave/process-accruals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId,
+          month,
+          year,
+          actorId: actor.id,
+          actorName: actor.name
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Server accrual processing failed');
+      }
+      return data;
+    } catch (err) {
+      console.error('[LeaveService] Error in triggerServerAccrualProcess:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Processes end-of-month accruals for all employees (synchronous helper)
    */
   static processAccruals(
     balance: LeaveBalanceRecord, 

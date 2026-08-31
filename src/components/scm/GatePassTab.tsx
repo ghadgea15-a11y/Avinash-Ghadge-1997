@@ -122,9 +122,11 @@ function CreateGatePassModal({ company, session, onClose, onSuccess }: any) {
     
     const gp: GatePassRecord = {
       id: `GP-${Date.now()}`,
+      referenceNo: `GP-${Math.floor(Math.random()*10000)}`,
       companyId: company.companyId,
       passNumber: `GP-${Math.floor(Math.random()*10000)}`,
       passType,
+      type: passType,
       status: 'SUBMITTED',
       sourceLocationId: sourceId || undefined,
       destinationLocationId: destId || undefined,
@@ -136,10 +138,14 @@ function CreateGatePassModal({ company, session, onClose, onSuccess }: any) {
       purpose: 'Material movement',
       createdAt: new Date().toISOString(),
       lines: lines.map((l: any) => {
-        const item = items.find(i => i.id === l.itemId)!;
+        const item = items.find(i => i.id === l.itemId);
         return {
-          itemId: item.id, itemCode: item.itemCode, itemName: item.itemName,
-          unit: item.unit, quantity: l.quantity
+          itemId: item?.id || l.itemId,
+          itemCode: item?.itemCode,
+          itemName: item?.itemName || '',
+          unit: item?.unit,
+          uom: item?.unit || 'NOS',
+          quantity: l.quantity
         };
       })
     };

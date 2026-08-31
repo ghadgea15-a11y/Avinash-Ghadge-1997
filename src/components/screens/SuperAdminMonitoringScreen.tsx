@@ -192,7 +192,7 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
           <div>
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl font-bold font-mono text-cyan-500">
-                {metrics ? `${metrics.storageUsedGb.toFixed(1)} GB` : '--'}
+                {metrics ? `${(metrics.storageUsedGb || 0).toFixed(1)} GB` : '--'}
               </span>
               <span className="text-[10px] text-slate-400">allocated volume</span>
             </div>

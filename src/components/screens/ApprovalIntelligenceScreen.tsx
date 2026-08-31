@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { UserSession } from '../../types';
 import { BpmApprovalInstance } from '../../types/bpm';
 import { BpmService } from '../../services/bpmService';
@@ -13,6 +14,7 @@ export const ApprovalIntelligenceScreen: React.FC<Props> = ({ session }) => {
   const [approvals, setApprovals] = useState<BpmApprovalInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedInstance, setSelectedInstance] = useState<BpmApprovalInstance | null>(null);
+  useBackNavigation(!!selectedInstance, () => setSelectedInstance(null as any), 'selectedInstance');
   const [filter, setFilter] = useState<string>('ALL'); // ALL, PENDING_APPROVAL, APPROVED, REJECTED, OVERDUE, ESCALATED, DELEGATED, CANCELLED
 
   useEffect(() => {

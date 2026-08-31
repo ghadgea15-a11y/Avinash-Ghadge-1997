@@ -53,22 +53,23 @@ export interface OperationalAnomaly {
   severity: OperationalAnomalySeverity;
   title: string;
   description: string;
-  entityLevel: 'COMPANY' | 'REGION' | 'BRANCH' | 'SITE' | 'DEPARTMENT';
-  entityId: string;
-  entityName: string;
+  entityLevel?: 'COMPANY' | 'REGION' | 'BRANCH' | 'SITE' | 'DEPARTMENT';
+  entityId?: string;
+  entityName?: string;
   regionId?: string;
   branchId?: string;
   siteId?: string;
   departmentId?: string;
-  metricName: string;
-  currentValue: number;
-  baselineValue: number;
-  deviationPercent: number;
-  financialImpact: number;
-  rootCause: string;
-  recommendedAction: string;
-  sourceTransactionCount: number;
-  sourceTransactions: OperationalSourceTransaction[];
+  metricName?: string;
+  currentValue?: number;
+  baselineValue?: number;
+  deviationPercent?: number;
+  financialImpact?: number;
+  rootCause?: string;
+  recommendedAction?: string;
+  sourceTransactionCount?: number;
+  sourceTransactions?: OperationalSourceTransaction[];
+  metricsContext?: Record<string, any>;
   timestamp: string;
 }
 

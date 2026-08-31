@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { CompanyTenant, UserSession, EmployeeRecord, SalaryStructureRecord, SalaryProfileRecord, PayrollCycleRecord, PayrollRecord, StatutoryConfigRecord, PtSlab } from '../../types';
 import { Calculator, FileText, Settings, Users, CheckCircle, Clock, Search, Plus, Play, FileCheck, Download, ShieldCheck, Landmark, Edit2, Save, X } from 'lucide-react';
 import { PayslipModal } from './PayslipModal';
@@ -25,22 +26,30 @@ export const PayrollCompensationScreen: React.FC<Props> = ({ userSession, active
   // Statutory configs state
   const [statutoryConfigs, setStatutoryConfigs] = useState<StatutoryConfigRecord[]>([]);
   const [selectedStatutoryState, setSelectedStatutoryState] = useState<string>('MAHARASHTRA');
+  useBackNavigation(!!selectedStatutoryState, () => setSelectedStatutoryState(null as any), 'selectedStatutoryState');
   const [editingStatutory, setEditingStatutory] = useState<StatutoryConfigRecord | null>(null);
+  useBackNavigation(!!editingStatutory, () => setEditingStatutory(null as any), 'editingStatutory');
   const [isSavingStatutory, setIsSavingStatutory] = useState(false);
 
   // Payslips state
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
+  useBackNavigation(!!selectedCycleId, () => setSelectedCycleId(null as any), 'selectedCycleId');
   const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
   const [viewingPayslip, setViewingPayslip] = useState<PayrollRecord | null>(null);
 
   // New Structure State
   const [showStructureModal, setShowStructureModal] = useState(false);
+  useBackNavigation(!!showStructureModal, () => setShowStructureModal(null as any), 'showStructureModal');
   const [editingStructure, setEditingStructure] = useState<Partial<SalaryStructureRecord>>({});
+  useBackNavigation(!!editingStructure, () => setEditingStructure(null as any), 'editingStructure');
 
   // Run Cycle State
   const [showRunModal, setShowRunModal] = useState(false);
+  useBackNavigation(!!showRunModal, () => setShowRunModal(null as any), 'showRunModal');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  useBackNavigation(!!selectedMonth, () => setSelectedMonth(null as any), 'selectedMonth');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  useBackNavigation(!!selectedYear, () => setSelectedYear(null as any), 'selectedYear');
 
   useEffect(() => {
     if (!activeCompany) return;
@@ -750,7 +759,14 @@ export const PayrollCompensationScreen: React.FC<Props> = ({ userSession, active
                         <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                           {payrollRecords.map(record => (
                             <tr key={record.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                              <td className="p-4 font-medium text-slate-900 dark:text-white">{record.employeeName}</td>
+                              <td className="p-4 font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                                <span>{record.employeeName}</span>
+                                {record.calculations?.isEpsExempt && (
+                                  <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-300/40 rounded-full" title={record.calculations.epsExemptionFlag || 'STAT-AGE-58: EPS Exemption Applied (Age >= 58)'}>
+                                    EPS Exempt
+                                  </span>
+                                )}
+                              </td>
                               <td className="p-4">{record.calculations.payableDays}</td>
                               <td className="p-4 text-emerald-600">₹{record.calculations.totalGross.toLocaleString()}</td>
                               <td className="p-4 text-rose-600">₹{record.calculations.totalDeductions.toLocaleString()}</td>

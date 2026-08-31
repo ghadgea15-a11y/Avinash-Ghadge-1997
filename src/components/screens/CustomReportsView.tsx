@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { Download, Filter, FileText, Plus, CheckCircle2, ChevronRight, Activity, Calendar } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { UserSession, CompanyTenant } from '../../types';
@@ -15,6 +16,7 @@ interface CustomReportsViewProps {
 export const CustomReportsView: React.FC<CustomReportsViewProps> = ({ userSession, activeCompany }) => {
   const { isDark } = useTheme();
   const [selectedModule, setSelectedModule] = useState<string>('ATTENDANCE');
+  useBackNavigation(!!selectedModule, () => setSelectedModule(null as any), 'selectedModule');
   const [reportName, setReportName] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewData, setPreviewData] = useState<any[]>([]);

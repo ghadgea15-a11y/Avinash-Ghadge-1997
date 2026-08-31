@@ -48,8 +48,8 @@ export class BpmDelegationService {
 
       for (const docSnap of snap.docs) {
         const del = docSnap.data() as any;
-        const start = new Date(del.startAt || del.startDate);
-        const end = new Date(del.endAt || del.endDate);
+        const start = new Date(del.startAt || del.startAt);
+        const end = new Date(del.endAt || del.endAt);
 
         if (now >= start && now <= end) {
           if (approvers.includes(del.delegatorUserId) || (del.delegatorRole && approvers.includes(del.delegatorRole))) {
@@ -86,8 +86,8 @@ export class BpmDelegationService {
       for (const docSnap of snap.docs) {
         const del = docSnap.data() as any;
         if (approverUserIds.includes(del.delegatorUserId)) {
-          const start = new Date(del.startAt || del.startDate);
-          const end = new Date(del.endAt || del.endDate);
+          const start = new Date(del.startAt || del.startAt);
+          const end = new Date(del.endAt || del.endAt);
           if (now >= start && now <= end) {
             if (this.matchesScope(del.scope, instance)) {
               activeProxies.push({ id: docSnap.id, ...del });
@@ -152,7 +152,7 @@ export class BpmDelegationService {
     
     snapshot.forEach(docSnap => {
       const data = docSnap.data() as ProxyDelegation;
-      if (data.endDate && new Date(data.endDate) < now) {
+      if (data.endAt && new Date(data.endAt) < now) {
         batch.update(docSnap.ref, { status: 'EXPIRED' });
       }
     });
@@ -187,10 +187,10 @@ export class BpmDelegationService {
       delegatorName: delegationData.delegatorName,
       delegateUserId: delegationData.delegateId,
       delegateName: delegationData.delegateName,
-      startDate: delegationData.startDate,
-      endDate: delegationData.endDate,
+      startAt: delegationData.startAt,
+      endAt: delegationData.endAt,
       scope: delegationData.scope,
-      status: 'ACTIVE',
+      status: 'ACTIVE', policyVersion: 1,
       reason: delegationData.reason,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -200,10 +200,11 @@ export class BpmDelegationService {
     return delegation;
   }
   
-  static async revokeDelegation(session: UserSession, delegationId: string): Promise<any> {
+  static async revokeDelegation(session: UserSession, delegationId: string, revokeReason?: string): Promise<any> {
     const ref = doc(db, 'companies', session.companyId, 'bpm_delegations', delegationId);
     await updateDoc(ref, {
       status: 'REVOKED',
+      revokeReason: revokeReason || 'Revoked by user',
       updatedAt: new Date().toISOString()
     });
   }

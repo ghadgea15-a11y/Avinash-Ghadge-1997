@@ -268,7 +268,7 @@ export class HistoricalTraceabilityEngine {
         const snap = await getDoc(siteRef);
         if (snap.exists()) {
           const site = snap.data() as SiteRecord;
-          entityDisplayName = site.name || site.siteName || cleanEntityId;
+          entityDisplayName = site.name || (site as any).siteName || cleanEntityId;
           entityIdentifier = site.id || cleanEntityId;
           primaryCreatedAt = site.createdAt || primaryCreatedAt;
           currentStatus = site.status || 'ACTIVE';
@@ -808,7 +808,7 @@ export class HistoricalTraceabilityEngine {
         siteSnap.docs.forEach(docSnap => {
           const site = docSnap.data() as SiteRecord;
           const siteAny = site as any;
-          const name = site.name || site.siteName || 'Unnamed Site';
+          const name = site.name || (site as any).siteName || 'Unnamed Site';
           const code = site.id || docSnap.id;
           if (matches([name, code, siteAny.city, site.address])) {
             results.push({

@@ -9,6 +9,15 @@ const isProduction = NODE_ENV === 'production';
 import { initializeFirebaseAdmin, hasAdminCredentials } from './src/server/firebaseAdmin';
 import { authRoutes, verifySuperAdminMiddleware } from './src/server/authRoutes';
 import { BpmEscalationAdminService } from './src/server/bpmEscalationAdminService';
+import { calculatePayrollHandler } from './src/server/payrollApi';
+import { processLeaveAccrualsHandler } from './src/server/leaveAccrualApi';
+import { punchInHandler, punchOutHandler, validateGeofenceHandler } from './src/server/attendanceApi';
+import { scanPayrollAnomaliesHandler } from './src/server/deepMLPayrollEngine';
+import { syncBigQueryCdcHandler, queryBigQueryWarehouseHandler } from './src/server/bigQueryCdcPipelineEngine';
+import { ingestVaptReportHandler, evaluateSoc2Handler } from './src/server/vaptSoc2ComplianceEngine';
+import { triggerBackupHandler, simulateRestoreHandler, getDrMetricsHandler } from './src/server/drGovernanceService';
+import { ingestA11yScanHandler, getA11yMetricsHandler } from './src/server/accessibilityGovernanceEngine';
+import { registerDocumentHashHandler, verifyDocumentHashHandler } from './src/server/cryptographicDocumentEngine';
 
 async function startServer() {
   const app = express();
@@ -49,9 +58,27 @@ async function startServer() {
   });
 
   // ============================================================
-  // BPM ESCALATION SERVER-AUTHORITATIVE ENDPOINTS
+  // SERVER-AUTHORITATIVE ENTERPRISE MODULES
   // ============================================================
   
+  app.post('/api/payroll/calculate', calculatePayrollHandler);
+  app.post('/api/payroll/ml-scan', scanPayrollAnomaliesHandler);
+  app.post('/api/leave/process-accruals', processLeaveAccrualsHandler);
+  app.post('/api/attendance/punch-in', punchInHandler);
+  app.post('/api/attendance/punch-out', punchOutHandler);
+  app.post('/api/attendance/validate-geofence', validateGeofenceHandler);
+  app.post('/api/analytics/bigquery/sync', syncBigQueryCdcHandler);
+  app.post('/api/analytics/bigquery/query', queryBigQueryWarehouseHandler);
+  app.post('/api/security/vapt-ingest', ingestVaptReportHandler);
+  app.post('/api/security/soc2-eval', evaluateSoc2Handler);
+  app.post('/api/dr/backup', triggerBackupHandler);
+  app.post('/api/dr/restore-simulation', simulateRestoreHandler);
+  app.get('/api/dr/metrics/:companyId', getDrMetricsHandler);
+  app.post('/api/compliance/a11y-ingest', ingestA11yScanHandler);
+  app.get('/api/compliance/a11y-metrics/:companyId', getA11yMetricsHandler);
+  app.post('/api/documents/crypto/register-hash', registerDocumentHashHandler);
+  app.post('/api/documents/crypto/verify-hash', verifyDocumentHashHandler);
+
   // This endpoint is intended to be triggered by Google Cloud Scheduler
   app.post('/api/cron/bpm-escalation', async (req: Request, res: Response) => {
     try {

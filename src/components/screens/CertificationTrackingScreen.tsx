@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { useTheme } from '../../context/ThemeContext';
 import { PhaseAScreen, UserSession, CompanyTenant, EmployeeCertificationRecord, EmployeeRecord } from '../../types';
 import { CertificationTrackingService } from '../../services/certificationTrackingService';
@@ -36,6 +37,7 @@ export const CertificationTrackingScreen: React.FC<{
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
   const [selectedCert, setSelectedCert] = useState<EmployeeCertificationRecord | null>(null);
+  useBackNavigation(!!selectedCert, () => setSelectedCert(null as any), 'selectedCert');
 
   // New Cert State
   const [newCert, setNewCert] = useState<Partial<EmployeeCertificationRecord>>({
@@ -47,7 +49,9 @@ export const CertificationTrackingScreen: React.FC<{
     isMandatory: true,
   });
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  useBackNavigation(!!selectedEmployeeId, () => setSelectedEmployeeId(null as any), 'selectedEmployeeId');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  useBackNavigation(!!selectedFile, () => setSelectedFile(null as any), 'selectedFile');
 
   useEffect(() => {
     if (activeCompany?.companyId) {

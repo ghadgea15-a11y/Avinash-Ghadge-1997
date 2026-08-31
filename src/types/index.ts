@@ -226,6 +226,51 @@ export interface AppNotification { [key: string]: any; }
 export interface PatrolCheckpointRecord { [key: string]: any; }
 export interface PatrolLogRecord { [key: string]: any; }
 export interface VisitorLogRecord { [key: string]: any; }
+
+export interface VisitorWatchlistRecord {
+  id: string;
+  companyId: string;
+  assignedRegionId?: string;
+  assignedBranchId?: string;
+  siteId?: string;
+  siteName?: string;
+  visitorName: string;
+  visitorPhone: string;
+  idNumber?: string;
+  vehicleNumber?: string;
+  reason: string;
+  severity: 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  status: 'ACTIVE' | 'REVOKED';
+  incidentReportId?: string;
+  incidentCategory?: string;
+  incidentDate?: string;
+  blacklistedBy: string;
+  blacklistedByName?: string;
+  blacklistedAt: string;
+  revokedAt?: string;
+  revokedBy?: string;
+  revocationReason?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
+  [key: string]: any;
+}
+
+export interface BlacklistCheckResult {
+  isBlacklisted: boolean;
+  severity?: 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  reason?: string;
+  matchedSource: 'WATCHLIST' | 'INCIDENT_REPORT' | 'PREVIOUS_VIOLATION' | 'NONE';
+  matchedField?: 'PHONE' | 'NAME' | 'VEHICLE' | 'ID';
+  incidentReportId?: string;
+  incidentDate?: string;
+  incidentCategory?: string;
+  incidentDescription?: string;
+  watchlistId?: string;
+  blacklistedAt?: string;
+  blacklistedByName?: string;
+  notes?: string;
+}
 export interface MaterialMovementRecord { [key: string]: any; }
 export interface DailySiteLogRecord {
   id: string;
@@ -237,7 +282,7 @@ export interface DailySiteLogRecord {
   date: string;
   supervisorId: string;
   supervisorName: string;
-  logType: 'INSPECTION' | 'HANDOVER';
+  logType?: 'INSPECTION' | 'HANDOVER' | 'DAILY' | string;
   inspectorId?: string;
   guardsCountOnDuty: number;
   totalPatrolsCompleted: number;
@@ -252,10 +297,10 @@ export interface DailySiteLogRecord {
     musterVerified: boolean;
     incomingSupervisorName: string;
   };
-  status: 'SUBMITTED' | 'INITIATED' | 'COMPLETED' | 'AMENDED';
-  notes: string;
+  status?: 'SUBMITTED' | 'INITIATED' | 'COMPLETED' | 'AMENDED' | string;
+  notes?: string;
   createdAt: string;
-  updatedAt: number;
+  updatedAt?: number | string;
   version?: number;
   editHistory?: Array<{
     updatedAt: string;
@@ -381,6 +426,8 @@ export interface BranchRecord {
   name: string;
   code: string;
   description?: string;
+  city?: string;
+  address?: string;
   status: 'ACTIVE' | 'INACTIVE';
   createdAt: string;
   updatedAt: string;
@@ -392,11 +439,20 @@ export interface SiteRecord {
   regionId?: string;
   branchId?: string;
   name: string;
+  siteName?: string;
   code: string;
   address?: string;
+  clientId?: string;
+  clientName?: string;
   latitude?: number;
   longitude?: number;
   radius?: number; // Geofence radius
+  geofenceRadius?: number;
+  geoFenceRadiusMeters?: number;
+  geofenceEnabled?: boolean;
+  accuracyThreshold?: number;
+  attendanceMode?: string;
+  geoCoordinates?: { latitude: number; longitude: number };
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   createdAt: string;
   updatedAt: string;
@@ -460,6 +516,7 @@ export interface EmployeeRecord {
   status: 'ACTIVE' | 'INACTIVE' | 'TERMINATED' | 'SUSPENDED' | 'PENDING_VERIFICATION' | 'DEACTIVATED';
   profilePhotoUrl?: string;
   onboardingStatus?: string;
+  fcmTokens?: string[];
   joinedAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -894,7 +951,7 @@ export interface LeavePolicyRecord {
   maxCarryForward?: number;
   encashmentAllowed: boolean;
   minNoticeDays: number;
-  applicableToGenders: 'ALL' | 'MALE' | 'FEMALE';
+  applicableToGenders?: 'ALL' | 'MALE' | 'FEMALE';
   status: 'ACTIVE' | 'INACTIVE';
   [key: string]: any;
 }
@@ -983,6 +1040,8 @@ export interface PayrollCalculation {
   totalGross: number;
   totalDeductions: number;
   netPay: number;
+  isEpsExempt?: boolean;
+  epsExemptionFlag?: string;
   earnings: {
     basic: number;
     hra: number;
@@ -997,6 +1056,8 @@ export interface PayrollCalculation {
     tds: number;
     lopDeduction: number;
     advanceDeduction?: number;
+    epsExemptionApplied?: boolean;
+    epsExemptionNote?: string;
   };
 }
 

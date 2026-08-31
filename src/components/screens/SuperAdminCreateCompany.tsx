@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   Building2, 
   ShieldCheck, 
@@ -71,6 +72,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
 
   // Module Entitlements (Default all enabled)
   const [selectedModules, setSelectedModules] = useState<string[]>(MASTER_APP_MODULES.map(m => m.key));
+  useBackNavigation(!!selectedModules, () => setSelectedModules(null as any), 'selectedModules');
 
   // State
   const [loading, setLoading] = useState(false);

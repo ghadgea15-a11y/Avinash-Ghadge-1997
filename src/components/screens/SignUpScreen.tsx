@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   Building2, 
   Mail, 
@@ -43,8 +44,10 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   const [companyCode, setCompanyCode] = useState(initialCompany?.companyId || '');
   const [mobileNumber, setMobileNumber] = useState('');
   const [selectedDeptId, setSelectedDeptId] = useState('');
+  useBackNavigation(!!selectedDeptId, () => setSelectedDeptId(null as any), 'selectedDeptId');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  useBackNavigation(!!showPassword, () => setShowPassword(null as any), 'showPassword');
 
   // Dynamic States
   const [verifiedCompany, setVerifiedCompany] = useState<CompanyTenant | null>(initialCompany || null);

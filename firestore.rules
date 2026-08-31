@@ -100,10 +100,11 @@ service cloud.firestore {
       return isActiveUser() && authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && regionId() == rId;
     }
 
-    function isSiteManager(sId) {
-      return isActiveUser() 
-        && (authorityLevel() == "A5_SITE_IN_CHARGE" || authorityLevel() == "A6_SUPERVISOR") 
-        && siteId() == sId;
+    function isSiteManager(sId, deptId) {
+      return isActiveUser() && siteId() == sId && (
+        authorityLevel() == "A5_SITE_IN_CHARGE" ||
+        (authorityLevel() == "A6_SUPERVISOR" && departmentId() == deptId)
+      );
     }
 
     function isGroundWorker() {
@@ -256,13 +257,13 @@ service cloud.firestore {
     match /audit_logs/{logId} {
       allow read: if isSuperAdmin() || (isActiveUser() && isOwnerOrExecutive() && resource.data.companyId == companyId());
       allow create: if signedIn();
-      allow update, delete: if isSuperAdmin();
+      allow update, delete: if false; // STRICT IMMUTABLE AUDIT TRAIL - WRITE-ONCE ONLY
     }
 
     match /auditLogs/{logId} {
       allow read: if isSuperAdmin() || (isActiveUser() && isOwnerOrExecutive() && resource.data.companyId == companyId());
       allow create: if signedIn();
-      allow update, delete: if isSuperAdmin();
+      allow update, delete: if false; // STRICT IMMUTABLE AUDIT TRAIL - WRITE-ONCE ONLY
     }
 
     match /super_admins/{uid} {
@@ -364,9 +365,8 @@ service cloud.firestore {
           isOwnerOrExecutive() ||
           isOfficialStaffDept("HR") ||
           isOfficialStaffDept("FINANCE") || // Finance needs employee master for payroll
-          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.assignedRegionId == regionId() || resource.data.assignedRegionId == null)) ||
-          isSiteManager(resource.data.assignedSiteId) ||
-          resource.data.assignedSiteId == null ||
+          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) ||
+          isSiteManager(resource.data.assignedSiteId, resource.data.departmentId) ||
           isSelfEmployee(resource.data.employeeId) ||
           isSelfUser(resource.data.userId)
         );
@@ -376,7 +376,7 @@ service cloud.firestore {
         allow update: if sameCompany(cId) && (
           isOwnerOrExecutive() ||
           isOfficialStaffDept("HR") ||
-          (isSiteManager(resource.data.assignedSiteId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['authorityLevel', 'companyId', 'salary', 'bankDetails']))
+          (isSiteManager(resource.data.assignedSiteId, resource.data.departmentId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['authorityLevel', 'companyId', 'salary', 'bankDetails']))
         );
 
         match /private_security/{docId} {
@@ -385,12 +385,12 @@ service cloud.firestore {
       }
 
       match /role_assignments/{roleId} {
-        allow read: if sameCompany(cId);
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSelfEmployee(resource.data.employeeId));
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
       }
 
       match /documents/{docId} {
-        allow read: if sameCompany(cId);
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSelfEmployee(resource.data.employeeId));
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS"));
       }
 
@@ -398,11 +398,11 @@ service cloud.firestore {
         allow read: if sameCompany(cId) && (
           isOwnerOrExecutive() ||
           isOfficialStaffDept("HR") ||
-          isSiteManager(resource.data.siteId) ||
+          isSiteManager(resource.data.siteId, resource.data.departmentId) ||
           isSelfEmployee(resource.data.employeeId)
         );
         allow create: if sameCompany(cId) && signedIn();
-        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSiteManager(resource.data.siteId));
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSiteManager(resource.data.siteId, resource.data.departmentId));
         allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
       }
 
@@ -410,11 +410,11 @@ service cloud.firestore {
         allow read: if sameCompany(cId) && (
           isOwnerOrExecutive() ||
           isOfficialStaffDept("HR") ||
-          isSiteManager(resource.data.siteId) ||
+          isSiteManager(resource.data.siteId, resource.data.departmentId) ||
           isSelfEmployee(resource.data.employeeId)
         );
         allow create: if sameCompany(cId) && signedIn();
-        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSiteManager(resource.data.siteId));
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSiteManager(resource.data.siteId, resource.data.departmentId));
         allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
       }
 
@@ -428,7 +428,7 @@ service cloud.firestore {
           isOfficialStaffDept("FINANCE") ||
           isOfficialStaffDept("OPERATIONS") ||
           (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.assignedRegionId == regionId() || resource.data.assignedRegionId == null)) ||
-          isSiteManager(resource.data.siteId) ||
+          isSiteManager(resource.data.siteId, resource.data.departmentId) ||
           isSelfEmployee(resource.data.employeeId)
         );
 
@@ -438,7 +438,7 @@ service cloud.firestore {
           isOwnerOrExecutive() ||
           isOfficialStaffDept("HR") ||
           isOfficialStaffDept("OPERATIONS") ||
-          (authorityLevel() in ["A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] && request.resource.data.siteId == siteId()) ||
+          (authorityLevel() in ["A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] && request.resource.data.siteId == siteId() && !isSelfEmployee(request.resource.data.employeeId)) ||
           (
             isSelfEmployee(request.resource.data.employeeId) &&
             (
@@ -455,7 +455,7 @@ service cloud.firestore {
           isOwnerOrExecutive() ||
           isOfficialStaffDept("HR") ||
           isOfficialStaffDept("OPERATIONS") ||
-          isSiteManager(resource.data.siteId)
+          isSiteManager(resource.data.siteId, resource.data.departmentId)
         );
 
         allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
@@ -468,7 +468,7 @@ service cloud.firestore {
           isOfficialStaffDept("FINANCE") ||
           isOfficialStaffDept("OPERATIONS") ||
           (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.assignedRegionId == regionId() || resource.data.assignedRegionId == null)) ||
-          isSiteManager(resource.data.siteId) ||
+          isSiteManager(resource.data.siteId, resource.data.departmentId) ||
           isSelfEmployee(resource.data.employeeId)
         );
 
@@ -477,7 +477,7 @@ service cloud.firestore {
           isOwnerOrExecutive() ||
           isOfficialStaffDept("HR") ||
           isOfficialStaffDept("OPERATIONS") ||
-          (authorityLevel() in ["A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] && request.resource.data.siteId == siteId()) ||
+          (authorityLevel() in ["A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] && request.resource.data.siteId == siteId() && !isSelfEmployee(request.resource.data.employeeId)) ||
           (
             isSelfEmployee(request.resource.data.employeeId) &&
             (
@@ -494,9 +494,12 @@ service cloud.firestore {
           isOwnerOrExecutive() || 
           isOfficialStaffDept("HR") || 
           isOfficialStaffDept("OPERATIONS") || 
-          isSiteManager(resource.data.siteId) ||
+          (isSiteManager(resource.data.siteId, resource.data.departmentId) && request.resource.data.siteId == resource.data.siteId) ||
           (
             isSelfEmployee(resource.data.employeeId) &&
+            request.resource.data.employeeId == resource.data.employeeId &&
+            request.resource.data.siteId == resource.data.siteId &&
+            request.resource.data.checkInTime == resource.data.checkInTime &&
             (
               !('checkOutGps' in request.resource.data) ||
               request.resource.data.checkOutGps == null ||
@@ -510,22 +513,22 @@ service cloud.firestore {
       }
 
       match /suspicious_punches/{punchId} {
-        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("OPERATIONS") || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("OPERATIONS") || isSiteManager(resource.data.siteId, resource.data.departmentId));
         allow create: if sameCompany(cId) && signedIn();
         allow update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("OPERATIONS"));
       }
 
 
       match /attendance_summaries/{summaryId} {
-        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS") || isSiteManager(resource.data.siteId) || isSiteManager(request.resource.data.siteId));
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS") || isSiteManager(resource.data.siteId, resource.data.departmentId) || isSiteManager(request.resource.data.siteId, request.resource.data.departmentId));
       }
 
       match /site_muster_rolls/{rollId} {
-        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS") || isSiteManager(resource.data.siteId) || isSiteManager(request.resource.data.siteId));
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS") || isSiteManager(resource.data.siteId, resource.data.departmentId) || isSiteManager(request.resource.data.siteId, request.resource.data.departmentId));
       }
 
       match /attendance_devices/{deviceId} {
-        allow read: if sameCompany(cId);
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("IT") || isOfficialStaffDept("OPERATIONS") || isSiteManager(resource.data.siteId, resource.data.departmentId));
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("OPERATIONS") || isOfficialStaffDept("IT"));
       }
 
@@ -586,46 +589,79 @@ service cloud.firestore {
       // Subcollection: Inventory, Supply & Stock
       // ----------------------------------------------------------
       match /inventory/{inventoryId} {
-        allow read: if sameCompany(cId);
-        allow create, update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId, resource.data.departmentId));
+        allow create: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId, request.resource.data.departmentId));
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (isSiteManager(resource.data.siteId, resource.data.departmentId) && request.resource.data.siteId == resource.data.siteId));
         allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
       match /inventory_items/{itemId} {
-        allow read: if sameCompany(cId);
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_IN_CHARGE" || authorityLevel() == "A6_SUPERVISOR");
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
       match /site_inventory/{inventoryId} {
-        allow read: if sameCompany(cId);
-        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId, resource.data.departmentId));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId, request.resource.data.departmentId) || isSiteManager(resource.data.siteId, resource.data.departmentId));
       }
 
       match /inventory_transactions/{txId} {
-        allow read: if sameCompany(cId);
-        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId, resource.data.departmentId));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId, request.resource.data.departmentId) || isSiteManager(resource.data.siteId, resource.data.departmentId));
       }
 
       // ----------------------------------------------------------
-      // Subcollection: Assets, Vendors, Clients & Billing
+      // Subcollection: Assets, EAM Movement Trail, Vendors, Clients & Billing
       // ----------------------------------------------------------
       match /assets/{assetId} {
-        allow read: if sameCompany(cId);
-        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId, resource.data.departmentId) || resource.data.assignedTo == request.auth.uid);
+        allow create: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId, request.resource.data.departmentId));
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (isSiteManager(resource.data.siteId, resource.data.departmentId) && request.resource.data.siteId == resource.data.siteId));
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      // Strictly Append-Only / Immutable Physical Movement & Audit Trail
+      match /asset_movements/{movementId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_IN_CHARGE" || authorityLevel() == "A6_SUPERVISOR" || resource.data.performedByUid == request.auth.uid || resource.data.employeeId == request.auth.token.employeeId);
+        allow create: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_IN_CHARGE" || authorityLevel() == "A6_SUPERVISOR");
+        allow update, delete: if false; // STRICT IMMUTABLE AUDIT TRAIL - NO EDITS OR DELETIONS PERMITTED
+      }
+
+      // EAM Asset Transfers (State-Machine Workflow with Immutable History)
+      match /asset_transfers/{transferId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_IN_CHARGE" || authorityLevel() == "A6_SUPERVISOR" || resource.data.requestedBy == request.auth.uid || resource.data.toCustodianId == request.auth.uid || resource.data.fromCustodianId == request.auth.uid);
+        allow create: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_IN_CHARGE" || authorityLevel() == "A6_SUPERVISOR");
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_IN_CHARGE" || authorityLevel() == "A6_SUPERVISOR" || resource.data.toCustodianId == request.auth.uid);
+        allow delete: if false; // STRICT NO-DELETE AUDIT POLICY
+      }
+
+      // EAM Custody Logs & Acknowledgements
+      match /asset_custody/{custodyId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_IN_CHARGE" || authorityLevel() == "A6_SUPERVISOR" || resource.data.toCustodianId == request.auth.uid);
+        allow create: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_IN_CHARGE" || authorityLevel() == "A6_SUPERVISOR");
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || resource.data.toCustodianId == request.auth.uid);
+        allow delete: if false; // STRICT NO-DELETE AUDIT POLICY
+      }
+
+      // EAM Maintenance & Repair Logs
+      match /asset_maintenance/{maintenanceId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_IN_CHARGE" || authorityLevel() == "A6_SUPERVISOR");
+        allow create, update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_IN_CHARGE" || authorityLevel() == "A6_SUPERVISOR");
+        allow delete: if false; // STRICT NO-DELETE AUDIT POLICY
       }
 
       match /vendors/{vendorId} {
-        allow read: if sameCompany(cId);
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_MANAGER");
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
       match /clients/{clientId} {
-        allow read: if sameCompany(cId);
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_MANAGER");
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
       match /contracts/{contractId} {
-        allow read: if sameCompany(cId);
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS"));
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
@@ -658,35 +694,35 @@ service cloud.firestore {
       // Subcollection: Site Operations Logs, EHS, Safety & Visitors
       // ----------------------------------------------------------
       match /daily_site_logs/{logId} {
-        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId));
-        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId, resource.data.departmentId));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId, request.resource.data.departmentId) || isSiteManager(resource.data.siteId, resource.data.departmentId));
       }
 
       match /incident_reports/{reportId} {
-        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId) || isSelfEmployee(resource.data.reportedById));
-        allow create: if sameCompany(cId) && signedIn();
-        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId, resource.data.departmentId) || isSelfEmployee(resource.data.reportedById));
+        allow create: if sameCompany(cId) && signedIn() && request.resource.data.reportedById == request.auth.uid;
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (isSiteManager(resource.data.siteId, resource.data.departmentId) && request.resource.data.siteId == resource.data.siteId));
         allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
       match /work_orders/{workOrderId} {
-        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId) || isSelfEmployee(resource.data.assignedToId));
-        allow create: if sameCompany(cId) && signedIn();
-        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId, resource.data.departmentId) || isSelfEmployee(resource.data.assignedToId));
+        allow create: if sameCompany(cId) && signedIn() && request.resource.data.reportedById == request.auth.uid;
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (isSiteManager(resource.data.siteId, resource.data.departmentId) && request.resource.data.siteId == resource.data.siteId));
         allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
       match /serviceTickets/{ticketId} {
-        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId) || isSelfEmployee(resource.data.reportedById));
-        allow create: if sameCompany(cId) && signedIn();
-        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId, resource.data.departmentId) || isSelfEmployee(resource.data.reportedById));
+        allow create: if sameCompany(cId) && signedIn() && request.resource.data.reportedById == request.auth.uid;
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (isSiteManager(resource.data.siteId, resource.data.departmentId) && request.resource.data.siteId == resource.data.siteId));
         allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
       match /security_audits/{auditId} {
-        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId));
-        allow create: if sameCompany(cId) && signedIn();
-        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId, resource.data.departmentId));
+        allow create: if sameCompany(cId) && signedIn() && isSiteManager(request.resource.data.siteId, request.resource.data.departmentId);
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (isSiteManager(resource.data.siteId, resource.data.departmentId) && request.resource.data.siteId == resource.data.siteId));
         allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
@@ -703,26 +739,41 @@ service cloud.firestore {
       }
 
       match /visitor_logs/{visitorId} {
-        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId));
-        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId, resource.data.departmentId));
+        allow create: if sameCompany(cId) && signedIn() && isSiteManager(request.resource.data.siteId, request.resource.data.departmentId);
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (isSiteManager(resource.data.siteId, resource.data.departmentId) && request.resource.data.siteId == resource.data.siteId));
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /visitor_watchlist/{watchlistId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId, resource.data.departmentId));
+        allow create: if sameCompany(cId) && signedIn() && isSiteManager(request.resource.data.siteId, request.resource.data.departmentId);
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (isSiteManager(resource.data.siteId, resource.data.departmentId) && request.resource.data.siteId == resource.data.siteId));
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
       match /material_movement_logs/{movementId} {
-        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId));
-        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId, resource.data.departmentId));
+        allow create: if sameCompany(cId) && signedIn() && isSiteManager(request.resource.data.siteId, request.resource.data.departmentId);
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (isSiteManager(resource.data.siteId, resource.data.departmentId) && request.resource.data.siteId == resource.data.siteId));
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
       // ----------------------------------------------------------
       // Subcollection: Communication, Tasks & Settings
       // ----------------------------------------------------------
       match /tasks/{taskId} {
-        allow read: if sameCompany(cId);
-        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId, resource.data.departmentId) || resource.data.assignedTo == request.auth.uid || resource.data.createdBy == request.auth.uid);
+        allow create: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId, request.resource.data.departmentId) || request.resource.data.createdBy == request.auth.uid);
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (isSiteManager(resource.data.siteId, resource.data.departmentId) && request.resource.data.siteId == resource.data.siteId) || resource.data.assignedTo == request.auth.uid || resource.data.createdBy == request.auth.uid);
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
       match /notifications/{notificationId} {
-        allow read: if sameCompany(cId);
-        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId) || isSiteManager(resource.data.siteId));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || resource.data.recipientUid == request.auth.uid || resource.data.recipientId == request.auth.uid);
+        allow create: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSystem());
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || resource.data.recipientUid == request.auth.uid || resource.data.recipientId == request.auth.uid);
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
       match /announcements/{announcementId} {
@@ -789,14 +840,14 @@ service cloud.firestore {
         
         match /members/{employeeId} {
           allow read: if sameCompany(cId);
-          allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId));
+          allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId, resource.data.departmentId));
         }
       }
 
       match /approval_requests/{requestId} {
-        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId) || isSelfUser(resource.data.uid));
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId, resource.data.departmentId) || isSelfUser(resource.data.uid));
         allow create: if sameCompany(cId) && signedIn();
-        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId));
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId, resource.data.departmentId));
         allow delete: if sameCompany(cId) && isOwnerOrExecutive();
       }
     }
@@ -817,15 +868,29 @@ service cloud.firestore {
       }
 
       allow read: if isAttendanceCollection() && (
-        isSuperAdmin() || sameCompany(getCompanyCodeFromCollection())
+        isSuperAdmin() || (sameCompany(getCompanyCodeFromCollection()) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("FINANCE") || 
+          isOfficialStaffDept("OPERATIONS") || 
+          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.assignedRegionId == regionId() || resource.data.assignedRegionId == null)) || 
+          isSiteManager(resource.data.siteId, resource.data.departmentId) || 
+          isSelfEmployee(resource.data.employeeId)
+        ))
       );
 
       allow create: if isAttendanceCollection() && (
-        isSuperAdmin() || sameCompany(getCompanyCodeFromCollection())
+        isSuperAdmin() || (sameCompany(getCompanyCodeFromCollection()) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("OPERATIONS") || 
+          (authorityLevel() in ["A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] && request.resource.data.siteId == siteId() && !isSelfEmployee(request.resource.data.employeeId)) || 
+          isSelfEmployee(request.resource.data.employeeId)
+        ))
       );
 
       allow update: if isAttendanceCollection() && (
-        isSuperAdmin() || (sameCompany(getCompanyCodeFromCollection()) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId)))
+        isSuperAdmin() || (sameCompany(getCompanyCodeFromCollection()) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId, resource.data.departmentId)))
       );
 
       allow delete: if isAttendanceCollection() && (
@@ -838,7 +903,15 @@ service cloud.firestore {
     match /collectionGroup/{groupName}/{documentId} {
       allow read: if (groupName == 'predictions' || groupName == 'incident_reports') 
                   && signedIn() 
-                  && sameCompany(resource.data.companyId);
+                  && sameCompany(resource.data.companyId)
+                  && (
+                    isSuperAdmin() || 
+                    isOwnerOrExecutive() || 
+                    isOfficialStaff() || 
+                    (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) ||
+                    isSiteManager(resource.data.siteId, resource.data.departmentId) ||
+                    isSelfEmployee(resource.data.reportedById)
+                  );
     }
   }
 }

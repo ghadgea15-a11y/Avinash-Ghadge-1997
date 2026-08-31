@@ -260,7 +260,7 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
       </div>
 
       {activeTab === 'THRESHOLDS' ? (
-        <ThresholdRuleManager session={session} />
+        <ThresholdRuleManager session={session} companyId={session.companyId} />
       ) : activeTab === 'POLICIES' ? (
         <EscalationPolicyManager session={session} />
       ) : activeTab === 'DELEGATIONS' ? (

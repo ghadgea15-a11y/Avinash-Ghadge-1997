@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   Building2, 
   Search, 
@@ -39,6 +40,7 @@ export const SuperAdminLeadsScreen: React.FC<SuperAdminLeadsScreenProps> = ({
   const [itemsPerPage, setItemsPerPage] = useState(10);
   
   const [selectedLead, setSelectedLead] = useState<LeadRecord | null>(null);
+  useBackNavigation(!!selectedLead, () => setSelectedLead(null as any), 'selectedLead');
   const [newNote, setNewNote] = useState('');
 
   useEffect(() => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { 
   CreditCard, TrendingUp, AlertTriangle, XCircle, 
   CheckCircle2, PlusCircle, Activity, Building2, ChevronLeft, RefreshCw,
@@ -35,6 +36,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
 
   // Selected Tenant for Plan Assignment / Status Update Modal
   const [selectedTenant, setSelectedTenant] = useState<CompanySubItem | null>(null);
+  useBackNavigation(!!selectedTenant, () => setSelectedTenant(null as any), 'selectedTenant');
   const [targetPlanId, setTargetPlanId] = useState<string>('PLAN_PRO');
   const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'YEARLY'>('MONTHLY');
   const [durationMonths, setDurationMonths] = useState<number>(12);
@@ -58,6 +60,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
 
   // New Plan Creation Modal
   const [showCreatePlanModal, setShowCreatePlanModal] = useState(false);
+  useBackNavigation(!!showCreatePlanModal, () => setShowCreatePlanModal(null as any), 'showCreatePlanModal');
   const [newPlan, setNewPlan] = useState<Partial<SubscriptionPlan>>({
     planCode: '',
     planName: '',
@@ -144,7 +147,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
   const createDefaultPlans = async () => {
     try {
       await Promise.all([
-        FirestoreService.saveSubscriptionPlan({
+        (FirestoreService as any).saveSubscriptionPlan({
           planId: 'PLAN_STARTER',
           planCode: 'STARTER',
           planName: 'Starter',
@@ -164,7 +167,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }),
-        FirestoreService.saveSubscriptionPlan({
+        (FirestoreService as any).saveSubscriptionPlan({
           planId: 'PLAN_PRO',
           planCode: 'PRO',
           planName: 'Professional',
@@ -184,7 +187,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }),
-        FirestoreService.saveSubscriptionPlan({
+        (FirestoreService as any).saveSubscriptionPlan({
           planId: 'PLAN_ENTERPRISE',
           planCode: 'ENTERPRISE',
           planName: 'Enterprise Elite',
@@ -321,7 +324,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      await FirestoreService.saveSubscriptionPlan(planToSave);
+      await (FirestoreService as any).saveSubscriptionPlan(planToSave);
       dismiss();
       showSuccess('✅ Subscription Plan Created');
       setShowCreatePlanModal(false);

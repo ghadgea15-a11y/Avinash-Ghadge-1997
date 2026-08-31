@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackNavigation } from '../../hooks/useBackNavigation';
 import { CompanyTenant, UserSession, RfqRequest, RfqBid } from '../../types';
 import { Search, Plus, Filter, FileText, CheckCircle, Clock, Ban, Award, FileSignature, ArrowRight, DollarSign, Download, Upload, Percent } from 'lucide-react';
 import { format } from 'date-fns';
@@ -16,9 +17,11 @@ export function RfqManagementScreen({ userSession, activeCompany, onNavigate }: 
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'PUBLISHED' | 'EVALUATION'>('ALL');
   const [selectedRfq, setSelectedRfq] = useState<RfqRequest | null>(null);
+  useBackNavigation(!!selectedRfq, () => setSelectedRfq(null as any), 'selectedRfq');
   
   // Matrix View State
   const [showMatrix, setShowMatrix] = useState(false);
+  useBackNavigation(!!showMatrix, () => setShowMatrix(null as any), 'showMatrix');
 
   useEffect(() => {
     const fetchData = async () => {

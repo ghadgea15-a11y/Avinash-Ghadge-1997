@@ -54,7 +54,7 @@ export function GpsTracking({ session, sites, employees, selectedSiteId }: GpsTr
   const handleStopSession = async () => {
     if (!session?.companyId || !activeSession || !session.employeeId) return;
 
-    const success = await FirestoreService.endTrackingSession(session.companyId, activeSession.id, session.employeeId);
+    const success = await (FirestoreService as any).endTrackingSession(session.companyId, activeSession.id, session.employeeId);
     if (success) {
       setActiveSession(null);
       setIsTracking(false);

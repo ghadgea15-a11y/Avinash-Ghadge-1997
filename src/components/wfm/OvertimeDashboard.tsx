@@ -150,14 +150,14 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
     unsubs.push(FirestoreService.subscribeToShifts(userSession, companyId, setShifts));
     unsubs.push(FirestoreService.subscribeToSites(companyId, setSites));
     unsubs.push(FirestoreService.subscribeToDepartments(companyId, setDepartments));
-    unsubs.push(FirestoreService.subscribeToOvertimePolicies(userSession, companyId, (pol: any) => {
+    unsubs.push(FirestoreService.subscribeToOvertimePolicies(companyId, (pol: any) => {
       setPolicies(pol);
       if (pol.length > 0 && !editingPolicy) {
         setEditingPolicy(pol[0]);
       }
     }));
-    unsubs.push(FirestoreService.subscribeToOvertimeRequests(userSession, companyId, setRequests));
-    unsubs.push(FirestoreService.subscribeToOvertimeAdjustments(userSession, companyId, setAdjustments));
+    unsubs.push(FirestoreService.subscribeToOvertimeRequests(companyId, setRequests));
+    unsubs.push(FirestoreService.subscribeToOvertimeAdjustments(companyId, setAdjustments));
     setIsLoading(false);
 
     return () => unsubs.forEach(u => u());
@@ -751,7 +751,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
               { id: 'EARLY_DEPARTURE', label: 'Early Departure' },
               { id: 'SHORTFALL', label: 'Shortfall' },
               { id: 'MAX_DAILY_OT_EXCEEDED', label: 'Max OT Exceeded' },
-              { id: 'HALF_DAY', label: 'Half Day' },
+              { id: 'HALFDAY', label: 'Half Day' },
               { id: 'GRACE_WINDOW_USED', label: 'Grace Used' }
             ].map((f) => (
               <button
@@ -809,7 +809,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                               ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
                               : att.status === 'LATE'
                               ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                              : att.status === 'HALF_DAY'
+                              : att.status === 'HALFDAY'
                               ? 'bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300'
                               : 'bg-slate-100 text-black dark:bg-slate-800 dark:text-slate-300'
                           }`}>

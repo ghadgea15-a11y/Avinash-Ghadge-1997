@@ -1,0 +1,249 @@
+src/App.tsx(559,21): error TS2322: Type '{ currentScreen: string; onNavigate: Dispatch<SetStateAction<string>>; onOpenDrawer: () => void; unreadNotifCount: number; userSession: UserSession; }' is not assignable to type 'IntrinsicAttributes & TabletNavigationRailProps'.
+  Property 'userSession' does not exist on type 'IntrinsicAttributes & TabletNavigationRailProps'.
+src/App.tsx(772,25): error TS2322: Type '{ userSession: UserSession; activeCompany: any; isOnline: boolean; onNavigate: Dispatch<SetStateAction<string>>; }' is not assignable to type 'IntrinsicAttributes & Props'.
+  Property 'onNavigate' does not exist on type 'IntrinsicAttributes & Props'.
+src/components/biometric/OneMinuteAutoConnectModal.tsx(304,68): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/bpm/DelegationManager.tsx(248,90): error TS2554: Expected 2 arguments, but got 3.
+src/components/common/TabletNavigationRail.tsx(34,24): error TS2304: Cannot find name 'userSession'.
+src/components/common/TabletNavigationRail.tsx(37,43): error TS2304: Cannot find name 'userSession'.
+src/components/common/TabletNavigationRail.tsx(159,10): error TS2304: Cannot find name 'userSession'.
+src/components/common/TabletNavigationRail.tsx(163,23): error TS2304: Cannot find name 'userSession'.
+src/components/common/TabletNavigationRail.tsx(163,49): error TS2304: Cannot find name 'userSession'.
+src/components/common/TabletNavigationRail.tsx(166,20): error TS2304: Cannot find name 'userSession'.
+src/components/eam/EnterpriseAssetManagement.tsx(44,80): error TS2554: Expected 2 arguments, but got 3.
+src/components/operations/EmergencySos.tsx(34,85): error TS2554: Expected 2 arguments, but got 3.
+src/components/operations/EmergencySos.tsx(124,80): error TS2345: Argument of type 'Partial<SosEventRecord>' is not assignable to parameter of type 'string'.
+src/components/operations/GpsTracking.tsx(46,84): error TS2345: Argument of type 'TrackingSessionRecord' is not assignable to parameter of type 'string'.
+src/components/operations/GpsTracking.tsx(57,100): error TS2554: Expected 2 arguments, but got 3.
+src/components/operations/GpsTracking.tsx(95,32): error TS2554: Expected 3 arguments, but got 2.
+src/components/operations/PatrolTourRunnerModal.tsx(125,43): error TS2339: Property 'geoCoordinates' does not exist on type 'SiteRecord'.
+src/components/operations/PatrolTourRunnerModal.tsx(126,44): error TS2339: Property 'geoCoordinates' does not exist on type 'SiteRecord'.
+src/components/operations/PatrolTourRunnerModal.tsx(127,28): error TS2339: Property 'geofenceRadius' does not exist on type 'SiteRecord'.
+src/components/operations/PatrolTourRunnerModal.tsx(127,52): error TS2339: Property 'geoFenceRadiusMeters' does not exist on type 'SiteRecord'.
+src/components/operations/SafetyChecksheetModule.tsx(143,66): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/operations/SafetyChecksheetModule.tsx(350,74): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/payroll/CompanyBankModal.tsx(81,9): error TS2554: Expected 2 arguments, but got 3.
+src/components/scm/GatePassTab.tsx(15,15): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<GatePassRecord[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'GatePassRecord[]'.
+    Type '{ id: string; }' is missing the following properties from type 'GatePassRecord': companyId, type, status, referenceNo, and 4 more.
+src/components/scm/GatePassTab.tsx(47,85): error TS2339: Property 'passNumber' does not exist on type 'GatePassRecord'.
+src/components/scm/GatePassTab.tsx(48,81): error TS2339: Property 'passType' does not exist on type 'GatePassRecord'.
+src/components/scm/GatePassTab.tsx(50,22): error TS2339: Property 'sourceLocationName' does not exist on type 'GatePassRecord'.
+src/components/scm/GatePassTab.tsx(50,66): error TS2339: Property 'destinationLocationName' does not exist on type 'GatePassRecord'.
+src/components/scm/GatePassTab.tsx(59,20): error TS2367: This comparison appears to be unintentional because the types '"CANCELLED" | "DRAFT" | "APPROVED" | "PENDING" | "VERIFIED" | "DISPATCHED" | "RECEIVED"' and '"SUBMITTED"' have no overlap.
+src/components/scm/GatePassTab.tsx(73,20): error TS2367: This comparison appears to be unintentional because the types '"CANCELLED" | "DRAFT" | "APPROVED" | "PENDING" | "VERIFIED" | "DISPATCHED" | "RECEIVED"' and '"GATE_VERIFIED"' have no overlap.
+src/components/scm/GatePassTab.tsx(73,54): error TS2339: Property 'passType' does not exist on type 'GatePassRecord'.
+src/components/scm/GatePassTab.tsx(81,20): error TS2367: This comparison appears to be unintentional because the types '"CANCELLED" | "DRAFT" | "APPROVED" | "PENDING" | "VERIFIED" | "DISPATCHED" | "RECEIVED"' and '"RETURN_PENDING"' have no overlap.
+src/components/scm/GatePassTab.tsx(115,53): error TS2345: Argument of type 'Dispatch<SetStateAction<StockLocationRecord[]>>' is not assignable to parameter of type '(value: { id: string; }[]) => void | PromiseLike<void>'.
+  Types of parameters 'value' and 'value' are incompatible.
+    Type '{ id: string; }[]' is not assignable to type 'SetStateAction<StockLocationRecord[]>'.
+      Type '{ id: string; }[]' is not assignable to type 'StockLocationRecord[]'.
+        Type '{ id: string; }' is missing the following properties from type 'StockLocationRecord': companyId, name, code, type, and 3 more.
+src/components/scm/GatePassTab.tsx(116,49): error TS2345: Argument of type 'Dispatch<SetStateAction<InventoryItemRecord[]>>' is not assignable to parameter of type '(value: { id: string; }[]) => void | PromiseLike<void>'.
+  Types of parameters 'value' and 'value' are incompatible.
+    Type '{ id: string; }[]' is not assignable to type 'SetStateAction<InventoryItemRecord[]>'.
+      Type '{ id: string; }[]' is not assignable to type 'InventoryItemRecord[]'.
+        Type '{ id: string; }' is missing the following properties from type 'InventoryItemRecord': companyId, itemCode, itemName, category, and 13 more.
+src/components/scm/GatePassTab.tsx(128,7): error TS2322: Type '"SUBMITTED"' is not assignable to type '"CANCELLED" | "DRAFT" | "APPROVED" | "PENDING" | "VERIFIED" | "DISPATCHED" | "RECEIVED"'.
+src/components/scm/GatePassTab.tsx(138,7): error TS2322: Type '{ itemId: string; itemCode: string; itemName: string; unit: string; quantity: any; }[]' is not assignable to type 'GatePassLine[]'.
+  Property 'uom' is missing in type '{ itemId: string; itemCode: string; itemName: string; unit: string; quantity: any; }' but required in type 'GatePassLine'.
+src/components/scm/GateVerificationTab.tsx(13,15): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<GatePassRecord[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'GatePassRecord[]'.
+    Type '{ id: string; }' is missing the following properties from type 'GatePassRecord': companyId, type, status, referenceNo, and 4 more.
+src/components/scm/GateVerificationTab.tsx(38,77): error TS2339: Property 'passNumber' does not exist on type 'GatePassRecord'.
+src/components/scm/GateVerificationTab.tsx(39,78): error TS2339: Property 'passType' does not exist on type 'GatePassRecord'.
+src/components/scm/GateVerificationTab.tsx(47,89): error TS2339: Property 'sourceLocationName' does not exist on type 'GatePassRecord'.
+src/components/scm/GateVerificationTab.tsx(48,87): error TS2339: Property 'destinationLocationName' does not exist on type 'GatePassRecord'.
+src/components/scm/ItemMasterTab.tsx(15,16): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<InventoryItemRecord[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'InventoryItemRecord[]'.
+    Type '{ id: string; }' is missing the following properties from type 'InventoryItemRecord': companyId, itemCode, itemName, category, and 13 more.
+src/components/scm/StockLocationTab.tsx(21,20): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<StockLocationRecord[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'StockLocationRecord[]'.
+    Type '{ id: string; }' is missing the following properties from type 'StockLocationRecord': companyId, name, code, type, and 3 more.
+src/components/scm/StockLocationTab.tsx(22,19): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<StockBalanceRecord[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'StockBalanceRecord[]'.
+    Type '{ id: string; }' is missing the following properties from type 'StockBalanceRecord': companyId, locationId, itemId, quantity, updatedAt
+src/components/scm/StockLocationTab.tsx(23,16): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<InventoryItemRecord[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'InventoryItemRecord[]'.
+    Type '{ id: string; }' is missing the following properties from type 'InventoryItemRecord': companyId, itemCode, itemName, category, and 13 more.
+src/components/scm/StockLocationTab.tsx(51,17): error TS2322: Type '"SITE_STORE"' is not assignable to type '"WAREHOUSE" | "STORE" | "SITE_OFFICE" | "TRANSIT"'.
+src/components/scm/TransferOrderTab.tsx(24,20): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<StockLocationRecord[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'StockLocationRecord[]'.
+    Type '{ id: string; }' is missing the following properties from type 'StockLocationRecord': companyId, name, code, type, and 3 more.
+src/components/scm/TransferOrderTab.tsx(25,16): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<InventoryItemRecord[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'InventoryItemRecord[]'.
+    Type '{ id: string; }' is missing the following properties from type 'InventoryItemRecord': companyId, itemCode, itemName, category, and 13 more.
+src/components/scm/TransferOrderTab.tsx(67,87): error TS2339: Property 'transferNumber' does not exist on type 'TransferOrderRecord'.
+src/components/scm/TransferOrderTab.tsx(74,83): error TS2339: Property 'expectedDeliveryDate' does not exist on type 'TransferOrderRecord'.
+src/components/scm/TransferOrderTab.tsx(74,117): error TS2339: Property 'expectedDeliveryDate' does not exist on type 'TransferOrderRecord'.
+src/components/scm/TransferOrderTab.tsx(76,22): error TS2367: This comparison appears to be unintentional because the types '"CANCELLED" | "DRAFT" | "PENDING" | "DISPATCHED" | "RECEIVED" | "RESERVED" | "IN_TRANSIT"' and '"SUBMITTED"' have no overlap.
+src/components/scm/TransferOrderTab.tsx(148,9): error TS2322: Type '"SUBMITTED"' is not assignable to type '"CANCELLED" | "DRAFT" | "PENDING" | "DISPATCHED" | "RECEIVED" | "RESERVED" | "IN_TRANSIT"'.
+src/components/scm/TransferOrderTab.tsx(150,11): error TS2739: Type '{ itemId: string; itemName: any; requestedQuantity: number; unitOfMeasure: any; }' is missing the following properties from type 'TransferOrderLine': quantity, uom
+src/components/screens/AiAssistantScreen.tsx(222,46): error TS2322: Type 'UserSession | null' is not assignable to type 'UserSession'.
+  Type 'null' is not assignable to type 'UserSession'.
+src/components/screens/AiAssistantScreen.tsx(222,68): error TS2322: Type 'CompanyTenant | null' is not assignable to type 'CompanyTenant'.
+  Type 'null' is not assignable to type 'CompanyTenant'.
+src/components/screens/AnnouncementsScreen.tsx(501,70): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/screens/AnnouncementsScreen.tsx(501,109): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/screens/ApprovalManagementScreen.tsx(137,13): error TS2554: Expected 3 arguments, but got 5.
+src/components/screens/ApprovalManagementScreen.tsx(171,9): error TS2554: Expected 3 arguments, but got 5.
+src/components/screens/CompanyManagementScreen.tsx(150,7): error TS2353: Object literal may only specify known properties, and 'city' does not exist in type 'BranchRecord'.
+src/components/screens/CompanyManagementScreen.tsx(150,27): error TS2339: Property 'city' does not exist on type 'Partial<BranchRecord>'.
+src/components/screens/CompanyManagementScreen.tsx(151,30): error TS2339: Property 'address' does not exist on type 'Partial<BranchRecord>'.
+src/components/screens/CompanyManagementScreen.tsx(179,7): error TS2353: Object literal may only specify known properties, and 'clientName' does not exist in type 'SiteRecord'.
+src/components/screens/CompanyManagementScreen.tsx(179,31): error TS2339: Property 'clientName' does not exist on type 'Partial<SiteRecord>'.
+src/components/screens/CompanyManagementScreen.tsx(184,35): error TS2339: Property 'geofenceRadius' does not exist on type 'Partial<SiteRecord>'.
+src/components/screens/CompanyManagementScreen.tsx(207,11): error TS2739: Type '{ companyId: string; id: string; name: string; code: string; description: string; }' is missing the following properties from type 'DepartmentRecord': status, createdAt, updatedAt
+src/components/screens/CompanyManagementScreen.tsx(533,21): error TS2304: Cannot find name 'SessionManager'.
+src/components/screens/CompanyManagementScreen.tsx(623,65): error TS2353: Object literal may only specify known properties, and 'geofenceRadius' does not exist in type 'Partial<SiteRecord> | ((prevState: Partial<SiteRecord> | null) => Partial<SiteRecord> | null)'.
+src/components/screens/CompanyManagementScreen.tsx(661,40): error TS2339: Property 'attendanceMode' does not exist on type 'Partial<SiteRecord>'.
+src/components/screens/CompanyManagementScreen.tsx(662,68): error TS2353: Object literal may only specify known properties, and 'attendanceMode' does not exist in type 'Partial<SiteRecord> | ((prevState: Partial<SiteRecord> | null) => Partial<SiteRecord> | null)'.
+src/components/screens/CompanyManagementScreen.tsx(677,44): error TS2339: Property 'geofenceEnabled' does not exist on type 'Partial<SiteRecord>'.
+src/components/screens/CompanyManagementScreen.tsx(678,70): error TS2353: Object literal may only specify known properties, and 'geofenceEnabled' does not exist in type 'Partial<SiteRecord> | ((prevState: Partial<SiteRecord> | null) => Partial<SiteRecord> | null)'.
+src/components/screens/CompanyManagementScreen.tsx(684,32): error TS2339: Property 'geofenceEnabled' does not exist on type 'Partial<SiteRecord>'.
+src/components/screens/CompanyManagementScreen.tsx(710,46): error TS2339: Property 'geofenceRadius' does not exist on type 'Partial<SiteRecord>'.
+src/components/screens/CompanyManagementScreen.tsx(711,74): error TS2353: Object literal may only specify known properties, and 'geofenceRadius' does not exist in type 'Partial<SiteRecord> | ((prevState: Partial<SiteRecord> | null) => Partial<SiteRecord> | null)'.
+src/components/screens/CompanyManagementScreen.tsx(719,46): error TS2339: Property 'accuracyThreshold' does not exist on type 'Partial<SiteRecord>'.
+src/components/screens/CompanyManagementScreen.tsx(720,74): error TS2353: Object literal may only specify known properties, and 'accuracyThreshold' does not exist in type 'Partial<SiteRecord> | ((prevState: Partial<SiteRecord> | null) => Partial<SiteRecord> | null)'.
+src/components/screens/CompanyManagementScreen.tsx(737,88): error TS2339: Property 'geofenceEnabled' does not exist on type 'Partial<SiteRecord>'.
+src/components/screens/CompanyManagementScreen.tsx(762,155): error TS2339: Property 'attendanceMode' does not exist on type 'SiteRecord'.
+src/components/screens/CompanyManagementScreen.tsx(763,24): error TS2339: Property 'geofenceEnabled' does not exist on type 'SiteRecord'.
+src/components/screens/CompanyManagementScreen.tsx(765,45): error TS2339: Property 'geofenceRadius' does not exist on type 'SiteRecord'.
+src/components/screens/DeploymentManagementScreen.tsx(32,94): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/DeploymentManagementScreen.tsx(33,90): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/DeploymentManagementScreen.tsx(69,83): error TS2554: Expected 2 arguments, but got 4.
+src/components/screens/EmployeeModuleScreen.tsx(1864,66): error TS2339: Property 'clientName' does not exist on type 'SiteRecord'.
+src/components/screens/IdentityBadgeScreen.tsx(109,93): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/IdentityBadgeScreen.tsx(149,9): error TS2554: Expected 3 arguments, but got 5.
+src/components/screens/InventoryStockScreen.tsx(184,91): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/InventoryStockScreen.tsx(189,92): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/InventoryStockScreen.tsx(193,95): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/InventoryStockScreen.tsx(241,15): error TS2339: Property 'warehouseLocation' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(241,41): error TS2339: Property 'warehouseLocation' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(245,62): error TS2339: Property 'siteId' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(263,25): error TS2339: Property 'description' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(267,27): error TS2339: Property 'maxStockLimit' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(269,31): error TS2339: Property 'warehouseLocation' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(270,20): error TS2339: Property 'siteId' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(271,30): error TS2339: Property 'supplierVendorId' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(273,21): error TS2339: Property 'barcode' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(323,9): error TS2353: Object literal may only specify known properties, and 'description' does not exist in type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(340,84): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/InventoryStockScreen.tsx(378,80): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/InventoryStockScreen.tsx(406,27): error TS2339: Property 'siteId' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(408,31): error TS2339: Property 'supplierVendorName' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(448,34): error TS2551: Property 'siteName' does not exist on type 'InventoryItemRecord'. Did you mean 'itemName'?
+src/components/screens/InventoryStockScreen.tsx(454,9): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/InventoryStockScreen.tsx(458,15): error TS2339: Property 'success' does not exist on type 'boolean'.
+src/components/screens/InventoryStockScreen.tsx(460,117): error TS2339: Property 'newStock' does not exist on type 'boolean'.
+src/components/screens/InventoryStockScreen.tsx(501,86): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/InventoryStockScreen.tsx(562,17): error TS2339: Property 'warehouseLocation' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(563,17): error TS2551: Property 'siteName' does not exist on type 'InventoryItemRecord'. Did you mean 'itemName'?
+src/components/screens/InventoryStockScreen.tsx(897,53): error TS2339: Property 'barcode' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(897,75): error TS2339: Property 'barcode' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(939,37): error TS2339: Property 'warehouseLocation' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(942,37): error TS2551: Property 'siteName' does not exist on type 'InventoryItemRecord'. Did you mean 'itemName'?
+src/components/screens/InventoryStockScreen.tsx(956,33): error TS2367: This comparison appears to be unintentional because the types '"IN_STOCK" | "CRITICAL_STOCK"' and '"DISCONTINUED"' have no overlap.
+src/components/screens/InventoryStockScreen.tsx(1188,39): error TS2339: Property 'warehouseLocation' does not exist on type 'InventoryItemRecord'.
+src/components/screens/InventoryStockScreen.tsx(1323,91): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/MandatoryRefreshersScreen.tsx(383,87): error TS2304: Cannot find name 'AlertCircle'.
+src/components/screens/OrgControlScreen.tsx(49,5): error TS2322: Type '"TEAM"' is not assignable to type '"SECURITY" | "MAINTENANCE" | "OPERATIONAL" | "ADMINISTRATIVE" | undefined'.
+src/components/screens/OrgControlScreen.tsx(333,31): error TS2367: This comparison appears to be unintentional because the types '"APPROVED" | "REJECTED" | "EXPIRED" | "PENDING"' and '"PENDING_APPROVAL"' have no overlap.
+src/components/screens/OrgControlScreen.tsx(361,87): error TS2322: Type '"TEAM"' is not assignable to type '"SECURITY" | "MAINTENANCE" | "OPERATIONAL" | "ADMINISTRATIVE" | undefined'.
+src/components/screens/ProcurementSrmScreen.tsx(128,96): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/ProcurementSrmScreen.tsx(162,55): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/screens/ProcurementSrmScreen.tsx(816,66): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/screens/ReportsAnalyticsScreen.tsx(90,89): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/ReportsAnalyticsScreen.tsx(91,81): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/ReportsAnalyticsScreen.tsx(169,79): error TS2367: This comparison appears to be unintentional because the types '"SCHEDULED" | "ON_LEAVE" | "ABSENT" | "LATE" | "HALFDAY" | "OFF_DUTY" | "EARLY_DEPARTURE"' and '"HALF_DAY"' have no overlap.
+src/components/screens/ReportsAnalyticsScreen.tsx(285,15): error TS2367: This comparison appears to be unintentional because the types '"SCHEDULED" | "ON_LEAVE" | "ABSENT" | "LATE" | "HALFDAY" | "OFF_DUTY" | "EARLY_DEPARTURE"' and '"HALF_DAY"' have no overlap.
+src/components/screens/ReportsAnalyticsScreen.tsx(554,79): error TS2339: Property 'clientName' does not exist on type 'SiteRecord'.
+src/components/screens/ReportsAnalyticsScreen.tsx(742,29): error TS2367: This comparison appears to be unintentional because the types '"SCHEDULED" | "ON_LEAVE" | "ABSENT" | "LATE" | "HALFDAY" | "OFF_DUTY" | "EARLY_DEPARTURE"' and '"HALF_DAY"' have no overlap.
+src/components/screens/ServiceDeskScreen.tsx(205,101): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/ServiceDeskScreen.tsx(247,7): error TS2345: Argument of type '(cList: any) => void' is not assignable to parameter of type 'string'.
+src/components/screens/ServiceDeskScreen.tsx(254,7): error TS2345: Argument of type '(aList: any) => void' is not assignable to parameter of type 'string'.
+src/components/screens/ServiceDeskScreen.tsx(277,74): error TS2339: Property 'clientName' does not exist on type 'SiteRecord'.
+src/components/screens/ServiceDeskScreen.tsx(277,120): error TS2339: Property 'clientName' does not exist on type 'SiteRecord'.
+src/components/screens/ServiceDeskScreen.tsx(286,55): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/screens/ServiceDeskScreen.tsx(288,95): error TS2339: Property 'clientName' does not exist on type 'SiteRecord'.
+src/components/screens/ServiceDeskScreen.tsx(2004,68): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/screens/ServiceDeskSlaPolicyManager.tsx(331,70): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/screens/ServiceDeskSlaPolicyManager.tsx(657,66): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/screens/SiteOperationsScreen.tsx(948,11): error TS2741: Property 'updatedAt' is missing in type '{ id: string; companyId: string; assignedRegionId: string | undefined; assignedBranchId: string | undefined; siteId: string; siteName: string; date: string; supervisorId: string; supervisorName: string; ... 10 more ...; createdAt: string; }' but required in type 'DailySiteLogRecord'.
+src/components/screens/SiteOperationsScreen.tsx(995,11): error TS2741: Property 'updatedAt' is missing in type '{ id: string; companyId: string; assignedRegionId: string | undefined; assignedBranchId: string | undefined; siteId: string; siteName: string; date: string; supervisorId: string; supervisorName: string; ... 10 more ...; createdAt: string; }' but required in type 'DailySiteLogRecord'.
+src/components/screens/SuperAdminAdminsScreen.tsx(60,16): error TS2339: Property 'id' does not exist on type 'SuperAdminUser'.
+src/components/screens/SuperAdminAdminsScreen.tsx(63,24): error TS2339: Property 'displayName' does not exist on type 'SuperAdminUser'.
+src/components/screens/SuperAdminAdminsScreen.tsx(64,33): error TS2339: Property 'seconds' does not exist on type 'string | Timestamp'.
+  Property 'seconds' does not exist on type 'string'.
+src/components/screens/SuperAdminAdminsScreen.tsx(64,64): error TS2339: Property 'seconds' does not exist on type 'string | Timestamp'.
+  Property 'seconds' does not exist on type 'string'.
+src/components/screens/SuperAdminAdminsScreen.tsx(65,37): error TS2339: Property 'seconds' does not exist on type 'string | Timestamp'.
+  Property 'seconds' does not exist on type 'string'.
+src/components/screens/SuperAdminAdminsScreen.tsx(65,70): error TS2339: Property 'seconds' does not exist on type 'string | Timestamp'.
+  Property 'seconds' does not exist on type 'string'.
+src/components/screens/SuperAdminManagementScreen.tsx(45,28): error TS2304: Cannot find name 'newAdminUid'.
+src/components/screens/SuperAdminManagementScreen.tsx(49,46): error TS2304: Cannot find name 'newAdminUid'.
+src/components/screens/SuperAdminManagementScreen.tsx(66,7): error TS2304: Cannot find name 'setNewAdminUid'.
+src/components/screens/SuperAdminManagementScreen.tsx(243,26): error TS2304: Cannot find name 'newAdminUid'.
+src/components/screens/SuperAdminManagementScreen.tsx(244,34): error TS2304: Cannot find name 'setNewAdminUid'.
+src/components/screens/SuperAdminMonitoringScreen.tsx(195,31): error TS18048: 'metrics.storageUsedGb' is possibly 'undefined'.
+src/components/screens/SuperAdminSubscriptionsScreen.tsx(147,26): error TS2339: Property 'saveSubscriptionPlan' does not exist on type 'typeof FirestoreService'.
+src/components/screens/SuperAdminSubscriptionsScreen.tsx(167,26): error TS2339: Property 'saveSubscriptionPlan' does not exist on type 'typeof FirestoreService'.
+src/components/screens/SuperAdminSubscriptionsScreen.tsx(187,26): error TS2339: Property 'saveSubscriptionPlan' does not exist on type 'typeof FirestoreService'.
+src/components/screens/SuperAdminSubscriptionsScreen.tsx(324,30): error TS2339: Property 'saveSubscriptionPlan' does not exist on type 'typeof FirestoreService'.
+src/components/screens/SuperAdminSupportScreen.tsx(94,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/screens/TaskManagementScreen.tsx(202,48): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/screens/TaskManagementScreen.tsx(251,80): error TS2554: Expected 3 arguments, but got 4.
+src/components/screens/TaskManagementScreen.tsx(274,82): error TS2554: Expected 3 arguments, but got 4.
+src/components/screens/TaskManagementScreen.tsx(475,60): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/screens/TaskManagementScreen.tsx(757,68): error TS2339: Property 'siteName' does not exist on type 'SiteRecord'.
+src/components/screens/WorkOrdersScreen.tsx(25,96): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/WorkforceCapacityPlanningScreen.tsx(122,57): error TS2345: Argument of type 'string' is not assignable to parameter of type 'UserSession'.
+src/components/screens/WorkforceCapacityPlanningScreen.tsx(124,63): error TS2345: Argument of type 'UserSession' is not assignable to parameter of type 'string'.
+src/components/screens/dashboards/RegionalAreaManagerDashboard.tsx(94,9): error TS2322: Type '{ session: UserSession; company: CompanyTenant; onDrillDown: (mod: any, data: any) => void; }' is not assignable to type 'DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>'.
+  Property 'session' does not exist on type 'DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>'.
+src/components/screens/dashboards/SiteInChargeDashboard.tsx(53,74): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/dashboards/SiteInChargeDashboard.tsx(54,82): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/dashboards/official/AdminDashboard.tsx(19,90): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/dashboards/official/AdminDashboard.tsx(20,101): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/dashboards/official/DepartmentGenericDashboard.tsx(26,89): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/dashboards/official/FinanceDashboard.tsx(19,98): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/dashboards/official/FinanceDashboard.tsx(20,100): error TS2554: Expected 2 arguments, but got 3.
+src/components/screens/dashboards/official/ProcurementDashboard.tsx(18,101): error TS2554: Expected 2 arguments, but got 3.
+src/components/wfm/AttendanceRules.tsx(14,40): error TS2304: Cannot find name 'OvertimePolicyRecord'.
+src/components/wfm/AttendanceRules.tsx(23,31): error TS2304: Cannot find name 'AttendanceCalculationEngine'.
+src/components/wfm/OvertimeDashboard.tsx(234,7): error TS2345: Argument of type '{ uid: string; name: string; reason: string; approvedMinutes: number; }' is not assignable to parameter of type 'string'.
+src/components/wfm/OvertimeDashboard.tsx(276,11): error TS2345: Argument of type '{ uid: string; name: string; reason: string; approvedMinutes: any; }' is not assignable to parameter of type 'string'.
+src/components/wfm/OvertimeDashboard.tsx(296,7): error TS2554: Expected 2 arguments, but got 5.
+src/components/wfm/OvertimeDashboard.tsx(305,81): error TS2554: Expected 2 arguments, but got 4.
+src/components/wfm/OvertimeDashboard.tsx(341,80): error TS2554: Expected 3 arguments, but got 4.
+src/components/wfm/OvertimeDashboard.tsx(351,84): error TS2554: Expected 2 arguments, but got 3.
+src/components/wfm/PunchStation.tsx(170,23): error TS2339: Property 'displayName' does not exist on type 'UserSession'.
+src/services/bpmService.ts(210,9): error TS2322: Type 'boolean | undefined' is not assignable to type 'boolean'.
+  Type 'undefined' is not assignable to type 'boolean'.
+src/services/bpmService.ts(321,9): error TS2554: Expected 8-9 arguments, but got 13.
+src/services/changeControlService.ts(190,7): error TS2554: Expected 8-9 arguments, but got 13.
+src/services/firestoreService.ts(2193,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/services/firestoreService.ts(2428,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/services/firestoreService.ts(5206,38): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(firestore: Firestore, path: string, ...pathSegments: string[]): DocumentReference<DocumentData, DocumentData>', gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+  Overload 2 of 3, '(reference: CollectionReference<unknown, DocumentData>, path?: string | undefined, ...pathSegments: string[]): DocumentReference<unknown, DocumentData>', gave the following error.
+    Argument of type 'Firestore' is not assignable to parameter of type 'CollectionReference<unknown, DocumentData>'.
+      Type 'Firestore' is missing the following properties from type 'CollectionReference<unknown, DocumentData>': id, path, parent, withConverter, and 2 more.
+  Overload 3 of 3, '(reference: DocumentReference<unknown, DocumentData>, path: string, ...pathSegments: string[]): DocumentReference<DocumentData, DocumentData>', gave the following error.
+    Argument of type 'Firestore' is not assignable to parameter of type 'DocumentReference<unknown, DocumentData>'.
+      Type 'Firestore' is missing the following properties from type 'DocumentReference<unknown, DocumentData>': converter, firestore, id, path, and 2 more.
+src/services/firestoreService.ts(5211,68): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/services/operationalIntelligenceEngine.ts(759,15): error TS2353: Object literal may only specify known properties, and 'resourceId' does not exist in type 'OperationalAnomaly'.
+src/services/queryScopeEngine.ts(20,70): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/services/queryScopeEngine.ts(62,66): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/tests/leaveProRata.test.ts(6,9): error TS2741: Property 'applicableToGenders' is missing in type '{ id: string; companyId: string; leaveCode: string; leaveName: string; description: string; isPaid: boolean; annualEntitlement: number; accrualType: string; accrualFrequency: string; proRataForMidYearJoiners: boolean; ... 13 more ...; updatedAt: number; }' but required in type 'LeavePolicyRecord'.
+src/tests/verifyPhase5.ts(260,11): error TS2739: Type '{ id: string; companyId: string; siteId: string; siteName: string; date: string; supervisorId: string; supervisorName: string; weatherCondition: string; guardsCountOnDuty: number; totalPatrolsCompleted: number; ... 4 more ...; createdAt: string; }' is missing the following properties from type 'DailySiteLogRecord': logType, notes, updatedAt
