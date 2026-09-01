@@ -25,9 +25,9 @@ export const UseCasesSection: React.FC = () => {
       problem: 'Managing 20+ outsourced vendor teams across MEP, housekeeping, and security without unified daily muster or equipment telemetry verification.',
       solution: 'Consolidated attendance roll-calls, DG/HVAC hourly log sheets, breakdown ticket escalation, and client SLA compliance scorecards.',
       outcomes: [
-        '99.4% contractor muster roll-call verification',
-        'Zero undocumented DG fuel leakages or downtime',
-        'Real-time SLA penalty auditing for service vendors'
+        'Auditable contractor muster roll-call verification',
+        'Zero undocumented DG fuel leakages or unrecorded downtime',
+        'Automated SLA auditing for facility service vendors'
       ]
     },
     {
@@ -38,8 +38,8 @@ export const UseCasesSection: React.FC = () => {
       problem: 'High turnover, ghost guards on night shifts, missed perimeter checkpoints, and slow paper-based incident reporting.',
       solution: 'Sequential QR patrol tours, biometric & geo-tagged shift muster, material inward/outward gate passes, and digital visitor logs.',
       outcomes: [
-        '100% verifiable guard patrol route adherence',
-        'Elimination of ghost guards on night shifts',
+        'Verifiable guard patrol route adherence via QR checkpoints',
+        'Elimination of ghost entries through geofenced roll-calls',
         'Immediate photo-evidence incident escalation'
       ]
     },
@@ -51,9 +51,9 @@ export const UseCasesSection: React.FC = () => {
       problem: 'Strict safety mandates, hazardous area permits, high-value asset tracking, and continuous 3-shift rotational operations.',
       solution: 'Form II statutory wage muster compliance, daily machinery log sheets, hazardous area access verification, and material gate passes.',
       outcomes: [
-        '100% statutory labor register compliance',
-        'Full traceability for returnable material gate passes',
-        'Preventive maintenance uptime exceeding 99.5%'
+        'Statutory labor register compliance (Form II output)',
+        'Full digital traceability for returnable material gate passes',
+        'Systematic preventive maintenance tracking & uptime audits'
       ]
     },
     {
@@ -210,7 +210,7 @@ export const UseCasesSection: React.FC = () => {
 
               <div className="p-6 rounded-2xl bg-white border border-slate-200 space-y-3">
                 <strong className="font-mono text-xs uppercase text-black block">
-                  PROVEN BUSINESS OUTCOMES:
+                  CORE OPERATIONAL DELIVERABLES:
                 </strong>
                 <div className="space-y-2">
                   {activeCategory.outcomes.map((out, i) => (

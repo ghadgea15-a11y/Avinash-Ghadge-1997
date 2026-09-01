@@ -171,8 +171,8 @@ const HeroSection: React.FC<{ onNavigate: (screen: PhaseAScreen) => void; onOpen
                   <div className="col-span-1 h-40 bg-slate-900/50 rounded-xl border border-slate-800 flex items-center justify-center relative">
                     <div className="w-24 h-24 rounded-full border-8 border-slate-800 border-t-blue-500 border-r-indigo-500 rotate-45"></div>
                     <div className="absolute text-center">
-                      <div className="text-xs text-slate-500">Total</div>
-                      <div className="font-bold">128</div>
+                      <div className="text-[10px] uppercase font-mono text-slate-300">Muster</div>
+                      <div className="font-bold text-xs text-blue-400">Sync</div>
                     </div>
                   </div>
                 </div>
@@ -216,19 +216,34 @@ const HeroSection: React.FC<{ onNavigate: (screen: PhaseAScreen) => void; onOpen
   );
 };
 
-// --- TRUSTED BY ---
+// --- ENTERPRISE CAPABILITY STRIP ---
 const TrustedBySection: React.FC = () => {
+  const pillars = [
+    'MULTI-TENANT ISOLATION',
+    'ZERO-TRUST RBAC',
+    'REAL-TIME WEB & ANDROID',
+    'STATUTORY FORM II COMPLIANCE',
+    'OFFLINE FIELD LOGGING',
+    'IMMUTABLE AUDIT TRAILS'
+  ];
+
   return (
-    <section className="py-10 border-y border-white/5 bg-[#080D1C]">
+    <section className="py-8 border-y border-white/5 bg-[#080D1C]">
       <div className="max-w-7xl mx-auto px-4 text-center">
-        <p className="text-sm font-semibold text-slate-500 mb-8 uppercase tracking-widest">Trusted by forward-thinking companies</p>
-        <div className="flex flex-wrap justify-center items-center gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-          {/* Abstract placeholder logos representing enterprise clients */}
-          <div className="flex items-center gap-2"><div className="w-8 h-8 bg-slate-300 rounded-full"></div><span className="text-xl font-bold text-slate-300">TATA</span></div>
-          <div className="flex items-center gap-2"><div className="w-8 h-8 bg-slate-300 rotate-45"></div><span className="text-xl font-bold text-slate-300">adani</span></div>
-          <div className="flex items-center gap-2"><div className="w-8 h-8 bg-slate-300 rounded"></div><span className="text-xl font-black text-slate-300 italic">JSW</span></div>
-          <div className="flex items-center gap-2"><div className="w-8 h-2 bg-slate-300"></div><span className="text-xl font-bold text-slate-300">JINDAL</span></div>
-          <div className="flex items-center gap-2"><div className="w-6 h-8 bg-slate-300 rounded-t-full"></div><span className="text-xl font-bold text-slate-300">vedanta</span></div>
+        <p className="text-xs font-semibold text-slate-400 mb-6 uppercase tracking-widest font-mono">
+          Designed for Multi-Tenant Workforce Operations &amp; Facility Governance
+        </p>
+        <div className="flex flex-wrap justify-center items-center gap-x-8 gap-y-3">
+          {pillars.map((pillar, idx) => (
+            <div key={idx} className="flex items-center gap-8">
+              <span className="text-xs sm:text-sm font-mono font-bold tracking-wider text-slate-300 hover:text-blue-400 transition-colors">
+                {pillar}
+              </span>
+              {idx < pillars.length - 1 && (
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-700 hidden sm:inline-block" />
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -458,19 +473,19 @@ const AboutUsSection: React.FC = () => {
               </a>
             </div>
           </div>
-          <div className="lg:w-2/3 grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="lg:w-2/3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { icon: Activity, val: '10+', label: 'Years of Excellence', color: 'text-amber-600', bg: 'bg-amber-100' },
-              { icon: Building2, val: '500+', label: 'Happy Clients', color: 'text-blue-600', bg: 'bg-blue-100' },
-              { icon: Users, val: '50K+', label: 'Users Daily', color: 'text-emerald-600', bg: 'bg-emerald-100' },
-              { icon: Clock, val: '99.9%', label: 'Uptime & Reliability', color: 'text-indigo-600', bg: 'bg-indigo-100' }
-            ].map((stat, i) => (
-              <div key={i} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center justify-center">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${stat.bg}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
+              { icon: Shield, title: 'Multi-Tenant Isolation', desc: 'Cryptographic data partition across enterprise accounts', color: 'text-blue-600', bg: 'bg-blue-100' },
+              { icon: Users, title: 'Role-Based Access', desc: 'Granular controls from Super Admin to Site Guards', color: 'text-emerald-600', bg: 'bg-emerald-100' },
+              { icon: Activity, title: 'Real-Time Sync', desc: 'Instant synchronization across Web & Android apps', color: 'text-amber-600', bg: 'bg-amber-100' },
+              { icon: Clock, title: 'Statutory Compliance', desc: 'Form II labor register & wage calculation compliance', color: 'text-indigo-600', bg: 'bg-indigo-100' }
+            ].map((pillar, i) => (
+              <div key={i} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center justify-center">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${pillar.bg}`}>
+                  <pillar.icon className={`w-6 h-6 ${pillar.color}`} />
                 </div>
-                <h4 className="text-2xl font-black text-slate-900 mb-1">{stat.val}</h4>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{stat.label}</p>
+                <h4 className="text-sm font-bold text-slate-900 mb-1">{pillar.title}</h4>
+                <p className="text-xs text-slate-500 font-medium leading-snug">{pillar.desc}</p>
               </div>
             ))}
           </div>
@@ -591,7 +606,7 @@ const FaqItem: React.FC<{ question: string, answer: string }> = ({ question, ans
 // --- FOOTER ---
 const Footer: React.FC<{ onNavigate: (screen: PhaseAScreen) => void, onOpenDemo: () => void }> = ({ onNavigate, onOpenDemo }) => {
   return (
-    <footer className="bg-[#040812] text-slate-400 py-16 border-t border-white/5">
+    <footer className="bg-[#040812] text-slate-300 py-16 border-t border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           
@@ -644,7 +659,7 @@ const Footer: React.FC<{ onNavigate: (screen: PhaseAScreen) => void, onOpenDemo:
         </div>
         
         <div className="pt-8 border-t border-slate-800/50 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
-          <div className="text-slate-500">
+          <div className="text-slate-400">
             &copy; {new Date().getFullYear()} Shourya Enterprises Pvt. Ltd. All rights reserved.
           </div>
           <div className="flex gap-6">

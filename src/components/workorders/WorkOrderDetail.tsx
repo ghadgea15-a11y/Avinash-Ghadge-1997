@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { UserSession, WorkOrderRecord, WorkOrderStatus } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
-import { X, CheckCircle2, Play, Pause, FileText, Send, ArrowLeft, Clock, AlertCircle } from 'lucide-react';
+import { SafetyInterlockService } from '../../services/safetyInterlockService';
+import { X, CheckCircle2, Play, Pause, FileText, Send, ArrowLeft, Clock, AlertCircle, ShieldAlert, Check } from 'lucide-react';
 
 interface WorkOrderDetailProps {
   workOrder: WorkOrderRecord;
@@ -12,6 +13,8 @@ interface WorkOrderDetailProps {
 
 export function WorkOrderDetail({ workOrder, companyId, userSession, onClose }: WorkOrderDetailProps) {
   const [loading, setLoading] = useState(false);
+  const [clearanceNotes, setClearanceNotes] = useState('');
+  const [showClearancePrompt, setShowClearancePrompt] = useState(false);
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -50,6 +53,31 @@ export function WorkOrderDetail({ workOrder, companyId, userSession, onClose }: 
     }
   };
 
+  const handleReleaseSafetyHold = async () => {
+    if (!clearanceNotes.trim()) {
+      alert('Please enter formal safety clearance notes / re-inspection confirmation.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const success = await SafetyInterlockService.releaseSafetyHalt(
+        companyId,
+        workOrder.id,
+        clearanceNotes,
+        userSession
+      );
+      if (success) {
+        workOrder.isSafetyHalted = false;
+        workOrder.status = 'IN_PROGRESS';
+        setShowClearancePrompt(false);
+      }
+    } catch (err) {
+      console.error('Error releasing safety hold:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'DRAFT': return 'bg-slate-100 text-slate-900';
@@ -81,6 +109,11 @@ export function WorkOrderDetail({ workOrder, companyId, userSession, onClose }: 
             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusColor(workOrder.status)}`}>
               {workOrder.status}
             </span>
+            {workOrder.isSafetyHalted && (
+              <span className="px-2.5 py-1 rounded-full text-xs font-black bg-rose-600 text-white flex items-center gap-1.5 animate-pulse">
+                <ShieldAlert className="w-3.5 h-3.5" /> SAFETY HOLD ACTIVE
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mt-1">
             <span>ID: {workOrder.id}</span>
@@ -88,6 +121,69 @@ export function WorkOrderDetail({ workOrder, companyId, userSession, onClose }: 
           </div>
         </div>
       </div>
+
+      {/* 🚨 SAFETY INTERLOCK BANNER */}
+      {workOrder.isSafetyHalted && (
+        <div className="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border-2 border-rose-500 flex items-start gap-4">
+          <div className="p-2 bg-rose-500 text-white rounded-xl">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-sm font-black text-rose-700 dark:text-rose-400 uppercase tracking-wide">
+              Automated Safety Interlock — Work Order Suspended
+            </h4>
+            <p className="text-xs text-rose-900 dark:text-rose-200 mt-1 font-medium">
+              {workOrder.safetyHaltReason || 'Critical hazard inspection failed on this site. Work order execution is halted to protect field safety.'}
+            </p>
+            <div className="mt-2 text-[11px] text-rose-600 dark:text-rose-400 flex items-center gap-3">
+              <span>Halted By: {workOrder.safetyHaltedBy || 'EHS Safety Engine'}</span>
+              <span>•</span>
+              <span>Time: {formatDate(workOrder.safetyHaltedAt)}</span>
+            </div>
+          </div>
+          {!showClearancePrompt && (
+            <button
+              onClick={() => setShowClearancePrompt(true)}
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition"
+            >
+              Release Safety Hold
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* SAFETY CLEARANCE DIALOG */}
+      {showClearancePrompt && (
+        <div className="mb-6 p-4 rounded-2xl bg-slate-900 text-white border border-slate-700 space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-black tracking-wider uppercase text-amber-400 flex items-center gap-2">
+              <Check className="w-4 h-4" /> Authorize EHS Safety Clearance & Resume
+            </h4>
+            <button 
+              onClick={() => setShowClearancePrompt(false)}
+              className="text-xs text-slate-400 hover:text-white"
+            >
+              Cancel
+            </button>
+          </div>
+          <textarea
+            value={clearanceNotes}
+            onChange={(e) => setClearanceNotes(e.target.value)}
+            placeholder="Enter formal clearance reason / Re-inspection passed reference ID..."
+            className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400"
+            rows={2}
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={handleReleaseSafetyHold}
+              disabled={loading}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition"
+            >
+              Confirm Clearance & Resume
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">

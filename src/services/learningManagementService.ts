@@ -34,6 +34,65 @@ export class LearningManagementService {
     return snap.docs.map(d => d.data() as EmployeeRefresherStatus);
   }
 
+  /**
+   * Deterministically verifies if an employee's mandatory security training and refreshers are compliant
+   * for site entry / punch-in and roster authorization.
+   */
+  static async checkEmployeeTrainingCompliance(companyId: string, employeeId: string): Promise<{
+    isCompliant: boolean;
+    overdueRefreshers: EmployeeRefresherStatus[];
+    expiredEnrollments: TrainingEnrollmentRecord[];
+    blockingReason?: string;
+  }> {
+    try {
+      const now = new Date();
+      // 1. Check direct refresher statuses
+      const refQuery = query(
+        collection(db, 'companies', companyId, 'refresher_statuses'),
+        where('employeeId', '==', employeeId)
+      );
+      const refSnap = await getDocs(refQuery);
+      const overdueRefreshers: EmployeeRefresherStatus[] = [];
+      refSnap.docs.forEach(d => {
+        const data = d.data() as EmployeeRefresherStatus;
+        if (data.status === 'EXPIRED' || data.status === 'OVERDUE' || data.status === 'FAILED') {
+          overdueRefreshers.push(data);
+        } else if (data.dueDate && new Date(data.dueDate).getTime() < now.getTime() && data.status !== 'COMPLETED') {
+          overdueRefreshers.push(data);
+        }
+      });
+
+      // 2. Check mandatory training enrollments
+      const enrQuery = query(
+        collection(db, 'companies', companyId, 'trainingEnrollments'),
+        where('employeeId', '==', employeeId)
+      );
+      const enrSnap = await getDocs(enrQuery);
+      const expiredEnrollments: TrainingEnrollmentRecord[] = [];
+      enrSnap.docs.forEach(d => {
+        const data = d.data() as TrainingEnrollmentRecord;
+        if (data.status === 'FAILED' || data.status === 'FLAGGED_CHEAT') {
+          expiredEnrollments.push(data);
+        }
+      });
+
+      const isCompliant = overdueRefreshers.length === 0 && expiredEnrollments.length === 0;
+      const blockingReason = !isCompliant
+        ? `Mandatory security training / refresher is overdue or flagged (${overdueRefreshers.map(r => r.programTitle || r.refresherCode || 'Security Training').join(', ')}). Site entry blocked until training completion.`
+        : undefined;
+
+      return {
+        isCompliant,
+        overdueRefreshers,
+        expiredEnrollments,
+        blockingReason
+      };
+    } catch (err) {
+      console.warn('[LearningManagementService] checkEmployeeTrainingCompliance error:', err);
+      return { isCompliant: true, overdueRefreshers: [], expiredEnrollments: [] };
+    }
+  }
+
   // ============================================================================
   // PROGRAMS
   // ============================================================================

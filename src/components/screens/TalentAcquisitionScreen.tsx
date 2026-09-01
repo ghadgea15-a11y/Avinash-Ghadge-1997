@@ -86,6 +86,12 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
   useBackNavigation(!!selectedCandidate, () => setSelectedCandidate(null as any), 'selectedCandidate');
   const [selectedReq, setSelectedReq] = useState<JobRequisitionRecord | null>(null);
   useBackNavigation(!!selectedReq, () => setSelectedReq(null as any), 'selectedReq');
+  const [matchScoreModalData, setMatchScoreModalData] = useState<{
+    candidate: CandidateRecord;
+    result: any;
+    req?: JobRequisitionRecord;
+  } | null>(null);
+  useBackNavigation(!!matchScoreModalData, () => setMatchScoreModalData(null), 'matchScoreModalData');
 
   // Form states
   const [reqForm, setReqForm] = useState({
@@ -666,7 +672,7 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                       <th className="py-3 px-4">Contact</th>
                       <th className="py-3 px-4">Applying For</th>
                       <th className="py-3 px-4">Exp & Salary</th>
-                      <th className="py-3 px-4">Rating</th>
+                      <th className="py-3 px-4">Auto Match Score</th>
                       <th className="py-3 px-4">Current Stage</th>
                       <th className="py-3 px-4">Verification</th>
                       <th className="py-3 px-4 text-right">Actions</th>
@@ -675,12 +681,15 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {filteredCandidates.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-8 text-center text-slate-400">
+                        <td colSpan={8} className="py-8 text-center text-slate-400">
                           No candidates found matching filter criteria.
                         </td>
                       </tr>
                     ) : (
-                      filteredCandidates.map((cand) => (
+                      filteredCandidates.map((cand) => {
+                        const targetReq = requisitions.find(r => r.id === cand.requisitionId);
+                        const matchResult = TalentAcquisitionService.calculateCandidateEligibilityAndMatch(cand, targetReq);
+                        return (
                         <tr key={cand.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                           <td className="py-3.5 px-4">
                             <div className="font-bold text-slate-900 dark:text-white">{cand.fullName}</div>
@@ -706,14 +715,17 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                             <div className="text-slate-400">Exp: ₹{cand.expectedSalary || 'Negotiable'}</div>
                           </td>
                           <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-0.5 text-amber-400">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star 
-                                  key={star} 
-                                  className={`w-3.5 h-3.5 ${star <= (cand.rating || 3) ? 'fill-amber-400' : 'text-slate-300 dark:text-slate-700'}`} 
-                                />
-                              ))}
-                            </div>
+                            <button
+                              onClick={() => setMatchScoreModalData({ candidate: cand, result: matchResult, req: targetReq })}
+                              className="group flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-bold transition-all bg-indigo-50/50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300"
+                              title="Click to view automated match scoring breakdown"
+                            >
+                              <span className={`w-2 h-2 rounded-full ${
+                                matchResult.overallScore >= 70 ? 'bg-emerald-500' : matchResult.overallScore >= 50 ? 'bg-amber-500' : 'bg-rose-500'
+                              }`} />
+                              <span>{matchResult.overallScore}% Match</span>
+                              <ChevronRight className="w-3 h-3 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+                            </button>
                           </td>
                           <td className="py-3.5 px-4">
                             <select
@@ -766,7 +778,8 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                             )}
                           </td>
                         </tr>
-                      ))
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -1029,6 +1042,78 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Automated Resume & Skills Match Breakdown Modal */}
+      {matchScoreModalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className={`w-full max-w-xl p-6 rounded-3xl border shadow-2xl ${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+            <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-500">
+                  AUTOMATED FIT ALGORITHM
+                </span>
+                <h2 className="text-xl font-bold mt-1 text-slate-900 dark:text-white">
+                  {matchScoreModalData.candidate.fullName}
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Target Requisition: {matchScoreModalData.req?.title || matchScoreModalData.candidate.requisitionId || 'General Pool'}
+                </p>
+              </div>
+              <div className={`text-center px-4 py-2 rounded-2xl border ${
+                matchScoreModalData.result.overallScore >= 70
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
+                  : matchScoreModalData.result.overallScore >= 50
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
+                  : 'bg-rose-500/10 border-rose-500/30 text-rose-500'
+              }`}>
+                <div className="text-2xl font-black">{matchScoreModalData.result.overallScore}%</div>
+                <div className="text-[10px] font-bold uppercase tracking-wider">Match Score</div>
+              </div>
+            </div>
+
+            <div className="my-5 p-3.5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 text-xs text-indigo-900 dark:text-indigo-200">
+              <div className="font-semibold flex items-center gap-1.5 mb-1">
+                <CheckCircle2 className="w-4 h-4 text-indigo-500" />
+                Algorithm Recommendation: {matchScoreModalData.result.decision}
+              </div>
+              <p className="text-slate-600 dark:text-slate-400">{matchScoreModalData.result.matchSummary}</p>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">
+                Evaluation Criteria Breakdown
+              </h4>
+              {matchScoreModalData.result.criteriaResults.map((crit: any, idx: number) => (
+                <div key={idx} className={`p-3 rounded-xl border text-xs ${isDark ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{crit.criterionName}</span>
+                    <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                      {crit.scoreAchieved} / {crit.maxScore} pts
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mb-1.5">
+                    <div
+                      className="bg-indigo-600 h-full rounded-full transition-all"
+                      style={{ width: `${(crit.scoreAchieved / crit.maxScore) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">{crit.remarks}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setMatchScoreModalData(null)}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm shadow-md"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

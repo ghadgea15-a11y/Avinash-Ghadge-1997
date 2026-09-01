@@ -34,15 +34,15 @@ export const PremiumFooter: React.FC<PremiumFooterProps> = ({ onNavigate, onOpen
                 <span className="font-bold text-sm tracking-widest text-blue-400 leading-tight">MUSTER</span>
               </div>
             </a>
-            <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
+            <p className="text-sm text-slate-300 leading-relaxed max-w-sm">
               The unified operational operating system connecting enterprise workforce management, facility log sheets, security patrol muster, and statutory labor compliance.
             </p>
-            <div className="space-y-2 text-sm text-slate-400">
-              <p>Developed by <strong className="text-white">Shourya Enterprises Pvt. Ltd.</strong></p>
-              <p>Founder: <span className="text-slate-300">Avinash Shivaji Ghadge</span></p>
-              <p>HQ: <span className="text-slate-300">Ajanthanagar, Chinchwad, Pune, MH 411019</span></p>
-              <p>Email: <a href="mailto:ghadgea162@gmail.com" className="text-blue-400 hover:text-blue-300 transition-colors">ghadgea162@gmail.com</a></p>
-              <p>Phone: <a href="tel:+919096345456" className="text-blue-400 hover:text-blue-300 transition-colors">+91-9096345456</a></p>
+            <div className="space-y-2 text-sm text-slate-300">
+              <div>Developed by <strong className="text-white">Shourya Enterprises Pvt. Ltd.</strong></div>
+              <div>Founder: <span className="text-white">Avinash Shivaji Ghadge</span></div>
+              <div>HQ: <span className="text-white">Ajanthanagar, Chinchwad, Pune, MH 411019</span></div>
+              <div>Email: <a href="mailto:ghadgea162@gmail.com" className="text-blue-400 hover:text-blue-300 transition-colors">ghadgea162@gmail.com</a></div>
+              <div>Phone: <a href="tel:+919096345456" className="text-blue-400 hover:text-blue-300 transition-colors">+91-9096345456</a></div>
             </div>
             <button 
               onClick={onOpenDemo}
@@ -59,7 +59,7 @@ export const PremiumFooter: React.FC<PremiumFooterProps> = ({ onNavigate, onOpen
             <ul className="space-y-3">
               {['Workforce', 'Attendance', 'Operations', 'Assets', 'Inventory', 'Payroll', 'Compliance', 'Analytics'].map(item => (
                 <li key={item}>
-                  <a href={`/${item.toLowerCase().replace(' ', '-')}`} onClick={(e) => handleLinkClick(e, `/${item.toLowerCase().replace(' ', '-')}`)} className="text-sm text-slate-400 hover:text-blue-400 transition-colors">
+                  <a href={`/${item.toLowerCase().replace(' ', '-')}`} onClick={(e) => handleLinkClick(e, `/${item.toLowerCase().replace(' ', '-')}`)} className="text-sm text-slate-300 hover:text-blue-400 transition-colors">
                     {item}
                   </a>
                 </li>
@@ -80,7 +80,7 @@ export const PremiumFooter: React.FC<PremiumFooterProps> = ({ onNavigate, onOpen
                 { label: 'Contractors', path: '/solutions/contractors' }
               ].map(item => (
                 <li key={item.label}>
-                  <a href={item.path} onClick={(e) => handleLinkClick(e, item.path)} className="text-sm text-slate-400 hover:text-blue-400 transition-colors">
+                  <a href={item.path} onClick={(e) => handleLinkClick(e, item.path)} className="text-sm text-slate-300 hover:text-blue-400 transition-colors">
                     {item.label}
                   </a>
                 </li>
@@ -94,7 +94,7 @@ export const PremiumFooter: React.FC<PremiumFooterProps> = ({ onNavigate, onOpen
             <ul className="space-y-3">
               {['About', 'Careers', 'Contact', 'Partners'].map(item => (
                 <li key={item}>
-                  <a href={`/${item.toLowerCase()}`} onClick={(e) => handleLinkClick(e, `/${item.toLowerCase()}`)} className="text-sm text-slate-400 hover:text-blue-400 transition-colors">
+                  <a href={`/${item.toLowerCase()}`} onClick={(e) => handleLinkClick(e, `/${item.toLowerCase()}`)} className="text-sm text-slate-300 hover:text-blue-400 transition-colors">
                     {item}
                   </a>
                 </li>
@@ -109,7 +109,7 @@ export const PremiumFooter: React.FC<PremiumFooterProps> = ({ onNavigate, onOpen
               <ul className="space-y-3">
                 {['FAQ', 'Support', 'Documentation', 'Release Notes'].map(item => (
                   <li key={item}>
-                    <a href={`/${item.toLowerCase().replace(' ', '-')}`} onClick={(e) => handleLinkClick(e, `/${item.toLowerCase().replace(' ', '-')}`)} className="text-sm text-slate-400 hover:text-blue-400 transition-colors">
+                    <a href={`/${item.toLowerCase().replace(' ', '-')}`} onClick={(e) => handleLinkClick(e, `/${item.toLowerCase().replace(' ', '-')}`)} className="text-sm text-slate-300 hover:text-blue-400 transition-colors">
                       {item}
                     </a>
                   </li>
@@ -121,7 +121,7 @@ export const PremiumFooter: React.FC<PremiumFooterProps> = ({ onNavigate, onOpen
         </div>
 
         <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-400">
             &copy; {new Date().getFullYear()} Log Sheet Muster &bull; Shourya Enterprises Pvt. Ltd. All rights reserved.
           </p>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -133,7 +133,7 @@ export const PremiumFooter: React.FC<PremiumFooterProps> = ({ onNavigate, onOpen
               { label: 'Data Protection', path: '/legal/data-protection' },
               { label: 'Demo Terms', path: '/legal/demo-terms' },
             ].map(item => (
-              <a key={item.label} href={item.path} onClick={(e) => handleLinkClick(e, item.path)} className="text-xs text-slate-500 hover:text-white transition-colors">
+              <a key={item.label} href={item.path} onClick={(e) => handleLinkClick(e, item.path)} className="text-xs text-slate-400 hover:text-white transition-colors">
                 {item.label}
               </a>
             ))}

@@ -31,7 +31,8 @@ import {
 import { 
   SafetyChecksheetRecord, 
   SafetyChecksheetTemplate, 
-  SafetyChecksheetItem 
+  SafetyChecksheetItem,
+  SafetyInterlockResult 
 } from '../../types/ops';
 import { FirestoreService } from '../../services/firestoreService';
 import { motion, AnimatePresence } from 'motion/react';
@@ -104,6 +105,9 @@ export const SafetyChecksheetModule: React.FC<SafetyChecksheetModuleProps> = ({
   // Detail State
   const [selectedRecord, setSelectedRecord] = useState<SafetyChecksheetRecord | null>(null);
 
+  // EHS Interlock Emergency Modal State
+  const [interlockModalData, setInterlockModalData] = useState<SafetyInterlockResult | null>(null);
+
   useEffect(() => {
     loadRecords();
   }, [userSession.companyId]);
@@ -142,6 +146,7 @@ export const SafetyChecksheetModule: React.FC<SafetyChecksheetModuleProps> = ({
     try {
       const siteName = sites.find(s => s.id === selectedSiteId)?.siteName || 'Unknown Site';
       const templateTitle = TEMPLATES.find(t => t.type === selectedTemplate)?.title || selectedTemplate;
+      const isFailedInspection = formItems.some(i => i.response === 'NO');
       
       const newRecord: SafetyChecksheetRecord = {
         id: `SAFETY_${Date.now()}`,
@@ -153,7 +158,7 @@ export const SafetyChecksheetModule: React.FC<SafetyChecksheetModuleProps> = ({
         performedByUserId: userSession.userId,
         performedByUserName: userSession.fullName,
         items: formItems,
-        overallStatus: formItems.some(i => i.response === 'NO') ? 'FAIL' : 'PASS',
+        overallStatus: isFailedInspection ? 'FAIL' : 'PASS',
         summaryRemarks,
         branding: {
           companyName: activeCompany?.companyLegalName || activeCompany?.name || 'My Company',
@@ -163,9 +168,12 @@ export const SafetyChecksheetModule: React.FC<SafetyChecksheetModuleProps> = ({
         updatedAt: new Date().toISOString()
       };
 
-      const success = await FirestoreService.saveSafetyChecksheet(userSession.companyId, newRecord);
-      if (success) {
+      const result = await FirestoreService.saveSafetyChecksheet(userSession.companyId, newRecord, userSession);
+      if (result.success) {
         await loadRecords();
+        if (result.interlockResult?.interlockTriggered) {
+          setInterlockModalData(result.interlockResult);
+        }
         setView('LIST');
       } else {
         alert('Failed to save checksheet');
@@ -540,6 +548,85 @@ export const SafetyChecksheetModule: React.FC<SafetyChecksheetModuleProps> = ({
           )}
         </div>
       </div>
+
+      {/* 🚨 EHS SAFETY INTERLOCK EMERGENCY MODAL */}
+      <AnimatePresence>
+        {interlockModalData && (
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-rose-500 max-w-xl w-full shadow-2xl overflow-hidden"
+            >
+              <div className="bg-rose-500 text-white p-6 flex items-center gap-4">
+                <div className="p-3 bg-white/20 rounded-2xl animate-pulse">
+                  <ShieldAlert className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black tracking-wide uppercase">Automated Safety Interlock Triggered</h3>
+                  <p className="text-xs text-rose-100 font-medium">Critical non-compliance detected. Site safety hold enacted.</p>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl">
+                  <div className="flex items-center justify-between text-xs font-bold text-rose-700 dark:text-rose-400 mb-2">
+                    <span>Target Site: {interlockModalData.siteName || interlockModalData.siteId}</span>
+                    <span className="bg-rose-600 text-white px-2 py-0.5 rounded-full text-[10px] font-black">AUTO-HALTED</span>
+                  </div>
+                  <p className="text-xs text-rose-900 dark:text-rose-200 leading-relaxed font-semibold">
+                    {interlockModalData.message}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Work Orders Halted</span>
+                    <span className="text-xl font-black text-rose-600 dark:text-rose-400">
+                      {interlockModalData.haltedWorkOrdersCount}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Field Tasks Frozen</span>
+                    <span className="text-xl font-black text-amber-600 dark:text-amber-400">
+                      {interlockModalData.haltedTasksCount}
+                    </span>
+                  </div>
+                </div>
+
+                {interlockModalData.failedHazards.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                      Failed Hazards Requiring Clearance:
+                    </h4>
+                    <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                      {interlockModalData.failedHazards.map((h, i) => (
+                        <div key={i} className="p-2.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-xs flex items-start gap-2 border border-slate-200 dark:border-slate-700">
+                          <XCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-bold text-slate-900 dark:text-white">[{h.category}]</span> {h.question}
+                            {h.remarks && <p className="text-[11px] text-slate-500 dark:text-slate-400 italic mt-0.5">{h.remarks}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-2 flex items-center justify-end gap-3">
+                  <button 
+                    onClick={() => setInterlockModalData(null)}
+                    className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-md"
+                  >
+                    Acknowledge & View Records
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { WorkOrderRecord, WorkOrderStatus, WorkOrderPriority } from '../../types';
-import { Search, Filter, AlertCircle, Clock, CheckCircle2, ChevronRight, FileText, Calendar, User, Tag } from 'lucide-react';
+import { Search, Filter, AlertCircle, Clock, CheckCircle2, ChevronRight, FileText, Calendar, User, Tag, ShieldAlert } from 'lucide-react';
 
 interface WorkOrderListProps {
   workOrders: WorkOrderRecord[];
@@ -169,6 +169,11 @@ export function WorkOrderList({ workOrders, onSelect }: WorkOrderListProps) {
                     <span className={`px-2 py-0.5 text-xs font-medium rounded border ${getPriorityBadge(order.priority)}`}>
                       {order.priority}
                     </span>
+                    {order.isSafetyHalted && (
+                      <span className="px-2 py-0.5 text-xs font-black bg-rose-600 text-white rounded-full flex items-center gap-1">
+                        <ShieldAlert className="w-3 h-3" /> SAFETY HOLD
+                      </span>
+                    )}
                   </div>
 
                   <h3 className="text-sm sm:text-base font-semibold text-black dark:text-white truncate">

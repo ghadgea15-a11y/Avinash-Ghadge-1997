@@ -186,7 +186,7 @@ export interface UserSession {
 
 export interface CandidateStatusHistory { [key: string]: any; }
 export interface ScreeningRecord { [key: string]: any; }
-export type ScreeningDecision = 'SELECTED' | 'REJECTED' | 'SHORTLISTED';
+export type ScreeningDecision = 'SELECTED' | 'REJECTED' | 'SHORTLISTED' | 'HOLD';
 export interface ScreeningCriteriaResult { [key: string]: any; }
 export interface InterviewRecord { [key: string]: any; }
 export type InterviewStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED';

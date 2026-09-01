@@ -28,10 +28,10 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
                 LOG SHEET MUSTER
               </span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
+            <p className="text-xs text-slate-300 leading-relaxed max-w-sm">
               The unified operational operating system connecting enterprise workforce management, facility log sheets, security patrol muster, and statutory compliance.
             </p>
-            <div className="pt-2 text-xs text-slate-400 font-mono">
+            <div className="pt-2 text-xs text-slate-300 font-mono">
               <span>A product by </span>
               <strong className="text-white">Shourya Enterprises Pvt. Ltd.</strong>
             </div>
@@ -42,7 +42,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
             <h4 className="font-mono text-[11px] uppercase font-bold text-emerald-400 tracking-wider">
               PLATFORM
             </h4>
-            <ul className="space-y-2 text-xs text-slate-400">
+            <ul className="space-y-2 text-xs text-slate-300">
               <li><a href="#platform" className="hover:text-white transition-colors">Operating System</a></li>
               <li><a href="#architecture" className="hover:text-white transition-colors">Architecture</a></li>
               <li><a href="#capabilities" className="hover:text-white transition-colors">Core Disciplines</a></li>
@@ -56,7 +56,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
             <h4 className="font-mono text-[11px] uppercase font-bold text-emerald-400 tracking-wider">
               SOLUTIONS
             </h4>
-            <ul className="space-y-2 text-xs text-slate-400">
+            <ul className="space-y-2 text-xs text-slate-300">
               <li><a href="#solutions" className="hover:text-white transition-colors">Facility Management</a></li>
               <li><a href="#solutions" className="hover:text-white transition-colors">Security Agencies</a></li>
               <li><a href="#solutions" className="hover:text-white transition-colors">Industrial Plants</a></li>
@@ -70,7 +70,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
             <h4 className="font-mono text-[11px] uppercase font-bold text-emerald-400 tracking-wider">
               GOVERNANCE
             </h4>
-            <ul className="space-y-2 text-xs text-slate-400">
+            <ul className="space-y-2 text-xs text-slate-300">
               <li><a href="#security" className="hover:text-white transition-colors">Security Architecture</a></li>
               <li><a href="#security" className="hover:text-white transition-colors">Tenant Isolation</a></li>
               <li><a href="#security" className="hover:text-white transition-colors">Form II Statutory Muster</a></li>
@@ -84,7 +84,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
             <h4 className="font-mono text-[11px] uppercase font-bold text-emerald-400 tracking-wider">
               PORTALS
             </h4>
-            <ul className="space-y-2 text-xs text-slate-400">
+            <ul className="space-y-2 text-xs text-slate-300">
               <li>
                 <button 
                   onClick={() => onNavigate('LOGIN')} 
@@ -102,7 +102,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
         </div>
 
         {/* Bottom Bar: Copyright & Compliance */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 font-mono">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 dark:text-slate-300 font-mono">
           <div>
             &copy; {new Date().getFullYear()} Log Sheet Muster &bull; Shourya Enterprises Pvt. Ltd. All rights reserved.
           </div>

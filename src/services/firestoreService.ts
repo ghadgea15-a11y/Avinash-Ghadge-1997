@@ -2003,6 +2003,25 @@ export class FirestoreService {
           return { success: false, message: `Punch-in denied: Employee status is currently ${empData.status.replace(/_/g, ' ')}.` };
         }
 
+        // Statutory & Training Compliance Verification (PSARA / Fire Safety / Security Refreshers)
+        const { CertificationTrackingService } = await import('./certificationTrackingService');
+        const certCompliance = await CertificationTrackingService.checkEmployeeComplianceStatus(companyId, employeeId);
+        if (!certCompliance.isCompliant && !geofenceOverrideRequested) {
+          return {
+            success: false,
+            message: `Punch-in denied: ${certCompliance.blockingReason} Please complete statutory renewal before site authorization.`
+          };
+        }
+
+        const { LearningManagementService } = await import('./learningManagementService');
+        const trainingCompliance = await LearningManagementService.checkEmployeeTrainingCompliance(companyId, employeeId);
+        if (!trainingCompliance.isCompliant && !geofenceOverrideRequested) {
+          return {
+            success: false,
+            message: `Punch-in denied: ${trainingCompliance.blockingReason}`
+          };
+        }
+
         // AI Vision Verification (Face Match & Liveness)
         let aiVerificationResult: any = null;
         if (selfieBase64 && empData.profilePhotoUrl) {
@@ -5634,11 +5653,22 @@ export class FirestoreService {
     } catch (err) { return false; }
   }
 
-  static async saveSafetyChecksheet(companyId: string, checksheet: any): Promise<boolean> {
-    const id = checksheet.id || `CHK-${Date.now()}`;
-    const ref = doc(db, 'companies', companyId || '', 'safety_checksheets', id);
-    await setDoc(ref, { ...checksheet, id, companyId, updatedAt: new Date().toISOString() }, { merge: true });
-    return true;
+  static async saveSafetyChecksheet(companyId: string, checksheet: any, session?: any): Promise<{ success: boolean; interlockResult?: any }> {
+    try {
+      const id = checksheet.id || `CHK-${Date.now()}`;
+      const ref = doc(db, 'companies', companyId || '', 'safety_checksheets', id);
+      const record = { ...checksheet, id, companyId, updatedAt: new Date().toISOString() };
+      await setDoc(ref, record, { merge: true });
+
+      // Trigger Automated EHS Safety Interlock & Work Order Auto-Halt
+      const { SafetyInterlockService } = await import('./safetyInterlockService');
+      const interlockResult = await SafetyInterlockService.processSafetyChecksheetInterlock(companyId, record, session);
+
+      return { success: true, interlockResult };
+    } catch (err) {
+      console.error('[FirestoreService] saveSafetyChecksheet error:', err);
+      return { success: false };
+    }
   }
 
   static subscribeToShiftHandovers(session: any, companyId: string, onData: (data: any[]) => void): () => void {

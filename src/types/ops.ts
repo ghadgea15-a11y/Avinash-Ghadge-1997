@@ -160,6 +160,32 @@ export interface SafetyChecksheetRecord {
     logoUrl?: string;
   };
   
+  // EHS Interlock & Auto-Halt Metadata
+  interlockTriggered?: boolean;
+  haltedWorkOrdersCount?: number;
+  haltedWorkOrderIds?: string[];
+  incidentReportId?: string;
+  remediedAt?: string;
+  remediedBy?: string;
+  clearanceNotes?: string;
+
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SafetyInterlockResult {
+  interlockTriggered: boolean;
+  overallStatus: 'PASS' | 'FAIL' | 'CONDITIONAL';
+  siteId: string;
+  siteName: string;
+  haltedWorkOrdersCount: number;
+  haltedWorkOrderIds: string[];
+  haltedTasksCount: number;
+  incidentReportId?: string;
+  failedHazards: Array<{
+    category: string;
+    question: string;
+    remarks?: string;
+  }>;
+  message: string;
 }

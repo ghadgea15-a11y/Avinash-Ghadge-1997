@@ -932,6 +932,148 @@ export class TalentAcquisitionService {
   }
 
   /**
+   * Automated Resume & Skills Matching Algorithm for Candidates against Job Requisitions.
+   * Evaluates:
+   * 1. Experience matching against required experience (30% weight)
+   * 2. Skill keywords & PSARA / Gun License / Security certifications (30% weight)
+   * 3. Police verification & Document completeness (20% weight)
+   * 4. Salary expectation alignment & Availability (20% weight)
+   */
+  public static calculateCandidateEligibilityAndMatch(
+    candidate: CandidateRecord,
+    requisition?: JobRequisitionRecord
+  ): {
+    overallScore: number;
+    decision: ScreeningDecision;
+    criteriaResults: ScreeningCriteriaResult[];
+    matchSummary: string;
+  } {
+    const criteria: ScreeningCriteriaResult[] = [];
+
+    // Criterion 1: Experience Requirement Fit (Weight: 30)
+    const requiredExp = requisition?.experienceRequired 
+      ? parseInt(String(requisition.experienceRequired).replace(/\D/g, '')) || 1
+      : 1;
+    const candExp = Number(candidate.experienceYears) || 0;
+    let expScore = 0;
+    if (candExp >= requiredExp) {
+      expScore = 30;
+    } else if (candExp > 0) {
+      expScore = Math.round((candExp / requiredExp) * 30);
+    } else {
+      expScore = 12;
+    }
+    criteria.push({
+      criterionId: 'CRIT_EXP',
+      criterionName: 'Experience Fit',
+      weight: 30,
+      maxScore: 30,
+      scoreAchieved: expScore,
+      mandatory: true,
+      passed: expScore >= 18,
+      remarks: `${candExp} yrs experience vs ${requiredExp} yrs required.`
+    });
+
+    // Criterion 2: Skills & Certification Match (Weight: 30)
+    const reqSkills: string[] = Array.isArray(requisition?.skills) 
+      ? requisition.skills 
+      : (requisition?.skills ? String(requisition.skills).split(',').map((s: string) => s.trim().toLowerCase()) : ['security', 'guard']);
+    
+    const candidateProfileText = [
+      candidate.skills || '',
+      candidate.notes || '',
+      candidate.qualification || '',
+      candidate.previousDesignation || '',
+      candidate.appliedRole || '',
+      candidate.psaraLicense || '',
+      candidate.certifications || ''
+    ].join(' ').toLowerCase();
+
+    let matchedSkillCount = 0;
+    reqSkills.forEach(skill => {
+      const s = skill.toLowerCase().trim();
+      if (s && candidateProfileText.includes(s)) {
+        matchedSkillCount++;
+      }
+    });
+
+    let skillScore = 20;
+    if (reqSkills.length > 0) {
+      const matchRatio = matchedSkillCount / reqSkills.length;
+      skillScore = Math.min(30, Math.round(matchRatio * 30));
+    }
+    if (candidateProfileText.includes('psara') || candidate.hasPsaraLicense || candidateProfileText.includes('security')) {
+      skillScore = Math.min(30, skillScore + 5);
+    }
+    criteria.push({
+      criterionId: 'CRIT_SKILLS',
+      criterionName: 'Skill & Security Competency Match',
+      weight: 30,
+      maxScore: 30,
+      scoreAchieved: skillScore,
+      mandatory: true,
+      passed: skillScore >= 15,
+      remarks: `Matched skills/certifications across candidate profile and resume attributes.`
+    });
+
+    // Criterion 3: Background & Verification Completeness (Weight: 20)
+    let bgScore = 12;
+    if (candidate.policeVerificationStatus === 'VERIFIED') bgScore += 4;
+    if (candidate.aadhaarVerified || candidate.idProofVerified) bgScore += 4;
+    criteria.push({
+      criterionId: 'CRIT_VERIF',
+      criterionName: 'Statutory Verification & Identity Completeness',
+      weight: 20,
+      maxScore: 20,
+      scoreAchieved: bgScore,
+      mandatory: false,
+      passed: bgScore >= 14,
+      remarks: `Police verification: ${candidate.policeVerificationStatus || 'PENDING'}. Identity checked.`
+    });
+
+    // Criterion 4: Salary & Joining Readiness (Weight: 20)
+    let compScore = 16;
+    const candSalary = Number(candidate.expectedSalary) || 0;
+    const reqMax = requisition?.maxSalary ? Number(requisition.maxSalary) : 0;
+    if (reqMax > 0 && candSalary > 0) {
+      if (candSalary <= reqMax) compScore = 20;
+      else if (candSalary <= reqMax * 1.15) compScore = 14;
+      else compScore = 8;
+    } else {
+      compScore = 18;
+    }
+    criteria.push({
+      criterionId: 'CRIT_COMP',
+      criterionName: 'Compensation & Availability Alignment',
+      weight: 20,
+      maxScore: 20,
+      scoreAchieved: compScore,
+      mandatory: false,
+      passed: compScore >= 12,
+      remarks: `Expected compensation: ₹${candSalary || 'Standard'}. Budget alignment evaluated.`
+    });
+
+    const overallScore = Math.min(100, Math.max(0, criteria.reduce((sum, c) => sum + c.scoreAchieved, 0)));
+    let decision: ScreeningDecision = 'SHORTLISTED';
+    if (overallScore < 50) {
+      decision = 'REJECTED';
+    } else if (overallScore < 70) {
+      decision = 'HOLD';
+    } else {
+      decision = 'SHORTLISTED';
+    }
+
+    const matchSummary = `Automated Assessment: ${overallScore}% eligibility score. Exp: ${expScore}/30, Skills: ${skillScore}/30, BGV: ${bgScore}/20, Budget: ${compScore}/20. Recommended: ${decision}.`;
+
+    return {
+      overallScore,
+      decision,
+      criteriaResults: criteria,
+      matchSummary
+    };
+  }
+
+  /**
    * Submits a screening decision and updates candidate lifecycle stage.
    */
   public static async submitScreeningDecision(
@@ -950,6 +1092,21 @@ export class TalentAcquisitionService {
       if (!candDoc.exists()) return { success: false, error: 'Candidate not found' };
       const candidate = candDoc.data() as CandidateRecord;
 
+      let requisition: JobRequisitionRecord | undefined = undefined;
+      if (screeningData.requisitionId) {
+        const reqDoc = await getDoc(doc(db, 'companies', companyId, 'jobRequisitions', screeningData.requisitionId));
+        if (reqDoc.exists()) requisition = reqDoc.data() as JobRequisitionRecord;
+      }
+
+      // Compute automated match score if not supplied
+      let calculatedScore = screeningData.overallEligibilityScore;
+      let calculatedCriteria = screeningData.criteriaResults || [];
+      if (calculatedScore === undefined || calculatedCriteria.length === 0) {
+        const matchResult = this.calculateCandidateEligibilityAndMatch(candidate, requisition);
+        calculatedScore = calculatedScore !== undefined ? calculatedScore : matchResult.overallScore;
+        calculatedCriteria = calculatedCriteria.length > 0 ? calculatedCriteria : matchResult.criteriaResults;
+      }
+
       // 2. Assembly
       const screeningId = doc(collection(db, 'companies', companyId, 'screenings')).id;
       const screeningCode = `SCR-${Date.now().toString().slice(-4)}${Math.floor(Math.random() * 99)}`;
@@ -966,8 +1123,8 @@ export class TalentAcquisitionService {
         decision: screeningData.decision as ScreeningDecision,
         rejectionReason: screeningData.rejectionReason,
         notes: screeningData.notes,
-        criteriaResults: screeningData.criteriaResults || [],
-        overallEligibilityScore: screeningData.overallEligibilityScore,
+        criteriaResults: calculatedCriteria,
+        overallEligibilityScore: calculatedScore,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };

@@ -451,25 +451,25 @@ export const InteractiveDemoSection: React.FC = () => {
 
                 <div className="p-6 rounded-2xl bg-white border border-slate-200 space-y-4">
                   <div className="flex justify-between items-center text-xs font-mono pb-2 border-b border-slate-200">
-                    <span>FORM II REGISTER OF ATTENDANCE &bull; SECTION 62</span>
-                    <span className="text-emerald-700 font-bold">100% AUDIT READY</span>
+                    <span>FORM II REGISTER OF ATTENDANCE &bull; STATUTORY STANDARD</span>
+                    <span className="text-emerald-700 font-bold">STRUCTURED AUDIT FORMAT</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                     <div>
-                      <span className="text-slate-600 block">Total Roster Strength:</span>
-                      <strong className="font-bold text-black">148 Personnel</strong>
+                      <span className="text-slate-600 block">Muster Verification:</span>
+                      <strong className="font-bold text-black">Geofenced GPS Radius</strong>
                     </div>
                     <div>
-                      <span className="text-slate-600 block">Muster Accuracy:</span>
-                      <strong className="font-bold text-emerald-700">99.8% Geo-Verified</strong>
+                      <span className="text-slate-600 block">Roster Synchronization:</span>
+                      <strong className="font-bold text-emerald-700">Real-Time Roll-Call</strong>
                     </div>
                     <div>
-                      <span className="text-slate-600 block">Patrol SLA Compliance:</span>
-                      <strong className="font-bold text-emerald-700">98.9% Route Score</strong>
+                      <span className="text-slate-600 block">Patrol Verification:</span>
+                      <strong className="font-bold text-emerald-700">QR Checkpoint Routing</strong>
                     </div>
                     <div>
-                      <span className="text-slate-600 block">Pending Incidents:</span>
-                      <strong className="font-bold text-black">0 Critical</strong>
+                      <span className="text-slate-600 block">Statutory Output:</span>
+                      <strong className="font-bold text-black">One-Click Form II PDF</strong>
                     </div>
                   </div>
                 </div>

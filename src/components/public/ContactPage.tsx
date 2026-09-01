@@ -150,7 +150,7 @@ export const ContactPage: React.FC<{ onNavigate: (screen: PhaseAScreen) => void 
                   </div>
                   <div>
                     <h3 className="font-bold text-white">{COMPANY_INFO.legalName}</h3>
-                    <p className="text-sm text-slate-400">Founder: {COMPANY_INFO.founder}</p>
+                    <p className="text-sm text-slate-300">Founder: {COMPANY_INFO.founder}</p>
                   </div>
                 </div>
                 
@@ -160,7 +160,7 @@ export const ContactPage: React.FC<{ onNavigate: (screen: PhaseAScreen) => void 
                   </div>
                   <div>
                     <h3 className="font-bold text-white">Pune Headquarters</h3>
-                    <p className="text-sm text-slate-400 leading-relaxed mt-1">
+                    <p className="text-sm text-slate-300 leading-relaxed mt-1">
                       {COMPANY_INFO.address.streetAddress},<br />
                       {COMPANY_INFO.address.addressLocality}, {COMPANY_INFO.address.addressRegion} - {COMPANY_INFO.address.postalCode}
                     </p>
