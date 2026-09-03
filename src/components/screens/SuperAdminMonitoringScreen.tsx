@@ -107,7 +107,7 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-slate-400 hidden sm:inline-block">
+          <span className="text-xs text-slate-400 hidden sm:inline-block">
             Auto-refresh (30s) • Last probed: {lastCheckTime.toLocaleTimeString()}
           </span>
           <button
@@ -131,7 +131,7 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
               <Database className="w-4 h-4 text-indigo-500" />
               <span className="text-xs font-bold">Cloud Firestore</span>
             </div>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${getStatusColor(metrics?.firestoreHealth || 'HEALTHY')}`}>
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${getStatusColor(metrics?.firestoreHealth || 'HEALTHY')}`}>
               {metrics?.firestoreHealth || 'HEALTHY'}
             </span>
           </div>
@@ -140,7 +140,7 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
               <span className="text-2xl font-bold font-mono text-indigo-500">
                 {metrics ? `${metrics.firestoreLatencyMs}ms` : '--'}
               </span>
-              <span className="text-[10px] text-slate-400">read/write latency</span>
+              <span className="text-[11px] text-slate-400">read/write latency</span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
               <div 
@@ -158,7 +158,7 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
               <span className="text-xs font-bold">Identity & Tokens</span>
             </div>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${getStatusColor(metrics?.authHealth || 'HEALTHY')}`}>
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${getStatusColor(metrics?.authHealth || 'HEALTHY')}`}>
               {metrics?.authHealth || 'HEALTHY'}
             </span>
           </div>
@@ -167,7 +167,7 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
               <span className="text-2xl font-bold font-mono text-emerald-500">
                 {metrics ? `${metrics.authLatencyMs}ms` : '--'}
               </span>
-              <span className="text-[10px] text-slate-400">auth token verification</span>
+              <span className="text-[11px] text-slate-400">auth token verification</span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
               <div 
@@ -185,7 +185,7 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
               <HardDrive className="w-4 h-4 text-cyan-500" />
               <span className="text-xs font-bold">Cloud Storage</span>
             </div>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${getStatusColor(metrics?.storageHealth || 'HEALTHY')}`}>
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${getStatusColor(metrics?.storageHealth || 'HEALTHY')}`}>
               {metrics?.storageHealth || 'HEALTHY'}
             </span>
           </div>
@@ -194,7 +194,7 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
               <span className="text-2xl font-bold font-mono text-cyan-500">
                 {metrics ? `${(metrics.storageUsedGb || 0).toFixed(1)} GB` : '--'}
               </span>
-              <span className="text-[10px] text-slate-400">allocated volume</span>
+              <span className="text-[11px] text-slate-400">allocated volume</span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
               <div 
@@ -212,7 +212,7 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
               <Activity className="w-4 h-4 text-violet-500" />
               <span className="text-xs font-bold">Platform Uptime</span>
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
               99.98%
             </span>
           </div>
@@ -221,7 +221,7 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
               <span className="text-2xl font-bold font-mono text-violet-500">
                 {metrics ? `${metrics.errorRatePercentage}%` : '0.00%'}
               </span>
-              <span className="text-[10px] text-slate-400">error rate (24h)</span>
+              <span className="text-[11px] text-slate-400">error rate (24h)</span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
               <div 
@@ -299,9 +299,9 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
             <div className={`p-3.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="font-bold">Firestore Multi-Region Replica</span>
-                <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">asia-south1 (Mumbai)</span>
+                <span className="text-[11px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">asia-south1 (Mumbai)</span>
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-xs text-slate-400">
                 Automatic multi-zone replication with sub-50ms failover guarantees.
               </p>
             </div>
@@ -309,9 +309,9 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
             <div className={`p-3.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="font-bold">Edge CDN & Reverse Proxy</span>
-                <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">Cloudflare / NGINX</span>
+                <span className="text-[11px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">Cloudflare / NGINX</span>
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-xs text-slate-400">
                 TLS 1.3, DDoS mitigation and cached static assets across 280+ POPs.
               </p>
             </div>
@@ -319,9 +319,9 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
             <div className={`p-3.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="font-bold">Push Gateway & Biometrics Ingest</span>
-                <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">WebSocket / MQTT</span>
+                <span className="text-[11px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">WebSocket / MQTT</span>
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-xs text-slate-400">
                 Low-latency biometrics heartbeat broker handling 10,000+ simultaneous punches.
               </p>
             </div>
@@ -329,9 +329,9 @@ export const SuperAdminMonitoringScreen: React.FC<SuperAdminMonitoringScreenProp
             <div className={`p-3.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="font-bold">Statutory & PDF Generation Node</span>
-                <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">Isolated Sandbox</span>
+                <span className="text-[11px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">Isolated Sandbox</span>
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-xs text-slate-400">
                 High-throughput Form 16 / Muster roll worker queue with memory limits.
               </p>
             </div>

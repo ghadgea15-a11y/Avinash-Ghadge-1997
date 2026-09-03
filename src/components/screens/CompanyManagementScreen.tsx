@@ -1,8 +1,4 @@
-import { Edit3 } from "lucide-react";
-import { Pagination } from "../common/Pagination";
-import React, { useState, useEffect } from 'react';
-import { useBackNavigation } from '../../hooks/useBackNavigation';
-import { SessionManager } from '../../services/sessionManager';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Building2, 
   MapPin, 
@@ -10,16 +6,10 @@ import {
   Layers, 
   Briefcase, 
   Users, 
-  ShieldCheck, 
   ShieldAlert, 
-  Plus, 
-  Save, 
   CheckCircle2, 
   AlertCircle,
   RefreshCw,
-  Search,
-  Filter,
-  Sliders,
   Award,
   GitPullRequest
 } from 'lucide-react';
@@ -31,13 +21,20 @@ import {
   DepartmentRecord, 
   DesignationRecord, 
   UserMembershipRecord, 
-  UserRole,
   VendorRecord,
   CostCentreRecord
 } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { FirestoreService } from '../../services/firestoreService';
 import { ThresholdRuleManager } from '../bpm/ThresholdRuleManager';
+import { CompanyProfileTab } from '../company/CompanyProfileTab';
+import { CompanyBranchesTab } from '../company/CompanyBranchesTab';
+import { CompanySitesTab } from '../company/CompanySitesTab';
+import { CompanyDepartmentsTab } from '../company/CompanyDepartmentsTab';
+import { CompanyDesignationsTab } from '../company/CompanyDesignationsTab';
+import { CompanyMembershipsTab } from '../company/CompanyMembershipsTab';
+import { CompanyVendorsTab } from '../company/CompanyVendorsTab';
+import { CompanyCostCentresTab } from '../company/CompanyCostCentresTab';
 
 interface CompanyManagementScreenProps {
   userSession: UserSession;
@@ -53,7 +50,9 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
   const { isDark } = useTheme();
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<'PROFILE' | 'BRANCHES' | 'SITES' | 'DEPARTMENTS' | 'DESIGNATIONS' | 'MEMBERSHIPS' | 'VENDORS' | 'COST_CENTRES' | 'BPM_RULES'>('PROFILE');
+  const [activeTab, setActiveTab] = useState<
+    'PROFILE' | 'BRANCHES' | 'SITES' | 'DEPARTMENTS' | 'DESIGNATIONS' | 'MEMBERSHIPS' | 'VENDORS' | 'COST_CENTRES' | 'BPM_RULES'
+  >('PROFILE');
 
   // State Data
   const [tenantInfo, setTenantInfo] = useState<CompanyTenant | null>(activeCompany);
@@ -65,299 +64,73 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
   const [vendors, setVendors] = useState<VendorRecord[]>([]);
   const [costCentres, setCostCentres] = useState<CostCentreRecord[]>([]);
 
-  // Form & Interaction States
+  // Interaction States
   const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  
-  useEffect(() => { setCurrentPage(1); }, [searchQuery]);
-  // Modals / Item Editors
-  const filteredMemberships = memberships.filter(m => m.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || m.email.toLowerCase().includes(searchQuery.toLowerCase()));
-  const paginatedMemberships = filteredMemberships.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  
-  const [editingBranch, setEditingBranch] = useState<Partial<BranchRecord> | null>(null);
-  useBackNavigation(!!editingBranch, () => setEditingBranch(null as any), 'editingBranch');
-  const [editingSite, setEditingSite] = useState<Partial<SiteRecord> | null>(null);
-  useBackNavigation(!!editingSite, () => setEditingSite(null as any), 'editingSite');
-  const [editingDept, setEditingDept] = useState<Partial<DepartmentRecord> | null>(null);
-  useBackNavigation(!!editingDept, () => setEditingDept(null as any), 'editingDept');
-  const [editingDesig, setEditingDesig] = useState<Partial<DesignationRecord> | null>(null);
-  useBackNavigation(!!editingDesig, () => setEditingDesig(null as any), 'editingDesig');
-  const [editingVendor, setEditingVendor] = useState<Partial<VendorRecord> | null>(null);
-  useBackNavigation(!!editingVendor, () => setEditingVendor(null as any), 'editingVendor');
-  const [editingCostCentre, setEditingCostCentre] = useState<Partial<CostCentreRecord> | null>(null);
-  useBackNavigation(!!editingCostCentre, () => setEditingCostCentre(null as any), 'editingCostCentre');
 
   const companyId = activeCompany?.companyId || userSession.companyId;
 
+  const showSuccess = useCallback((msg: string) => {
+    setSaveSuccess(msg);
+    setErrorMessage(null);
+    setTimeout(() => setSaveSuccess(null), 4000);
+  }, []);
+
+  const showError = useCallback((msg: string) => {
+    setErrorMessage(msg);
+    setSaveSuccess(null);
+    setTimeout(() => setErrorMessage(null), 6000);
+  }, []);
+
   // Load Data
-  useEffect(() => {
+  const loadData = useCallback(async (isSilent = false) => {
     if (!companyId) return;
 
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const [comp, bList, sList, dList, desList, mList, vList, ccList] = await Promise.all([
-          FirestoreService.getCompanyTenantDetails(companyId),
-          FirestoreService.getBranches(companyId),
-          FirestoreService.getSites(companyId),
-          FirestoreService.getDepartments(companyId),
-          FirestoreService.getDesignations(companyId),
-          FirestoreService.getMemberships(companyId),
-          FirestoreService.getVendors(companyId),
-          FirestoreService.getCostCentres(companyId)
-        ]);
-
-        if (comp) setTenantInfo(comp);
-        setBranches(bList);
-        setSites(sList);
-        setDepartments(dList);
-        setDesignations(desList);
-        setMemberships(mList);
-        setVendors(vList);
-        setCostCentres(ccList);
-      } catch (err) {
-        console.error('Error loading company management data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [companyId]);
-
-  // Handle Save Tenant Profile
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!tenantInfo) return;
+    if (!isSilent) setLoading(true);
+    else setRefreshing(true);
 
     try {
-      setSaveSuccess(null);
-      setErrorMessage(null);
-      const success = await FirestoreService.updateCompanyTenantDetails(tenantInfo);
-      if (success) {
-        setSaveSuccess('Company profile and branding saved successfully.');
-        if (onCompanyUpdated) onCompanyUpdated(tenantInfo);
-        setTimeout(() => setSaveSuccess(null), 4000);
-      }
-    } catch (err: unknown) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to update company details');
+      const [comp, bList, sList, dList, desList, mList, vList, ccList] = await Promise.all([
+        FirestoreService.getCompanyTenantDetails(companyId),
+        FirestoreService.getBranches(companyId),
+        FirestoreService.getSites(companyId),
+        FirestoreService.getDepartments(companyId),
+        FirestoreService.getDesignations(companyId),
+        FirestoreService.getMemberships(companyId),
+        FirestoreService.getVendors(companyId),
+        FirestoreService.getCostCentres(companyId)
+      ]);
+
+      if (comp) setTenantInfo(comp);
+      setBranches(bList || []);
+      setSites(sList || []);
+      setDepartments(dList || []);
+      setDesignations(desList || []);
+      setMemberships(mList || []);
+      setVendors(vList || []);
+      setCostCentres(ccList || []);
+    } catch (err) {
+      console.error('[CompanyManagementScreen] Error loading data:', err);
+      showError('Failed to load company records from Firestore.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [companyId, showError]);
 
-  // Branch Save
-  const handleSaveBranch = async () => {
-    if (!editingBranch?.name || !editingBranch?.code) return;
-    const bRecord: BranchRecord = {
-      companyId: companyId,
-      id: editingBranch.id || `BR-${Date.now().toString(36)}`,
-      name: editingBranch.name,
-      code: editingBranch.code.toUpperCase(),
-      city: editingBranch.city || 'Mumbai',
-      address: editingBranch.address || 'HQ',
-      status: editingBranch.status || 'ACTIVE',
-      regionId: editingBranch.regionId || 'default-region',
-      createdAt: editingBranch.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    const success = await FirestoreService.saveBranch(companyId, bRecord);
-    if (success) {
-      setBranches(prev => {
-        const existing = prev.findIndex(b => b.id === bRecord.id);
-        if (existing >= 0) {
-          const updated = [...prev];
-          updated[existing] = bRecord;
-          return updated;
-        }
-        return [...prev, bRecord];
-      });
-      setEditingBranch(null);
-      setSaveSuccess('Branch saved successfully.');
-      setTimeout(() => setSaveSuccess(null), 3000);
-    }
-  };
-
-  // Site Save
-  const handleSaveSite = async () => {
-    if (!editingSite?.name || !editingSite?.branchId) return;
-    const sRecord: SiteRecord = {
-      id: editingSite.id || `SITE-${Date.now().toString(36)}`,
-      companyId: companyId,
-      name: editingSite.name,
-      code: editingSite.code || editingSite.name.toUpperCase().replace(/\s+/g, '_'),
-      branchId: editingSite.branchId,
-      clientName: editingSite.clientName || 'Corporate Client',
-      address: editingSite.address || 'Site Premises',
-      status: editingSite.status || 'ACTIVE',
-      latitude: editingSite.latitude,
-      longitude: editingSite.longitude,
-      geofenceRadius: editingSite.geofenceRadius || 100,
-      createdAt: editingSite.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    const success = await FirestoreService.saveSite(companyId, sRecord);
-    if (success) {
-      setSites(prev => {
-        const existing = prev.findIndex(s => s.id === sRecord.id);
-        if (existing >= 0) {
-          const updated = [...prev];
-          updated[existing] = sRecord;
-          return updated;
-        }
-        return [...prev, sRecord];
-      });
-      setEditingSite(null);
-      setSaveSuccess('Site location saved successfully.');
-      setTimeout(() => setSaveSuccess(null), 3000);
-    }
-  };
-
-  // Dept Save
-  const handleSaveDept = async () => {
-    if (!editingDept?.name || !editingDept?.code) return;
-    const dRecord: DepartmentRecord = {
-      companyId: companyId,
-      id: editingDept.id || `DEPT-${Date.now().toString(36)}`,
-      name: editingDept.name,
-      code: editingDept.code.toUpperCase(),
-      description: editingDept.description || '',
-      status: editingDept.status || 'ACTIVE',
-      createdAt: editingDept.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    const success = await FirestoreService.saveDepartment(companyId, dRecord);
-    if (success) {
-      setDepartments(prev => {
-        const existing = prev.findIndex(d => d.id === dRecord.id);
-        if (existing >= 0) {
-          const updated = [...prev];
-          updated[existing] = dRecord;
-          return updated;
-        }
-        return [...prev, dRecord];
-      });
-      setEditingDept(null);
-      setSaveSuccess('Department saved successfully.');
-      setTimeout(() => setSaveSuccess(null), 3000);
-    }
-  };
-
-  // Designation Save
-  const handleSaveDesig = async () => {
-    if (!editingDesig?.title) return;
-    const desRecord: DesignationRecord = {
-      companyId: companyId, id: editingDesig.id || `DESIG-${Date.now().toString(36)}`,
-      title: editingDesig.title,
-      level: editingDesig.level || 'L1'
-    };
-
-    const success = await FirestoreService.saveDesignation(companyId, desRecord);
-    if (success) {
-      setDesignations(prev => {
-        const existing = prev.findIndex(d => d.id === desRecord.id);
-        if (existing >= 0) {
-          const updated = [...prev];
-          updated[existing] = desRecord;
-          return updated;
-        }
-        return [...prev, desRecord];
-      });
-      setEditingDesig(null);
-      setSaveSuccess('Designation saved successfully.');
-      setTimeout(() => setSaveSuccess(null), 3000);
-    }
-  };
-
-  // Vendor Save
-  const handleSaveVendor = async () => {
-    if (!editingVendor?.vendorName || !editingVendor?.vendorCode || !editingVendor?.serviceType || !editingVendor?.contactPerson || !editingVendor?.contactPhone) return;
-    const vRecord: VendorRecord = {
-      id: editingVendor.id || `VEND-${Date.now().toString(36)}`,
-      companyId: companyId,
-      vendorName: editingVendor.vendorName,
-      vendorCode: editingVendor.vendorCode.toUpperCase(),
-      serviceType: editingVendor.serviceType || 'SECURITY_AGENCY',
-      gstinNumber: editingVendor.gstinNumber || '',
-      panNumber: editingVendor.panNumber || '',
-      contactPerson: editingVendor.contactPerson,
-      contactPhone: editingVendor.contactPhone,
-      contactEmail: editingVendor.contactEmail || '',
-      address: editingVendor.address || '',
-      contractStartDate: editingVendor.contractStartDate || new Date().toISOString(),
-      status: editingVendor.status || 'ACTIVE',
-      createdAt: editingVendor.createdAt || new Date().toISOString()
-    };
-
-    const success = await FirestoreService.saveVendor(companyId, vRecord);
-    if (success) {
-      setVendors(prev => {
-        const existing = prev.findIndex(v => v.id === vRecord.id);
-        if (existing >= 0) {
-          const updated = [...prev];
-          updated[existing] = vRecord;
-          return updated;
-        }
-        return [...prev, vRecord];
-      });
-      setEditingVendor(null);
-      setSaveSuccess('Vendor saved successfully.');
-      setTimeout(() => setSaveSuccess(null), 3000);
-    }
-  };
-
-  // Cost Centre Save
-  const handleSaveCostCentre = async () => {
-    if (!editingCostCentre?.code || !editingCostCentre?.name) return;
-    const ccRecord: CostCentreRecord = {
-      id: editingCostCentre.id || `CC-${Date.now().toString(36)}`,
-      companyId: companyId,
-      code: editingCostCentre.code.toUpperCase(),
-      name: editingCostCentre.name,
-      description: editingCostCentre.description || '',
-      budgetAllocated: editingCostCentre.budgetAllocated || 0,
-      status: editingCostCentre.status || 'ACTIVE'
-    };
-
-    const success = await FirestoreService.saveCostCentre(companyId, ccRecord);
-    if (success) {
-      setCostCentres(prev => {
-        const existing = prev.findIndex(c => c.id === ccRecord.id);
-        if (existing >= 0) {
-          const updated = [...prev];
-          updated[existing] = ccRecord;
-          return updated;
-        }
-        return [...prev, ccRecord];
-      });
-      setEditingCostCentre(null);
-      setSaveSuccess('Cost Centre saved successfully.');
-      setTimeout(() => setSaveSuccess(null), 3000);
-    }
-  };
-
-  // Membership Role Update
-  const handleUpdateRole = async (member: UserMembershipRecord, newRole: UserRole) => {
-    const updated = { ...member, role: newRole };
-    const success = await FirestoreService.updateUserMembership(userSession, companyId, updated);
-    if (success) {
-      setMemberships(prev => prev.map(m => m.userId === member.userId ? updated : m));
-      setSaveSuccess(`Role for ${member.fullName} updated to ${newRole}.`);
-      setTimeout(() => setSaveSuccess(null), 3000);
-    }
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Unauthorized Screen Guard
-  const isAuthorized = userSession.role === 'SUPER_ADMIN' || 
-                       userSession.role === 'COMPANY_ADMIN' ||
-                       userSession.role === 'HR_ADMIN' ||
-                       userSession.role === 'OPS_MANAGER';
-                       
+  const isAuthorized = 
+    userSession.role === 'SUPER_ADMIN' || 
+    userSession.role === 'COMPANY_ADMIN' ||
+    userSession.role === 'HR_ADMIN' ||
+    userSession.role === 'OPS_MANAGER';
+
   if (!isAuthorized) {
     return (
       <div className={`flex-1 p-6 flex flex-col items-center justify-center text-center ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-white text-black'}`}>
@@ -381,26 +154,37 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
       {/* Top Header Banner */}
       <div className={`p-5 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} flex flex-col md:flex-row md:items-center justify-between gap-4`}>
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/20">
+          <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/20 shrink-0">
             <Building2 className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold">{tenantInfo?.brandName || 'Company Management'}</h1>
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <h1 className="text-lg font-bold">{tenantInfo?.brandName || 'Company Administration'}</h1>
+              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                 {tenantInfo?.licenseTier || 'ENTERPRISE'} TIER
               </span>
             </div>
-            <p className="text-xs text-slate-400">Tenant ID: <span className="font-mono text-indigo-400">{companyId}</span> • Legal: {tenantInfo?.companyLegalName}</p>
+            <p className="text-xs text-slate-400">
+              Tenant ID: <span className="font-mono text-indigo-400">{companyId}</span> • Legal: {tenantInfo?.companyLegalName || tenantInfo?.brandName || 'Registered Entity'}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Status:</span>
-          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => loadData(true)}
+            disabled={refreshing || loading}
+            title="Reload all company records from Firestore"
+            className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition ${isDark ? 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'}`}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
+
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            Active Isolation
-          </span>
+            <span>Active Tenant</span>
+          </div>
         </div>
       </div>
 
@@ -500,12 +284,13 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
               : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-600 hover:text-black hover:bg-white'
           }`}
         >
-          < Building2 className="w-3.5 h-3.5" />
+          <Building2 className="w-3.5 h-3.5" />
           <span className="whitespace-nowrap">Vendors ({vendors.length})</span>
         </button>
+
         <button
           onClick={() => setActiveTab('COST_CENTRES')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-xs md:text-sm font-bold transition-all ${
+          className={`flex-1 min-w-[120px] py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition ${
             activeTab === 'COST_CENTRES'
               ? 'bg-indigo-600 text-white shadow-md'
               : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-600 hover:text-black hover:bg-white'
@@ -528,688 +313,113 @@ export const CompanyManagementScreen: React.FC<CompanyManagementScreenProps> = (
         </button>
       </div>
 
-      {/* TAB: SITES */}
-      {activeTab === 'PROFILE' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-bold">Company Profile & Branding</h3>
-              <p className="text-xs text-slate-400">Manage white-label settings, logos, and brand colors.</p>
-            </div>
-            <button
-              onClick={async () => {
-                try {
-                  if (tenantInfo) {
-                    const { doc, updateDoc } = await import('firebase/firestore');
-                    const { db } = await import('../../firebase');
-                    await updateDoc(doc(db, 'companies', tenantInfo.companyId), {
-                      brandName: tenantInfo.brandName || '',
-                      tagline: tenantInfo.tagline || '',
-                      primaryColorHex: tenantInfo.primaryColorHex || '',
-                      logoUrl: tenantInfo.logoUrl || '',
-                      loginBackgroundUrl: tenantInfo.loginBackgroundUrl || '',
-                      updatedAt: new Date().toISOString()
-                    });
-                    SessionManager.setActiveCompany(tenantInfo as any);
-                    if (onCompanyUpdated) onCompanyUpdated(tenantInfo as any);
-                    alert("Branding saved successfully.");
-                  }
-                } catch (e) {
-                  alert("Failed to save branding.");
-                }
-              }}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-2 transition shadow-md shadow-indigo-600/20"
-            >
-              <Save className="w-4 h-4" />
-              <span>Save Changes</span>
-            </button>
-          </div>
-          
-          <div className={`p-5 rounded-2xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} space-y-6 text-sm`}>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-slate-400 mb-1 text-xs">Company Brand Name *</label>
-                  <input
-                    type="text"
-                    value={tenantInfo?.brandName || ''}
-                    onChange={(e) => setTenantInfo(prev => prev ? {...prev, brandName: e.target.value} : null)}
-                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1 text-xs">Tagline</label>
-                  <input
-                    type="text"
-                    value={tenantInfo?.tagline || ''}
-                    onChange={(e) => setTenantInfo(prev => prev ? {...prev, tagline: e.target.value} : null)}
-                    placeholder="e.g. Empowering Workforce"
-                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
-                  />
-                </div>
-             </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-slate-400 mb-1 text-xs">Primary Brand Color (Hex) *</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={tenantInfo?.primaryColorHex || '#4f46e5'}
-                      onChange={(e) => setTenantInfo(prev => prev ? {...prev, primaryColorHex: e.target.value} : null)}
-                      className={`h-10 w-10 rounded cursor-pointer border-0 p-0`}
-                    />
-                    <input
-                      type="text"
-                      value={tenantInfo?.primaryColorHex || '#4f46e5'}
-                      onChange={(e) => setTenantInfo(prev => prev ? {...prev, primaryColorHex: e.target.value} : null)}
-                      className={`flex-1 p-2.5 rounded-xl border font-mono ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1 text-xs">Logo URL</label>
-                  <input
-                    type="text"
-                    value={tenantInfo?.logoUrl || ''}
-                    onChange={(e) => setTenantInfo(prev => prev ? {...prev, logoUrl: e.target.value} : null)}
-                    placeholder="https://example.com/logo.png"
-                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
-                  />
-                </div>
-             </div>
-             
-             <div>
-                <label className="block text-slate-400 mb-1 text-xs">Login Background Image URL</label>
-                <input
-                  type="text"
-                  value={tenantInfo?.loginBackgroundUrl || ''}
-                  onChange={(e) => setTenantInfo(prev => prev ? {...prev, loginBackgroundUrl: e.target.value} : null)}
-                  placeholder="https://example.com/bg.jpg"
-                  className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
-                />
-             </div>
-          </div>
+      {/* Tab Contents */}
+      {loading ? (
+        <div className="py-20 flex flex-col items-center justify-center gap-3 text-slate-400">
+          <RefreshCw className="w-6 h-6 animate-spin text-indigo-500" />
+          <p className="text-xs">Loading company organization records...</p>
         </div>
-      )}
-
-      {activeTab === 'SITES' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-bold">Sites & Geofencing</h3>
-              <p className="text-xs text-slate-400">Manage deployment sites, location geofences, and attendance modes.</p>
-            </div>
-            <button
-              onClick={() => setEditingSite({ status: 'ACTIVE', geofenceRadius: 100, attendanceMode: 'STANDARD', geofenceEnabled: false, accuracyThreshold: 50 })}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-2 transition shadow-md shadow-indigo-600/20"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add New Site</span>
-            </button>
-          </div>
-
-          {editingSite && (
-            <div className={`p-5 rounded-2xl border ${isDark ? 'bg-indigo-950/20 border-indigo-500/30' : 'bg-indigo-50/50 border-indigo-200'} space-y-4`}>
-              <h4 className="text-sm font-bold text-indigo-400">{editingSite.id ? 'Edit Site' : 'Create New Site'}</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label className="block text-slate-400 mb-1">Site Name *</label>
-                  <input
-                    type="text"
-                    value={editingSite.name || ''}
-                    onChange={e => setEditingSite({...editingSite, name: e.target.value})}
-                    placeholder="e.g. Westside Tech Park"
-                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Branch Association *</label>
-                  <select
-                    value={editingSite.branchId || ''}
-                    onChange={e => setEditingSite({...editingSite, branchId: e.target.value})}
-                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                  >
-                    <option value="">-- Select Branch --</option>
-                    {branches.map(b => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Attendance Mode *</label>
-                  <select
-                    value={editingSite.attendanceMode || 'STANDARD'}
-                    onChange={e => setEditingSite({...editingSite, attendanceMode: e.target.value as any})}
-                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                  >
-                    <option value="STANDARD">Standard (Any Location)</option>
-                    <option value="GEO_FENCE">Geo-Fence Required</option>
-                    <option value="BIOMETRIC">Biometric Required</option>
-                    <option value="GEO_FENCE_AND_BIOMETRIC">Geo-Fence + Biometric</option>
-                    <option value="SUPERVISOR_MUSTER">Supervisor Muster Only</option>
-                  </select>
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="flex items-center gap-2 text-slate-900 dark:text-slate-300 font-bold mb-2 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={editingSite.geofenceEnabled || false} 
-                      onChange={e => setEditingSite({...editingSite, geofenceEnabled: e.target.checked})} 
-                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" 
-                    />
-                    Enable Location Geo-Fencing
-                  </label>
-                  
-                  {editingSite.geofenceEnabled && (
-                    <div className={`p-4 rounded-xl border grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 ${isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-white border-slate-200'}`}>
-                      <div>
-                        <label className="block text-slate-400 mb-1">Latitude</label>
-                        <input
-                          type="number"
-                          step="0.0000001"
-                          value={editingSite.latitude || ''}
-                          onChange={e => setEditingSite({...editingSite, latitude: parseFloat(e.target.value)})}
-                          className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-slate-400 mb-1">Longitude</label>
-                        <input
-                          type="number"
-                          step="0.0000001"
-                          value={editingSite.longitude || ''}
-                          onChange={e => setEditingSite({...editingSite, longitude: parseFloat(e.target.value)})}
-                          className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-slate-400 mb-1">Radius (meters)</label>
-                        <input
-                          type="number"
-                          value={editingSite.geofenceRadius || ''}
-                          onChange={e => setEditingSite({...editingSite, geofenceRadius: parseInt(e.target.value, 10)})}
-                          className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-slate-400 mb-1">Accuracy Threshold (m)</label>
-                        <input
-                          type="number"
-                          value={editingSite.accuracyThreshold || 50}
-                          onChange={e => setEditingSite({...editingSite, accuracyThreshold: parseInt(e.target.value, 10)})}
-                          className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex gap-2 justify-end pt-2">
-                <button
-                  onClick={() => setEditingSite(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveSite}
-                  disabled={!editingSite.name || !editingSite.branchId || (editingSite.geofenceEnabled && (!editingSite.latitude || !editingSite.longitude))}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold disabled:opacity-50"
-                >
-                  Save Site
-                </button>
-              </div>
-            </div>
+      ) : (
+        <>
+          {activeTab === 'PROFILE' && (
+            <CompanyProfileTab
+              tenantInfo={tenantInfo}
+              setTenantInfo={setTenantInfo}
+              onCompanyUpdated={onCompanyUpdated}
+              onSuccess={showSuccess}
+              onError={showError}
+              isDark={isDark}
+            />
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sites.map(s => (
-              <div key={s.id} className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900 border-slate-800 hover:border-indigo-500/50' : 'bg-white border-slate-200 hover:border-indigo-400'} transition flex flex-col justify-between group`}>
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="text-sm font-bold text-black dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{s.name}</h4>
-                      <p className="text-[10px] font-medium text-slate-400">Branch: {branches.find(b => b.id === s.branchId)?.name || s.branchId}</p>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                      s.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
-                    }`}>
-                      {s.status}
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Mode: <span className="font-semibold text-slate-900 dark:text-slate-300">{s.attendanceMode || 'STANDARD'}</span></p>
-                    {s.geofenceEnabled && (
-                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                        Geofence Active: {s.geofenceRadius}m radius
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                  <button
-                    onClick={() => setEditingSite(s)}
-                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-            {sites.length === 0 && !editingSite && (
-              <div className="col-span-full py-12 text-center text-slate-400 italic bg-white dark:bg-slate-950/50 dark:bg-slate-900/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-                No sites configured yet. Add your first deployment site.
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'MEMBERSHIPS' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-bold">Company Memberships</h3>
-              <p className="text-xs text-slate-400">Manage access roles for employees across this company collection.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                <Search className="w-3.5 h-3.5 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search user..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="bg-transparent border-none outline-none text-xs w-32"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className={`rounded-2xl border overflow-x-auto ${isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
-            <table className="w-full text-xs text-left">
-              <thead className={`text-[10px] uppercase tracking-wider ${isDark ? 'bg-slate-800/80 text-slate-400' : 'bg-white text-slate-500'}`}>
-                <tr>
-                  <th className="py-3 px-4 font-semibold">User Name</th>
-                  <th className="py-3 px-4 font-semibold">Email</th>
-                  <th className="py-3 px-4 font-semibold">Current Role</th>
-                  <th className="py-3 px-4 font-semibold">Status</th>
-                  <th className="py-3 px-4 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/40">
-                {paginatedMemberships.map(member => (
-                    <tr key={member.userId} className="hover:bg-slate-800/20 transition">
-                      <td className="py-3 pl-2 font-bold">{member.fullName}</td>
-                      <td className="py-3 font-mono text-slate-400">{member.email}</td>
-                      <td className="py-3">
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                          member.role === 'COMPANY_ADMIN' 
-                            ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
-                            : member.role === 'HR_ADMIN' || member.role === 'OPS_MANAGER' || member.role === 'FINANCE_MANAGER'
-                              ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                              : member.role === 'SAFETY_OFFICER' || member.role === 'TECHNICIAN'
-                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                : 'bg-white0/10 text-slate-400 border-slate-500/20'
-                        }`}>
-                          {member.role}
-                        </span>
-                      </td>
-                      <td className="py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          member.status === 'ACTIVE' 
-                            ? 'bg-emerald-500/10 text-emerald-400' 
-                            : 'bg-rose-500/10 text-rose-400'
-                        }`}>
-                          {member.status}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-2 text-right">
-                        <select
-                          value={member.role}
-                          onChange={e => handleUpdateRole(member, e.target.value as UserRole)}
-                          className={`p-1.5 rounded-lg border text-xs ${isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-300 text-black'}`}
-                        >
-                          <option value="EMPLOYEE">EMPLOYEE</option>
-                          <option value="GUARD">GUARD</option>
-                          <option value="SUPERVISOR">SUPERVISOR</option>
-                          <option value="FIELD_OFFICER">FIELD_OFFICER</option>
-                          <option value="TECHNICIAN">TECHNICIAN</option>
-                          <option value="SAFETY_OFFICER">SAFETY_OFFICER</option>
-                          <option value="OPS_MANAGER">OPS_MANAGER</option>
-                          <option value="HR_ADMIN">HR_ADMIN</option>
-                          <option value="FINANCE_MANAGER">FINANCE_MANAGER</option>
-                          <option value="COMPANY_ADMIN">COMPANY_ADMIN</option>
-                          {userSession.role === 'SUPER_ADMIN' && <option value="SUPER_ADMIN">SUPER_ADMIN</option>}
-                        </select>
-                      </td>
-                    </tr>
-                  ))}
-                {memberships.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-400 italic">
-                      No user memberships registered under this tenant collection. Add employees in Employee Module to assign roles.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-                {filteredMemberships.length > 0 && (
-                  <tfoot>
-                    <tr>
-                      <td colSpan={4} className="p-0">
-                        <Pagination
-                          currentPage={currentPage}
-                          totalItems={filteredMemberships.length}
-                          itemsPerPage={itemsPerPage}
-                          onPageChange={setCurrentPage}
-                          onItemsPerPageChange={setItemsPerPage}
-                        />
-                      </td>
-                    </tr>
-                  </tfoot>
-                )}
-              </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB: BPM RULES */}
-      {activeTab === 'BPM_RULES' && (
-        <div className="space-y-4">
-          <ThresholdRuleManager 
-            companyId={companyId} 
-            session={userSession} 
-          />
-        </div>
-      )}
-
-      {/* TAB: COST CENTRES (Existing footer etc might go here) */}
-      {activeTab === 'VENDORS' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-bold">Vendor & Contractor Management</h3>
-              <p className="text-xs text-slate-400">Manage third-party agencies supplying contract staff, security guards, and services.</p>
-            </div>
-            <button
-              onClick={() => setEditingVendor({ status: 'ACTIVE', serviceType: 'SECURITY_AGENCY' })}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-2 transition shadow-md shadow-indigo-600/20"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add New Vendor</span>
-            </button>
-          </div>
-
-          {editingVendor && (
-            <div className={`p-5 rounded-2xl border ${isDark ? 'bg-indigo-950/20 border-indigo-500/30' : 'bg-indigo-50/50 border-indigo-200'} space-y-4`}>
-              <h4 className="text-sm font-bold text-indigo-400">{editingVendor.id ? 'Edit Vendor Details' : 'Register New Vendor Agency'}</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label className="block text-slate-400 mb-1">Vendor Agency Name *</label>
-                  <input
-                    type="text"
-                    value={editingVendor.vendorName || ''}
-                    onChange={e => setEditingVendor({...editingVendor, vendorName: e.target.value})}
-                    placeholder="e.g. Eagle Security Services"
-                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Vendor Code *</label>
-                  <input
-                    type="text"
-                    value={editingVendor.vendorCode || ''}
-                    onChange={e => setEditingVendor({...editingVendor, vendorCode: e.target.value.toUpperCase()})}
-                    placeholder="e.g. ESS-MUM-01"
-                    className={`w-full p-2.5 rounded-xl border font-mono uppercase ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Service Type</label>
-                  <select
-                    value={editingVendor.serviceType || 'SECURITY_AGENCY'}
-                    onChange={e => setEditingVendor({...editingVendor, serviceType: e.target.value as any})}
-                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                  >
-                    <option value="SECURITY_AGENCY">Security Guarding</option>
-                    <option value="HOUSEKEEPING">Housekeeping</option>
-                    <option value="MANPOWER">General Manpower / Labour</option>
-                    <option value="FACILITY_MANAGEMENT">Facility Management</option>
-                    <option value="OTHER">Other Services</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Status</label>
-                  <select
-                    value={editingVendor.status || 'ACTIVE'}
-                    onChange={e => setEditingVendor({...editingVendor, status: e.target.value as any})}
-                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                  >
-                    <option value="ACTIVE">Active (Current Vendor)</option>
-                    <option value="INACTIVE">Inactive (Contract Expired)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Contact Person *</label>
-                  <input
-                    type="text"
-                    value={editingVendor.contactPerson || ''}
-                    onChange={e => setEditingVendor({...editingVendor, contactPerson: e.target.value})}
-                    placeholder="e.g. Rajesh Kumar"
-                    className={`w-full p-2.5 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Contact Mobile Number *</label>
-                  <input
-                    type="text"
-                    value={editingVendor.contactPhone || ''}
-                    onChange={e => setEditingVendor({...editingVendor, contactPhone: e.target.value})}
-                    placeholder="e.g. +91 9876543210"
-                    className={`w-full p-2.5 rounded-xl border font-mono ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">GSTIN Number</label>
-                  <input
-                    type="text"
-                    value={editingVendor.gstinNumber || ''}
-                    onChange={e => setEditingVendor({...editingVendor, gstinNumber: e.target.value.toUpperCase()})}
-                    className={`w-full p-2.5 rounded-xl border font-mono uppercase ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">PAN Number</label>
-                  <input
-                    type="text"
-                    value={editingVendor.panNumber || ''}
-                    onChange={e => setEditingVendor({...editingVendor, panNumber: e.target.value.toUpperCase()})}
-                    className={`w-full p-2.5 rounded-xl border font-mono uppercase ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2 justify-end pt-2">
-                <button
-                  onClick={() => setEditingVendor(null)}
-                  className={`px-4 py-2 rounded-xl text-xs font-semibold border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-300 text-slate-900'}`}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveVendor}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white flex items-center gap-2"
-                >
-                  <Save className="w-4 h-4" />
-                  Save Vendor
-                </button>
-              </div>
-            </div>
+          {activeTab === 'BRANCHES' && (
+            <CompanyBranchesTab
+              companyId={companyId}
+              branches={branches}
+              setBranches={setBranches}
+              sites={sites}
+              onSuccess={showSuccess}
+              onError={showError}
+              isDark={isDark}
+            />
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {vendors.map(v => (
-              <div key={v.id} className={`p-4 rounded-2xl border space-y-2 relative group ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-indigo-400">{v.vendorCode}</span>
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${v.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-                    {v.status}
-                  </span>
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold">{v.vendorName}</h4>
-                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">{v.serviceType.replace('_', ' ')}</p>
-                </div>
-                <div className="pt-2 mt-2 border-t border-slate-800/40 text-[10px] text-slate-400 space-y-1">
-                  <p>Contact: <span className="font-medium text-slate-300">{v.contactPerson}</span></p>
-                  <p>Phone: <span className="font-mono text-slate-300">{v.contactPhone}</span></p>
-                  {v.gstinNumber && <p>GST: <span className="font-mono text-slate-300">{v.gstinNumber}</span></p>}
-                </div>
-                
-                <button
-                  onClick={() => setEditingVendor(v)}
-                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-indigo-600 text-white"
-                  title="Edit Vendor"
-                >
-                  <Sliders className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-            {vendors.length === 0 && (
-              <div className="col-span-full p-8 text-center text-xs text-slate-400 italic">
-                No vendors or contracting agencies registered yet. Click "Add New Vendor" above.
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 8: COST CENTRES */}
-      {activeTab === 'COST_CENTRES' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-bold">Cost Centre Management</h3>
-              <p className="text-xs text-slate-400">Define financial and operational cost centres for tracking and allocation.</p>
-            </div>
-            <button
-              onClick={() => setEditingCostCentre({ status: 'ACTIVE' })}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-2 transition shadow-md shadow-indigo-600/20"
-            >
-              <Plus className="w-4 h-4" />
-              Add Cost Centre
-            </button>
-          </div>
-
-          {editingCostCentre && (
-            <div className={`p-4 rounded-2xl border mb-4 space-y-4 ${isDark ? 'bg-slate-900 border-indigo-900/50' : 'bg-slate-50 border-indigo-100'}`}>
-              <h4 className="text-xs font-bold text-indigo-500 uppercase tracking-wider">{editingCostCentre.id ? 'Edit Cost Centre' : 'New Cost Centre'}</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1">Centre Code</label>
-                  <input
-                    type="text"
-                    value={editingCostCentre.code || ''}
-                    onChange={(e) => setEditingCostCentre(p => ({ ...p, code: e.target.value.toUpperCase() }))}
-                    className={`w-full px-3 py-2 rounded-xl border focus:outline-none ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-300'}`}
-                    placeholder="e.g. CC-001"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1">Centre Name</label>
-                  <input
-                    type="text"
-                    value={editingCostCentre.name || ''}
-                    onChange={(e) => setEditingCostCentre(p => ({ ...p, name: e.target.value }))}
-                    className={`w-full px-3 py-2 rounded-xl border focus:outline-none ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-300'}`}
-                    placeholder="e.g. Marketing, IT Ops"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1">Allocated Budget (Optional)</label>
-                  <input
-                    type="number"
-                    value={editingCostCentre.budgetAllocated || ''}
-                    onChange={(e) => setEditingCostCentre(p => ({ ...p, budgetAllocated: Number(e.target.value) }))}
-                    className={`w-full px-3 py-2 rounded-xl border focus:outline-none ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-300'}`}
-                    placeholder="e.g. 50000"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1">Description</label>
-                  <input
-                    type="text"
-                    value={editingCostCentre.description || ''}
-                    onChange={(e) => setEditingCostCentre(p => ({ ...p, description: e.target.value }))}
-                    className={`w-full px-3 py-2 rounded-xl border focus:outline-none ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-300'}`}
-                    placeholder="Short description..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1">Status</label>
-                  <select
-                    value={editingCostCentre.status || 'ACTIVE'}
-                    onChange={(e) => setEditingCostCentre(p => ({ ...p, status: e.target.value as any }))}
-                    className={`w-full px-3 py-2 rounded-xl border focus:outline-none ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-300'}`}
-                  >
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="INACTIVE">INACTIVE</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-2 justify-end pt-2">
-                <button
-                  onClick={() => setEditingCostCentre(null)}
-                  className={`px-4 py-2 rounded-xl text-xs font-semibold border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-300 text-slate-900'}`}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveCostCentre}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white flex items-center gap-2"
-                >
-                  <Save className="w-4 h-4" />
-                  Save Cost Centre
-                </button>
-              </div>
-            </div>
+          {activeTab === 'SITES' && (
+            <CompanySitesTab
+              companyId={companyId}
+              sites={sites}
+              setSites={setSites}
+              branches={branches}
+              onSuccess={showSuccess}
+              onError={showError}
+              isDark={isDark}
+            />
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {costCentres.map(c => (
-              <div key={c.id} className={`p-4 rounded-2xl border space-y-2 relative group ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-indigo-400">{c.code}</span>
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${c.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-                    {c.status}
-                  </span>
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold">{c.name}</h4>
-                  {c.description && <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-2">{c.description}</p>}
-                </div>
-                {c.budgetAllocated ? (
-                  <div className="pt-2 mt-2 border-t border-slate-800/40 text-[10px] text-slate-400 space-y-1">
-                    <p>Budget: <span className="font-mono text-slate-300">${c.budgetAllocated.toLocaleString()}</span></p>
-                  </div>
-                ) : null}
-                
-                <button
-                  onClick={() => setEditingCostCentre(c)}
-                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-indigo-600 text-white"
-                  title="Edit Cost Centre"
-                >
-                  <Sliders className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-            {costCentres.length === 0 && (
-              <div className="col-span-full p-8 text-center text-xs text-slate-400 italic">
-                No cost centres defined yet. Click "Add Cost Centre" above.
-              </div>
-            )}
-          </div>
-        </div>
+          {activeTab === 'DEPARTMENTS' && (
+            <CompanyDepartmentsTab
+              companyId={companyId}
+              departments={departments}
+              setDepartments={setDepartments}
+              onSuccess={showSuccess}
+              onError={showError}
+              isDark={isDark}
+            />
+          )}
+
+          {activeTab === 'DESIGNATIONS' && (
+            <CompanyDesignationsTab
+              companyId={companyId}
+              designations={designations}
+              setDesignations={setDesignations}
+              onSuccess={showSuccess}
+              onError={showError}
+              isDark={isDark}
+            />
+          )}
+
+          {activeTab === 'MEMBERSHIPS' && (
+            <CompanyMembershipsTab
+              companyId={companyId}
+              userSession={userSession}
+              memberships={memberships}
+              setMemberships={setMemberships}
+              branches={branches}
+              onSuccess={showSuccess}
+              onError={showError}
+              isDark={isDark}
+            />
+          )}
+
+          {activeTab === 'VENDORS' && (
+            <CompanyVendorsTab
+              companyId={companyId}
+              vendors={vendors}
+              setVendors={setVendors}
+              onSuccess={showSuccess}
+              onError={showError}
+              isDark={isDark}
+            />
+          )}
+
+          {activeTab === 'COST_CENTRES' && (
+            <CompanyCostCentresTab
+              companyId={companyId}
+              costCentres={costCentres}
+              setCostCentres={setCostCentres}
+              onSuccess={showSuccess}
+              onError={showError}
+              isDark={isDark}
+            />
+          )}
+
+          {activeTab === 'BPM_RULES' && (
+            <ThresholdRuleManager 
+              companyId={companyId} 
+              session={userSession} 
+            />
+          )}
+        </>
       )}
     </div>
   );

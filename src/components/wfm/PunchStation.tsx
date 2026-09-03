@@ -254,7 +254,7 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
             {selfie && (
               <button 
                 onClick={() => setSelfie(null)}
-                className="text-[10px] font-bold text-rose-600 uppercase hover:underline"
+                className="text-[11px] font-bold text-rose-600 uppercase hover:underline"
               >
                 Retake
               </button>
@@ -266,7 +266,7 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
               <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
                 <AlertCircle className="w-8 h-8 text-slate-400" />
               </div>
-              <p className="text-[11px] text-slate-500 text-center max-w-[200px]">
+              <p className="text-xs text-slate-500 text-center max-w-[200px]">
                 Real-time selfie required for AI Liveness & Face Matching
               </p>
               <label className="cursor-pointer px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md">
@@ -294,7 +294,7 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-900 dark:text-white">Photo Captured</p>
-                <p className="text-[10px] text-slate-500">Ready for AI Vision Analysis</p>
+                <p className="text-[11px] text-slate-500">Ready for AI Vision Analysis</p>
               </div>
             </div>
           )}
@@ -398,7 +398,7 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
               {LanguageService.translate('PUNCH_IN')}
             </span>
             {geofenceEval?.result === 'OUTSIDE_GEOFENCE' && !isSupervisorOrAbove && (
-              <span className="text-[11px] bg-red-800/80 px-2 py-0.5 rounded-full text-white font-medium mt-1">
+              <span className="text-xs bg-red-800/80 px-2 py-0.5 rounded-full text-white font-medium mt-1">
                 {LanguageService.translate('OUT_OF_GEOFENCE')}
               </span>
             )}
@@ -417,7 +417,7 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
               {LanguageService.translate('PUNCH_OUT')}
             </span>
             {geofenceEval?.result === 'OUTSIDE_GEOFENCE' && !isSupervisorOrAbove && (
-              <span className="text-[11px] bg-red-800/80 px-2 py-0.5 rounded-full text-white font-medium mt-1">
+              <span className="text-xs bg-red-800/80 px-2 py-0.5 rounded-full text-white font-medium mt-1">
                 {LanguageService.translate('OUT_OF_GEOFENCE')}
               </span>
             )}

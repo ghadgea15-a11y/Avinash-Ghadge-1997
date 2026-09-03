@@ -458,12 +458,12 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
                 <div>
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-500 block">
+                      <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-indigo-500 block">
                         {plan.planCode}
                       </span>
                       <h3 className="font-bold text-lg">{plan.planName}</h3>
                     </div>
-                    <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full ${plan.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white0/20 text-slate-400'}`}>
+                    <span className={`px-2.5 py-0.5 text-[11px] font-bold rounded-full ${plan.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white0/20 text-slate-400'}`}>
                       {plan.status}
                     </span>
                   </div>
@@ -485,7 +485,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
                   </ul>
                 </div>
 
-                <div className="pt-3 border-t border-slate-700/50 flex justify-between items-center text-[10px] opacity-60">
+                <div className="pt-3 border-t border-slate-700/50 flex justify-between items-center text-[11px] opacity-60">
                   <span>Trial: {plan.trialDays || 14} days</span>
                   <span>ID: {plan.planId}</span>
                 </div>
@@ -559,12 +559,12 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
                         <span className="font-semibold text-xs text-indigo-400">
                           {currentPlan?.planName || item.subscription?.planId.replace('PLAN_', '') || 'Starter Tier'}
                         </span>
-                        <span className="block text-[10px] opacity-60">
+                        <span className="block text-[11px] opacity-60">
                           {item.subscription?.billingCycle || 'MONTHLY'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                           item.subscription?.status === 'ACTIVE' 
                             ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
                             : item.subscription?.status === 'TRIAL'
@@ -681,7 +681,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
                 </select>
               </div>
 
-              <div className={`p-3.5 rounded-xl border text-[11px] leading-relaxed ${isDark ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300' : 'bg-indigo-50 border-indigo-100 text-indigo-800'}`}>
+              <div className={`p-3.5 rounded-xl border text-xs leading-relaxed ${isDark ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300' : 'bg-indigo-50 border-indigo-100 text-indigo-800'}`}>
                 <Sparkles className="w-4 h-4 text-indigo-400 inline mr-1" />
                 <b>Real-Time Synchronization:</b> Saving will automatically update the company's tier quotas and refresh Firestore module entitlements for all company admins and staff immediately.
                 {proratedCredit > 0 && (
@@ -824,7 +824,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
                   {MASTER_APP_MODULES.map(m => {
                     const checked = (newPlan.enabledModules || []).includes(m.key);
                     return (
-                      <label key={m.key} className="flex items-center gap-2 cursor-pointer text-[11px]">
+                      <label key={m.key} className="flex items-center gap-2 cursor-pointer text-xs">
                         <input
                           type="checkbox"
                           checked={checked}

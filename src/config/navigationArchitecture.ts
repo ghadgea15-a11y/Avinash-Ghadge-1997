@@ -6,7 +6,7 @@ import { Network,
   IdCard, 
   GraduationCap, 
   ShieldAlert, 
-  Award, 
+  Award, Target, 
   Calendar, 
   Clock, 
   ListTodo, 
@@ -198,7 +198,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 1. DASHBOARD
   {
     screen: 'SUPER_ADMIN_DASHBOARD',
-    label: 'Global Overview',
+    label: 'Dashboard',
     shortLabel: 'Overview',
     description: 'Multi-tenant cloud platform analytics and system health metrics',
     icon: LayoutDashboard,
@@ -208,7 +208,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'ENTERPRISE_DASHBOARD',
-    label: 'Enterprise Dashboard',
+    label: 'Dashboard',
     shortLabel: 'Dashboard',
     description: 'Real-time operational KPIs, active muster metrics and pending tasks',
     icon: LayoutDashboard,
@@ -218,7 +218,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'ANNOUNCEMENTS',
-    label: 'Broadcast Announcements',
+    label: 'Announcements',
     shortLabel: 'Broadcasts',
     description: 'Company-wide notices, safety bulletins and emergency advisories',
     icon: Megaphone,
@@ -229,7 +229,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 2. COMPANIES
   {
     screen: 'SUPER_ADMIN_COMPANIES',
-    label: 'Tenant Directory',
+    label: 'Companies',
     shortLabel: 'Tenants',
     description: 'List and manage all onboarded enterprise tenant organizations',
     icon: Building2,
@@ -239,7 +239,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SUPER_ADMIN_CREATE_COMPANY',
-    label: 'Provision New Tenant',
+    label: 'Add Company',
     shortLabel: 'New Tenant',
     description: 'Step-by-step company registration, initial admin setup and licensing',
     icon: PlusCircle,
@@ -259,7 +259,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SUPER_ADMIN_MODULES',
-    label: 'Module Entitlements',
+    label: 'Entitlements',
     shortLabel: 'Modules',
     description: 'Enable or restrict enterprise modules per client contract',
     icon: Layers,
@@ -269,7 +269,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SUPER_ADMIN_SUPPORT',
-    label: 'Controlled Support Access',
+    label: 'Support Access',
     shortLabel: 'Support Access',
     description: 'Time-bounded, auditable support sessions for tenant troubleshooting',
     icon: LifeBuoy,
@@ -279,7 +279,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'COMPANY_BILLING',
-    label: 'Subscription & Billing',
+    label: 'Billing',
     shortLabel: 'Billing',
     description: 'Tenant billing details, payment methods, renewal history and invoices',
     icon: Receipt,
@@ -291,7 +291,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 3. ORGANIZATION MASTER
   {
     screen: 'COMPANY_MANAGEMENT',
-    label: 'Organization Master Setup',
+    label: 'Organization',
     shortLabel: 'Org Master',
     description: 'Configure company profile, legal entities, branches, sites and departments',
     icon: Building2,
@@ -300,7 +300,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'ORG_CONTROL',
-    label: 'Org Control & Assignments',
+    label: 'Assignments',
     shortLabel: 'Org Control',
     description: 'Manage hierarchy assignments, transfers, and integrity',
     icon: Network,
@@ -310,7 +310,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'DEPLOYMENT_MANAGEMENT',
-    label: 'Site & Post Deployment',
+    label: 'Sites & Posts',
     shortLabel: 'Sites / Posts',
     description: 'Geofenced client locations, post requirements and duty allocations',
     icon: MapPin,
@@ -322,7 +322,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 4. PEOPLE / WORKFORCE
   {
     screen: 'EMPLOYEES',
-    label: 'Workforce Staff Directory',
+    label: 'Employees',
     shortLabel: 'Staff Directory',
     description: 'Complete employee lifecycle, biometric records, KYC and contacts',
     icon: Users,
@@ -332,7 +332,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'ID_BADGES',
-    label: 'Identity Badge Master',
+    label: 'ID Badges',
     shortLabel: 'ID Badges',
     description: 'Digital Smart QR badges, print passes and physical badge issuance',
     icon: IdCard,
@@ -342,7 +342,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'TALENT_ACQUISITION',
-    label: 'Talent Acquisition & ATS',
+    label: 'Recruitment',
     shortLabel: 'Recruit ATS',
     description: 'Job requisitions, applicant pipeline, candidate scoring and offer generation',
     icon: UserCheck,
@@ -351,8 +351,28 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'HR'],
   },
   {
+    screen: 'PERFORMANCE_MANAGEMENT',
+    label: 'Performance (PMS)',
+    shortLabel: 'Performance',
+    description: 'Goals, OKRs, 360 appraisal cycles, rating calibration and PIP tracking',
+    icon: Target,
+    category: 'PEOPLE_WORKFORCE',
+    dataType: 'TRANSACTION',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 'HR', 'GENERAL_MANAGER', 'ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO', 'SUPERVISOR', 'SITE_IN_CHARGE', 'REGIONAL_MANAGER', 'AREA_MANAGER', 'EMPLOYEE', 'GUARD', 'WORKER'],
+  },
+  {
+    screen: 'TALENT_MANAGEMENT',
+    label: 'Talent & Succession',
+    shortLabel: 'Talent Suite',
+    description: '9-Box succession planning, skills matrix, digital offer letters, Kirkpatrick training ROI and rewards wallet',
+    icon: Award,
+    category: 'PEOPLE_WORKFORCE',
+    dataType: 'TRANSACTION',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 'HR', 'GENERAL_MANAGER', 'ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO', 'SUPERVISOR', 'SITE_IN_CHARGE', 'REGIONAL_MANAGER', 'AREA_MANAGER'],
+  },
+  {
     screen: 'TRAINING_LMS',
-    label: 'LMS & Security Training',
+    label: 'Training',
     shortLabel: 'LMS Training',
     description: 'PSARA compliance curriculum, training modules, quizzes and tracking',
     icon: GraduationCap,
@@ -361,7 +381,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'MANDATORY_REFRESHERS',
-    label: 'Mandatory Refreshers',
+    label: 'Refreshers',
     shortLabel: 'Refreshers',
     description: 'Mandatory annual safety, fire drill and SOP refreshers schedule',
     icon: ShieldAlert,
@@ -370,7 +390,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'CERTIFICATION_TRACKING',
-    label: 'Certifications & Expiry',
+    label: 'Certifications',
     shortLabel: 'Certifications',
     description: 'PSARA licenses, First Aid, Fire Safety certificates and renewal alerts',
     icon: Award,
@@ -381,7 +401,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 5. OPERATIONS
   {
     screen: 'ATTENDANCE_SHIFTS',
-    label: 'Daily Attendance & Muster',
+    label: 'Attendance',
     shortLabel: 'Attendance',
     description: 'Geo-verified punches, biometric facial scans and live muster check-in',
     icon: Clock,
@@ -390,7 +410,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SHIFT_ROSTER',
-    label: 'Shift Roster Planner',
+    label: 'Roster',
     shortLabel: 'Shift Roster',
     description: 'Monthly and weekly shift scheduling matrix, rotations and swaps',
     icon: Calendar,
@@ -400,7 +420,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'WORKFORCE_CAPACITY',
-    label: 'Workforce Capacity & Shortages',
+    label: 'Capacity',
     shortLabel: 'Capacity Planning',
     description: 'Predictive shortage detection, skill floors, supervisor alerts & replacement approval workflow',
     icon: Network,
@@ -410,7 +430,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'CONFLICT_DETECTION',
-    label: 'Enterprise Conflict Detection',
+    label: 'Conflict Checks',
     shortLabel: 'Conflict Engine',
     description: 'Deterministic prevention of overlapping shifts, multi-site collisions, SoD violations & controlled overrides',
     icon: ShieldAlert,
@@ -420,7 +440,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'LEAVE_MANAGEMENT',
-    label: 'Leave Management',
+    label: 'Leave',
     shortLabel: 'Leaves',
     description: 'Leave request applications, approval workflows and accrual balances',
     icon: Calendar,
@@ -429,7 +449,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'WORK_ORDERS',
-    label: 'Work Orders & Facility Maintenance',
+    label: 'Work Orders',
     shortLabel: 'Work Orders',
     description: 'Dispatch tickets, maintenance tasks, SLAs and field repair progress',
     icon: ListTodo,
@@ -438,7 +458,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'TASK_MANAGEMENT',
-    label: 'BPM Task Management',
+    label: 'Tasks',
     shortLabel: 'Tasks',
     description: 'Organizational task allocation, Kanban boards and status milestones',
     icon: CheckSquare,
@@ -447,7 +467,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'MY_TASKS',
-    label: 'My Assigned Tasks',
+    label: 'My Tasks',
     shortLabel: 'My Tasks',
     description: 'Individual employee task checklist, checklists and daily activities',
     icon: CheckSquare,
@@ -456,7 +476,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SITE_OPERATIONS',
-    label: 'Site Operations & Guard Patrol',
+    label: 'Operations',
     shortLabel: 'Site Ops',
     description: 'QR checkpoint patrols, Incident reporting, Visitor gate pass & Material muster',
     icon: ShieldCheck,
@@ -465,10 +485,37 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SAFETY_MANAGEMENT',
-    label: 'Safety Inspections & PPE Checks',
+    label: 'Inspections',
     shortLabel: 'Safety Checks',
     description: 'EHS hazard inspections, equipment checks and safety protocol audits',
     icon: ShieldAlert,
+    category: 'OPERATIONS',
+    dataType: 'TRANSACTION',
+  },
+  {
+    screen: 'CLIENT_PORTAL',
+    label: 'Client Portal',
+    shortLabel: 'Client Portal',
+    description: 'Real-time live attendance, patrol verification transparency, invoice viewer and SLA metrics',
+    icon: Building2,
+    category: 'OPERATIONS',
+    dataType: 'TRANSACTION',
+  },
+  {
+    screen: 'MULTI_MODE_PATROL',
+    label: 'Multi-Mode Patrols',
+    shortLabel: 'NFC/QR Patrols',
+    description: 'Hardware NFC UID, dynamic QR tokens & GPS geofencing with cryptographic HMAC proof-of-presence',
+    icon: ShieldCheck,
+    category: 'OPERATIONS',
+    dataType: 'TRANSACTION',
+  },
+  {
+    screen: 'AI_SCHEDULING',
+    label: 'AI Scheduling & Relievers',
+    shortLabel: 'AI Relievers',
+    description: 'Transparent rule-based scoring (fatigue index, transit distance, absenteeism) and auto-reliever dispatch',
+    icon: Activity,
     category: 'OPERATIONS',
     dataType: 'TRANSACTION',
   },
@@ -476,7 +523,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 6. ASSETS & INVENTORY
   {
     screen: 'ASSET_TRACKING',
-    label: 'EAM Asset Lifecycle Management',
+    label: 'Assets',
     shortLabel: 'Asset Register',
     description: 'Fixed assets register, QR tracking, custodian assignment and maintenance history',
     icon: QrCode,
@@ -485,7 +532,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'INVENTORY_STOCK',
-    label: 'SCM Inventory & Stock Control',
+    label: 'Inventory',
     shortLabel: 'Stock & Items',
     description: 'Uniforms, gear, spare parts, GRN receipt and warehouse stock ledger',
     icon: Boxes,
@@ -496,7 +543,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 7. FINANCE
   {
     screen: 'PAYROLL_COMPENSATION',
-    label: 'ERP Payroll & Compensation',
+    label: 'Payroll',
     shortLabel: 'Payroll',
     description: 'Salary structures, wage registers, statutory PF/ESI/PT deductions and payslips',
     icon: DollarSign,
@@ -504,11 +551,31 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     dataType: 'TRANSACTION',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'FINANCE_MANAGER', 'FINANCE', 'OWNER_PROMOTER'],
   },
+  {
+    screen: 'EXPENSE_TRAVEL',
+    label: 'Expenses & Travel',
+    shortLabel: 'Expense Claims',
+    description: 'AI receipt OCR scanner, travel pre-authorization and reimbursement approval workflows',
+    icon: Receipt,
+    category: 'FINANCE',
+    dataType: 'TRANSACTION',
+  },
+  {
+    screen: 'CLIENT_BILLING',
+    label: 'Client Billing & Contracts',
+    shortLabel: 'Billing & Contracts',
+    description: 'Contract profitability, versioned rate cards, idempotent invoicing and SLA shortfall penalties',
+    icon: FileText,
+    category: 'FINANCE',
+    dataType: 'TRANSACTION',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'FINANCE_MANAGER', 'FINANCE', 'OWNER_PROMOTER'],
+  },
+
 
   // 8. PROCUREMENT
   {
     screen: 'PROCUREMENT_SRM',
-    label: 'Procurement SRM Hub',
+    label: 'Procurement',
     shortLabel: 'Procurement Hub',
     description: 'Supplier relationship overview, requisition analytics and spend dashboards',
     icon: ShoppingCart,
@@ -518,7 +585,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'VENDOR_MANAGEMENT',
-    label: 'Approved Vendor Directory',
+    label: 'Vendors',
     shortLabel: 'Vendors',
     description: 'Vendor master register, onboarding documents, tax compliance and ratings',
     icon: Building2,
@@ -528,7 +595,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'RFQ_MANAGEMENT',
-    label: 'RFQ & Quotation Bids',
+    label: 'Quotations',
     shortLabel: 'RFQs & Bids',
     description: 'Request for quotation tenders, supplier bid comparison and awards',
     icon: FileSignature,
@@ -548,7 +615,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'THREE_WAY_MATCH',
-    label: '3-Way Match & Invoice Audit',
+    label: 'Invoices',
     shortLabel: '3-Way Match',
     description: 'PO, Goods Receipt (GRN) and Vendor Invoice verification audit',
     icon: Receipt,
@@ -560,7 +627,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 9. CRM
   {
     screen: 'CLIENT_MANAGEMENT',
-    label: 'CRM Client Accounts & Contracts',
+    label: 'Clients',
     shortLabel: 'Clients & Contracts',
     description: 'Client master, service contracts, billing rates and SLA agreements',
     icon: Briefcase,
@@ -570,7 +637,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SUPER_ADMIN_LEADS',
-    label: 'Sales Pipeline & Leads CRM',
+    label: 'Sales Pipeline',
     shortLabel: 'Lead Pipeline',
     description: 'Enterprise inquiry tracking, demo scheduling and tenant onboarding conversion',
     icon: UserCheck,
@@ -582,7 +649,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 10. COMPLIANCE & RISK
   {
     screen: 'COMPLIANCE',
-    label: 'GRC Compliance Dashboard',
+    label: 'Compliance',
     shortLabel: 'GRC Dashboard',
     description: 'Labor law registers, minimum wage compliance, PF/ESIC returns and audits',
     icon: Scale,
@@ -592,7 +659,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'DOCUMENT_LIFECYCLE',
-    label: 'Document Lifecycle & Expiry Control',
+    label: 'Documents',
     shortLabel: 'Document Lifecycle',
     description: 'Statutory licenses, contracts, compliance certificates & renewal workflows',
     icon: FileSpreadsheet,
@@ -601,8 +668,17 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'FINANCE_MANAGER', 'QUALITY', 'ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO'],
   },
   {
+    screen: 'COMPLIANCE_EXPIRY',
+    label: 'Licensing & Expiries',
+    shortLabel: 'PSARA & Expiry',
+    description: 'Statutory guard licensing (PSARA, Arms, Police Verification) with 30/15/7-day alerts and shift blocking',
+    icon: Shield,
+    category: 'COMPLIANCE_RISK',
+    dataType: 'TRANSACTION',
+  },
+  {
     screen: 'LEGAL_POLICIES',
-    label: 'Legal & Privacy Policies',
+    label: 'Policies',
     shortLabel: 'Legal & Privacy',
     description: 'DPDP Act data privacy, confidentiality agreements and terms of service',
     icon: FileText,
@@ -613,7 +689,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 11. APPROVALS & WORKFLOWS
   {
     screen: 'APPROVAL_MANAGEMENT',
-    label: 'Approval Inbox & Requests',
+    label: 'My Approvals',
     shortLabel: 'Approvals Inbox',
     description: 'Centralized workflow approval queue for leaves, expenses, overtime and onboarding',
     icon: CheckSquare,
@@ -623,7 +699,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'APPROVAL_CENTER',
-    label: 'Multi-Tier BPM Approval Center',
+    label: 'Approvals Center',
     shortLabel: 'BPM Rules',
     description: 'Configurable multi-level approval hierarchies, delegation and escalations',
     icon: Award,
@@ -633,7 +709,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SUPER_ADMIN_PENDING_APPROVALS',
-    label: 'Global Tenant Approvals',
+    label: 'Global Approvals',
     shortLabel: 'Global Approvals',
     description: 'Super Admin approval inbox for new tenant registrations and global requests',
     icon: UserCheck,
@@ -645,7 +721,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 12. REPORTS & ANALYTICS
   {
     screen: 'SUPER_ADMIN_REPORTS',
-    label: 'Platform SaaS Analytics & BI',
+    label: 'Analytics',
     shortLabel: 'Platform BI',
     description: 'Multi-tenant licensing analytics, module adoption and platform usage reports',
     icon: FileBarChart,
@@ -655,7 +731,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'OPERATIONAL_INTELLIGENCE',
-    label: 'CFO/COO Operational Intelligence',
+    label: 'Intelligence',
     shortLabel: 'Ops Intelligence',
     description: 'Hierarchical cost, overtime, maintenance, procurement & risk anomaly detection',
     icon: BarChart3,
@@ -665,7 +741,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'REPORTS_ANALYTICS',
-    label: 'BI Reports & Statutory Exports',
+    label: 'Reports',
     shortLabel: 'BI Reports',
     description: 'Muster registers, payroll summaries, incident analytics and PDF/Excel downloads',
     icon: BarChart3,
@@ -674,7 +750,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SERVICE_DESK',
-    label: 'Service Desk & SLA Analytics',
+    label: 'Service Desk',
     shortLabel: 'Service Desk',
     description: 'Internal ticketing, incident resolution timelines and client satisfaction metrics',
     icon: LifeBuoy,
@@ -685,7 +761,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 13. NOTIFICATIONS
   {
     screen: 'NOTIFICATIONS',
-    label: 'System Alerts & Notifications',
+    label: 'Notifications',
     shortLabel: 'Notifications',
     description: 'Real-time push alerts, duty reminders and system event feed',
     icon: Bell,
@@ -697,7 +773,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 14. SECURITY & AUDIT
   {
     screen: 'SUPER_ADMIN_ADMINS',
-    label: 'Platform Administrators',
+    label: 'Admins',
     shortLabel: 'Platform Admins',
     description: 'Manage platform Super Admins, Support Auditors and Platform Ops users',
     icon: UserCog,
@@ -707,7 +783,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SUPER_ADMIN_SECURITY',
-    label: 'Platform Security & Claims',
+    label: 'Security',
     shortLabel: 'Platform Security',
     description: 'Custom claims enforcement, security anomaly feed and access audit',
     icon: ShieldAlert,
@@ -717,7 +793,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SUPER_ADMIN_AUDIT',
-    label: 'Immutable Platform Audit Log',
+    label: 'Audit Log',
     shortLabel: 'Platform Audit',
     description: 'Cryptographically ordered platform mutation logs with before/after diffs',
     icon: History,
@@ -727,7 +803,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SUPER_ADMIN_MONITORING',
-    label: 'System Telemetry & Health',
+    label: 'Health',
     shortLabel: 'Telemetry',
     description: 'Live latency tests, Firestore health, error rates and cloud storage status',
     icon: Activity,
@@ -736,8 +812,18 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     isSuperAdminOnly: true,
   },
   {
+    screen: 'SETUP_AUDIT',
+    label: 'Setup Cross-Check',
+    shortLabel: 'Setup Audit',
+    description: 'Verify hierarchy, accounts, claims, and organization completeness',
+    icon: ShieldCheck,
+    category: 'SECURITY_AUDIT',
+    dataType: 'SYSTEM',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN'],
+  },
+  {
     screen: 'HISTORICAL_TRACEABILITY',
-    label: 'Enterprise Historical Traceability',
+    label: 'Traceability',
     shortLabel: 'Traceability',
     description: 'Reconstruct complete immutable timelines for Employees, Sites, Contracts, Assets and Transactions',
     icon: History,
@@ -747,7 +833,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SCALABILITY_ASSESSMENT',
-    label: 'Scalability Architecture Assessment',
+    label: 'Scalability',
     shortLabel: '500-Site Scale',
     description: 'Real 500-site and 50k-workforce scalability assessment, load benchmarking, and bottleneck fixes',
     icon: Server,
@@ -757,7 +843,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'PROFILE',
-    label: 'User Security & TOTP MFA',
+    label: 'MFA Setup',
     shortLabel: 'Security & Profile',
     description: 'KYC identity details, emergency contacts and RFC 6238 2FA setup',
     icon: Lock,
@@ -766,7 +852,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'SESSION_LOCK',
-    label: 'Session Lock & PIN Protection',
+    label: 'Lock Session',
     shortLabel: 'Lock Screen',
     description: 'Quick-lock terminal to prevent unauthorized workstation access',
     icon: Lock,
@@ -777,7 +863,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 15. SETTINGS
   {
     screen: 'SUPER_ADMIN_CONFIG',
-    label: 'Platform Global Configuration',
+    label: 'Settings',
     shortLabel: 'Global Config',
     description: 'Multi-tenant global parameters, maintenance mode & feature flags',
     icon: Sliders,
@@ -787,7 +873,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   },
   {
     screen: 'BIOMETRIC_DEVICES',
-    label: 'Universal Biometric Hub',
+    label: 'Biometrics',
     shortLabel: 'Biometrics',
     description: '1-Minute zero-config IT auto-connect for ZKTeco, eSSL, Hikvision and RFID machines',
     icon: Fingerprint,
@@ -796,8 +882,18 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 'ADMIN', 'IT', 'OWNER_PROMOTER', 'DIRECTOR_CEO'],
   },
   {
+    screen: 'ENTERPRISE_INTEGRATIONS',
+    label: 'APIs & Webhooks',
+    shortLabel: 'Integrations',
+    description: 'REST API keys, outbound webhooks, SAML/OIDC SSO and Tally ERP connectors',
+    icon: Sliders,
+    category: 'SETTINGS',
+    dataType: 'SYSTEM',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO', 'IT', 'ADMIN'],
+  },
+  {
     screen: 'SETTINGS',
-    label: 'Settings & Diagnostics',
+    label: 'Settings',
     shortLabel: 'Settings',
     description: 'Storage quota, offline sync queue, theme configuration and system diagnostics',
     icon: Settings,

@@ -377,7 +377,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
 
       {/* 2. Interactive Hierarchy Breadcrumb Navigation */}
       <div className="bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur px-5 py-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 flex flex-wrap items-center gap-2 text-xs font-medium">
-        <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] mr-1 flex items-center gap-1">
+        <span className="text-slate-400 font-bold uppercase tracking-wider text-[11px] mr-1 flex items-center gap-1">
           <Layers className="w-3.5 h-3.5" /> Scope:
         </span>
         {navigationPath.map((node, index) => {
@@ -393,7 +393,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                     : 'text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
                 }`}
               >
-                <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-300 font-bold">
+                <span className="text-[11px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-300 font-bold">
                   {node.level}
                 </span>
                 {node.name}
@@ -441,7 +441,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                   ₹{currentNode.metrics.costPerHeadcount.toLocaleString()} per active headcount
                 </p>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
                 <span>Payroll: ₹{currentNode.metrics.costBreakdown.payrollGross.toLocaleString()}</span>
                 <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-0.5 hover:underline">
                   Inspect <ArrowRight className="w-3 h-3" />
@@ -477,7 +477,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                   Est. Payout: ₹{currentNode.metrics.overtimeCostTotal.toLocaleString()}
                 </p>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
                 <span>{currentNode.metrics.activeEmployees} active staff</span>
                 <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-0.5 hover:underline">
                   Audit OT <ArrowRight className="w-3 h-3" />
@@ -504,7 +504,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                   {currentNode.metrics.openWorkOrdersCount} open work orders • {currentNode.metrics.purchaseOrdersCount} POs
                 </p>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
                 <span>Assets: {currentNode.metrics.activeAssetsCount}</span>
                 <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-0.5 hover:underline">
                   View WO <ArrowRight className="w-3 h-3" />
@@ -531,7 +531,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                   {currentNode.metrics.criticalIncidentsCount} critical • ₹{currentNode.metrics.incidentLossTotal.toLocaleString()} loss impact
                 </p>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
                 <span>Muster: {currentNode.metrics.attendanceRate.toFixed(1)}%</span>
                 <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-0.5 hover:underline">
                   Incidents <ArrowRight className="w-3 h-3" />
@@ -612,7 +612,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-black dark:text-slate-200">
+                        <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-black dark:text-slate-200">
                           {anomaly.entityLevel}: {anomaly.entityName}
                         </span>
                         {getSeverityBadge(anomaly.severity)}
@@ -629,17 +629,17 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
 
                     <div className="space-y-2.5 pt-3 border-t border-slate-200/80 dark:border-slate-700/80 text-xs">
                       <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Root Cause:</span>
-                        <p className="text-slate-900 dark:text-slate-300 italic text-[11px]">"{anomaly.rootCause}"</p>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Root Cause:</span>
+                        <p className="text-slate-900 dark:text-slate-300 italic text-xs">"{anomaly.rootCause}"</p>
                       </div>
 
                       <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Action Plan:</span>
-                        <p className="text-slate-900 dark:text-slate-300 text-[11px] font-medium">{anomaly.recommendedAction}</p>
+                        <span className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider">Action Plan:</span>
+                        <p className="text-slate-900 dark:text-slate-300 text-xs font-medium">{anomaly.recommendedAction}</p>
                       </div>
 
                       {(anomaly.financialImpact ?? 0) > 0 && (
-                        <div className="flex justify-between items-center bg-rose-50 dark:bg-rose-950/30 px-3 py-1.5 rounded-xl text-rose-800 dark:text-rose-300 font-semibold text-[11px]">
+                        <div className="flex justify-between items-center bg-rose-50 dark:bg-rose-950/30 px-3 py-1.5 rounded-xl text-rose-800 dark:text-rose-300 font-semibold text-xs">
                           <span>Financial Exposure:</span>
                           <span className="font-black">₹{(anomaly.financialImpact ?? 0).toLocaleString()}</span>
                         </div>
@@ -674,9 +674,9 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
+                <table className="w-full text-left text-sm border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                    <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[11px]">
                       <th className="py-3 px-4">Entity Unit</th>
                       <th className="py-3 px-4">Headcount</th>
                       <th className="py-3 px-4">Muster %</th>
@@ -701,7 +701,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                         >
                           <td className="py-3.5 px-4 font-bold text-black dark:text-white">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-300 font-bold">
+                              <span className="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-300 font-bold">
                                 {child.code}
                               </span>
                               <span>{child.name}</span>
@@ -828,7 +828,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold text-[10px]">
+                          <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold text-[11px]">
                             {tx.module}
                           </span>
                           <span className="font-mono text-slate-500 dark:text-slate-400 font-medium">#{tx.referenceNumber}</span>
@@ -838,7 +838,7 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                         <h4 className="font-bold text-black dark:text-white text-sm">
                           {tx.title}
                         </h4>
-                        <p className="text-slate-600 dark:text-slate-400 dark:text-slate-300 text-[11px]">
+                        <p className="text-slate-600 dark:text-slate-400 dark:text-slate-300 text-xs">
                           {tx.description}
                         </p>
                       </div>
@@ -846,13 +846,13 @@ export const ExecutiveOperationalIntelligenceScreen: React.FC<ExecutiveOperation
                       <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                         {tx.amount !== undefined && tx.amount > 0 && (
                           <div className="text-right">
-                            <span className="text-[10px] text-slate-400 block uppercase font-bold">Amount</span>
+                            <span className="text-[11px] text-slate-400 block uppercase font-bold">Amount</span>
                             <span className="font-black text-black dark:text-white text-sm">
                               ₹{tx.amount.toLocaleString()}
                             </span>
                           </div>
                         )}
-                        <span className="px-2.5 py-1 rounded-xl bg-slate-200 dark:bg-slate-700 text-black dark:text-slate-200 font-bold text-[10px] uppercase">
+                        <span className="px-2.5 py-1 rounded-xl bg-slate-200 dark:bg-slate-700 text-black dark:text-slate-200 font-bold text-[11px] uppercase">
                           {tx.status}
                         </span>
                       </div>

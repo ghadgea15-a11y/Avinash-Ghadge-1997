@@ -328,10 +328,10 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-sm text-white">{req.fullName}</span>
-                      <span className="px-2 py-0.5 bg-slate-800 text-slate-300 rounded-md text-[10px] font-mono">
+                      <span className="px-2 py-0.5 bg-slate-800 text-slate-300 rounded-md text-[11px] font-mono">
                         {req.departmentName || 'General'}
                       </span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
                         req.accountStatus === 'ACTIVE' 
                           ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
                           : req.accountStatus === 'REJECTED'
@@ -362,7 +362,7 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
                     {/* Step Approval Badges */}
                     <div className="flex flex-wrap gap-2 pt-1">
                       {/* Email Verification */}
-                      <span className={`px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 ${
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1 ${
                         req.emailVerified 
                           ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/80' 
                           : 'bg-amber-950/60 text-amber-300 border border-amber-800/80'
@@ -372,7 +372,7 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
                       </span>
 
                       {/* Company Admin Badge */}
-                      <span className={`px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 ${
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1 ${
                         isAdminApproved 
                           ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/80' 
                           : 'bg-slate-950 text-slate-400 border border-slate-800'
@@ -382,7 +382,7 @@ export const ApprovalManagementScreen: React.FC<ApprovalManagementScreenProps> =
                       </span>
 
                       {/* HR Badge */}
-                      <span className={`px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 ${
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1 ${
                         isHrApproved 
                           ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/80' 
                           : 'bg-slate-950 text-slate-400 border border-slate-800'

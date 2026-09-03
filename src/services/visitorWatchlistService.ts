@@ -1,5 +1,6 @@
 import { collection, doc, getDocs, onSnapshot, query, setDoc, where } from 'firebase/firestore';
 import { db } from '../firebase';
+import { GrcIntegrationEngine } from './grcIntegrationEngine';
 import { BlacklistCheckResult, IncidentReportRecord, UserSession, VisitorLogRecord, VisitorWatchlistRecord } from '../types';
 import { FirestoreService } from './firestoreService';
 import { QueryScopeEngine } from './queryScopeEngine';
@@ -60,6 +61,9 @@ export class VisitorWatchlistService {
         createdAt: record.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }, { merge: true });
+
+      // Auto-Sync to GRC
+      await GrcIntegrationEngine.syncBlacklistedVisitorToGrc(companyId, record);
 
       // Audit log entry
       await FirestoreService.logAuditEvent(

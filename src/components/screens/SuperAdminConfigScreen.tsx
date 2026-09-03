@@ -274,7 +274,7 @@ export const SuperAdminConfigScreen: React.FC<SuperAdminConfigScreenProps> = ({
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   <span>Gemini AI Insights</span>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-slate-400">
                   Anomaly detection, smart roster predictions and payroll error scans.
                 </p>
               </div>
@@ -294,7 +294,7 @@ export const SuperAdminConfigScreen: React.FC<SuperAdminConfigScreenProps> = ({
                   <Fingerprint className="w-4 h-4 text-indigo-500" />
                   <span>Biometric Auto-Discovery</span>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-slate-400">
                   1-minute zero-config local subnet discovery for ZKTeco / eSSL machines.
                 </p>
               </div>
@@ -314,7 +314,7 @@ export const SuperAdminConfigScreen: React.FC<SuperAdminConfigScreenProps> = ({
                   <WifiOff className="w-4 h-4 text-cyan-500" />
                   <span>Offline Sync V2 Engine</span>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-slate-400">
                   IndexedDB background queue with vector clocks & deterministic merge.
                 </p>
               </div>
@@ -334,7 +334,7 @@ export const SuperAdminConfigScreen: React.FC<SuperAdminConfigScreenProps> = ({
                   <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
                   <span>Statutory PDF & Excel Engine</span>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-slate-400">
                   Server-side high fidelity muster registers and Form 16 generators.
                 </p>
               </div>
@@ -354,7 +354,7 @@ export const SuperAdminConfigScreen: React.FC<SuperAdminConfigScreenProps> = ({
                   <LifeBuoy className="w-4 h-4 text-amber-500" />
                   <span>Support Impersonation</span>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-slate-400">
                   Enables ephemeral support access sessions for tier-3 diagnostics.
                 </p>
               </div>
@@ -374,7 +374,7 @@ export const SuperAdminConfigScreen: React.FC<SuperAdminConfigScreenProps> = ({
                   <Sliders className="w-4 h-4 text-violet-500" />
                   <span>Early Access Beta Modules</span>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-slate-400">
                   Allow enterprise clients to opt into preview experimental features.
                 </p>
               </div>

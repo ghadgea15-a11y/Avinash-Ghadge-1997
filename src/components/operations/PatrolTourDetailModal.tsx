@@ -106,7 +106,7 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
                 <span className="text-xs font-mono text-indigo-300">Tour #{tour.tourNumber}</span>
                 {getStatusBadge(tour.status)}
                 {tour.isOverridden && (
-                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     OVERRIDDEN
                   </span>
                 )}
@@ -140,24 +140,24 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
           {/* Key Metrics Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-3.5 bg-white dark:bg-slate-950 border border-slate-200 rounded-xl">
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Site Location</span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Site Location</span>
               <span className="text-sm font-bold text-black dark:text-white truncate block mt-0.5">{tour.siteName}</span>
             </div>
 
             <div className="p-3.5 bg-white dark:bg-slate-950 border border-slate-200 rounded-xl">
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Assigned Guard</span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Assigned Guard</span>
               <span className="text-sm font-bold text-black dark:text-white truncate block mt-0.5">{tour.assignedGuardName || 'Unassigned'}</span>
             </div>
 
             <div className="p-3.5 bg-white dark:bg-slate-950 border border-slate-200 rounded-xl">
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Completion</span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Completion</span>
               <span className="text-sm font-bold text-indigo-600 block mt-0.5">
                 {completedCount} / {totalCount} ({completionPercent}%)
               </span>
             </div>
 
             <div className="p-3.5 bg-white dark:bg-slate-950 border border-slate-200 rounded-xl">
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Exceptions</span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Exceptions</span>
               <span className="text-sm font-bold block mt-0.5 text-black dark:text-white">
                 {(tour.exceptionsDetected?.length || 0) === 0 ? (
                   <span className="text-emerald-600 font-semibold">None (Clean)</span>
@@ -213,7 +213,7 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
               </div>
             ) : (
               <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-sm">
                   <thead className="bg-slate-100 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200">
                     <tr>
                       <th className="py-2.5 px-3">Seq #</th>
@@ -230,13 +230,13 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
                         <td className="py-2.5 px-3 font-bold font-mono text-black dark:text-white">#{scan.sequenceOrder}</td>
                         <td className="py-2.5 px-3">
                           <span className="font-semibold text-black dark:text-white block">{scan.checkpointName}</span>
-                          <span className="font-mono text-[10px] text-slate-400">{scan.code}</span>
+                          <span className="font-mono text-[11px] text-slate-400">{scan.code}</span>
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-[11px]">
+                        <td className="py-2.5 px-3 font-mono text-xs">
                           {new Date(scan.scannedAt).toLocaleTimeString()}
                         </td>
                         <td className="py-2.5 px-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                             scan.geofenceStatus === 'WITHIN_GEOFENCE'
                               ? 'bg-emerald-100 text-emerald-800'
                               : scan.geofenceStatus === 'OUTSIDE_GEOFENCE'
@@ -248,7 +248,7 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
                           </span>
                         </td>
                         <td className="py-2.5 px-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                             scan.sequenceStatus === 'IN_SEQUENCE'
                               ? 'bg-emerald-100 text-emerald-800'
                               : 'bg-amber-100 text-amber-800'
@@ -256,7 +256,7 @@ export const PatrolTourDetailModal: React.FC<PatrolTourDetailModalProps> = ({
                             {scan.sequenceStatus || 'IN_SEQUENCE'}
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 text-[11px] text-slate-500 dark:text-slate-400 max-w-[150px] truncate">
+                        <td className="py-2.5 px-3 text-xs text-slate-500 dark:text-slate-400 max-w-[150px] truncate">
                           {scan.remarks || '-'}
                         </td>
                       </tr>

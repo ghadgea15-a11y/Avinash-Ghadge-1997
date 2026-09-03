@@ -67,7 +67,7 @@ export const ShiftHandover: React.FC<ShiftHandoverProps> = ({ session, sites, em
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Pending Review</p>
+              <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">Pending Review</p>
               <p className="text-2xl font-black text-black dark:text-white">{pendingAcknowledge.length}</p>
             </div>
           </div>
@@ -76,9 +76,9 @@ export const ShiftHandover: React.FC<ShiftHandoverProps> = ({ session, sites, em
 
       <div className={`rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm overflow-hidden`}>
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-white text-slate-500'}`}>
+              <tr className={`border-b text-[11px] font-bold uppercase tracking-wider ${isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-white text-slate-500'}`}>
                 <th className="py-3 px-4">Handover Details</th>
                 <th className="py-3 px-4">Outgoing / Incoming</th>
                 <th className="py-3 px-4">Summary</th>
@@ -96,17 +96,17 @@ export const ShiftHandover: React.FC<ShiftHandoverProps> = ({ session, sites, em
                   <tr key={handover.id} className={`hover:bg-white dark:hover:bg-slate-800/50 transition`}>
                     <td className="py-3 px-4">
                       <div className="font-bold text-black dark:text-white dark:text-slate-100">{handover.id}</div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400">{site?.name || handover.siteId}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">{site?.name || handover.siteId}</div>
                     </td>
                     <td className="py-3 px-4">
                       <div className="text-xs font-medium text-black dark:text-slate-200 dark:text-slate-300">Out: {`${outEmp?.firstName} ${outEmp?.lastName}` || handover.outgoingEmployeeId}</div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">In: {`${ackEmp?.firstName} ${ackEmp?.lastName}` || `${inEmp?.firstName} ${inEmp?.lastName}` || 'Pending...'}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">In: {`${ackEmp?.firstName} ${ackEmp?.lastName}` || `${inEmp?.firstName} ${inEmp?.lastName}` || 'Pending...'}</div>
                     </td>
                     <td className="py-3 px-4 max-w-[200px] truncate text-slate-600 dark:text-slate-400">
                       {handover.summary}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${
                         handover.status === 'ACKNOWLEDGED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
                         handover.status === 'SUBMITTED' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
                         handover.status === 'RETURNED' ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400' :
@@ -230,24 +230,24 @@ const [metrics, setMetrics] = useState({ incidents: 0, visitors: 0, workOrders: 
            </div>
 
            <div>
-              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Site</label>
+              <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Site</label>
               <select required value={formData.siteId} onChange={e => setFormData({...formData, siteId: e.target.value})} className={`w-full p-2 text-xs rounded-xl border focus:ring-2 outline-none ${isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200'}`}>
                 {sites.map((s: SiteRecord) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
            </div>
 
            <div>
-              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Shift Summary *</label>
+              <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Shift Summary *</label>
               <textarea required rows={3} value={formData.summary} onChange={e => setFormData({...formData, summary: e.target.value})} placeholder="Brief overview of shift events..." className={`w-full p-2 text-xs rounded-xl border focus:ring-2 outline-none ${isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200'}`}></textarea>
            </div>
 
            <div>
-              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Critical Observations</label>
+              <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Critical Observations</label>
               <textarea rows={2} value={formData.criticalObservations} onChange={e => setFormData({...formData, criticalObservations: e.target.value})} placeholder="Any security breaches, safety hazards..." className={`w-full p-2 text-xs rounded-xl border focus:ring-2 outline-none ${isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200'}`}></textarea>
            </div>
 
            <div>
-              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Important Notes for Next Shift</label>
+              <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Important Notes for Next Shift</label>
               <textarea rows={2} value={formData.importantNotes} onChange={e => setFormData({...formData, importantNotes: e.target.value})} placeholder="Pending vendor deliveries, pass handovers..." className={`w-full p-2 text-xs rounded-xl border focus:ring-2 outline-none ${isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200'}`}></textarea>
            </div>
            

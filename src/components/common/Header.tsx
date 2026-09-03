@@ -73,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate(userSession ? 'EMPLOYEES' : 'LOGIN')}>
           <AppLogo size="sm" company={activeCompany} />
           {activeCompany && (
-            <span className={`hidden lg:inline-block text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+            <span className={`hidden lg:inline-block text-[11px] font-mono px-2 py-0.5 rounded-full border ${
               isDark ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-600'
             }`}>
               {activeCompany.companyId}
@@ -181,7 +181,7 @@ export const Header: React.FC<HeaderProps> = ({
           {isOnline ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5 animate-pulse" />}
           <span className="hidden sm:inline">{isOnline ? 'Online' : 'Offline'}</span>
           {offlineQueueCount > 0 && (
-            <span className="bg-amber-500 text-slate-950 text-[10px] font-bold px-1.5 rounded-full">
+            <span className="bg-amber-500 text-slate-950 text-[11px] font-bold px-1.5 rounded-full">
               {offlineQueueCount}
             </span>
           )}
@@ -198,7 +198,7 @@ export const Header: React.FC<HeaderProps> = ({
               <UserCheck className="w-3.5 h-3.5 text-indigo-400" />
               <div className="hidden lg:block">
                 <p className="text-xs font-semibold leading-none">{userSession.fullName.split(' ')[0]}</p>
-                <p className="text-[10px] text-indigo-400 font-mono leading-none mt-0.5">{userSession.role}</p>
+                <p className="text-[11px] text-indigo-400 font-mono leading-none mt-0.5">{userSession.role}</p>
               </div>
             </button>
             

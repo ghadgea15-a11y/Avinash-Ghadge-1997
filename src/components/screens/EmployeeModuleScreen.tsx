@@ -64,6 +64,7 @@ import { SubscriptionService } from '../../services/subscriptionService';
 import { StorageService } from '../../services/storageService';
 import { OfflineSyncService } from '../../services/offlineSyncService';
 import { useFeedback } from '../../context/ActionFeedbackContext';
+import { OrgSetupWizardScreen } from './OrgSetupWizardScreen';
 
 interface EmployeeModuleScreenProps {
   userSession: UserSession;
@@ -98,6 +99,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
   const closeEmployeeDetail = () => setSelectedEmployee(null);
   const handleBack = useBackNavigation(!!selectedEmployee, closeEmployeeDetail, "employeeDetail");
   const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
+  const [showOrgSetupWizard, setShowOrgSetupWizard] = useState(false);
   useBackNavigation(!!editingEmployeeId, () => setEditingEmployeeId(null as any), 'editingEmployeeId');
   const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(null);
   useBackNavigation(!!deletingEmployeeId, () => setDeletingEmployeeId(null as any), 'deletingEmployeeId');
@@ -1222,7 +1224,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base font-black tracking-tight">Employee & HR Management</h2>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                 Phase 3 Live
               </span>
             </div>
@@ -1249,6 +1251,17 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             <span>Staff Directory ({stats.total})</span>
           </button>
 
+          
+          {isCompanyAdmin && (
+            <button 
+              onClick={() => setShowOrgSetupWizard(true)}
+              className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg flex items-center gap-2 text-sm font-medium transition-colors border border-indigo-400"
+            >
+              <Building className="w-4 h-4" />
+              Organization Setup Wizard
+            </button>
+          )}
+          
           {canManageEmployees && (
             <button
               onClick={() => {
@@ -1278,7 +1291,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               <ShieldAlert className="w-4 h-4 text-amber-400" />
               <span>Approvals Queue</span>
               {stats.pending > 0 && (
-                <span className="bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full">
+                <span className="bg-amber-500 text-slate-950 text-[11px] font-black px-1.5 py-0.2 rounded-full">
                   {stats.pending}
                 </span>
               )}
@@ -1297,6 +1310,15 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
         </div>
       </div>
 
+      
+      {showOrgSetupWizard && activeCompany && (
+        <OrgSetupWizardScreen 
+          userSession={userSession}
+          activeCompany={activeCompany}
+          onClose={() => setShowOrgSetupWizard(false)}
+        />
+      )}
+  
       {/* Alert / Feedback Notification Banner */}
       {feedbackMessage && (
         <div className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-center justify-between animate-fade-in ${
@@ -1322,7 +1344,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Roster</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Roster</p>
             <p className="text-xl font-black text-indigo-400">{stats.total}</p>
           </div>
           <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400">
@@ -1334,7 +1356,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Duty</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Duty</p>
             <p className="text-xl font-black text-emerald-400">{stats.active}</p>
           </div>
           <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400">
@@ -1346,7 +1368,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Onboarding Queue</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Onboarding Queue</p>
             <p className="text-xl font-black text-amber-400">{stats.pending}</p>
           </div>
           <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400">
@@ -1358,7 +1380,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Suspended Staff</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Suspended Staff</p>
             <p className="text-xl font-black text-rose-400">{stats.suspended}</p>
           </div>
           <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400">
@@ -1370,7 +1392,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">KYC Doc Pending</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">KYC Doc Pending</p>
             <p className="text-xl font-black text-sky-400">{stats.kycPending}</p>
           </div>
           <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-400">
@@ -1553,7 +1575,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                         <p className="text-xs text-indigo-400 font-mono font-bold mt-0.5">
                           {emp.employeeId || emp.id} • {emp.designation}
                         </p>
-                        <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                        <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
                           <Building className="w-3 h-3 text-slate-500 dark:text-slate-400 shrink-0" />
                           <span className="truncate">Site: {emp.assignedSiteId}</span>
                         </p>
@@ -1607,7 +1629,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-2.5 border-t border-slate-800/60 grid grid-cols-2 gap-2 text-[11px] text-slate-400">
+                  <div className="mt-3 pt-2.5 border-t border-slate-800/60 grid grid-cols-2 gap-2 text-xs text-slate-400">
                     <div className="flex items-center gap-1.5 truncate">
                       <Phone className="w-3 h-3 text-emerald-400 shrink-0" />
                       <span>{emp.contactNumber}</span>
@@ -1647,7 +1669,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               </h3>
               <p className="text-xs text-slate-400">Specify personnel details, organizational placements, and identity verification</p>
             </div>
-            <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800">
+            <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800">
               Tenant: {currentCompanyId}
             </span>
           </div>
@@ -1655,7 +1677,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* Employee ID (Business ID) */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Employee ID (Business) *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Employee ID (Business) *</label>
               <input
                 type="text"
                 value={formData.employeeId}
@@ -1665,12 +1687,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   formErrors.employeeId ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
-              {formErrors.employeeId && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.employeeId}</p>}
+              {formErrors.employeeId && <p className="text-[11px] text-rose-400 mt-0.5">{formErrors.employeeId}</p>}
             </div>
 
             {/* Employee Code (Secondary) */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Employee Code (Optional)</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Employee Code (Optional)</label>
               <input
                 type="text"
                 value={formData.employeeCode}
@@ -1680,11 +1702,11 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   formErrors.employeeCode ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
-              {formErrors.employeeCode && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.employeeCode}</p>}
+              {formErrors.employeeCode && <p className="text-[11px] text-rose-400 mt-0.5">{formErrors.employeeCode}</p>}
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Profile Picture (Optional)</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Profile Picture (Optional)</label>
               <input
                 type="file"
                 accept="image/*"
@@ -1697,7 +1719,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             
             {/* First Name */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">First Name *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">First Name *</label>
               <input
                 type="text"
                 value={formData.firstName}
@@ -1707,12 +1729,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   formErrors.firstName ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
-              {formErrors.firstName && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.firstName}</p>}
+              {formErrors.firstName && <p className="text-[11px] text-rose-400 mt-0.5">{formErrors.firstName}</p>}
             </div>
 
             {/* Middle Name */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Middle Name</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Middle Name</label>
               <input
                 type="text"
                 value={formData.middleName}
@@ -1726,7 +1748,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Last Name */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Last Name *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Last Name *</label>
               <input
                 type="text"
                 value={formData.lastName}
@@ -1736,12 +1758,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   formErrors.lastName ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
-              {formErrors.lastName && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.lastName}</p>}
+              {formErrors.lastName && <p className="text-[11px] text-rose-400 mt-0.5">{formErrors.lastName}</p>}
             </div>
 
             {/* Contact Number */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Contact Number *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Contact Number *</label>
               <input
                 type="text"
                 value={formData.contactNumber}
@@ -1751,12 +1773,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   formErrors.contactNumber ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
-              {formErrors.contactNumber && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.contactNumber}</p>}
+              {formErrors.contactNumber && <p className="text-[11px] text-rose-400 mt-0.5">{formErrors.contactNumber}</p>}
             </div>
 
             {/* Email Address */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">
+              <label className="block text-xs font-bold text-slate-400 mb-1">
                 Email Address {formData.hasSystemAccess ? <span className="text-indigo-400 font-black">* (Required for App Access)</span> : <span className="text-slate-500 dark:text-slate-400 font-normal">(Optional for HR only)</span>}
               </label>
               <input
@@ -1768,12 +1790,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   formErrors.email ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
-              {formErrors.email && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.email}</p>}
+              {formErrors.email && <p className="text-[11px] text-rose-400 mt-0.5">{formErrors.email}</p>}
             </div>
 
             {/* Date of Birth */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Date of Birth</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Date of Birth</label>
               <input
                 type="date"
                 value={formData.dateOfBirth}
@@ -1782,12 +1804,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
-              {formErrors.dateOfBirth && <p className="text-[10px] text-rose-400 font-semibold mt-1">{formErrors.dateOfBirth}</p>}
+              {formErrors.dateOfBirth && <p className="text-[11px] text-rose-400 font-semibold mt-1">{formErrors.dateOfBirth}</p>}
             </div>
 
             {/* Gender */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Gender</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Gender</label>
               <select
                 value={formData.gender}
                 onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value as any }))}
@@ -1803,7 +1825,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Blood Group */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Blood Group</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Blood Group</label>
               <select
                 value={formData.bloodGroup}
                 onChange={(e) => setFormData(prev => ({ ...prev, bloodGroup: e.target.value }))}
@@ -1824,7 +1846,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* PAN Number */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">PAN Number</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">PAN Number</label>
               <input
                 type="text"
                 value={formData.panNumber}
@@ -1838,7 +1860,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Aadhaar Number */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Aadhaar Card Number *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Aadhaar Card Number *</label>
               <input
                 type="text"
                 value={formData.aadharNumber}
@@ -1848,12 +1870,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   formErrors.aadharNumber ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
-              {formErrors.aadharNumber && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.aadharNumber}</p>}
+              {formErrors.aadharNumber && <p className="text-[11px] text-rose-400 mt-0.5">{formErrors.aadharNumber}</p>}
             </div>
 
             {/* Address */}
             <div className="sm:col-span-2">
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Full Residential Address</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Full Residential Address</label>
               <input
                 type="text"
                 value={formData.address}
@@ -1867,7 +1889,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Assigned Branch */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Assigned Branch *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Assigned Branch *</label>
               <select
                 value={formData.assignedBranchId}
                 onChange={(e) => setFormData(prev => ({ ...prev, assignedBranchId: e.target.value }))}
@@ -1887,7 +1909,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Assigned Site */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Assigned Duty Site *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Assigned Duty Site *</label>
               <select
                 value={formData.assignedSiteId}
                 onChange={(e) => setFormData(prev => ({ ...prev, assignedSiteId: e.target.value }))}
@@ -1907,7 +1929,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Department */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Department *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Department *</label>
               <select
                 value={formData.departmentId}
                 onChange={(e) => setFormData(prev => ({ ...prev, departmentId: e.target.value }))}
@@ -1927,7 +1949,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Designation */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Designation *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Designation *</label>
               <select
                 value={formData.designation}
                 onChange={(e) => setFormData(prev => ({ ...prev, designation: e.target.value }))}
@@ -1947,7 +1969,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Reporting Supervisor */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Reporting Supervisor</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Reporting Supervisor</label>
               <input
                 type="text"
                 value={formData.supervisorId}
@@ -1961,7 +1983,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Reporting Manager */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Reporting Manager</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Reporting Manager</label>
               <input
                 type="text"
                 value={formData.reportingManagerId}
@@ -1975,7 +1997,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Employment Type */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Employment Type *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Employment Type *</label>
               <select
                 value={formData.employmentType}
                 onChange={(e) => setFormData(prev => ({ ...prev, employmentType: e.target.value as any }))}
@@ -1992,7 +2014,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Role Scope */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">System Role Scope *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">System Role Scope *</label>
               <select
                 value={formData.role}
                 onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as UserRole }))}
@@ -2010,7 +2032,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             {/* Emergency Contact Name */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Emergency Contact Person *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Emergency Contact Person *</label>
               <input
                 type="text"
                 value={formData.emergencyName}
@@ -2020,12 +2042,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   formErrors.emergencyName ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
-              {formErrors.emergencyName && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.emergencyName}</p>}
+              {formErrors.emergencyName && <p className="text-[11px] text-rose-400 mt-0.5">{formErrors.emergencyName}</p>}
             </div>
 
             {/* Emergency Contact Phone */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 mb-1">Emergency Contact Phone *</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Emergency Contact Phone *</label>
               <input
                 type="text"
                 value={formData.emergencyPhone}
@@ -2035,7 +2057,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                   formErrors.emergencyPhone ? 'border-rose-500 bg-rose-950/20' : isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
                 }`}
               />
-              {formErrors.emergencyPhone && <p className="text-[10px] text-rose-400 mt-0.5">{formErrors.emergencyPhone}</p>}
+              {formErrors.emergencyPhone && <p className="text-[11px] text-rose-400 mt-0.5">{formErrors.emergencyPhone}</p>}
             </div>
           </div>
 
@@ -2064,14 +2086,14 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                     />
                     <span>System Access Required (Web & Mobile Login Account)</span>
                   </label>
-                  <p className="text-[11px] text-slate-400 mt-1">
+                  <p className="text-xs text-slate-400 mt-1">
                     {formData.hasSystemAccess
                       ? `When saved, a Firebase Authentication login account will be provisioned. User will be linked to tenant with role '${formData.role}' at Site '${formData.assignedSiteId}'.`
                       : 'Staff HR record only. No Firebase Authentication credentials will be created for this employee.'}
                   </p>
                 </div>
               </div>
-              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 border ${
+              <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 border ${
                 formData.hasSystemAccess
                   ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
                   : 'bg-slate-800 text-slate-400 border-slate-700'
@@ -2141,7 +2163,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                       />
                       <div>
                         <h4 className="text-xs font-bold">{emp.firstName} {emp.lastName} ({emp.id})</h4>
-                        <p className="text-[11px] text-slate-400">{emp.designation} • Site: {emp.assignedSiteId}</p>
+                        <p className="text-xs text-slate-400">{emp.designation} • Site: {emp.assignedSiteId}</p>
                       </div>
                     </div>
 
@@ -2165,7 +2187,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
                   {/* Documents pending */}
                   <div className="pl-3 border-l-2 border-indigo-500/30 space-y-2">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Submitted Verification Documents:</p>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Submitted Verification Documents:</p>
                     {(emp.documents || []).map((doc: any) => (
                       <div key={doc.id} className="flex items-center justify-between text-xs bg-slate-950/40 p-2 rounded-xl border border-slate-800/80">
                         <div className="flex items-center gap-2">
@@ -2178,19 +2200,19 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleVerifyDoc(emp.id, doc.id, 'VERIFIED')}
-                              className="text-[10px] text-emerald-400 font-bold hover:underline"
+                              className="text-[11px] text-emerald-400 font-bold hover:underline"
                             >
                               Verify Doc
                             </button>
                             <button
                               onClick={() => handleVerifyDoc(emp.id, doc.id, 'REJECTED')}
-                              className="text-[10px] text-rose-400 font-bold hover:underline"
+                              className="text-[11px] text-rose-400 font-bold hover:underline"
                             >
                               Reject Doc
                             </button>
                           </div>
                         ) : (
-                          <span className="text-[10px] font-bold text-emerald-400">Verified</span>
+                          <span className="text-[11px] font-bold text-emerald-400">Verified</span>
                         )}
                       </div>
                     ))}
@@ -2229,7 +2251,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                     </span>
                   </div>
                   <p className="text-xs text-indigo-400 font-mono font-bold mt-0.5">{selectedEmployee.id}</p>
-                  <p className="text-[11px] text-slate-400">{selectedEmployee.designation} • {selectedEmployee.departmentId}</p>
+                  <p className="text-xs text-slate-400">{selectedEmployee.designation} • {selectedEmployee.departmentId}</p>
                 </div>
               </div>
               <button
@@ -2244,40 +2266,40 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-2.5 p-3 rounded-2xl bg-slate-950/40 border border-slate-800">
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Role Scope:</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px]">Role Scope:</span>
                   <p className="font-bold text-indigo-400">{selectedEmployee.role}</p>
                 </div>
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Employment Type:</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px]">Employment Type:</span>
                   <p className="font-bold text-amber-400">{selectedEmployee.employmentType || 'PERMANENT'}</p>
                 </div>
                 {selectedEmployee.employmentType === 'CONTRACT' && (
                   <div className="col-span-2">
-                    <span className="text-slate-500 dark:text-slate-400 text-[10px]">Vendor / Agency ID:</span>
+                    <span className="text-slate-500 dark:text-slate-400 text-[11px]">Vendor / Agency ID:</span>
                     <p className="font-bold text-amber-400">{selectedEmployee.vendorId || 'N/A'}</p>
                   </div>
                 )}
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Assigned Duty Site:</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px]">Assigned Duty Site:</span>
                   <p className="font-semibold text-slate-200">{selectedEmployee.assignedSiteId}</p>
                 </div>
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Assigned Branch:</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px]">Assigned Branch:</span>
                   <p className="font-semibold text-slate-200">{selectedEmployee.assignedBranchId}</p>
                 </div>
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Joined Date:</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px]">Joined Date:</span>
                   <p className="font-semibold text-slate-200">{selectedEmployee.joinedDate}</p>
                 </div>
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Tenant ID:</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px]">Tenant ID:</span>
                   <p className="font-mono text-slate-300">{selectedEmployee.companyId}</p>
                 </div>
               </div>
 
               {/* Contact & Emergency */}
               <div className="p-3 rounded-2xl border border-slate-800 space-y-2">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Contact & Emergency Contact</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Contact & Emergency Contact</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -2290,7 +2312,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="text-[11px] text-slate-300 pt-1 border-t border-slate-800">
+                <div className="text-xs text-slate-300 pt-1 border-t border-slate-800">
                   <span className="text-slate-500 dark:text-slate-400">Emergency: </span>
                   <span className="font-bold">{selectedEmployee.emergencyContact?.name || 'N/A'}</span> ({selectedEmployee.emergencyContact?.relation || 'Spouse'}) — {selectedEmployee.emergencyContact?.phone || 'N/A'}
                 </div>
@@ -2313,25 +2335,25 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                     {selectedEmployee.authUid ? 'AUTH LINKED (ACTIVE)' : selectedEmployee.hasSystemAccess ? 'INVITATION PENDING' : 'HR RECORD ONLY'}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
+                <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
                   <div>
-                    <span className="text-slate-500 dark:text-slate-400 text-[10px]">Auth UID: </span>
-                    <span className="font-mono text-[10px]">{selectedEmployee.authUid || 'Unlinked'}</span>
+                    <span className="text-slate-500 dark:text-slate-400 text-[11px]">Auth UID: </span>
+                    <span className="font-mono text-[11px]">{selectedEmployee.authUid || 'Unlinked'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 dark:text-slate-400 text-[10px]">RBAC Role: </span>
+                    <span className="text-slate-500 dark:text-slate-400 text-[11px]">RBAC Role: </span>
                     <span className="font-bold text-indigo-300">{selectedEmployee.role}</span>
                   </div>
                 </div>
                 {canManageEmployees && selectedEmployee.email && (
                   <div className="pt-2 border-t border-indigo-500/20 flex items-center justify-between gap-2">
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[11px] text-slate-400">
                       {selectedEmployee.authUid ? 'Re-send password setup or login link:' : 'Grant/send login credentials:'}
                     </span>
                     <button
                       onClick={() => handleSendInvitation(selectedEmployee)}
                       disabled={submitting}
-                      className="px-3 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                      className="px-3 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold flex items-center gap-1.5 shadow"
                     >
                       <Mail className="w-3 h-3" />
                       <span>{selectedEmployee.authUid ? 'Resend Login Link' : 'Send Invite'}</span>
@@ -2355,7 +2377,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               {/* LIFECYCLE & TIMELINE SECTION */}
               <div className="pt-3 border-t border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-amber-500" />
                     Employee Lifecycle & Service Timeline
                   </p>
@@ -2379,16 +2401,16 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 {activeLifecycleTab === 'TIMELINE' && (
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1 text-slate-300">
                     {lifecycleHistory.length === 0 ? (
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 italic py-2">No history recorded for this employee.</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 italic py-2">No history recorded for this employee.</p>
                     ) : (
                       lifecycleHistory.map((event, idx) => (
                         <div key={event.id} className="relative pl-4 pb-3 last:pb-0 border-l border-slate-800">
                           <div className="absolute -left-[4.5px] top-1 w-2 h-2 rounded-full bg-indigo-500 ring-4 ring-slate-900" />
-                          <div className="text-[10px] flex items-center justify-between">
+                          <div className="text-[11px] flex items-center justify-between">
                             <span className="font-bold text-indigo-300">{event.type.replace(/_/g, ' ')}</span>
                             <span className="text-slate-500 dark:text-slate-400 font-mono">{new Date(event.effectiveDate).toLocaleDateString()}</span>
                           </div>
-                          <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">{event.reason}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">{event.reason}</p>
                           <div className="text-[9px] text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-1">
                             <User className="w-2.5 h-2.5" />
                             <span>Action by: {event.initiatedBy}</span>
@@ -2404,12 +2426,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                     {(selectedEmployee.onboardingTasks || []).length === 0 ? (
                       <div className="p-4 text-center bg-slate-950/40 rounded-xl border border-slate-800">
                         <BadgeCheck className="w-8 h-8 text-emerald-500/50 mx-auto mb-1" />
-                        <p className="text-[10px] text-slate-400">This employee has no active onboarding checklist.</p>
+                        <p className="text-[11px] text-slate-400">This employee has no active onboarding checklist.</p>
                       </div>
                     ) : (
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Progress: {Math.round(((selectedEmployee.onboardingTasks || []).filter((t: any) => t.status === 'COMPLETED').length / (selectedEmployee.onboardingTasks || []).length) * 100)}%</span>
+                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Progress: {Math.round(((selectedEmployee.onboardingTasks || []).filter((t: any) => t.status === 'COMPLETED').length / (selectedEmployee.onboardingTasks || []).length) * 100)}%</span>
                           <span className={`text-[9px] font-black px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800`}>
                             {selectedEmployee.lifecycleStatus}
                           </span>
@@ -2429,7 +2451,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                                 {task.status === 'COMPLETED' && <CheckCircle2 className="w-3 h-3" />}
                               </button>
                               <div>
-                                <p className={`text-[11px] font-bold ${task.status === 'COMPLETED' ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+                                <p className={`text-xs font-bold ${task.status === 'COMPLETED' ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
                                   {task.title}
                                   {task.isMandatory && <span className="text-rose-500 ml-1">*</span>}
                                 </p>
@@ -2450,12 +2472,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
                 {activeLifecycleTab === 'ACTIONS' && (
                   <div className="grid grid-cols-1 gap-2">
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-1">Trigger career events, transfers, or offboarding workflows:</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-1">Trigger career events, transfers, or offboarding workflows:</p>
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => setShowPromotionModal(true)}
                         disabled={selectedEmployee.status !== 'ACTIVE'}
-                        className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                        className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-[11px] font-bold flex items-center gap-1.5 shadow"
                       >
                         <Sparkles className="w-3 h-3" />
                         Initiate Promotion
@@ -2463,7 +2485,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                       <button
                         onClick={() => setShowTransferModal(true)}
                         disabled={selectedEmployee.status !== 'ACTIVE'}
-                        className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                        className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-[11px] font-bold flex items-center gap-1.5 shadow"
                       >
                         <ArrowUpDown className="w-3 h-3" />
                         Internal Transfer
@@ -2471,7 +2493,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                       <button
                         onClick={() => setShowExitModal(true)}
                         disabled={['TERMINATED', 'EXITED'].includes(selectedEmployee.status)}
-                        className="px-3 py-2 rounded-xl bg-rose-900/60 hover:bg-rose-900 text-rose-100 disabled:opacity-50 text-[10px] font-bold flex items-center gap-1.5 border border-rose-800"
+                        className="px-3 py-2 rounded-xl bg-rose-900/60 hover:bg-rose-900 text-rose-100 disabled:opacity-50 text-[11px] font-bold flex items-center gap-1.5 border border-rose-800"
                       >
                         <XCircle className="w-3 h-3" />
                         Initiate Separation / Exit
@@ -2480,7 +2502,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                       {selectedEmployee.employmentType === 'PROBATION' && selectedEmployee.lifecycleStatus !== 'SUSPENDED' && (
                         <button
                           onClick={() => setShowConfirmationModal(true)}
-                          className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                          className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center gap-1.5 shadow"
                         >
                           <CheckCircle2 className="w-3 h-3" />
                           Confirm Probation
@@ -2490,7 +2512,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                       {selectedEmployee.lifecycleStatus !== 'SUSPENDED' && !['EXITED', 'TERMINATED'].includes(selectedEmployee.status) && (
                          <button
                            onClick={() => setShowSuspensionModal(true)}
-                           className="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                           className="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-bold flex items-center gap-1.5 shadow"
                          >
                            <AlertTriangle className="w-3 h-3" />
                            Suspend
@@ -2500,7 +2522,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                       {selectedEmployee.lifecycleStatus === 'SUSPENDED' && (
                          <button
                            onClick={handleRevokeSuspension}
-                           className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                           className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold flex items-center gap-1.5 shadow"
                          >
                            <RefreshCw className="w-3 h-3" />
                            Revoke Suspension
@@ -2510,7 +2532,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                       {selectedEmployee.lifecycleStatus === 'EXITED' && selectedEmployee.finalSettlementStatus !== 'SETTLED' && (
                          <button
                            onClick={() => setShowSettlementModal(true)}
-                           className="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold flex items-center gap-1.5 shadow"
+                           className="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold flex items-center gap-1.5 shadow"
                          >
                            <Banknote className="w-3 h-3" />
                            Process Final Settlement
@@ -2584,7 +2606,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Document Type *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Document Type *</label>
                 <select
                   value={newDocData.type}
                   onChange={(e) => setNewDocData(prev => ({ ...prev, type: e.target.value as any }))}
@@ -2600,7 +2622,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Document Number / Certificate ID *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Document Number / Certificate ID *</label>
                 <input
                   type="text"
                   value={newDocData.documentNumber}
@@ -2613,7 +2635,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Upload File (Optional)</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Upload File (Optional)</label>
                 <input
                   type="file"
                   onChange={(e) => setAddDocFile(e.target.files ? e.target.files[0] : null)}
@@ -2691,7 +2713,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">New Designation *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">New Designation *</label>
                 <select
                   value={promoForm.newDesignation}
                   onChange={(e) => setPromoForm(prev => ({ ...prev, newDesignation: e.target.value }))}
@@ -2705,7 +2727,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Effective Date *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Effective Date *</label>
                 <input
                   type="date"
                   value={promoForm.effectiveDate}
@@ -2717,7 +2739,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Reason / Merit Details *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Reason / Merit Details *</label>
                 <textarea
                   value={promoForm.reason}
                   onChange={(e) => setPromoForm(prev => ({ ...prev, reason: e.target.value }))}
@@ -2761,7 +2783,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Destination Site *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Destination Site *</label>
                 <select
                   value={transferForm.newSiteId}
                   onChange={(e) => {
@@ -2783,7 +2805,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Effective Date *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Effective Date *</label>
                 <input
                   type="date"
                   value={transferForm.effectiveDate}
@@ -2795,7 +2817,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Reason for Transfer *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Reason for Transfer *</label>
                 <textarea
                   value={transferForm.reason}
                   onChange={(e) => setTransferForm(prev => ({ ...prev, reason: e.target.value }))}
@@ -2839,7 +2861,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             </h3>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Effective Date *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Effective Date *</label>
                 <input
                   type="date"
                   value={suspendForm.effectiveDate}
@@ -2850,7 +2872,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Reason for Suspension *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Reason for Suspension *</label>
                 <textarea
                   value={suspendForm.reason}
                   onChange={(e) => setSuspendForm(prev => ({ ...prev, reason: e.target.value }))}
@@ -2891,7 +2913,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             </h3>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Effective Date *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Effective Date *</label>
                 <input
                   type="date"
                   value={confirmationForm.effectiveDate}
@@ -2934,7 +2956,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             </h3>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Settlement Amount *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Settlement Amount *</label>
                 <input
                   type="number"
                   value={settlementForm.amount}
@@ -2945,7 +2967,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Remarks</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Remarks</label>
                 <textarea
                   value={settlementForm.remarks}
                   onChange={(e) => setSettlementForm(prev => ({ ...prev, remarks: e.target.value }))}
@@ -2987,7 +3009,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Exit Type *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Exit Type *</label>
                 <select
                   value={exitForm.exitType}
                   onChange={(e) => setExitForm(prev => ({ ...prev, exitType: e.target.value as any }))}
@@ -3003,7 +3025,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Last Working Day *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Last Working Day *</label>
                 <input
                   type="date"
                   value={exitForm.lastWorkingDay}
@@ -3015,7 +3037,7 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Reason / Remarks *</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Reason / Remarks *</label>
                 <textarea
                   value={exitForm.reason}
                   onChange={(e) => setExitForm(prev => ({ ...prev, reason: e.target.value }))}

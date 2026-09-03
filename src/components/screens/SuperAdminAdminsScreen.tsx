@@ -190,7 +190,7 @@ export const SuperAdminAdminsScreen: React.FC<SuperAdminAdminsScreenProps> = ({
         <ShieldAlert className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
         <div className="space-y-1">
           <p className="font-bold">Privileged Identity Management Notice</p>
-          <p className="text-[11px] opacity-80">
+          <p className="text-xs opacity-80">
             Platform Super Admins hold root privileges over SaaS configuration and tenant lifecycle. All accounts require Multi-Factor Authentication (MFA) and are bound to immutable audit trails.
           </p>
         </div>
@@ -199,7 +199,7 @@ export const SuperAdminAdminsScreen: React.FC<SuperAdminAdminsScreenProps> = ({
       {/* Admin List Table */}
       <div className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-sm">
             <thead className={`border-b ${isDark ? 'bg-slate-950/60 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'} font-semibold uppercase tracking-wider`}>
               <tr>
                 <th className="py-3 px-4">Administrator</th>
@@ -239,28 +239,28 @@ export const SuperAdminAdminsScreen: React.FC<SuperAdminAdminsScreenProps> = ({
                             <div className="font-bold flex items-center gap-1.5">
                               <span>{adm.displayName}</span>
                               {isCurrent && (
-                                <span className="text-[10px] bg-indigo-500 text-white font-bold px-1.5 py-0.2 rounded">YOU</span>
+                                <span className="text-[11px] bg-indigo-500 text-white font-bold px-1.5 py-0.2 rounded">YOU</span>
                               )}
                             </div>
-                            <span className="text-slate-400 text-[11px]">{adm.email}</span>
+                            <span className="text-slate-400 text-xs">{adm.email}</span>
                           </div>
                         </div>
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
                           {adm.role}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-500 font-semibold">
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-500 font-semibold">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>MFA Enforced</span>
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] text-slate-400">
+                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs text-slate-400">
                         {adm.uid.substring(0, 12)}...
                       </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] text-slate-400">
+                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs text-slate-400">
                         {adm.createdAt ? new Date(adm.createdAt).toLocaleDateString() : '--'}
                       </td>
                       <td className="py-3.5 px-4 text-right">

@@ -157,12 +157,12 @@ export class SubscriptionService {
       licenseTier: tier,
       maxEmployeesAllowed: plan.employeeLimit,
       maxSitesAllowed: tier === 'STARTER' ? 5 : tier === 'PROFESSIONAL' ? 25 : 100,
-      enabledModules: plan.enabledModules,
+      enabledModules: plan.enabledModules || [],
       updatedAt: timestamp
     });
 
     // 3. Synchronize Entitlements
-    await this.syncEntitlementsForPlan(companyId, plan.planId, subId, plan.enabledModules);
+    await this.syncEntitlementsForPlan(companyId, plan.planId, subId, plan.enabledModules || []);
 
     return newSub;
   }
@@ -298,10 +298,10 @@ export class SubscriptionService {
     companyId: string, 
     planId: string, 
     subscriptionId: string, 
-    enabledModules: string[]
+    enabledModules: string[] = []
   ): Promise<void> {
     const timestamp = new Date().toISOString();
-    for (const modKey of enabledModules) {
+    for (const modKey of (enabledModules || [])) {
       const entId = `${companyId}_${modKey}`;
       const entRef = doc(db, 'companies', companyId, ENTITLEMENTS_COLLECTION, entId);
       const entitlement: ModuleEntitlement = {

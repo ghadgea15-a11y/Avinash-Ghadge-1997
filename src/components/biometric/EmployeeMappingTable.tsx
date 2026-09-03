@@ -158,7 +158,7 @@ export const EmployeeMappingTable: React.FC<EmployeeMappingTableProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Total Hardware Users</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 block">Total Hardware Users</span>
             <span className="text-lg font-bold text-white">{mappings.length}</span>
           </div>
           <Users className="w-5 h-5 text-slate-500 dark:text-slate-400" />
@@ -166,7 +166,7 @@ export const EmployeeMappingTable: React.FC<EmployeeMappingTableProps> = ({
 
         <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Mapped Employees</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 block">Mapped Employees</span>
             <span className="text-lg font-bold text-emerald-400">{exactCount}</span>
           </div>
           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
@@ -174,7 +174,7 @@ export const EmployeeMappingTable: React.FC<EmployeeMappingTableProps> = ({
 
         <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Unmapped PINs</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 block">Unmapped PINs</span>
             <span className="text-lg font-bold text-amber-400">{unmappedCount}</span>
           </div>
           <HelpCircle className="w-5 h-5 text-amber-500" />
@@ -238,7 +238,7 @@ export const EmployeeMappingTable: React.FC<EmployeeMappingTableProps> = ({
       {/* Mappings Table */}
       <div className="border border-slate-800 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-sm">
             <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
               <tr>
                 <th className="px-4 py-3 font-semibold">Device Machine User</th>
@@ -267,7 +267,7 @@ export const EmployeeMappingTable: React.FC<EmployeeMappingTableProps> = ({
                   <tr key={m.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="px-4 py-3">
                       <div className="font-semibold text-white font-mono">PIN #{m.machineUserId}</div>
-                      <div className="text-[11px] text-slate-400">{m.machineUserName || 'Unnamed Terminal User'}</div>
+                      <div className="text-xs text-slate-400">{m.machineUserName || 'Unnamed Terminal User'}</div>
                     </td>
                     <td className="px-4 py-3">
                       <span className="font-mono text-slate-300">{m.machineCardNo || '—'}</span>
@@ -289,22 +289,22 @@ export const EmployeeMappingTable: React.FC<EmployeeMappingTableProps> = ({
                     </td>
                     <td className="px-4 py-3">
                       {m.mappingStatus === 'AUTO_MATCHED' && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                           <Check className="w-3 h-3" /> Auto Matched ({Math.round(m.matchConfidence * 100)}%)
                         </span>
                       )}
                       {m.mappingStatus === 'MANUALLY_MAPPED' && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-sky-500/10 text-sky-400 border border-sky-500/20">
                           <UserCheck className="w-3 h-3" /> Manually Mapped
                         </span>
                       )}
                       {m.mappingStatus === 'UNMAPPED' && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
                           <HelpCircle className="w-3 h-3" /> Unmapped
                         </span>
                       )}
                       {m.mappingStatus === 'IGNORED' && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-800 text-slate-400">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-slate-800 text-slate-400">
                           Ignored
                         </span>
                       )}

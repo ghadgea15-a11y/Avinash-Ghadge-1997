@@ -280,7 +280,7 @@ export const ModuleExplorer: React.FC = () => {
                       {domain.name}
                     </span>
                   </div>
-                  <span className={`font-mono text-[10px] px-2 py-0.5 rounded font-semibold ${
+                  <span className={`font-mono text-[11px] px-2 py-0.5 rounded font-semibold ${
                     isSelected ? 'bg-[#27272A] text-emerald-400' : 'bg-white text-slate-600'
                   }`}>
                     {domain.code}
@@ -312,13 +312,13 @@ export const ModuleExplorer: React.FC = () => {
 
             <div className="space-y-4 font-body">
               <div>
-                <span className="font-mono text-[11px] uppercase font-bold text-slate-600 block">CORE OBJECTIVE</span>
+                <span className="font-mono text-xs uppercase font-bold text-slate-600 block">CORE OBJECTIVE</span>
                 <p className="text-sm font-semibold text-black mt-1">{activeDomain.tagline}</p>
                 <p className="text-xs sm:text-sm text-black mt-1.5 leading-relaxed">{activeDomain.desc}</p>
               </div>
 
               <div className="pt-3 border-t border-[#F0EFEB]">
-                <span className="font-mono text-[11px] uppercase font-bold text-slate-600 block mb-2">KEY CAPABILITIES</span>
+                <span className="font-mono text-xs uppercase font-bold text-slate-600 block mb-2">KEY CAPABILITIES</span>
                 <div className="space-y-2">
                   {activeDomain.features.map((feat, i) => (
                     <div key={i} className="flex items-start gap-2.5 text-xs text-black">
@@ -331,11 +331,11 @@ export const ModuleExplorer: React.FC = () => {
 
               <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 text-xs">
                 <div>
-                  <strong className="font-mono text-[11px] uppercase text-black block">BUSINESS LOGIC & ENFORCEMENT:</strong>
+                  <strong className="font-mono text-xs uppercase text-black block">BUSINESS LOGIC & ENFORCEMENT:</strong>
                   <p className="text-black mt-0.5">{activeDomain.rules}</p>
                 </div>
                 <div className="pt-2 border-t border-slate-200">
-                  <strong className="font-mono text-[11px] uppercase text-black block">AUDITABLE OUTPUTS:</strong>
+                  <strong className="font-mono text-xs uppercase text-black block">AUDITABLE OUTPUTS:</strong>
                   <p className="text-emerald-700 font-medium mt-0.5">{activeDomain.exports}</p>
                 </div>
               </div>

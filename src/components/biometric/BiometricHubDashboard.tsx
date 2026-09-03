@@ -203,7 +203,7 @@ export const BiometricHubDashboard: React.FC<BiometricHubDashboardProps> = ({
                 <Icon className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
                 {tab.count !== undefined && (
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  <span className={`px-1.5 py-0.2 rounded-full text-[11px] font-bold ${
                     isActive ? 'bg-slate-950 text-amber-400' : 'bg-slate-800 text-slate-300'
                   }`}>
                     {tab.count}

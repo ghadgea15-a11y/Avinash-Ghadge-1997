@@ -123,7 +123,7 @@ export function NavigationDrawer({
                   </div>
                   <div className="overflow-hidden">
                     <h2 className="font-bold text-sm leading-tight truncate">Platform Super Admin</h2>
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full border inline-block bg-amber-500/20 text-amber-400 border-amber-500/30">
+                    <span className="text-[11px] font-bold px-1.5 py-0.2 rounded-full border inline-block bg-amber-500/20 text-amber-400 border-amber-500/30">
                       SUPER ADMIN
                     </span>
                   </div>
@@ -131,7 +131,7 @@ export function NavigationDrawer({
               ) : (
                 <div className="flex flex-col gap-0.5 overflow-hidden">
                   <AppLogo size="sm" company={activeCompany} />
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full border inline-block w-max bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
+                  <span className="text-[11px] font-bold px-1.5 py-0.2 rounded-full border inline-block w-max bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
                     {userSession?.role || 'AUTHENTICATED'}
                   </span>
                 </div>
@@ -179,7 +179,7 @@ export function NavigationDrawer({
           {filteredNavigation.length === 0 ? (
             <div className="py-8 text-center text-slate-400 space-y-1">
               <p className="font-semibold">No matching modules found</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Try searching with another keyword</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Try searching with another keyword</p>
             </div>
           ) : (
             filteredNavigation.map((group) => {
@@ -203,13 +203,13 @@ export function NavigationDrawer({
                       }`}>
                         <CategoryIcon className="w-3.5 h-3.5" />
                       </div>
-                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
                         {group.category.number}. {group.category.title}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-                      <span className="text-[10px] font-mono bg-slate-800/50 px-1.5 py-0.2 rounded text-slate-400">
+                      <span className="text-[11px] font-mono bg-slate-800/50 px-1.5 py-0.2 rounded text-slate-400">
                         {group.items.length}
                       </span>
                       {isCollapsed ? (
@@ -253,7 +253,7 @@ export function NavigationDrawer({
                                 <p className="truncate text-xs font-semibold leading-tight">
                                   {item.label}
                                 </p>
-                                <p className={`truncate text-[10px] leading-tight ${
+                                <p className={`truncate text-[11px] leading-tight ${
                                   isCurrent ? 'text-indigo-100 opacity-90' : 'text-slate-500'
                                 }`}>
                                   {item.description}
@@ -268,7 +268,7 @@ export function NavigationDrawer({
                                 </span>
                               )}
                               {badge !== undefined && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white animate-pulse">
+                                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500 text-white animate-pulse">
                                   {badge}
                                 </span>
                               )}

@@ -125,7 +125,7 @@ export const ServiceDeskFeedbackView: React.FC<ServiceDeskFeedbackViewProps> = (
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Overall Rating</span>
+              <span className="text-[11px] uppercase font-bold text-slate-400">Overall Rating</span>
               <div className="flex items-center justify-center gap-1 mt-1 text-amber-400">
                 {[1, 2, 3, 4, 5].map(s => (
                   <Star key={s} className={`w-4 h-4 ${s <= (existingFeedback.rating || 5) ? 'fill-amber-400' : 'text-slate-300 dark:text-slate-700'}`} />
@@ -137,7 +137,7 @@ export const ServiceDeskFeedbackView: React.FC<ServiceDeskFeedbackViewProps> = (
             </div>
 
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Resolution Timeliness</span>
+              <span className="text-[11px] uppercase font-bold text-slate-400">Resolution Timeliness</span>
               <div className="flex items-center justify-center gap-1 mt-1 text-indigo-400">
                 {[1, 2, 3, 4, 5].map(s => (
                   <Star key={s} className={`w-4 h-4 ${s <= (existingFeedback.timelinessRating || existingFeedback.rating || 5) ? 'fill-indigo-400' : 'text-slate-300 dark:text-slate-700'}`} />
@@ -149,7 +149,7 @@ export const ServiceDeskFeedbackView: React.FC<ServiceDeskFeedbackViewProps> = (
             </div>
 
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Agent Helpfulness</span>
+              <span className="text-[11px] uppercase font-bold text-slate-400">Agent Helpfulness</span>
               <div className="flex items-center justify-center gap-1 mt-1 text-emerald-400">
                 {[1, 2, 3, 4, 5].map(s => (
                   <Star key={s} className={`w-4 h-4 ${s <= (existingFeedback.helpfulnessRating || existingFeedback.rating || 5) ? 'fill-emerald-400' : 'text-slate-300 dark:text-slate-700'}`} />
@@ -163,12 +163,12 @@ export const ServiceDeskFeedbackView: React.FC<ServiceDeskFeedbackViewProps> = (
 
           {existingFeedback.comments && (
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-xs">
-              <span className="font-bold text-slate-500 uppercase text-[10px] block mb-1">Feedback Comments</span>
+              <span className="font-bold text-slate-500 uppercase text-[11px] block mb-1">Feedback Comments</span>
               <p className="text-slate-800 dark:text-slate-200 italic">"{existingFeedback.comments}"</p>
             </div>
           )}
 
-          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
             <span>Submitted by: <strong>{existingFeedback.submittedBy || 'User'}</strong></span>
             <span>{existingFeedback.submittedAt ? new Date(existingFeedback.submittedAt).toLocaleString() : ''}</span>
           </div>

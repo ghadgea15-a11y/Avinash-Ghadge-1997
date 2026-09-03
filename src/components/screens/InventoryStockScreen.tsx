@@ -660,7 +660,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
           <div className="text-xl sm:text-2xl font-black text-black dark:text-white">
             {metrics.totalItems}
           </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">Unique SKUs in System</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">Unique SKUs in System</div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -671,7 +671,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
           <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 truncate">
             ₹{metrics.totalValuation.toLocaleString('en-IN')}
           </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">Stock Asset Value</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">Stock Asset Value</div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -682,7 +682,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
           <div className="text-xl sm:text-2xl font-black text-black dark:text-white">
             {metrics.inStockCount}
           </div>
-          <div className="text-[11px] text-teal-600 dark:text-teal-400 mt-1 font-medium">Optimal Quantities</div>
+          <div className="text-xs text-teal-600 dark:text-teal-400 mt-1 font-medium">Optimal Quantities</div>
         </div>
 
         <div className={`p-4 rounded-2xl border shadow-sm transition-colors ${
@@ -697,7 +697,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
           <div className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">
             {metrics.lowStockCount}
           </div>
-          <div className="text-[11px] text-amber-700 dark:text-amber-300 mt-1 font-medium">Needs Replenishment</div>
+          <div className="text-xs text-amber-700 dark:text-amber-300 mt-1 font-medium">Needs Replenishment</div>
         </div>
 
         <div className={`p-4 rounded-2xl border shadow-sm transition-colors ${
@@ -712,7 +712,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
           <div className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400">
             {metrics.outOfStockCount}
           </div>
-          <div className="text-[11px] text-rose-600 dark:text-rose-400 mt-1 font-medium">0 Balance Items</div>
+          <div className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-medium">0 Balance Items</div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -723,7 +723,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
           <div className="text-sm font-bold text-black dark:text-slate-200 flex items-center gap-2">
             <span className="text-emerald-600">+{metrics.todayInward}</span> / <span className="text-rose-600">-{metrics.todayOutward}</span>
           </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">Inward / Issued Units</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">Inward / Issued Units</div>
         </div>
 
       </div>
@@ -765,7 +765,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
           <AlertTriangle className="w-4 h-4 text-amber-500" />
           Low Stock Alerts
           {lowStockItems.length > 0 && (
-            <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-amber-500 text-white">
+            <span className="px-1.5 py-0.2 text-[11px] font-bold rounded-full bg-amber-500 text-white">
               {lowStockItems.length}
             </span>
           )}
@@ -876,8 +876,8 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
           ) : (
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase text-[11px] font-bold tracking-wider">
+                <table className="w-full text-left text-sm sm:text-sm">
+                  <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase text-xs font-bold tracking-wider">
                     <tr>
                       <th className="px-4 py-3">Code & Item</th>
                       <th className="px-4 py-3">Category</th>
@@ -902,14 +902,14 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                             <div className="font-bold text-black dark:text-white flex items-center gap-2">
                               <span>{item.itemName}</span>
                             </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                            <div className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                               {item.itemCode} {item.barcode && `• #${item.barcode}`}
                             </div>
                           </td>
 
                           {/* Category */}
                           <td className="px-4 py-3">
-                            <span className={`inline-block px-2.5 py-0.5 text-[11px] font-semibold rounded-full ${catInfo.color}`}>
+                            <span className={`inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full ${catInfo.color}`}>
                               {catInfo.label}
                             </span>
                           </td>
@@ -926,7 +926,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                               </span>
                               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{item.unit}</span>
                             </div>
-                            <div className="text-[10px] text-slate-400 font-medium">
+                            <div className="text-[11px] text-slate-400 font-medium">
                               Min Alert: {item.minStockThreshold || 0} {item.unit}
                             </div>
                           </td>
@@ -934,9 +934,9 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                           {/* Cost */}
                           <td className="px-4 py-3">
                             <div className="font-semibold text-black dark:text-white">
-                              ₹{item.unitCost?.toLocaleString('en-IN')} <span className="text-[10px] text-slate-400 font-normal">/ {item.unit}</span>
+                              ₹{item.unitCost?.toLocaleString('en-IN')} <span className="text-[11px] text-slate-400 font-normal">/ {item.unit}</span>
                             </div>
-                            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                            <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                               Val: ₹{((item.currentStock || 0) * (item.unitCost || 0)).toLocaleString('en-IN')}
                             </div>
                           </td>
@@ -947,7 +947,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                               <MapPin className="w-3 h-3 text-slate-400" />
                               {item.warehouseLocation || 'Central Store'}
                             </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
                               {item.siteName || 'HQ Main Facility'}
                             </div>
                           </td>
@@ -955,19 +955,19 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                           {/* Status */}
                           <td className="px-4 py-3">
                             {item.status === 'OUT_OF_STOCK' || isOut ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-full bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">
                                 <AlertOctagon className="w-3 h-3" /> Out of Stock
                               </span>
                             ) : item.status === 'LOW_STOCK' || isLow ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
                                 <AlertTriangle className="w-3 h-3" /> Low Stock
                               </span>
                             ) : item.status === 'DISCONTINUED' ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-slate-100 text-slate-600 dark:text-slate-400 dark:bg-slate-800 dark:text-slate-400">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-600 dark:text-slate-400 dark:bg-slate-800 dark:text-slate-400">
                                 Discontinued
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
                                 <CheckCircle2 className="w-3 h-3" /> In Stock
                               </span>
                             )}
@@ -1052,8 +1052,8 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
           ) : (
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase text-[11px] font-bold tracking-wider">
+                <table className="w-full text-left text-sm sm:text-sm">
+                  <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase text-xs font-bold tracking-wider">
                     <tr>
                       <th className="px-4 py-3">Date & Ref</th>
                       <th className="px-4 py-3">Movement Type</th>
@@ -1075,7 +1075,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                             <div className="font-bold text-black dark:text-white">
                               {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('en-GB') : 'N/A'}
                             </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                            <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                               {tx.referenceNumber || tx.id}
                             </div>
                           </td>
@@ -1083,27 +1083,27 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                           {/* Movement Type */}
                           <td className="px-4 py-3">
                             {tx.transactionType === 'PURCHASE_INWARD' ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                                 <ArrowDownLeft className="w-3 h-3" /> Purchase Inward
                               </span>
                             ) : tx.transactionType === 'ISSUE_TO_EMPLOYEE' ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
                                 <ArrowUpRight className="w-3 h-3" /> Issued to Guard
                               </span>
                             ) : tx.transactionType === 'SITE_TRANSFER' ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300">
                                 <RefreshCw className="w-3 h-3" /> Site Transfer
                               </span>
                             ) : tx.transactionType === 'RETURN_FROM_EMPLOYEE' ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300">
                                 <RotateCcw className="w-3 h-3" /> Return from Staff
                               </span>
                             ) : tx.transactionType === 'DAMAGE_SCRAP' ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
                                 <AlertTriangle className="w-3 h-3" /> Damage / Scrap
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                                 <SlidersHorizontal className="w-3 h-3" /> Audit Adjustment
                               </span>
                             )}
@@ -1112,7 +1112,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                           {/* Item Details */}
                           <td className="px-4 py-3">
                             <div className="font-semibold text-black dark:text-white">{tx.itemName}</div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{tx.itemCode}</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">{tx.itemCode}</div>
                           </td>
 
                           {/* Quantity */}
@@ -1134,7 +1134,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                             <div className="text-xs font-medium text-black dark:text-slate-200">
                               {tx.employeeName || tx.vendorSupplier || '—'}
                             </div>
-                            {tx.remarks && <div className="text-[10px] text-slate-500 dark:text-slate-400 italic max-w-xs truncate">{tx.remarks}</div>}
+                            {tx.remarks && <div className="text-[11px] text-slate-500 dark:text-slate-400 italic max-w-xs truncate">{tx.remarks}</div>}
                           </td>
 
                           {/* Performed By */}
@@ -1185,7 +1185,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                 <div key={item.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-amber-200 dark:border-amber-900/50 shadow-sm flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                      <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                         {item.category}
                       </span>
                       <span className="text-xs font-mono text-slate-400">{item.itemCode}</span>
@@ -1199,11 +1199,11 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
 
                     <div className="mt-4 p-3 bg-white dark:bg-slate-950 dark:bg-slate-800/50 rounded-xl flex items-center justify-between">
                       <div>
-                        <div className="text-[10px] text-slate-400 uppercase font-bold">Current Stock</div>
+                        <div className="text-[11px] text-slate-400 uppercase font-bold">Current Stock</div>
                         <div className="text-xl font-black text-rose-600 dark:text-rose-400">{item.currentStock} {item.unit}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-[10px] text-slate-400 uppercase font-bold">Min Threshold</div>
+                        <div className="text-[11px] text-slate-400 uppercase font-bold">Min Threshold</div>
                         <div className="text-sm font-bold text-slate-900 dark:text-slate-300">{item.minStockThreshold} {item.unit}</div>
                       </div>
                     </div>
@@ -1273,7 +1273,7 @@ export const InventoryStockScreen: React.FC<InventoryStockScreenProps> = ({
                       <span className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded-md">
                         {v.vendorCode}
                       </span>
-                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                      <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                         {v.status}
                       </span>
                     </div>

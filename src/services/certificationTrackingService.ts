@@ -150,7 +150,7 @@ export class CertificationTrackingService {
 
     if (notifications.length > 0) {
       for (const n of notifications) {
-         const notifRef = doc(db, 'notifications', n.id);
+         const notifRef = doc(db, 'companies', companyId, 'notifications', n.id);
          batch.set(notifRef, { ...n, companyId });
       }
     }

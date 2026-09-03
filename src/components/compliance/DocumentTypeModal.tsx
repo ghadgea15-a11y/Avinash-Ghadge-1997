@@ -69,7 +69,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                   <Save className="w-4 h-4 text-indigo-600" />
                   Manage Document Types
                 </h4>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">Configure global document requirements and alert thresholds</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Configure global document requirements and alert thresholds</p>
               </div>
               <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition">
                 <X className="w-5 h-5 text-slate-400" />
@@ -100,7 +100,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                     <div className="flex justify-between items-start">
                       <div>
                         <h5 className="text-xs font-bold text-black dark:text-white">{type.name}</h5>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">{type.code}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">{type.code}</p>
                       </div>
                       {type.isMandatory && (
                         <span className="px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 rounded text-[8px] font-bold">MANDATORY</span>
@@ -115,7 +115,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                 {editingType ? (
                   <form onSubmit={handleSave} className="space-y-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Display Name</label>
+                      <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Display Name</label>
                       <input 
                         required
                         type="text" 
@@ -127,7 +127,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Type Code (Internal)</label>
+                      <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Type Code (Internal)</label>
                       <input 
                         required
                         type="text" 
@@ -152,7 +152,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 flex justify-between">
+                      <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1 flex justify-between">
                         <span>Alert Thresholds (Days)</span>
                         <span className="text-indigo-500 font-normal">Comma separated</span>
                       </label>
@@ -169,7 +169,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Description</label>
+                      <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Description</label>
                       <textarea 
                         className="w-full px-3 py-2 bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 transition min-h-[80px]"
                         placeholder="Add internal notes or requirements..."
@@ -203,7 +203,7 @@ export function DocumentTypeModal({ isOpen, onClose, companyId, existingTypes, o
                     </div>
                     <div>
                       <p className="text-sm font-bold text-slate-600 dark:text-slate-400">Select a type to edit</p>
-                      <p className="text-[10px] text-slate-400">Or click 'Add New Type' to create a new one</p>
+                      <p className="text-[11px] text-slate-400">Or click 'Add New Type' to create a new one</p>
                     </div>
                   </div>
                 )}

@@ -396,7 +396,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
         >
           <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Work Orders</div>
           <div className="text-2xl font-black mt-1 text-indigo-600">{kpis.total}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Across all sites</div>
+          <div className="text-xs text-slate-400 mt-1">Across all sites</div>
         </div>
 
         <div 
@@ -407,7 +407,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
         >
           <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Active / In Progress</div>
           <div className="text-2xl font-black mt-1 text-blue-600">{kpis.inProgress}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Ongoing field action</div>
+          <div className="text-xs text-slate-400 mt-1">Ongoing field action</div>
         </div>
 
         <div 
@@ -421,7 +421,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
             {kpis.pendingReview > 0 && <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />}
           </div>
           <div className="text-2xl font-black mt-1 text-amber-600">{kpis.pendingReview}</div>
-          <div className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 font-semibold">Requires Supervisor Sign-off</div>
+          <div className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">Requires Supervisor Sign-off</div>
         </div>
 
         <div 
@@ -432,7 +432,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
         >
           <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Completed</div>
           <div className="text-2xl font-black mt-1 text-emerald-600">{kpis.completed}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Approved & closed</div>
+          <div className="text-xs text-slate-400 mt-1">Approved & closed</div>
         </div>
 
         <div 
@@ -443,7 +443,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
         >
           <div className="text-xs font-medium text-slate-500 dark:text-slate-400">SLA Breached / Overdue</div>
           <div className="text-2xl font-black mt-1 text-rose-600">{kpis.overdue}</div>
-          <div className="text-[11px] text-rose-600 dark:text-rose-400 mt-1 font-semibold">Escalation critical</div>
+          <div className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-semibold">Escalation critical</div>
         </div>
       </div>
 
@@ -531,7 +531,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-1.5">
                     {/* Priority Badge */}
-                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md uppercase tracking-wider ${
+                    <span className={`px-2 py-0.5 text-[11px] font-bold rounded-md uppercase tracking-wider ${
                       task.priority === 'URGENT' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' :
                       task.priority === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300' :
                       task.priority === 'LOW' ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' :
@@ -541,7 +541,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                     </span>
 
                     {/* Status Badge */}
-                    <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-md ${
+                    <span className={`px-2 py-0.5 text-[11px] font-semibold rounded-md ${
                       task.status === 'COMPLETED' || task.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' :
                       task.status === 'PENDING_VERIFICATION' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 font-bold' :
                       task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' :
@@ -551,7 +551,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                     </span>
                   </div>
 
-                  <span className="text-[11px] text-slate-400 font-mono">
+                  <span className="text-xs text-slate-400 font-mono">
                     {new Date(task.createdAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -586,14 +586,14 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                       <Clock className="w-3.5 h-3.5 text-slate-400" />
                       SLA:
                     </span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] ${sla.color}`}>
+                    <span className={`px-2 py-0.5 rounded text-[11px] ${sla.color}`}>
                       {sla.label}
                     </span>
                   </div>
 
                   {/* Checklist summary */}
                   {task.checklist && task.checklist.length > 0 && (
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                    <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
                       <span>Checklist:</span>
                       <span>
                         {task.checklist.filter((c: any) => c.done).length} / {task.checklist.length} done
@@ -800,7 +800,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
                   <button
                     type="button"
                     onClick={() => setNewTask({ ...newTask, checklistItems: [...newTask.checklistItems, ''] })}
-                    className="text-[11px] text-indigo-600 font-bold hover:underline"
+                    className="text-xs text-indigo-600 font-bold hover:underline"
                   >
                     + Add Step
                   </button>
@@ -891,7 +891,7 @@ export const TaskManagementScreen: React.FC<Props> = ({ userSession, company, on
               }`}>
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-sm text-indigo-600 dark:text-indigo-400">{selectedTaskForReview.title}</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
                     {selectedTaskForReview.status}
                   </span>
                 </div>

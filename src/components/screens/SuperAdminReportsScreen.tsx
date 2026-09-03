@@ -147,7 +147,7 @@ export const SuperAdminReportsScreen: React.FC<SuperAdminReportsScreenProps> = (
             <Building2 className="w-4 h-4 text-indigo-500" />
           </div>
           <div className="text-2xl font-bold font-mono text-indigo-500">{totalTenants}</div>
-          <span className="text-[11px] text-emerald-500 font-medium">{activeTenants} active contracts</span>
+          <span className="text-xs text-emerald-500 font-medium">{activeTenants} active contracts</span>
         </div>
 
         <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-1`}>
@@ -156,7 +156,7 @@ export const SuperAdminReportsScreen: React.FC<SuperAdminReportsScreenProps> = (
             <Users className="w-4 h-4 text-cyan-500" />
           </div>
           <div className="text-2xl font-bold font-mono text-cyan-500">{totalEmployees.toLocaleString()}</div>
-          <span className="text-[11px] text-slate-400">Total registered personnel</span>
+          <span className="text-xs text-slate-400">Total registered personnel</span>
         </div>
 
         <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-1`}>
@@ -165,7 +165,7 @@ export const SuperAdminReportsScreen: React.FC<SuperAdminReportsScreenProps> = (
             <Layers className="w-4 h-4 text-amber-500" />
           </div>
           <div className="text-2xl font-bold font-mono text-amber-500">{totalSites}</div>
-          <span className="text-[11px] text-slate-400">Active geofenced locations</span>
+          <span className="text-xs text-slate-400">Active geofenced locations</span>
         </div>
 
         <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-1`}>
@@ -174,7 +174,7 @@ export const SuperAdminReportsScreen: React.FC<SuperAdminReportsScreenProps> = (
             <TrendingUp className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="text-2xl font-bold font-mono text-emerald-500">{plans.length}</div>
-          <span className="text-[11px] text-slate-400">SaaS subscription packages</span>
+          <span className="text-xs text-slate-400">SaaS subscription packages</span>
         </div>
 
       </div>
@@ -215,7 +215,7 @@ export const SuperAdminReportsScreen: React.FC<SuperAdminReportsScreenProps> = (
           </h3>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-sm">
               <thead className={`border-b ${isDark ? 'bg-slate-950/60 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'} font-semibold`}>
                 <tr>
                   <th className="py-2.5 px-3">Company</th>
@@ -236,9 +236,9 @@ export const SuperAdminReportsScreen: React.FC<SuperAdminReportsScreenProps> = (
                         <Building2 className="w-3.5 h-3.5 text-slate-400" />
                         <span>{t.name}</span>
                       </td>
-                      <td className="py-3 px-3 font-mono text-[11px]">{t.subscriptionPlan}</td>
+                      <td className="py-3 px-3 font-mono text-xs">{t.subscriptionPlan}</td>
                       <td className="py-3 px-3">
-                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[11px] font-bold ${
                           t.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
                         }`}>
                           {t.status}

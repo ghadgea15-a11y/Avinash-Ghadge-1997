@@ -9,7 +9,8 @@ import {
   ArrowRight, 
   Loader2, 
   AlertCircle,
-  QrCode
+  QrCode,
+  Building2
 } from 'lucide-react';
 import { setDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -32,7 +33,6 @@ export const PlatformLoginScreen: React.FC<PlatformLoginScreenProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  useBackNavigation(!!showPassword, () => setShowPassword(null as any), 'showPassword');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,6 +67,7 @@ export const PlatformLoginScreen: React.FC<PlatformLoginScreenProps> = ({
         throw new Error('This portal is restricted to Platform Owners.');
       }
 
+      SessionManager.clearActiveCompany();
       SessionManager.setUserSession(session);
       onLoginSuccess(session);
     } catch (err: any) {
@@ -108,6 +109,7 @@ export const PlatformLoginScreen: React.FC<PlatformLoginScreenProps> = ({
         throw new Error('Restricted to Platform Owners.');
       }
 
+      SessionManager.clearActiveCompany();
       SessionManager.setUserSession(session);
       onLoginSuccess(session);
     } catch (err: any) {
@@ -139,6 +141,7 @@ export const PlatformLoginScreen: React.FC<PlatformLoginScreenProps> = ({
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
+      SessionManager.clearActiveCompany();
       SessionManager.setUserSession(enrollSession);
       onLoginSuccess(enrollSession);
     } catch (err: any) {
@@ -297,14 +300,24 @@ export const PlatformLoginScreen: React.FC<PlatformLoginScreenProps> = ({
         </form>
 
         <div className="pt-4 border-t border-slate-100 flex flex-col items-center gap-4">
-          <button
-            onClick={() => onNavigate('LANDING')}
-            className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest"
-          >
-            Back to Public Site
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => onNavigate('LOGIN')}
+              className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-wider flex items-center gap-1.5"
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              Customer / Tenant Login
+            </button>
+            <span className="text-slate-300">•</span>
+            <button
+              onClick={() => onNavigate('LANDING')}
+              className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-wider"
+            >
+              Public Site
+            </button>
+          </div>
           
-          <p className="text-[10px] text-slate-300 font-medium max-w-[200px] text-center leading-relaxed">
+          <p className="text-[11px] text-slate-300 font-medium max-w-[240px] text-center leading-relaxed">
             All access attempts are monitored and logged. Unauthorized access is prohibited.
           </p>
         </div>

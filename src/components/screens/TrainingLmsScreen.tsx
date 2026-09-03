@@ -302,7 +302,7 @@ export const TrainingLmsScreen: React.FC<{
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-xs font-bold px-2 py-1 bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 dark:text-slate-300 rounded-lg">{p.programCode}</span>
                       {p.isMandatoryForPSARA && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 rounded-lg"><ShieldAlert className="w-3 h-3"/> PSARA MANDATORY</span>
+                        <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-1 bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 rounded-lg"><ShieldAlert className="w-3 h-3"/> PSARA MANDATORY</span>
                       )}
                     </div>
                     <h3 className="font-bold text-black dark:text-white mb-1">{p.title}</h3>

@@ -265,8 +265,8 @@ export const NotificationAdminScreen: React.FC<NotificationAdminScreenProps> = (
                            <span className="text-xs text-slate-500 truncate max-w-md">{log.message}</span>
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
-                           <span className="text-[10px] font-mono text-slate-400">{formatTimestamp(log.timestamp)}</span>
-                           <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${log.isRead ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                           <span className="text-[11px] font-mono text-slate-400">{formatTimestamp(log.timestamp)}</span>
+                           <span className={`text-[11px] px-2 py-0.5 rounded font-bold ${log.isRead ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                              {log.isRead ? 'READ' : 'UNREAD'}
                            </span>
                         </div>

@@ -229,7 +229,7 @@ export const CompanyBankModal: React.FC<CompanyBankModalProps> = ({
             </label>
           </div>
 
-          <div className="p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 text-[11px] text-slate-500 dark:text-slate-400 flex items-center space-x-2">
+          <div className="p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 text-xs text-slate-500 dark:text-slate-400 flex items-center space-x-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <span>Never enter passwords, PINs, or OTPs. Only debit account identifiers are stored.</span>
           </div>

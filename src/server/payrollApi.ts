@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { getAdminDb } from './firebaseAdmin';
+import { ReimbursementPayloadBuilder } from '../services/reimbursementPayloadBuilder';
 
 // --- Types ---
 interface StatutoryConfigRecord {
@@ -103,26 +104,42 @@ class PayrollEngine {
     let payableDays = daysInMonth;
     let lopDays = 0;
     let approvedOvertimeMinutes = 0;
+
+    const empWeeklyOff = emp.weeklyOff || emp.weeklyOffDays || [0];
+
     for (let d = 1; d <= daysInMonth; d++) {
       const dateObj = new Date(year, month - 1, d);
       const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const isDayOff = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+      
+      const isDayOff = empWeeklyOff.includes(dateObj.getDay());
+      
       const isHoliday = holidays.some(h => {
         if (h.date !== dateStr) return false;
         if (!h.applicableRegions || h.applicableRegions.length === 0) return true;
         return emp.assignedRegionId && h.applicableRegions.includes(emp.assignedRegionId);
       });
+      
       const att = attendances.find(a => a.attendanceDate === dateStr || a.date === dateStr);
       const leave = leaves.find(l => l.startDate <= dateStr && l.endDate >= dateStr);
+      
       if (att && att.approvedOvertimeMinutes) {
         approvedOvertimeMinutes += att.approvedOvertimeMinutes;
       }
+      
       if (!att && !isDayOff && !isHoliday) {
-        if (leave && leave.status === 'APPROVED') { } else { lopDays += 1; }
+        if (leave && (leave.status === 'APPROVED' || leave.status === 'ACCEPTED')) {
+          if (leave.leaveType === 'UNPAID' || leave.leaveType === 'LWP') { lopDays += 1; }
+        } else { 
+          lopDays += 1; 
+        }
       } else if (att && (att.status === 'ABSENT' || att.status === 'HALFDAY')) {
          if (isDayOff || isHoliday) continue; 
-         if (att.status === 'ABSENT' && (!leave || leave.status !== 'APPROVED')) { lopDays += 1; }
-         else if (att.status === 'HALFDAY' && (!leave || leave.status !== 'APPROVED')) { lopDays += 0.5; }
+         if (att.status === 'ABSENT' && (!leave || leave.status !== 'APPROVED' || leave.leaveType === 'UNPAID' || leave.leaveType === 'LWP')) { lopDays += 1; }
+         else if (att.status === 'HALFDAY' && (!leave || leave.status !== 'APPROVED' || leave.leaveType === 'UNPAID' || leave.leaveType === 'LWP')) { lopDays += 0.5; }
+      } else if (isDayOff || isHoliday) {
+        if (leave && (leave.status === 'APPROVED' || leave.status === 'ACCEPTED') && (leave.leaveType === 'UNPAID' || leave.leaveType === 'LWP')) {
+          lopDays += 1;
+        }
       }
     }
     payableDays = Math.max(0, daysInMonth - lopDays);
@@ -222,6 +239,13 @@ export const calculatePayrollHandler = async (req: Request, res: Response) => {
       .where('date', '<=', endDate).get();
     const holidays = holidaysSnap.docs.map(d => d.data());
 
+    // --- FIX: Reimbursement-to-Payroll Handoff ---
+    // Fetch all expense claims and build structured batch payload via ReimbursementPayloadBuilder
+    const expensesSnap = await db.collection('companies').doc(companyId).collection('expenseClaims').get();
+    const allExpenses = expensesSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+    const reimbursementBatch = ReimbursementPayloadBuilder.buildBatchPayload(companyId, cycleId, month, year, allExpenses);
+    // ---------------------------------------------
+
     let totalGross = 0; let totalDeductions = 0; let totalNetPay = 0;
 
     // 3. Process each employee
@@ -235,11 +259,31 @@ export const calculatePayrollHandler = async (req: Request, res: Response) => {
       const empLeaves = leaves.filter(l => l.employeeId === emp.id);
       const profile = salaries.find(s => s.employeeId === emp.id) || { baseMonthlySalary: 18000 };
       const structure = structures.find(s => s.id === (profile as any).structureId) || { basicPercentage: 50 };
-
+      
       const empStateKey = StatutoryRulesService.normalizeStateKey((emp as any).state || (emp as any).assignedRegionId || (emp as any).workLocation);
       const empStatutory = statutoryConfigs.find(c => c.state === empStateKey) || DEFAULT_STATE_STATUTORY_CONFIGS[empStateKey] || defaultStatutory;
-
+      
       const calc = PayrollEngine.calculate(month, year, emp, profile, structure, holidays, empLeaves, empAtts, 0, empStatutory);
+
+      // --- FIX: Reimbursement-to-Payroll Handoff ---
+      const empReimbursement = reimbursementBatch.employeePayloads[emp.id];
+      const totalReimbursements = empReimbursement ? empReimbursement.totalReimbursementAmount : 0;
+      
+      if (totalReimbursements > 0) {
+        calc.earnings.reimbursements = Math.round(totalReimbursements);
+        calc.netPay += Math.round(totalReimbursements);
+        
+        empReimbursement.claims.forEach(claimItem => {
+          const expRef = db.collection('companies').doc(companyId).collection('expenseClaims').doc(claimItem.claimId);
+          currentBatch.update(expRef, {
+            status: 'PAID',
+            payrollMonthYear: cycleId,
+            paidDate: new Date().toISOString()
+          });
+          operationCounter++;
+        });
+      }
+      // ---------------------------------------------
 
       const prId = `PR-${cycleId}-${emp.id}`;
       const prRef = db.collection('companies').doc(companyId).collection('payrollRecords').doc(prId);

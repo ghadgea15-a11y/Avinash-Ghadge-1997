@@ -78,7 +78,7 @@ export const CheckpointQRCodeModal: React.FC<CheckpointQRCodeModalProps> = ({
             )}
 
             {checkpoint.gpsCoordinates && (
-              <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 bg-slate-200/70 px-2.5 py-1 rounded">
+              <div className="text-xs font-mono text-slate-500 dark:text-slate-400 bg-slate-200/70 px-2.5 py-1 rounded">
                 GPS: {checkpoint.gpsCoordinates.latitude.toFixed(6)}, {checkpoint.gpsCoordinates.longitude.toFixed(6)}
                 {checkpoint.geofenceRadiusMeters && ` (±${checkpoint.geofenceRadiusMeters}m)`}
               </div>

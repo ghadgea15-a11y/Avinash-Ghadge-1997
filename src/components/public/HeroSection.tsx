@@ -93,7 +93,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="max-w-4xl mx-auto text-center space-y-8"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-300 bg-white dark:bg-slate-900/50 backdrop-blur-sm text-[11px] font-mono font-bold tracking-widest text-black uppercase shadow-sm">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-300 bg-white dark:bg-slate-900/50 backdrop-blur-sm text-xs font-mono font-bold tracking-widest text-black uppercase shadow-sm">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>Unified Operational Operating System</span>
           </div>

@@ -286,7 +286,7 @@ export const ProductDetails: React.FC = () => {
                 {React.createElement(currentPillar.icon, { className: 'w-7 h-7' })}
               </div>
               <div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-500">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-500">
                   {currentPillar.badge}
                 </span>
                 <h3 className="text-2xl font-extrabold text-black dark:text-white">

@@ -21,7 +21,8 @@ import {
   PurchaseOrderRecord,
   IncidentReportRecord,
   ContractRecord,
-  InventoryItemRecord
+  InventoryItemRecord,
+  VisitorLogRecord
 } from '../types';
 import { 
   OperationalHierarchyNode, 
@@ -88,7 +89,8 @@ export class OperationalIntelligenceEngine {
       contractsSnap,
       inventorySnap,
       patrolAnomaliesSnap,
-      dailySiteLogsSnap
+      dailySiteLogsSnap,
+      visitorLogsSnap
     ] = await Promise.all([
       getDocs(collection(db, `companies/${companyId}/salary_slips`)),
       getDocs(collection(db, `companies/${companyId}/attendance`)),
@@ -100,7 +102,8 @@ export class OperationalIntelligenceEngine {
       getDocs(collection(db, `companies/${companyId}/contracts`)),
       getDocs(collection(db, `companies/${companyId}/inventory_items`)),
       getDocs(collection(db, `companies/${companyId}/suspicious_patrol_scans`)),
-      getDocs(collection(db, `companies/${companyId}/daily_site_logs`))
+      getDocs(collection(db, `companies/${companyId}/daily_site_logs`)),
+      getDocs(collection(db, `companies/${companyId}/visitor_logs`))
     ]);
 
     const salarySlips: SalarySlipRecord[] = salarySlipsSnap.docs.map(d => ({ id: d.id, ...d.data() } as SalarySlipRecord));
@@ -110,6 +113,7 @@ export class OperationalIntelligenceEngine {
     const workOrders: WorkOrderRecord[] = workOrdersSnap.docs.map(d => ({ id: d.id, ...d.data() } as WorkOrderRecord));
     const purchaseOrders: PurchaseOrderRecord[] = purchaseOrdersSnap.docs.map(d => ({ id: d.id, ...d.data() } as PurchaseOrderRecord));
     const incidents: IncidentReportRecord[] = incidentsSnap.docs.map(d => ({ id: d.id, ...d.data() } as IncidentReportRecord));
+    const visitors: VisitorLogRecord[] = visitorLogsSnap ? visitorLogsSnap.docs.map(d => ({ id: d.id, ...d.data() } as VisitorLogRecord)) : [];
     const contracts: ContractRecord[] = contractsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ContractRecord));
     const inventoryItems: InventoryItemRecord[] = inventorySnap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItemRecord));
     const patrolAnomalies: any[] = patrolAnomaliesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -596,6 +600,41 @@ export class OperationalIntelligenceEngine {
           timestamp: now.toISOString()
         });
       }
+
+      
+
+      // Visitor metrics mapped per node
+      let nodeActiveVisitors = 0;
+      let nodeTotalVisitors = 0;
+      visitors.filter(v => v.siteId === node.id || v.assignedBranchId === node.id || v.assignedRegionId === node.id).forEach(vis => {
+        nodeTotalVisitors++;
+        if (vis.status === 'CHECKED_IN' || vis.status === 'IN_SITE') nodeActiveVisitors++;
+      });
+      // Attach to node metrics if we want to extend the interface, else just push anomaly if needed
+      if (nodeTotalVisitors > 100) {
+        nodeAnomalies.push({
+          id: 'ANOM-VIS-' + node.id + '-' + Date.now(),
+          type: 'SECURITY_ANOMALY',
+          severity: 'MEDIUM',
+          title: 'High Visitor Traffic Detected',
+          description: `${nodeTotalVisitors} visitors recorded exceed normal threshold for ${node.name}.`,
+          entityLevel: node.level,
+          entityId: node.id,
+          entityName: node.name,
+          metricName: 'Total Visitors',
+          currentValue: nodeTotalVisitors,
+          baselineValue: 50,
+          deviationPercent: Math.round(((nodeTotalVisitors - 50) / 50) * 100),
+          financialImpact: 0,
+          rootCause: 'Unusual spike in physical site visits.',
+          recommendedAction: 'Verify entry logs and enforce strict badge access.',
+          sourceTransactionCount: nodeTotalVisitors,
+          sourceTransactions: [],
+          timestamp: new Date().toISOString()
+        });
+      }
+  
+
 
       // 4. INCIDENT SPIKE DETECTOR
       if (m.criticalIncidentsCount > 0 || (m.headcount >= 5 && (m.openIncidentsCount / m.headcount) * 100 > Math.max(avgIncidentRate * 2, 5))) {

@@ -35,7 +35,8 @@ export const COMPANY_INFO = {
   legalName: 'Shourya Enterprises Private Limited',
   productName: 'Log Sheet Muster',
   founder: 'Avinash Shivaji Ghadge',
-  email: 'ghadgea162@gmail.com',
+  email: 'ghadgea15@gmail.com',
+  supportEmail: 'ghadgea162@gmail.com',
   telephone: '+91-9096345456',
   address: {
     streetAddress: 'Ajanthanagar, Chinchwad',

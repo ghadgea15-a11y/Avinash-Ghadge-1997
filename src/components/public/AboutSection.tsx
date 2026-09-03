@@ -48,6 +48,14 @@ export const AboutSection: React.FC = () => {
                 <span className="text-slate-600">State & Country:</span>
                 <strong className="text-black font-semibold">Maharashtra, India (411019)</strong>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-600">Direct Contact:</span>
+                <a href="tel:+919096345456" className="text-emerald-700 font-semibold hover:underline">+91 90963 45456</a>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-600">Corporate Email:</span>
+                <a href="mailto:ghadgea15@gmail.com" className="text-emerald-700 font-semibold hover:underline">ghadgea15@gmail.com</a>
+              </div>
             </div>
           </div>
 

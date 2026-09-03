@@ -288,7 +288,7 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
             </div>
             <div>
               <h1 className="text-xl font-black text-black dark:text-white leading-tight">Leave & Absence</h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                 {activeCompany?.brandName || 'Log Sheet Muster'} • Workforce Management
               </p>
             </div>
@@ -297,7 +297,7 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
           <div className="flex items-center gap-2">
             <div className="flex items-center px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <div className={`w-2 h-2 rounded-full mr-2 ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 {isOnline ? 'Cloud Sync Active' : 'Offline Mode'}
               </span>
             </div>
@@ -442,10 +442,10 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
                             </div>
                             <div>
                               <h4 className="text-base font-black text-black dark:text-white leading-tight">{req.employeeName}</h4>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Employee ID: {req.employeeId}</p>
+                              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Employee ID: {req.employeeId}</p>
                             </div>
                           </div>
-                          <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-wider border border-amber-200">Pending</span>
+                          <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-[11px] font-black uppercase tracking-wider border border-amber-200">Pending</span>
                         </div>
 
                         <div className="p-4 rounded-2xl bg-white dark:bg-slate-950 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 mb-6 space-y-2">
@@ -458,7 +458,7 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
                             <span className="text-black dark:text-white">{req.startDate} → {req.endDate} ({req.daysCount}d)</span>
                           </div>
                           <div className="pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Reason</p>
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Reason</p>
                             <p className="text-xs font-medium text-slate-900 dark:text-slate-300 italic leading-relaxed">"{req.reason}"</p>
                           </div>
                         </div>
@@ -514,7 +514,7 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
                       <div className="space-y-1">
                         <h4 className="text-sm font-black text-slate-900 dark:text-white">Pro-Rata Calculation Engine</h4>
                         <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                          For mid-year joining employees, entitlement is calculated pro-rata: <code className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 text-indigo-600 font-mono text-[11px] font-bold">Pro-Rata Entitlement = Annual Entitlement × (Remaining Service Days / Total Days in Year)</code>, rounded strictly by statutory compliance rules (Nearest 0.5 Day).
+                          For mid-year joining employees, entitlement is calculated pro-rata: <code className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 text-indigo-600 font-mono text-xs font-bold">Pro-Rata Entitlement = Annual Entitlement × (Remaining Service Days / Total Days in Year)</code>, rounded strictly by statutory compliance rules (Nearest 0.5 Day).
                         </p>
                       </div>
                     </div>
@@ -524,13 +524,13 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
                   <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                     <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                       <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Active Entitlement Ledger</h4>
-                      <span className="text-[10px] font-bold text-slate-400">Employee: {userSession.fullName} ({userSession.employeeId || userSession.userId})</span>
+                      <span className="text-[11px] font-bold text-slate-400">Employee: {userSession.fullName} ({userSession.employeeId || userSession.userId})</span>
                     </div>
 
                     <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs">
+                      <table className="w-full text-left text-sm">
                         <thead>
-                          <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase text-slate-400 bg-slate-50/50 dark:bg-slate-950/50">
+                          <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-black uppercase text-slate-400 bg-slate-50/50 dark:bg-slate-950/50">
                             <th className="py-3.5 px-5">Leave Code</th>
                             <th className="py-3.5 px-5">Leave Name</th>
                             <th className="py-3.5 px-5 text-right">Opening</th>
@@ -559,7 +559,7 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
                                     Pro-Rata ({b.joiningDate ? `DOJ: ${b.joiningDate}` : `${((b.proRataFactor || 1)*100).toFixed(0)}%`})
                                   </span>
                                 ) : (
-                                  <span className="text-[10px] text-slate-400 font-bold">Standard (100%)</span>
+                                  <span className="text-[11px] text-slate-400 font-bold">Standard (100%)</span>
                                 )}
                               </td>
                             </tr>
@@ -580,13 +580,13 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
                   <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                     <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                       <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Transaction & Utilization Log</h4>
-                      <span className="text-[10px] font-bold text-slate-400">{myRequests.length} Total Applications</span>
+                      <span className="text-[11px] font-bold text-slate-400">{myRequests.length} Total Applications</span>
                     </div>
 
                     <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs">
+                      <table className="w-full text-left text-sm">
                         <thead>
-                          <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase text-slate-400 bg-slate-50/50 dark:bg-slate-950/50">
+                          <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-black uppercase text-slate-400 bg-slate-50/50 dark:bg-slate-950/50">
                             <th className="py-3.5 px-5">Date / Time</th>
                             <th className="py-3.5 px-5">Leave Type</th>
                             <th className="py-3.5 px-5">Span</th>

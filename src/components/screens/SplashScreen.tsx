@@ -118,7 +118,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       {/* Top Section: App Brand & Logo */}
       <div className="flex flex-col items-center text-center pt-8 space-y-3">
         <AppLogo size="xl" showSubtitle={true} company={activeCompany} />
-        <span className="inline-block px-3 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200 text-[11px] font-mono text-indigo-700 shadow-sm">
+        <span className="inline-block px-3 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200 text-xs font-mono text-indigo-700 shadow-sm">
           Android Native Edition v1.0.0
         </span>
       </div>
@@ -130,7 +130,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             <Loader2 className="w-3.5 h-3.5 text-indigo-600 animate-spin" />
             Initialization Sequence
           </span>
-          <span className="text-[11px] font-mono text-indigo-600">
+          <span className="text-xs font-mono text-indigo-600">
             {Math.min(currentStepIndex + 1, steps.length)}/5
           </span>
         </div>
@@ -158,7 +158,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
                   {step.label}
                 </p>
                 {step.detail && (
-                  <p className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                  <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                     {step.detail}
                   </p>
                 )}
@@ -169,7 +169,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       </div>
 
       {/* Bottom Footer Details */}
-      <div className="text-center text-[10px] text-slate-400 font-mono space-y-1 pb-2">
+      <div className="text-center text-[11px] text-slate-400 font-mono space-y-1 pb-2">
         <p>Google Play Store Target SDK 34 • Material Design 3</p>
         <p className="text-slate-500 dark:text-slate-400">Built with Jetpack Compose & Firebase Multi-Tenant Architecture</p>
       </div>

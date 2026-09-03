@@ -1504,7 +1504,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                 <Radio className={`w-3.5 h-3.5 ${liveTours.length > 0 ? 'animate-pulse text-rose-300' : ''}`} />
                 <span>Active & Live Tours</span>
                 {liveTours.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-extrabold">
+                  <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[11px] font-extrabold">
                     {liveTours.length}
                   </span>
                 )}
@@ -1520,7 +1520,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               >
                 <Layers className="w-3.5 h-3.5" />
                 <span>Patrol Plans & Routes</span>
-                <span className="opacity-70 text-[10px]">({patrolPlans.length})</span>
+                <span className="opacity-70 text-[11px]">({patrolPlans.length})</span>
               </button>
 
               <button
@@ -1533,7 +1533,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               >
                 <MapPin className="w-3.5 h-3.5" />
                 <span>Site Checkpoints & QR Tags</span>
-                <span className="opacity-70 text-[10px]">({checkpoints.length})</span>
+                <span className="opacity-70 text-[11px]">({checkpoints.length})</span>
               </button>
 
               <button
@@ -1546,7 +1546,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               >
                 <FileCheck className="w-3.5 h-3.5" />
                 <span>Tour Logs & Historical Audit</span>
-                <span className="opacity-70 text-[10px]">({patrolTours.length})</span>
+                <span className="opacity-70 text-[11px]">({patrolTours.length})</span>
               </button>
             </div>
 
@@ -1607,7 +1607,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     <Radio className="w-4 h-4 text-emerald-500 animate-pulse" />
                   </div>
                   <div className="text-2xl font-black text-black dark:text-white dark:text-slate-100">{liveTours.length}</div>
-                  <div className="text-[10px] text-slate-400 mt-1">Real-time GPS guard tracking</div>
+                  <div className="text-[11px] text-slate-400 mt-1">Real-time GPS guard tracking</div>
                 </div>
 
                 <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
@@ -1616,7 +1616,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     <CheckCircle2 className="w-4 h-4 text-indigo-500" />
                   </div>
                   <div className="text-2xl font-black text-black dark:text-white dark:text-slate-100">{completedToursToday.length}</div>
-                  <div className="text-[10px] text-slate-400 mt-1">Verified checkpoint rounds</div>
+                  <div className="text-[11px] text-slate-400 mt-1">Verified checkpoint rounds</div>
                 </div>
 
                 <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
@@ -1625,7 +1625,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     <AlertTriangle className="w-4 h-4 text-rose-500" />
                   </div>
                   <div className="text-2xl font-black text-rose-600">{exceptionTours.length}</div>
-                  <div className="text-[10px] text-slate-400 mt-1">Sequence / Geofence breaks</div>
+                  <div className="text-[11px] text-slate-400 mt-1">Sequence / Geofence breaks</div>
                 </div>
 
                 <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
@@ -1636,7 +1636,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   <div className="text-2xl font-black text-black dark:text-white dark:text-slate-100">
                     {patrolPlans.filter(p => p.status === 'ACTIVE').length}
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-1">Scheduled site routes</div>
+                  <div className="text-[11px] text-slate-400 mt-1">Scheduled site routes</div>
                 </div>
               </div>
 
@@ -1646,7 +1646,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   <h3 className="text-sm font-bold text-black dark:text-white dark:text-slate-100 flex items-center gap-2">
                     <span>Live Patrol Runs</span>
                     {liveTours.length > 0 && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
                         {liveTours.length} Active Now
                       </span>
                     )}
@@ -1675,7 +1675,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                                 <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
                                   {tour.tourNumber}
                                 </span>
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 animate-pulse">
+                                <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 animate-pulse">
                                   LIVE IN PROGRESS
                                 </span>
                               </div>
@@ -1720,7 +1720,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
                           {/* Action Buttons */}
                           <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-                            <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                            <div className="text-xs text-slate-400 flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5" />
                               <span>Started {new Date(tour.actualStart || tour.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
@@ -1821,7 +1821,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                       <div className="space-y-3">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300">
+                            <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300">
                               {plan.frequency || 'SHIFT_BASED'}
                             </span>
                             <h4 className="text-sm font-bold text-black dark:text-white dark:text-slate-100 mt-1.5">
@@ -1832,7 +1832,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                             </p>
                           </div>
 
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
                             plan.status === 'ACTIVE'
                               ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
                               : 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-400'
@@ -1849,7 +1849,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
                         {/* Rules Badges */}
                         <div className="flex flex-wrap gap-1.5 pt-1">
-                          <span className={`px-2 py-0.5 rounded-lg text-[10px] font-medium border ${
+                          <span className={`px-2 py-0.5 rounded-lg text-[11px] font-medium border ${
                             isSeqStrict 
                               ? 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300' 
                               : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
@@ -1857,7 +1857,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                             {isSeqStrict ? 'Strict Sequence' : 'Flexible Order'}
                           </span>
 
-                          <span className={`px-2 py-0.5 rounded-lg text-[10px] font-medium border ${
+                          <span className={`px-2 py-0.5 rounded-lg text-[11px] font-medium border ${
                             isGeofence 
                               ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300' 
                               : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
@@ -1865,7 +1865,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                             {isGeofence ? 'Geofence Guarded' : 'GPS Optional'}
                           </span>
 
-                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-medium border bg-white dark:bg-slate-950 border-slate-200 text-slate-600 dark:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
+                          <span className="px-2 py-0.5 rounded-lg text-[11px] font-medium border bg-white dark:bg-slate-950 border-slate-200 text-slate-600 dark:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
                             Min {plan.minCompletionPercentage || 80}% Complete
                           </span>
                         </div>
@@ -1967,7 +1967,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-bold">
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono text-[11px] font-bold">
                           Seq #{cp.sequenceOrder} • {cp.code}
                         </span>
                         <span className={`w-2 h-2 rounded-full ${cp.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
@@ -1976,11 +1976,11 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                       <h4 className="text-xs font-bold text-black dark:text-white dark:text-slate-100 leading-tight">
                         {cp.checkpointName}
                       </h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                         {cp.locationDescription || 'No description entered'}
                       </p>
 
-                      <div className="text-[10px] text-slate-400 flex items-center gap-1 font-mono pt-1">
+                      <div className="text-[11px] text-slate-400 flex items-center gap-1 font-mono pt-1">
                         <Compass className="w-3 h-3 text-slate-400" />
                         <span>
                           {cp.latitude && cp.longitude
@@ -1996,7 +1996,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                           setSelectedCheckpointForQr(cp);
                           setIsCheckpointQrModalOpen(true);
                         }}
-                        className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[11px] font-bold text-slate-900 dark:text-slate-300 dark:text-slate-200 flex items-center gap-1"
+                        className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-900 dark:text-slate-300 dark:text-slate-200 flex items-center gap-1"
                       >
                         <Printer className="w-3 h-3 text-indigo-500" />
                         <span>View / Print QR</span>
@@ -2066,9 +2066,9 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+                <table className="w-full text-left border-collapse text-sm">
                   <thead>
-                    <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${
+                    <tr className={`border-b text-[11px] font-bold uppercase tracking-wider ${
                       isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-white text-slate-500'
                     }`}>
                       <th className="py-3 px-4">Tour # & Plan</th>
@@ -2090,7 +2090,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                         <tr key={tour.id} className="hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-800/50 transition">
                           <td className="py-3 px-4">
                             <div className="font-bold text-black dark:text-white dark:text-slate-100">{tour.tourNumber}</div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[140px]">{tour.patrolPlanName}</div>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[140px]">{tour.patrolPlanName}</div>
                           </td>
                           <td className="py-3 px-4 text-slate-900 dark:text-slate-300 font-medium">
                             {tour.siteName}
@@ -2098,10 +2098,10 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                           <td className="py-3 px-4 text-slate-900 dark:text-slate-300">
                             {tour.assignedGuardName}
                           </td>
-                          <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-[11px]">
+                          <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs">
                             <div>{new Date(tour.actualStart || tour.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                             {tour.actualEnd && (
-                              <div className="text-[10px] text-slate-400">
+                              <div className="text-[11px] text-slate-400">
                                 to {new Date(tour.actualEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </div>
                             )}
@@ -2120,7 +2120,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex flex-wrap items-center gap-1">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
                                 tour.status === 'COMPLETED'
                                   ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
                                   : tour.status === 'IN_PROGRESS'
@@ -2213,13 +2213,13 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase ${
                         inc.severity === 'CRITICAL' ? 'bg-rose-600 text-white' :
                         inc.severity === 'HIGH' ? 'bg-amber-500 text-white' : 'bg-indigo-500 text-white'
                       }`}>
                         {inc.severity} SEVERITY
                       </span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
                         inc.status === 'RESOLVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
                       }`}>
                         {inc.status}
@@ -2249,13 +2249,13 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                       {(() => {
                         const sla = getComplaintSlaStatus(inc);
                         return (
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${sla.color}`}>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${sla.color}`}>
                             {sla.label}
                           </span>
                         );
                       })()}
                       {inc.slaDeadline && (
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                           Due: {new Date(inc.slaDeadline).toLocaleDateString()}
                         </span>
                       )}
@@ -2264,7 +2264,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
                   <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300">{inc.description}</p>
 
-                  <div className="text-[10px] text-slate-400 space-y-0.5 border-t border-slate-100 dark:border-slate-800 pt-2">
+                  <div className="text-[11px] text-slate-400 space-y-0.5 border-t border-slate-100 dark:border-slate-800 pt-2">
                     <p>Reported By: {inc.reportedByName} • Category: {inc.category}</p>
                     <p>Time: {new Date(inc.reportedAt).toLocaleString()}</p>
                   </div>
@@ -2363,20 +2363,20 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                 <div key={m.id} className={`p-4 rounded-2xl border ${isOverdue ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/20 shadow-md ring-1 ring-rose-500/50' : isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-3`}>
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                         m.movementType === 'INWARD' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300'
                       }`}>
                         {m.movementType} PASS #{m.gatePassNumber}
                       </span>
 
                       {isRgp && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
+                        <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
                           RGP (Returnable)
                         </span>
                       )}
 
                       {m.isAnomalyFlagged && (
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1 ${
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold flex items-center gap-1 ${
                           m.anomalySeverity === 'CRITICAL' ? 'bg-rose-600 text-white animate-pulse' :
                           m.anomalySeverity === 'HIGH' ? 'bg-amber-500 text-white' :
                           'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300'
@@ -2389,13 +2389,13 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
                     <div className="flex items-center gap-1.5">
                       {isOverdue && (
-                        <span className="animate-pulse px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-600 text-white shadow-sm flex items-center gap-1">
+                        <span className="animate-pulse px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-600 text-white shadow-sm flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3 inline" />
                           OVERDUE (Delayed Return)
                         </span>
                       )}
 
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
                         m.status === 'APPROVED' || m.status === 'RECEIVED' || m.status === 'RETURNED' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
                         m.status === 'REJECTED' ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300' :
                         m.status === 'DISPATCHED' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300' :
@@ -2409,7 +2409,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   <h4 className="text-xs font-bold text-black dark:text-white dark:text-slate-100">{m.materialDescription} ({m.quantity})</h4>
                   <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300">Supplier / Vendor: {m.supplierVendorName}</p>
 
-                  <div className="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2 space-y-0.5">
+                  <div className="text-[11px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2 space-y-0.5">
                     <p>Vehicle: {m.vehicleNumber || 'N/A'} • Driver: {m.driverName || 'N/A'} ({m.driverPhone || 'N/A'})</p>
                     {isRgp && m.expectedReturnDate && (
                       <p className={`font-semibold ${isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'}`}>
@@ -2418,7 +2418,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     )}
                     <p>Created: {new Date(m.createdAt).toLocaleString()}</p>
                     {m.isAnomalyFlagged && (
-                      <div className="mt-1 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-[10px] text-amber-900 dark:text-amber-200">
+                      <div className="mt-1 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-[11px] text-amber-900 dark:text-amber-200">
                         <p className="font-semibold">{m.anomalyReason}</p>
                         {m.anomalyOverridden && (
                           <p className="text-emerald-700 dark:text-emerald-400 mt-0.5 font-mono">
@@ -2433,13 +2433,13 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         onClick={() => handleUpdateMaterialStatus(m.id, 'APPROVED')}
-                        className="flex-1 py-1.5 rounded-xl bg-emerald-600 text-white text-[10px] font-bold shadow hover:bg-emerald-700 transition"
+                        className="flex-1 py-1.5 rounded-xl bg-emerald-600 text-white text-[11px] font-bold shadow hover:bg-emerald-700 transition"
                       >
                         Approve Pass
                       </button>
                       <button
                         onClick={() => handleUpdateMaterialStatus(m.id, 'REJECTED')}
-                        className="flex-1 py-1.5 rounded-xl bg-rose-600 text-white text-[10px] font-bold shadow hover:bg-rose-700 transition"
+                        className="flex-1 py-1.5 rounded-xl bg-rose-600 text-white text-[11px] font-bold shadow hover:bg-rose-700 transition"
                       >
                         Reject Pass
                       </button>
@@ -2451,14 +2451,14 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                       {m.movementType === 'OUTWARD' ? (
                         <button
                           onClick={() => handleUpdateMaterialStatus(m.id, 'DISPATCHED')}
-                          className="w-full py-1.5 rounded-xl bg-indigo-600 text-white text-[10px] font-bold shadow hover:bg-indigo-700 transition"
+                          className="w-full py-1.5 rounded-xl bg-indigo-600 text-white text-[11px] font-bold shadow hover:bg-indigo-700 transition"
                         >
                           Mark Dispatched from Gate
                         </button>
                       ) : (
                         <button
                           onClick={() => handleUpdateMaterialStatus(m.id, 'RECEIVED')}
-                          className="w-full py-1.5 rounded-xl bg-emerald-600 text-white text-[10px] font-bold shadow hover:bg-emerald-700 transition"
+                          className="w-full py-1.5 rounded-xl bg-emerald-600 text-white text-[11px] font-bold shadow hover:bg-emerald-700 transition"
                         >
                           Mark Received at Gate
                         </button>
@@ -2470,7 +2470,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     <div className="pt-1">
                       <button
                         onClick={() => handleUpdateMaterialStatus(m.id, 'RETURNED')}
-                        className="w-full py-1.5 rounded-xl bg-emerald-600 text-white text-[10px] font-bold shadow hover:bg-emerald-700 transition flex items-center justify-center gap-1.5"
+                        className="w-full py-1.5 rounded-xl bg-emerald-600 text-white text-[11px] font-bold shadow hover:bg-emerald-700 transition flex items-center justify-center gap-1.5"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Mark Returned at Gate (Inward Verification)</span>
@@ -2537,7 +2537,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
             {dailySiteLogs.filter(d => selectedSiteId === "ALL" || d.siteId === selectedSiteId).map(log => (
               <div key={log.id} className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-3`}>
                 <div className="flex items-center justify-between">
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase ${
                     log.logType === 'INSPECTION' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300'
                   }`}>
                     {log.logType || 'INSPECTION'} • {log.siteName || 'Site'}
@@ -2548,7 +2548,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                         REV v{log.version}
                       </span>
                     )}
-                    <span className="text-[10px] font-bold text-slate-400">{new Date(log.createdAt).toLocaleString()}</span>
+                    <span className="text-[11px] font-bold text-slate-400">{new Date(log.createdAt).toLocaleString()}</span>
                     {log.supervisorId === (userSession.employeeId || userSession.userId) && (
                       <button 
                         onClick={() => {
@@ -2600,7 +2600,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     {log.checklistData && log.checklistData.length > 0 && (
                       <div className="grid grid-cols-2 gap-1.5 pt-1">
                         {log.checklistData.map((item: any, idx: number) => (
-                          <div key={idx} className="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400 dark:text-slate-300">
+                          <div key={idx} className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300">
                             <span className={item.passed ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
                               {item.passed ? '✓' : '✗'}
                             </span>
@@ -2610,7 +2610,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                       </div>
                     )}
                     <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300 pt-1">{log.notes}</p>
-                    <p className="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2">
+                    <p className="text-[11px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2">
                       Inspector: {log.supervisorName || log.inspectorId} • On Duty: {log.guardsCountOnDuty || 0} Guards
                     </p>
                   </div>
@@ -2620,14 +2620,14 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     <div className="text-xs font-semibold text-slate-900 dark:text-slate-300">
                       Outgoing: <span className="font-bold text-black dark:text-white dark:text-slate-100">{log.supervisorName || 'Duty Supervisor'}</span> → Incoming: <span className="font-bold text-indigo-600">{log.inventoryStatus?.incomingSupervisorName || log.incomingSupervisorId || 'Next Supervisor'}</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-1 text-[11px] text-slate-600 dark:text-slate-400 dark:text-slate-300 pt-1">
+                    <div className="grid grid-cols-2 gap-1 text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300 pt-1">
                       <div>Master Keys: <span className="font-bold text-emerald-600">{log.inventoryStatus?.keysTransferred ? 'Transferred' : 'Pending'}</span></div>
                       <div>Walkie-Talkies: <span className="font-bold text-emerald-600">{log.inventoryStatus?.radiosTransferred ? 'Transferred' : 'Pending'}</span></div>
                       <div>Logbooks: <span className="font-bold text-emerald-600">{log.inventoryStatus?.logbooksTransferred ? 'Verified' : 'Pending'}</span></div>
                       <div>Muster Count: <span className="font-bold text-emerald-600">{log.inventoryStatus?.musterVerified ? 'Verified' : 'Pending'}</span></div>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300 pt-1">{log.notes}</p>
-                    <p className="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2">
+                    <p className="text-[11px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2">
                       Handover Status: <span className="font-bold text-emerald-600">{log.status || 'COMPLETED'}</span>
                     </p>
                   </div>
@@ -2667,7 +2667,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
             <form onSubmit={handleSaveCheckpoint} className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Site</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Site</label>
                 <select
                   value={checkpointForm.siteId || ''}
                   onChange={e => setCheckpointForm({ ...checkpointForm, siteId: e.target.value })}
@@ -2681,7 +2681,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
               <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-2">
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Checkpoint Name</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Checkpoint Name</label>
                   <input
                     type="text"
                     value={checkpointForm.checkpointName || ''}
@@ -2693,7 +2693,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Seq #</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Seq #</label>
                   <input
                     type="number"
                     value={checkpointForm.sequenceOrder ?? 1}
@@ -2705,7 +2705,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Location Notes</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Location Notes</label>
                 <input
                   type="text"
                   value={checkpointForm.locationDescription || ''}
@@ -2718,7 +2718,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               {/* GPS Geofence Binding */}
               <div className="p-3 rounded-2xl bg-white dark:bg-slate-950 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
                     <Compass className="w-3 h-3 text-indigo-500" />
                     <span>GPS Coordinates & Radius</span>
                   </span>
@@ -2740,7 +2740,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                         );
                       }
                     }}
-                    className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                    className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
                   >
                     <Navigation className="w-2.5 h-2.5" />
                     <span>Detect Device GPS</span>
@@ -2816,7 +2816,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
             <form onSubmit={handleSaveIncident} className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Incident Title</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Incident Title</label>
                 <input
                   type="text"
                   value={incidentForm.title}
@@ -2828,7 +2828,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Record Type</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Record Type</label>
                 <select
                   value={incidentForm.type}
                   onChange={e => setIncidentForm({ ...incidentForm, type: e.target.value as any })}
@@ -2842,7 +2842,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
               {incidentForm.type === 'BBS_OBSERVATION' && (
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Behavior Category (BBS)</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Behavior Category (BBS)</label>
                   <input
                     type="text"
                     value={incidentForm.behaviorCategory || ''}
@@ -2855,7 +2855,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               )}
               {incidentForm.type === 'COMPLAINT' && (
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">SLA Deadline</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">SLA Deadline</label>
                   <input
                     type="date"
                     value={incidentForm.slaDeadline || ''}
@@ -2867,7 +2867,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Category</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Category</label>
                   <select
                     value={incidentForm.category}
                     onChange={e => setIncidentForm({ ...incidentForm, category: e.target.value as any })}
@@ -2882,7 +2882,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Severity</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Severity</label>
                   <select
                     value={incidentForm.severity}
                     onChange={e => setIncidentForm({ ...incidentForm, severity: e.target.value as any })}
@@ -2897,7 +2897,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Description</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Description</label>
                 <textarea
                   value={incidentForm.description}
                   onChange={e => setIncidentForm({ ...incidentForm, description: e.target.value })}
@@ -2908,7 +2908,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Attach Evidence Photo</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Attach Evidence Photo</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -2940,7 +2940,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
             <form onSubmit={handleCheckInVisitor} className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Visitor Full Name</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Visitor Full Name</label>
                 <input
                   type="text"
                   value={visitorForm.visitorName}
@@ -2953,7 +2953,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Phone</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Phone</label>
                   <input
                     type="text"
                     value={visitorForm.visitorPhone}
@@ -2964,7 +2964,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Company</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Company</label>
                   <input
                     type="text"
                     value={visitorForm.visitorCompany}
@@ -2994,7 +2994,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
             <form onSubmit={handleSaveMaterialPass} className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Site</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Site</label>
                 <select
                   value={materialForm.siteId || ''}
                   onChange={e => setMaterialForm({ ...materialForm, siteId: e.target.value })}
@@ -3005,7 +3005,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Movement Type</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Movement Type</label>
                 <select
                   value={materialForm.movementType}
                   onChange={e => setMaterialForm({ ...materialForm, movementType: e.target.value as any })}
@@ -3019,7 +3019,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               {materialForm.movementType === 'OUTWARD' && (
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Gate Pass Classification</label>
+                    <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Gate Pass Classification</label>
                     <select
                       value={materialForm.passCategory}
                       onChange={e => setMaterialForm({ ...materialForm, passCategory: e.target.value as any })}
@@ -3031,7 +3031,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   </div>
                   {materialForm.passCategory === 'RETURNABLE' && (
                     <div>
-                      <label className="text-[10px] font-bold uppercase text-rose-500">Expected Return Date & Time *</label>
+                      <label className="text-[11px] font-bold uppercase text-rose-500">Expected Return Date & Time *</label>
                       <input
                         type="datetime-local"
                         value={materialForm.expectedReturnDate}
@@ -3045,7 +3045,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               )}
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Material Description</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Material Description</label>
                 <input
                   type="text"
                   value={materialForm.materialDescription}
@@ -3058,7 +3058,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Quantity</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Quantity</label>
                   <input
                     type="text"
                     value={materialForm.quantity}
@@ -3069,7 +3069,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Vehicle Number</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Vehicle Number</label>
                   <input
                     type="text"
                     value={materialForm.vehicleNumber}
@@ -3081,7 +3081,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Supplier / Vendor Name</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Supplier / Vendor Name</label>
                 <input
                   type="text"
                   value={materialForm.supplierVendorName}
@@ -3093,7 +3093,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Driver Name</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Driver Name</label>
                   <input
                     type="text"
                     value={materialForm.driverName}
@@ -3103,7 +3103,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Driver Phone / Mobile</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Driver Phone / Mobile</label>
                   <input
                     type="tel"
                     value={materialForm.driverPhone}
@@ -3127,10 +3127,10 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                     }`} />
                     <div className="space-y-1 text-xs">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded-full bg-rose-600 text-white">
+                        <span className="font-bold uppercase tracking-wider text-[11px] px-2 py-0.5 rounded-full bg-rose-600 text-white">
                           ANOMALY FLAGGED: {vehicleAnomalyResult.anomalyType}
                         </span>
-                        <span className="text-[10px] font-semibold">
+                        <span className="text-[11px] font-semibold">
                           Today's Trip #{vehicleAnomalyResult.todayTripCount}
                         </span>
                       </div>
@@ -3140,7 +3140,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
                   {/* Recent Trips Log */}
                   {vehicleAnomalyResult.recentTrips.length > 0 && (
-                    <div className="bg-white/60 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 text-[11px]">
+                    <div className="bg-white/60 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 text-xs">
                       <p className="font-bold text-slate-700 dark:text-slate-300">Previous Gate Passes Today:</p>
                       {vehicleAnomalyResult.recentTrips.map((trip, idx) => (
                         <div key={trip.id || idx} className="flex justify-between items-center text-slate-600 dark:text-slate-400">
@@ -3160,7 +3160,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                         onChange={e => setOverrideVehicleAnomaly(e.target.checked)}
                         className="w-4 h-4 text-amber-600 rounded"
                       />
-                      <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                         Supervisor Authorization Override (Acknowledge high frequency anomaly)
                       </span>
                     </label>
@@ -3195,7 +3195,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-black dark:text-white dark:text-slate-100">Visitor Check-Out & Pass Return</h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Validate physical badge surrender before departure.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Validate physical badge surrender before departure.</p>
               </div>
               <button onClick={() => { setIsVisitorCheckoutModalOpen(false); setSelectedVisitorForCheckout(null); }} className="opacity-60 hover:opacity-100">
                 <X className="w-4 h-4" />
@@ -3223,7 +3223,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Check-Out Notes (Optional)</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Check-Out Notes (Optional)</label>
                 <input
                   type="text"
                   value={visitorCheckoutForm.notes}
@@ -3253,14 +3253,14 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                 <h3 className="text-sm font-bold text-black dark:text-white dark:text-slate-100">
                   {editingLog ? 'Amend Site Inspection' : 'New Site Facility Inspection'}
                 </h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Perform standard 4-point facility security audit.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Perform standard 4-point facility security audit.</p>
               </div>
               <button onClick={() => setIsInspectionModalOpen(false)} className="opacity-60 hover:opacity-100"><X className="w-4 h-4" /></button>
             </div>
 
             <form onSubmit={handleSaveInspection} className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Site</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Site</label>
                 <select
                   value={inspectionForm.siteId || ''}
                   onChange={e => setInspectionForm({ ...inspectionForm, siteId: e.target.value })}
@@ -3273,7 +3273,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Inspection Date</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Inspection Date</label>
                   <input
                     type="date"
                     value={inspectionForm.date}
@@ -3282,7 +3282,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Compliance Score (%)</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Compliance Score (%)</label>
                   <input
                     type="number"
                     min={0}
@@ -3295,7 +3295,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               </div>
 
               <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Audit Checklist Items</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Audit Checklist Items</label>
                 <div className="space-y-1.5 text-xs">
                   <label className="flex items-center gap-2">
                     <input type="checkbox" checked={inspectionForm.accessControlOk} onChange={e => setInspectionForm({ ...inspectionForm, accessControlOk: e.target.checked })} />
@@ -3317,7 +3317,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Audit Notes / Corrective Actions</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Audit Notes / Corrective Actions</label>
                 <textarea
                   value={inspectionForm.notes}
                   onChange={e => setInspectionForm({ ...inspectionForm, notes: e.target.value })}
@@ -3348,14 +3348,14 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   {editingLog ? 'Amend Shift Handover' : 'Shift Handover Register'}
                 </h3>
 
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Transfer custody of keys, radios, and site logs.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Transfer custody of keys, radios, and site logs.</p>
               </div>
               <button onClick={() => setIsHandoverModalOpen(false)} className="opacity-60 hover:opacity-100"><X className="w-4 h-4" /></button>
             </div>
 
             <form onSubmit={handleSaveHandover} className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Site</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Site</label>
                 <select
                   value={handoverForm.siteId || ''}
                   onChange={e => setHandoverForm({ ...handoverForm, siteId: e.target.value })}
@@ -3367,7 +3367,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Incoming Duty Supervisor</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Incoming Duty Supervisor</label>
                 <select
                   value={handoverForm.incomingSupervisorId || ''}
                   onChange={e => setHandoverForm({ ...handoverForm, incomingSupervisorId: e.target.value })}
@@ -3381,7 +3381,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               </div>
 
               <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Custody Transfers & Checks</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Custody Transfers & Checks</label>
                 <div className="space-y-1.5 text-xs">
                   <label className="flex items-center gap-2">
                     <input type="checkbox" checked={handoverForm.keysTransferred} onChange={e => setHandoverForm({ ...handoverForm, keysTransferred: e.target.checked })} />
@@ -3403,7 +3403,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Handover Remarks & Outstanding Instructions</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Handover Remarks & Outstanding Instructions</label>
                 <textarea
                   value={handoverForm.notes}
                   onChange={e => setHandoverForm({ ...handoverForm, notes: e.target.value })}

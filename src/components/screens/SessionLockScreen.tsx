@@ -63,7 +63,7 @@ export const SessionLockScreen: React.FC<SessionLockScreenProps> = ({
           <h2 className="text-xl font-bold text-white">{userSession.fullName}</h2>
           <p className="text-xs text-indigo-400 font-mono mt-0.5">{userSession.employeeId} • {userSession.role}</p>
           {activeCompany && (
-            <p className="text-[11px] text-slate-400 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               {activeCompany.brandName} ({activeCompany.companyId})
             </p>
           )}

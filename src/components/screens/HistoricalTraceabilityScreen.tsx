@@ -343,7 +343,7 @@ export const HistoricalTraceabilityScreen: React.FC<HistoricalTraceabilityScreen
                         <div className="font-bold text-slate-900 dark:text-white">
                           {log.actor || log.performedBy || log.actorEmail || 'System'}
                         </div>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono">
+                        <span className="text-[11px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono">
                           {log.role || 'USER'}
                         </span>
                       </td>
@@ -352,11 +352,11 @@ export const HistoricalTraceabilityScreen: React.FC<HistoricalTraceabilityScreen
                           {log.module || log.targetType || 'SYSTEM'}
                         </div>
                         {log.entityId && (
-                          <span className="text-[10px] font-mono text-indigo-500">ID: {log.entityId}</span>
+                          <span className="text-[11px] font-mono text-indigo-500">ID: {log.entityId}</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border font-mono ${
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border font-mono ${
                           ['CREATE', 'POST', 'APPROVE'].includes(log.action)
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                             : ['UPDATE', 'TRANSFER', 'EDIT'].includes(log.action)

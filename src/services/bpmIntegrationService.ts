@@ -1,7 +1,7 @@
 import { BpmApprovalInstance } from '../types/bpm';
 import { FirestoreService } from './firestoreService';
 import { db } from '../firebase';
-import { doc, getDoc, updateDoc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, collection, getDocs, query, where, deleteDoc } from 'firebase/firestore';
 
 export class BpmIntegrationService {
   /**
@@ -159,6 +159,34 @@ export class BpmIntegrationService {
         if (instance.transactionType === 'JOB_REQUISITION_APPROVAL') {
           const reqRef = doc(db, 'companies', instance.companyId, 'jobRequisitions', instance.sourceRecordId);
           await this.performWrite(reqRef, { status: 'APPROVED', openingDate: now, updatedAt: now }, transaction);
+          
+          // Sync public-safe job posting to root /publicJobPostings
+          const reqSnap = transaction ? await transaction.get(reqRef) : await getDoc(reqRef);
+          if (reqSnap.exists()) {
+            const reqData = reqSnap.data() as any;
+            if (reqData.isInternalOnly !== true) {
+              const publicReqRef = doc(db, 'publicJobPostings', instance.sourceRecordId);
+              const publicPosting = {
+                id: instance.sourceRecordId,
+                companyId: instance.companyId,
+                companyName: reqData.companyName || 'Enterprise Partner',
+                jobTitle: reqData.title || reqData.jobTitle || 'Open Position',
+                departmentName: reqData.department || reqData.departmentName || 'Operations',
+                siteName: reqData.siteName || '',
+                locationCity: reqData.locationCity || reqData.location || 'On-site',
+                employmentType: reqData.employmentType || 'FULL_TIME',
+                experienceRequired: reqData.experienceRequired || '1-3 Years',
+                jobDescription: reqData.jobDescription || reqData.description || 'Exciting career opportunity.',
+                skills: Array.isArray(reqData.skills) ? reqData.skills : [],
+                openPositions: Number(reqData.openPositions || reqData.openings) || 1,
+                status: 'PUBLISHED',
+                publishedAt: reqData.publishedAt || now,
+                updatedAt: now,
+                closingDate: reqData.closingDate || null
+              };
+              await this.performWrite(publicReqRef, publicPosting, transaction, 'SET');
+            }
+          }
         } else if (instance.transactionType === 'SELECTION_APPROVAL') {
           const selRef = doc(db, 'companies', instance.companyId, 'selections', instance.sourceRecordId);
           const selSnap = transaction ? await transaction.get(selRef) : await getDoc(selRef);
@@ -173,11 +201,20 @@ export class BpmIntegrationService {
             if (reqSnap.exists()) {
               const reqData = reqSnap.data() as any;
               const newFilled = (reqData.filledPositions || 0) + 1;
+              const isFilled = newFilled >= reqData.openPositions;
               await this.performWrite(jobReqRef, { 
                 filledPositions: newFilled,
-                status: newFilled >= reqData.openPositions ? 'FILLED' : 'OPEN',
+                status: isFilled ? 'FILLED' : 'OPEN',
                 updatedAt: now 
               }, transaction);
+
+              if (isFilled) {
+                // Remove filled requisition from public portal
+                const publicReqRef = doc(db, 'publicJobPostings', selection.requisitionId);
+                try {
+                  await deleteDoc(publicReqRef);
+                } catch (e) { /* ignore */ }
+              }
             }
           }
         }
@@ -214,6 +251,10 @@ export class BpmIntegrationService {
         if (instance.transactionType === 'JOB_REQUISITION_APPROVAL') {
           const reqRejectRef = doc(db, 'companies', instance.companyId, 'jobRequisitions', instance.sourceRecordId);
           await this.performWrite(reqRejectRef, { status: 'REJECTED', statusReason: reason || 'Rejected via BPM', updatedAt: now }, transaction);
+          const publicReqRef = doc(db, 'publicJobPostings', instance.sourceRecordId);
+          try {
+            await deleteDoc(publicReqRef);
+          } catch (e) { /* ignore */ }
         } else if (instance.transactionType === 'SELECTION_APPROVAL') {
           const selRef = doc(db, 'companies', instance.companyId, 'selections', instance.sourceRecordId);
           const selSnap = transaction ? await transaction.get(selRef) : await getDoc(selRef);

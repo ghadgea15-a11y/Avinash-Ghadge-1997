@@ -66,6 +66,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
   // Data Collections
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
+  const [leaves, setLeaves] = useState<any[]>([]);
   const [salarySlips, setSalarySlips] = useState<SalarySlipRecord[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItemRecord[]>([]);
   const [assets, setAssets] = useState<AssetRecord[]>([]);
@@ -93,6 +94,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
     const unsubEmp = FirestoreService.subscribeToEmployees(userSession, companyId, setEmployees);
     const unsubAtt = FirestoreService.subscribeToAttendance(userSession, companyId, setAttendanceLogs);
+    const unsubLea = FirestoreService.subscribeToLeaveRequests(userSession, companyId, setLeaves);
     const unsubInv = FirestoreService.subscribeToInventoryItems(userSession, companyId, setInventoryItems);
     const unsubAst = FirestoreService.subscribeToAssets(userSession, companyId, setAssets);
     const unsubSit = FirestoreService.subscribeToSites(companyId, setSites);
@@ -108,6 +110,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
     return () => {
       unsubEmp();
       unsubAtt();
+      unsubLea();
       unsubInv();
       unsubAst();
       unsubSit();
@@ -281,25 +284,43 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
 
     const rows = filteredEmployees.map((emp, idx) => {
       let worked = 0;
-      let leaves = 0;
-      let weeklyOff = 4;
-
+      let leavesCount = 0;
+      let weeklyOff = 0;
+      
+      const empWeeklyOff = (emp as any).weeklyOff || (emp as any).weeklyOffDays || [0];
+      
       const dayMarks = daysArray.map(day => {
+        const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayOfWeek = new Date(selectedYear, selectedMonth - 1, day).getDay();
+        const isDayOff = empWeeklyOff.includes(dayOfWeek);
+        
         const log = monthlyAttendanceMap.get(`${emp.id}_${day}`);
+        const leave = leaves.find(l => l.employeeId === emp.id && l.status === 'APPROVED' && l.startDate <= dateStr && l.endDate >= dateStr);
+        
         if (log) {
           if (log.status === 'PRESENT') { worked++; return 'P'; }
           if (log.status === 'HALFDAY' || (log.status as string) === 'HALF_DAY') { worked += 0.5; return 'HD'; }
-          if (log.status === 'ON_LEAVE') { leaves++; return 'L'; }
-          if (log.status === 'ABSENT') return 'A';
+          if (log.status === 'ON_LEAVE') { leavesCount++; return 'L'; }
+          if (log.status === 'ABSENT') {
+            if (leave && leave.leaveType !== 'UNPAID' && leave.leaveType !== 'LWP') { leavesCount++; return 'L'; }
+            return 'A'; 
+          }
         }
-        // Default estimate based on calendar day
-        const dayOfWeek = new Date(selectedYear, selectedMonth - 1, day).getDay();
-        if (dayOfWeek === 0) return 'WO';
-        worked++;
-        return 'P';
+        
+        if (isDayOff) {
+          weeklyOff++;
+          return 'WO';
+        }
+        
+        if (leave && leave.leaveType !== 'UNPAID' && leave.leaveType !== 'LWP') {
+          leavesCount++;
+          return 'L';
+        }
+        
+        return '-';
       });
 
-      const totalPayDays = Math.min(daysInSelectedMonth, worked + leaves + weeklyOff);
+      const totalPayDays = Math.min(daysInSelectedMonth, worked + leavesCount + weeklyOff);
       const estGross = Math.round(totalPayDays * 650);
       const netPay = Math.round(estGross * 0.88);
 
@@ -312,7 +333,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
         emp.departmentId || 'Operations',
         ...dayMarks,
         worked,
-        leaves,
+        leavesCount,
         weeklyOff,
         totalPayDays,
         estGross,
@@ -469,7 +490,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                 <span className="text-2xl sm:text-3xl font-black text-black dark:text-white">{kpis.activeStaff}</span>
                 <span className="text-xs font-medium text-emerald-600">Active Personnel</span>
               </div>
-              <p className="text-[11px] text-slate-400">Total Registered: {kpis.totalStaff} staff across {sites.length} sites</p>
+              <p className="text-xs text-slate-400">Total Registered: {kpis.totalStaff} staff across {sites.length} sites</p>
             </div>
 
             {/* Attendance Rate */}
@@ -501,7 +522,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                 <span className="text-2xl sm:text-3xl font-black text-black dark:text-white">₹{(kpis.totalGrossLiability / 1000).toFixed(1)}k</span>
                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Gross Liability</span>
               </div>
-              <p className="text-[11px] text-slate-400">Net Disbursement: ₹{(kpis.totalNetDisbursement / 1000).toFixed(1)}k</p>
+              <p className="text-xs text-slate-400">Net Disbursement: ₹{(kpis.totalNetDisbursement / 1000).toFixed(1)}k</p>
             </div>
 
             {/* Security Compliance & Patrol */}
@@ -516,7 +537,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                 <span className="text-2xl sm:text-3xl font-black text-black dark:text-white">{kpis.patrolTourRate}%</span>
                 <span className="text-xs font-medium text-emerald-600">Patrols On-Time</span>
               </div>
-              <p className="text-[11px] text-slate-400">Incidents Resolved: {kpis.incidentResolutionRate}%</p>
+              <p className="text-xs text-slate-400">Incidents Resolved: {kpis.incidentResolutionRate}%</p>
             </div>
 
           </div>
@@ -535,7 +556,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-sm">
                   <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
                     <tr>
                       <th className="p-3">Site / Client Name</th>
@@ -557,7 +578,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                         <tr key={site.id} className="hover:bg-white dark:bg-slate-950/50 dark:hover:bg-slate-800/30">
                           <td className="p-3 font-semibold text-black dark:text-white dark:text-slate-100">
                             <div>{site.name}</div>
-                            <div className="text-[10px] text-slate-400">{site.clientName || 'Commercial Post'}</div>
+                            <div className="text-[11px] text-slate-400">{site.clientName || 'Commercial Post'}</div>
                           </td>
                           <td className="p-3 font-mono font-bold">{deployedCount} Guards</td>
                           <td className="p-3 font-mono text-emerald-600 font-bold">{presentCount}</td>
@@ -571,11 +592,11 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                           </td>
                           <td className="p-3">
                             {siteIncidents > 0 ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 border border-rose-200">
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 border border-rose-200">
                                 {siteIncidents} Open Alert
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border border-emerald-200">
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border border-emerald-200">
                                 Clear / Normal
                               </span>
                             )}
@@ -604,7 +625,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                     <div className="text-xs font-bold text-black dark:text-white group-hover:text-indigo-600">
                       Form-T (Muster Roll & Wage Register)
                     </div>
-                    <div className="text-[10px] text-slate-400">Combined labor register (Central Rules)</div>
+                    <div className="text-[11px] text-slate-400">Combined labor register (Central Rules)</div>
                   </div>
                   <ChevronDown className="w-4 h-4 -rotate-90 text-slate-400 group-hover:text-indigo-600" />
                 </button>
@@ -617,7 +638,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                     <div className="text-xs font-bold text-black dark:text-white group-hover:text-emerald-600">
                       Bank NEFT / RTGS Salary Sheet
                     </div>
-                    <div className="text-[10px] text-slate-400">Single-batch direct disbursement advice</div>
+                    <div className="text-[11px] text-slate-400">Single-batch direct disbursement advice</div>
                   </div>
                   <Download className="w-4 h-4 text-emerald-500" />
                 </button>
@@ -630,7 +651,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                     <div className="text-xs font-bold text-black dark:text-white group-hover:text-purple-600">
                       Monthly Attendance CSV Export
                     </div>
-                    <div className="text-[10px] text-slate-400">31-day presence matrix for audit</div>
+                    <div className="text-[11px] text-slate-400">31-day presence matrix for audit</div>
                   </div>
                   <Download className="w-4 h-4 text-purple-500" />
                 </button>
@@ -641,7 +662,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                   <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
                   Statutory Compliance Ready
                 </span>
-                <p className="text-[11px] leading-relaxed">
+                <p className="text-xs leading-relaxed">
                   All muster rolls, PF ECR formats and overtime calculations strictly adhere to the Central & State Labour Regulation and Abolition Acts.
                 </p>
               </div>
@@ -708,14 +729,14 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                 {selectedStatutoryForm === 'FORM_32' && 'FORM 32 - HEALTH, SAFETY & SHIFT DUTY MUSTER ROLL'}
                 {selectedStatutoryForm === 'MUSTER_2' && 'MUSTER 2 - DAILY SECURITY GUARD SITE DEPLOYMENT LOG'}
               </div>
-              <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
                 Month & Year of Return: {selectedMonth.toString().padStart(2, '0')}/{selectedYear} • Duty Site: {selectedSiteId === 'ALL' ? 'All Operations Units' : selectedSiteId}
               </p>
             </div>
 
             {/* 31-Day Attendance & Wage Grid */}
             <div className="overflow-x-auto border border-slate-400">
-              <table className="w-full text-left text-[10px] border-collapse">
+              <table className="w-full text-left text-[11px] border-collapse">
                 <thead className="bg-slate-100 font-bold border-b border-slate-400">
                   <tr>
                     <th className="p-1.5 border-r border-slate-300 w-8 text-center">Sr</th>
@@ -739,23 +760,44 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                   {filteredEmployees.slice(0, 30).map((emp, idx) => {
                     let present = 0;
                     let absent = 0;
-                    let weeklyOff = 4;
+                    let weeklyOff = 0;
+                    let paidLeaves = 0;
+                    
+                    const empWeeklyOff = (emp as any).weeklyOff || (emp as any).weeklyOffDays || [0];
 
                     const dayCols = daysArray.map(day => {
+                      const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                      const dayOfWeek = new Date(selectedYear, selectedMonth - 1, day).getDay();
+                      const isDayOff = empWeeklyOff.includes(dayOfWeek);
+                      
                       const log = monthlyAttendanceMap.get(`${emp.id}_${day}`);
+                      const leave = leaves.find(l => l.employeeId === emp.id && l.status === 'APPROVED' && l.startDate <= dateStr && l.endDate >= dateStr);
+                      
                       if (log) {
                         if (log.status === 'PRESENT') { present++; return 'P'; }
                         if (log.status === 'HALFDAY' || (log.status as string) === 'HALF_DAY') { present += 0.5; return 'HD'; }
-                        if (log.status === 'ABSENT') { absent++; return 'A'; }
-                        if (log.status === 'ON_LEAVE') return 'L';
+                        if (log.status === 'ON_LEAVE') { paidLeaves++; return 'L'; }
+                        if (log.status === 'ABSENT') { 
+                          if (leave && leave.leaveType !== 'UNPAID' && leave.leaveType !== 'LWP') { paidLeaves++; return 'L'; }
+                          absent++; return 'A'; 
+                        }
                       }
-                      const dayOfWeek = new Date(selectedYear, selectedMonth - 1, day).getDay();
-                      if (dayOfWeek === 0) return 'WO';
-                      present++;
-                      return 'P';
+                      
+                      if (isDayOff) {
+                        weeklyOff++;
+                        return 'WO';
+                      }
+                      
+                      if (leave && leave.leaveType !== 'UNPAID' && leave.leaveType !== 'LWP') {
+                        paidLeaves++;
+                        return 'L';
+                      }
+                      
+                      absent++;
+                      return '-';
                     });
 
-                    const payDays = Math.min(daysInSelectedMonth, present + weeklyOff);
+                    const payDays = Math.min(daysInSelectedMonth, present + paidLeaves + weeklyOff);
                     const gross = payDays * 650;
                     const net = Math.round(gross * 0.88);
 
@@ -797,7 +839,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                 <div className="h-8 border-b border-dashed border-slate-600"></div>
                 <div>
                   <div className="font-bold">{userSession.fullName}</div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Prepared by: Muster Incharge / Field Officer</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 uppercase">Prepared by: Muster Incharge / Field Officer</div>
                 </div>
               </div>
 
@@ -805,7 +847,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                 <div className="h-8 border-b border-dashed border-slate-600"></div>
                 <div>
                   <div className="font-bold">{activeCompany.adminName || 'Authorized Signatory'}</div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Employer / Factory Manager Signature & Stamp</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 uppercase">Employer / Factory Manager Signature & Stamp</div>
                 </div>
               </div>
             </div>
@@ -857,7 +899,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-sm">
                 <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="p-3">Employee</th>
@@ -873,7 +915,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                     <tr key={emp.id} className="hover:bg-white dark:bg-slate-950/50 dark:hover:bg-slate-800/30">
                       <td className="p-3 font-semibold text-black dark:text-white dark:text-slate-100">
                         <div>{emp.firstName} {emp.lastName}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">{emp.employeeId || emp.id}</div>
+                        <div className="text-[11px] text-slate-400 font-mono">{emp.employeeId || emp.id}</div>
                       </td>
                       <td className="p-3">{sites.find(s => s.id === emp.assignedSiteId)?.name || 'HQ Post'}</td>
                       <td className="p-3 font-mono">{emp.shiftId || emp.shiftId || 'SHIFT-A (08:00 - 20:00)'}</td>
@@ -898,19 +940,19 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
               <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Gross Wage Liability</span>
               <div className="text-2xl font-black text-black dark:text-white">₹{kpis.totalGrossLiability.toLocaleString()}</div>
-              <p className="text-[11px] text-slate-400">Total earned salaries</p>
+              <p className="text-xs text-slate-400">Total earned salaries</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
               <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">PF ECR Contribution</span>
               <div className="text-2xl font-black text-indigo-600">₹{kpis.totalPfDeduction.toLocaleString()}</div>
-              <p className="text-[11px] text-slate-400">Employee 12% + Employer Match</p>
+              <p className="text-xs text-slate-400">Employee 12% + Employer Match</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
               <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">ESIC Return Liability</span>
               <div className="text-2xl font-black text-emerald-600">₹{kpis.totalEsicDeduction.toLocaleString()}</div>
-              <p className="text-[11px] text-slate-400">Statutory Health Contribution</p>
+              <p className="text-xs text-slate-400">Statutory Health Contribution</p>
             </div>
           </div>
 
@@ -930,7 +972,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-sm">
                 <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="p-3">Staff Name</th>
@@ -952,7 +994,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                       <td className="p-3 font-bold text-slate-900 dark:text-slate-300">{(emp as any).ifscCode || 'HDFC000182'}</td>
                       <td className="p-3 font-bold text-emerald-600">₹16,420</td>
                       <td className="p-3 font-sans">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600">
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600">
                           Ready for Batch
                         </span>
                       </td>
@@ -974,26 +1016,26 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
               <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Security Incidents</span>
               <div className="text-2xl font-black text-black dark:text-white">{incidents.length}</div>
-              <p className="text-[11px] text-slate-400">Total logged across sites</p>
+              <p className="text-xs text-slate-400">Total logged across sites</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
               <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Visitor Gate Passes</span>
               <div className="text-2xl font-black text-sky-600">{visitorLogs.length}</div>
-              <p className="text-[11px] text-slate-400">Checked in / verified</p>
+              <p className="text-xs text-slate-400">Checked in / verified</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
               <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Material Passes (In/Out)</span>
               <div className="text-2xl font-black text-purple-600">{materialLogs.length}</div>
-              <p className="text-[11px] text-slate-400">Reconciled gate movements</p>
+              <p className="text-xs text-slate-400">Reconciled gate movements</p>
             </div>
           </div>
 
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <h3 className="text-sm font-bold text-black dark:text-white">Recent Security Incident & Resolution Log</h3>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-sm">
                 <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="p-3">Incident Title</th>
@@ -1016,7 +1058,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                         <td className="p-3 font-bold text-black dark:text-white dark:text-slate-100">{inc.title}</td>
                         <td className="p-3">{inc.siteName || 'HQ Post'}</td>
                         <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                             inc.severity === 'CRITICAL' || inc.severity === 'HIGH'
                               ? 'bg-rose-50 text-rose-600 border border-rose-200'
                               : 'bg-amber-50 text-amber-600 border border-amber-200'
@@ -1026,7 +1068,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                         </td>
                         <td className="p-3">{inc.reportedByName}</td>
                         <td className="p-3">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600">
+                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-600">
                             {inc.status}
                           </span>
                         </td>
@@ -1049,13 +1091,13 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
               <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Total Asset Book Value</span>
               <div className="text-2xl font-black text-black dark:text-white">₹{kpis.totalAssetValue.toLocaleString()}</div>
-              <p className="text-[11px] text-slate-400">{assets.length} registered equipment items</p>
+              <p className="text-xs text-slate-400">{assets.length} registered equipment items</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
               <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Low Stock SKUs</span>
               <div className="text-2xl font-black text-amber-500">{kpis.lowStockCount}</div>
-              <p className="text-[11px] text-slate-400">Items below reorder point</p>
+              <p className="text-xs text-slate-400">Items below reorder point</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
@@ -1063,7 +1105,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
               <div className="text-2xl font-black text-emerald-600">
                 ₹{inventoryItems.reduce((acc, curr) => acc + ((curr.currentStock || 0) * (curr.unitCost || 0)), 0).toLocaleString()}
               </div>
-              <p className="text-[11px] text-slate-400">{inventoryItems.length} inventory categories</p>
+              <p className="text-xs text-slate-400">{inventoryItems.length} inventory categories</p>
             </div>
           </div>
 
@@ -1084,7 +1126,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-sm">
                 <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="p-3">Asset Code</th>
@@ -1103,7 +1145,7 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({
                       <td className="p-3">{asset.category}</td>
                       <td className="p-3 font-semibold">{asset.assignedEmployeeName || 'Central Store'}</td>
                       <td className="p-3">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600">
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-600">
                           {asset.condition}
                         </span>
                       </td>

@@ -253,10 +253,10 @@ export const ThresholdRuleManager: React.FC<ThresholdRuleManagerProps> = ({ sess
                   <div className="flex items-center gap-2">
                     <h4 className="font-bold text-sm text-black dark:text-white">{rule.ruleName}</h4>
                     {!rule.active && (
-                      <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[10px] font-bold uppercase">Disabled</span>
+                      <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[11px] font-bold uppercase">Disabled</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
                     <span className="font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-tighter">{rule.module}</span>
                     <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
                     <span>{rule.transactionType}</span>
@@ -268,14 +268,14 @@ export const ThresholdRuleManager: React.FC<ThresholdRuleManagerProps> = ({ sess
                 <div className="flex items-center gap-4">
                   <div className="bg-slate-50 dark:bg-slate-950 px-4 py-2 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-3">
                     <div className="text-center">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Logic</p>
+                      <p className="text-[11px] text-slate-400 font-bold uppercase">Logic</p>
                       <p className="text-xs font-mono font-bold text-black dark:text-slate-200">
                         {rule.field} {rule.operator} {rule.thresholdValue}
                       </p>
                     </div>
                     <ArrowRight className="w-4 h-4 text-slate-300" />
                     <div className="text-center">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Target Workflow</p>
+                      <p className="text-[11px] text-slate-400 font-bold uppercase">Target Workflow</p>
                       <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
                         {workflows.find(w => w.workflowId === rule.workflowId || w.id === rule.workflowId)?.workflowName || rule.workflowId}
                       </p>
@@ -394,7 +394,7 @@ export const ThresholdRuleManager: React.FC<ThresholdRuleManagerProps> = ({ sess
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-indigo-800 dark:text-indigo-400">Context Field</label>
+                  <label className="text-[11px] font-bold text-indigo-800 dark:text-indigo-400">Context Field</label>
                   <input
                     type="text"
                     required
@@ -405,7 +405,7 @@ export const ThresholdRuleManager: React.FC<ThresholdRuleManagerProps> = ({ sess
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-indigo-800 dark:text-indigo-400">Operator</label>
+                  <label className="text-[11px] font-bold text-indigo-800 dark:text-indigo-400">Operator</label>
                   <select
                     required
                     value={editingRule.operator}
@@ -416,7 +416,7 @@ export const ThresholdRuleManager: React.FC<ThresholdRuleManagerProps> = ({ sess
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-indigo-800 dark:text-indigo-400">Threshold Value</label>
+                  <label className="text-[11px] font-bold text-indigo-800 dark:text-indigo-400">Threshold Value</label>
                   <input
                     type="text"
                     required
@@ -442,7 +442,7 @@ export const ThresholdRuleManager: React.FC<ThresholdRuleManagerProps> = ({ sess
                   <option key={wf.id} value={wf.workflowId || wf.id}>{wf.workflowName} ({wf.steps?.length || 0} tiers)</option>
                 ))}
               </select>
-              <p className="text-[10px] text-slate-400 mt-1">If this rule matches, the transaction will bypass the standard route and use this specific multi-tier workflow.</p>
+              <p className="text-[11px] text-slate-400 mt-1">If this rule matches, the transaction will bypass the standard route and use this specific multi-tier workflow.</p>
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
@@ -479,7 +479,7 @@ export const ThresholdRuleManager: React.FC<ThresholdRuleManagerProps> = ({ sess
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500">Module</label>
+                    <label className="text-[11px] font-bold text-slate-500">Module</label>
                     <select
                       value={simModule}
                       onChange={e => setSimModule(e.target.value as any)}
@@ -489,7 +489,7 @@ export const ThresholdRuleManager: React.FC<ThresholdRuleManagerProps> = ({ sess
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500">Tx Type</label>
+                    <label className="text-[11px] font-bold text-slate-500">Tx Type</label>
                     <input
                       type="text"
                       value={simType}
@@ -500,12 +500,12 @@ export const ThresholdRuleManager: React.FC<ThresholdRuleManagerProps> = ({ sess
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500">JSON Payload Context</label>
+                  <label className="text-[11px] font-bold text-slate-500">JSON Payload Context</label>
                   <textarea
                     rows={8}
                     value={simPayload}
                     onChange={e => setSimPayload(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-[11px] font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
 
@@ -531,11 +531,11 @@ export const ThresholdRuleManager: React.FC<ThresholdRuleManagerProps> = ({ sess
                   <div className="space-y-4">
                     <div className={`p-4 rounded-2xl border ${simResult.matched ? 'bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/40' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800'}`}>
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Decision Outcome</span>
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Decision Outcome</span>
                         {simResult.matched ? (
-                          <span className="px-2 py-0.5 bg-emerald-600 text-white rounded text-[10px] font-bold">RULE MATCHED</span>
+                          <span className="px-2 py-0.5 bg-emerald-600 text-white rounded text-[11px] font-bold">RULE MATCHED</span>
                         ) : (
-                          <span className="px-2 py-0.5 bg-slate-400 text-white rounded text-[10px] font-bold">DEFAULT ROUTE</span>
+                          <span className="px-2 py-0.5 bg-slate-400 text-white rounded text-[11px] font-bold">DEFAULT ROUTE</span>
                         )}
                       </div>
                       
@@ -560,10 +560,10 @@ export const ThresholdRuleManager: React.FC<ThresholdRuleManagerProps> = ({ sess
                     </div>
 
                     <div className="space-y-2">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Evaluation Trace Log</p>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Evaluation Trace Log</p>
                       <div className="bg-slate-900 rounded-2xl p-4 overflow-x-auto max-h-[180px] overflow-y-auto">
                         {simResult.trace.map((line: string, i: number) => (
-                          <p key={i} className={`text-[10px] font-mono py-0.5 ${
+                          <p key={i} className={`text-[11px] font-mono py-0.5 ${
                             line.includes('✓ MATCH') ? 'text-emerald-400' :
                             line.includes('✗ SKIP') ? 'text-slate-500' :
                             'text-indigo-300'

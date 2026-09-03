@@ -285,7 +285,7 @@ export const ServiceDeskFeedbackModal: React.FC<ServiceDeskFeedbackModalProps> =
               <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
               <div>
                 <strong className="block font-bold">Negative Feedback Escalation Active</strong>
-                <p className="text-[11px] text-rose-700 dark:text-rose-300 mt-0.5">
+                <p className="text-xs text-rose-700 dark:text-rose-300 mt-0.5">
                   Your rating will automatically notify Service Desk leadership and trigger an immediate operational quality review.
                 </p>
               </div>
@@ -316,7 +316,7 @@ export const ServiceDeskFeedbackModal: React.FC<ServiceDeskFeedbackModalProps> =
                         key={s}
                         type="button"
                         onClick={() => setTimelinessScore(s)}
-                        className={`w-6 h-6 rounded-md text-[11px] font-bold ${
+                        className={`w-6 h-6 rounded-md text-xs font-bold ${
                           timelinessScore >= s ? 'bg-amber-400 text-black' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
                         }`}
                       >
@@ -337,7 +337,7 @@ export const ServiceDeskFeedbackModal: React.FC<ServiceDeskFeedbackModalProps> =
                         key={s}
                         type="button"
                         onClick={() => setTechnicianScore(s)}
-                        className={`w-6 h-6 rounded-md text-[11px] font-bold ${
+                        className={`w-6 h-6 rounded-md text-xs font-bold ${
                           technicianScore >= s ? 'bg-amber-400 text-black' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
                         }`}
                       >
@@ -358,7 +358,7 @@ export const ServiceDeskFeedbackModal: React.FC<ServiceDeskFeedbackModalProps> =
                         key={s}
                         type="button"
                         onClick={() => setCommunicationScore(s)}
-                        className={`w-6 h-6 rounded-md text-[11px] font-bold ${
+                        className={`w-6 h-6 rounded-md text-xs font-bold ${
                           communicationScore >= s ? 'bg-amber-400 text-black' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
                         }`}
                       >
@@ -379,7 +379,7 @@ export const ServiceDeskFeedbackModal: React.FC<ServiceDeskFeedbackModalProps> =
                         key={s}
                         type="button"
                         onClick={() => setQualityScore(s)}
-                        className={`w-6 h-6 rounded-md text-[11px] font-bold ${
+                        className={`w-6 h-6 rounded-md text-xs font-bold ${
                           qualityScore >= s ? 'bg-amber-400 text-black' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
                         }`}
                       >
@@ -478,7 +478,7 @@ export const ServiceDeskFeedbackModal: React.FC<ServiceDeskFeedbackModalProps> =
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block mb-0.5">Contact Name</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 block mb-0.5">Contact Name</span>
                     <input
                       type="text"
                       value={contactName}
@@ -487,7 +487,7 @@ export const ServiceDeskFeedbackModal: React.FC<ServiceDeskFeedbackModalProps> =
                     />
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block mb-0.5">Contact Phone/Email</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 block mb-0.5">Contact Phone/Email</span>
                     <input
                       type="text"
                       value={contactPreferred === 'PHONE' ? contactPhone : contactEmail}
@@ -498,7 +498,7 @@ export const ServiceDeskFeedbackModal: React.FC<ServiceDeskFeedbackModalProps> =
                 </div>
 
                 <div>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block mb-0.5">Follow-Up Note / Best Time to Call</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block mb-0.5">Follow-Up Note / Best Time to Call</span>
                   <input
                     type="text"
                     value={followUpNotes}

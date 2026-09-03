@@ -39,7 +39,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
 
           {/* Col 1: Platform */}
           <div className="space-y-3">
-            <h4 className="font-mono text-[11px] uppercase font-bold text-emerald-400 tracking-wider">
+            <h4 className="font-mono text-xs uppercase font-bold text-emerald-400 tracking-wider">
               PLATFORM
             </h4>
             <ul className="space-y-2 text-xs text-slate-300">
@@ -53,7 +53,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
 
           {/* Col 2: Solutions */}
           <div className="space-y-3">
-            <h4 className="font-mono text-[11px] uppercase font-bold text-emerald-400 tracking-wider">
+            <h4 className="font-mono text-xs uppercase font-bold text-emerald-400 tracking-wider">
               SOLUTIONS
             </h4>
             <ul className="space-y-2 text-xs text-slate-300">
@@ -67,7 +67,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
 
           {/* Col 3: Security & Governance */}
           <div className="space-y-3">
-            <h4 className="font-mono text-[11px] uppercase font-bold text-emerald-400 tracking-wider">
+            <h4 className="font-mono text-xs uppercase font-bold text-emerald-400 tracking-wider">
               GOVERNANCE
             </h4>
             <ul className="space-y-2 text-xs text-slate-300">
@@ -81,7 +81,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
 
           {/* Col 4: Portals */}
           <div className="space-y-3">
-            <h4 className="font-mono text-[11px] uppercase font-bold text-emerald-400 tracking-wider">
+            <h4 className="font-mono text-xs uppercase font-bold text-emerald-400 tracking-wider">
               PORTALS
             </h4>
             <ul className="space-y-2 text-xs text-slate-300">

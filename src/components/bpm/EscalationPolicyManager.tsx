@@ -348,7 +348,7 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
                   onChange={(e) => setEditingPolicy({ ...editingPolicy, reminderAfterMinutes: parseInt(e.target.value) || 0 })}
                   className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-black dark:text-white focus:outline-none focus:border-indigo-500"
                 />
-                <p className="text-[10px] text-slate-400 mt-1">e.g. 120 mins (2 hours) before reminder notice</p>
+                <p className="text-[11px] text-slate-400 mt-1">e.g. 120 mins (2 hours) before reminder notice</p>
               </div>
 
               <div>
@@ -363,7 +363,7 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
                   onChange={(e) => setEditingPolicy({ ...editingPolicy, dueAfterMinutes: parseInt(e.target.value) || 0 })}
                   className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-black dark:text-white focus:outline-none focus:border-indigo-500"
                 />
-                <p className="text-[10px] text-slate-400 mt-1">e.g. 1440 mins (24 hours) SLA deadline</p>
+                <p className="text-[11px] text-slate-400 mt-1">e.g. 1440 mins (24 hours) SLA deadline</p>
               </div>
 
               <div>
@@ -425,7 +425,7 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1">
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">
                         Trigger After (Total Mins)
                       </label>
                       <input
@@ -442,7 +442,7 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
                     </div>
 
                     <div>
-                      <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1">
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">
                         Escalate Target
                       </label>
                       <select
@@ -463,7 +463,7 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
                     </div>
 
                     <div>
-                      <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1">
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">
                         Reassign Approver
                       </label>
                       <div className="pt-2">
@@ -485,7 +485,7 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">
                       Custom Notification Message (Optional)
                     </label>
                     <input
@@ -558,7 +558,7 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="font-bold text-black dark:text-white text-base">{policy.policyName}</h4>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                       v{policy.version}
                     </span>
                   </div>
@@ -568,7 +568,7 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
                     policy.active 
                       ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' 
                       : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
@@ -590,19 +590,19 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
               {/* Policy Timing Metrics */}
               <div className="grid grid-cols-3 gap-2 bg-white dark:bg-slate-950/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
                 <div>
-                  <span className="text-slate-400 text-[10px] block">Reminder</span>
+                  <span className="text-slate-400 text-[11px] block">Reminder</span>
                   <span className="font-semibold text-black dark:text-slate-200">
                     {policy.reminderAfterMinutes}m ({Math.round(policy.reminderAfterMinutes / 60)}h)
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 text-[10px] block">Due SLA</span>
+                  <span className="text-slate-400 text-[11px] block">Due SLA</span>
                   <span className="font-semibold text-black dark:text-slate-200">
                     {policy.dueAfterMinutes}m ({Math.round(policy.dueAfterMinutes / 60)}h)
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 text-[10px] block">Levels</span>
+                  <span className="text-slate-400 text-[11px] block">Levels</span>
                   <span className="font-semibold text-black dark:text-slate-200">
                     {policy.levels.length} Tiers
                   </span>
@@ -611,7 +611,7 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
 
               {/* Levels Overview */}
               <div className="space-y-1.5">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Escalation Ladder
                 </span>
                 <div className="space-y-1.5">
@@ -621,19 +621,19 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
                       className="flex items-center justify-between text-xs p-2 rounded-xl bg-white dark:bg-slate-950/60 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/80"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 text-[10px] font-bold text-slate-900 dark:text-slate-300 flex items-center justify-center">
+                        <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 text-[11px] font-bold text-slate-900 dark:text-slate-300 flex items-center justify-center">
                           {lvl.level}
                         </span>
                         <span className="font-medium text-slate-900 dark:text-slate-300">
                           Target: {lvl.escalationTargetType}
                         </span>
                         {lvl.reassignmentAllowed && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-400">
+                          <span className="text-[11px] px-1.5 py-0.5 rounded font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-400">
                             Reassigns
                           </span>
                         )}
                       </div>
-                      <span className="text-slate-400 text-[11px] font-mono">
+                      <span className="text-slate-400 text-xs font-mono">
                         +{lvl.escalationAfterMinutes}m
                       </span>
                     </div>
@@ -641,7 +641,7 @@ export const EscalationPolicyManager: React.FC<EscalationPolicyManagerProps> = (
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <span>Updated: {format(new Date(policy.updatedAt), 'PP')}</span>
                 <span className="font-mono">{policy.policyId}</span>
               </div>

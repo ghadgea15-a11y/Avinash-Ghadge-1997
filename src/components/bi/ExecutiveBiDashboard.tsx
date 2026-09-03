@@ -78,11 +78,11 @@ export const ExecutiveBiDashboard: React.FC<BiDashboardProps> = ({ session, comp
   const renderStatusBadge = (val: any) => {
     switch (val.status) {
       case 'ON_TRACK':
-        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"><CheckCircle className="w-3 h-3" /> Target Met</span>;
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"><CheckCircle className="w-3 h-3" /> Target Met</span>;
       case 'WARNING':
-        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"><AlertTriangle className="w-3 h-3" /> Warning</span>;
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-widest bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"><AlertTriangle className="w-3 h-3" /> Warning</span>;
       case 'CRITICAL':
-        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400"><AlertTriangle className="w-3 h-3" /> Critical</span>;
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-widest bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400"><AlertTriangle className="w-3 h-3" /> Critical</span>;
       default:
         return null;
     }
@@ -98,7 +98,7 @@ export const ExecutiveBiDashboard: React.FC<BiDashboardProps> = ({ session, comp
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-black text-black dark:text-white tracking-tight">Executive Telemetry</h2>
             {snapshot && snapshot.status !== 'COMPLETE' && (
-              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[10px] font-bold uppercase tracking-widest
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[11px] font-bold uppercase tracking-widest
                 ${snapshot.status === 'PARTIAL' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' : ''}
                 ${snapshot.status === 'GENERATING' ? 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200' : ''}
                 ${snapshot.status === 'FAILED' ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400' : ''}
@@ -165,7 +165,7 @@ export const ExecutiveBiDashboard: React.FC<BiDashboardProps> = ({ session, comp
             <div key={val.kpiId} className="bg-white dark:bg-[#0f1115] p-6 rounded-[12px] border border-[#eaebec] dark:border-[#1f2228] transition-colors">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest">{val.name}</h3>
+                  <h3 className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">{val.name}</h3>
                   <div className="mt-3 flex items-baseline gap-2">
                     <span className="text-4xl font-black text-black dark:text-white">
                       {val.currentValue.toLocaleString()}
@@ -186,7 +186,7 @@ export const ExecutiveBiDashboard: React.FC<BiDashboardProps> = ({ session, comp
                     {val.percentageChange !== null ? `${Math.abs(val.percentageChange).toFixed(1)}%` : '0%'}
                   </span>
                 </div>
-                <div className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                <div className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                   VS PREV: {val.previousValue !== null ? val.previousValue.toLocaleString() : 'N/A'}
                 </div>
               </div>

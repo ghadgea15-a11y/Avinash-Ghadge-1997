@@ -120,10 +120,10 @@ export const SuspiciousPunchDashboard: React.FC<SuspiciousPunchDashboardProps> =
                         {new Date(punch.punchTimestamp).toLocaleString()}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded border ${getSeverityStyle(punch.severity)}`}>
+                        <span className={`px-2 py-0.5 text-[11px] font-bold rounded border ${getSeverityStyle(punch.severity)}`}>
                           {punch.severity}
                         </span>
-                        <span className="text-[10px] font-bold text-gray-500 border border-gray-200 px-1 rounded">
+                        <span className="text-[11px] font-bold text-gray-500 border border-gray-200 px-1 rounded">
                           SCORE: {punch.riskScore}
                         </span>
                       </div>
@@ -138,18 +138,18 @@ export const SuspiciousPunchDashboard: React.FC<SuspiciousPunchDashboardProps> =
                       <span className="text-xs font-semibold text-red-700 bg-red-50 px-2 py-0.5 rounded-full inline-block w-fit">
                         {punch.anomalyType}
                       </span>
-                      <span className="text-[10px] text-gray-400 font-mono mt-1">{punch.punchType}</span>
+                      <span className="text-[11px] text-gray-400 font-mono mt-1">{punch.punchType}</span>
                     </div>
                   </td>
                   <td className="px-4 py-4 max-w-xs text-xs text-gray-600">
                     <div className="truncate" title={punch.evidence}>{punch.evidence}</div>
                     {punch.correlationId && (
-                       <div className="text-[10px] text-gray-400 mt-1 font-mono">Corr: {punch.correlationId}</div>
+                       <div className="text-[11px] text-gray-400 mt-1 font-mono">Corr: {punch.correlationId}</div>
                     )}
                   </td>
                   <td className="px-4 py-4 text-right">
                     <div className="flex flex-col items-end gap-2">
-                       <span className={`px-2 py-0.5 text-[10px] font-bold rounded border ${getStatusStyle(punch.status)}`}>
+                       <span className={`px-2 py-0.5 text-[11px] font-bold rounded border ${getStatusStyle(punch.status)}`}>
                          {punch.status}
                        </span>
                        <button 
@@ -211,7 +211,7 @@ export const SuspiciousPunchDashboard: React.FC<SuspiciousPunchDashboardProps> =
                     <label className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Risk Score</label>
                     <div className="mt-1 flex items-center gap-2">
                        <span className="font-bold text-gray-900 text-lg">{selectedPunch.riskScore}</span>
-                       <span className={`px-2 py-0.5 text-[10px] font-bold rounded border ${getSeverityStyle(selectedPunch.severity)}`}>
+                       <span className={`px-2 py-0.5 text-[11px] font-bold rounded border ${getSeverityStyle(selectedPunch.severity)}`}>
                           {selectedPunch.severity}
                        </span>
                     </div>

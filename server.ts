@@ -18,6 +18,11 @@ import { ingestVaptReportHandler, evaluateSoc2Handler } from './src/server/vaptS
 import { triggerBackupHandler, simulateRestoreHandler, getDrMetricsHandler } from './src/server/drGovernanceService';
 import { ingestA11yScanHandler, getA11yMetricsHandler } from './src/server/accessibilityGovernanceEngine';
 import { registerDocumentHashHandler, verifyDocumentHashHandler } from './src/server/cryptographicDocumentEngine';
+import { processReceiptOcrHandler } from './src/server/expenseOcrApi';
+import { triggerWebhookHandler, processWebhookRetriesHandler } from './src/server/webhookServerDispatcher';
+import { generateInvoiceApi, calculateProfitabilityApi, detectSlaBreachesApi } from './src/server/clientBillingApi';
+import { apiKeyRoutes } from './src/server/apiKeyRoutes';
+import { publicJobRoutes } from './src/server/publicJobRoutes';
 
 async function startServer() {
   const app = express();
@@ -43,6 +48,8 @@ async function startServer() {
   }
 
   app.use('/api', authRoutes);
+  app.use('/api/integrations', apiKeyRoutes);
+  app.use('/api/jobs', publicJobRoutes);
 
   // ============================================================
   // HEALTH & STATUS ENDPOINTS
@@ -78,6 +85,14 @@ async function startServer() {
   app.get('/api/compliance/a11y-metrics/:companyId', getA11yMetricsHandler);
   app.post('/api/documents/crypto/register-hash', registerDocumentHashHandler);
   app.post('/api/documents/crypto/verify-hash', verifyDocumentHashHandler);
+  app.post('/api/expense/ocr-receipt', processReceiptOcrHandler);
+  app.post('/api/integrations/webhooks/dispatch-test', triggerWebhookHandler);
+  app.post('/api/integrations/webhooks/process-retries', processWebhookRetriesHandler);
+  
+  // Client Billing & SLA Compliance Endpoints (Module 1)
+  app.post('/api/billing/invoices/generate', generateInvoiceApi);
+  app.post('/api/billing/profitability', calculateProfitabilityApi);
+  app.post('/api/billing/sla-check', detectSlaBreachesApi);
 
   // This endpoint is intended to be triggered by Google Cloud Scheduler
   app.post('/api/cron/bpm-escalation', async (req: Request, res: Response) => {

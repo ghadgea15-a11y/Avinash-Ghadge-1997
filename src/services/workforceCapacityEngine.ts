@@ -910,7 +910,7 @@ export class WorkforceCapacityEngine {
   ): () => void {
     try {
       const q = query(
-        collection(db, this.INCIDENTS_COLLECTION),
+        collection(db, 'companies', companyId, this.INCIDENTS_COLLECTION),
         where('companyId', '==', companyId),
         where('date', '==', targetDate)
       );
@@ -935,7 +935,7 @@ export class WorkforceCapacityEngine {
   ): () => void {
     try {
       const q = query(
-        collection(db, this.REQUIREMENTS_COLLECTION),
+        collection(db, 'companies', companyId, this.REQUIREMENTS_COLLECTION),
         where('companyId', '==', companyId)
       );
 
@@ -954,13 +954,13 @@ export class WorkforceCapacityEngine {
   }
 
   private static async saveIncident(companyId: string, incident: WorkforceShortageIncident): Promise<void> {
-    const docRef = doc(db, this.INCIDENTS_COLLECTION, incident.id);
+    const docRef = doc(db, 'companies', incident.companyId, this.INCIDENTS_COLLECTION, incident.id);
     await setDoc(docRef, incident, { merge: true });
   }
 
   private static async getSites(companyId: string): Promise<SiteRecord[]> {
     try {
-      const q = query(collection(db, 'sites'), where('companyId', '==', companyId));
+      const q = query(collection(db, 'companies', companyId, 'sites'), where('companyId', '==', companyId));
       const snap = await getDocs(q);
       const list: SiteRecord[] = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() } as SiteRecord));
@@ -972,7 +972,7 @@ export class WorkforceCapacityEngine {
 
   private static async getShifts(companyId: string): Promise<ShiftRecord[]> {
     try {
-      const q = query(collection(db, 'shifts'), where('companyId', '==', companyId));
+      const q = query(collection(db, 'companies', companyId, 'shifts'), where('companyId', '==', companyId));
       const snap = await getDocs(q);
       const list: ShiftRecord[] = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() } as ShiftRecord));
@@ -984,7 +984,7 @@ export class WorkforceCapacityEngine {
 
   private static async getEmployees(companyId: string): Promise<EmployeeRecord[]> {
     try {
-      const q = query(collection(db, 'employees'), where('companyId', '==', companyId));
+      const q = query(collection(db, 'companies', companyId, 'employees'), where('companyId', '==', companyId));
       const snap = await getDocs(q);
       const list: EmployeeRecord[] = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() } as EmployeeRecord));
@@ -997,7 +997,7 @@ export class WorkforceCapacityEngine {
   private static async getRostersForDate(companyId: string, targetDate: string): Promise<RosterRecord[]> {
     try {
       const q = query(
-        collection(db, 'rosters'),
+        collection(db, 'companies', companyId, 'rosters'),
         where('companyId', '==', companyId),
         where('date', '==', targetDate)
       );
@@ -1013,7 +1013,7 @@ export class WorkforceCapacityEngine {
   private static async getAttendanceForDate(companyId: string, targetDate: string): Promise<AttendanceRecord[]> {
     try {
       const q = query(
-        collection(db, 'attendance'),
+        collection(db, 'companies', companyId, 'attendance'),
         where('companyId', '==', companyId),
         where('attendanceDate', '==', targetDate)
       );
@@ -1028,7 +1028,7 @@ export class WorkforceCapacityEngine {
 
   private static async getActiveLeaves(companyId: string): Promise<LeaveRequestRecord[]> {
     try {
-      const q = query(collection(db, 'leave_requests'), where('companyId', '==', companyId));
+      const q = query(collection(db, 'companies', companyId, 'leaves'), where('companyId', '==', companyId));
       const snap = await getDocs(q);
       const list: LeaveRequestRecord[] = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() } as LeaveRequestRecord));
@@ -1040,7 +1040,7 @@ export class WorkforceCapacityEngine {
 
   private static async getSiteRequirements(companyId: string): Promise<SiteShiftRequirement[]> {
     try {
-      const q = query(collection(db, this.REQUIREMENTS_COLLECTION), where('companyId', '==', companyId));
+      const q = query(collection(db, 'companies', companyId, this.REQUIREMENTS_COLLECTION), where('companyId', '==', companyId));
       const snap = await getDocs(q);
       const list: SiteShiftRequirement[] = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() } as SiteShiftRequirement));
@@ -1053,7 +1053,7 @@ export class WorkforceCapacityEngine {
   private static async getIncidentsForDate(companyId: string, targetDate: string): Promise<WorkforceShortageIncident[]> {
     try {
       const q = query(
-        collection(db, this.INCIDENTS_COLLECTION),
+        collection(db, 'companies', companyId, this.INCIDENTS_COLLECTION),
         where('companyId', '==', companyId),
         where('date', '==', targetDate)
       );

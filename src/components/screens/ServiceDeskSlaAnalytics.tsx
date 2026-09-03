@@ -174,7 +174,7 @@ export function ServiceDeskSlaAnalytics({
               <div className="text-2xl font-bold text-black dark:text-white">
                 {resolutionComplianceRate}%
               </div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {breachedTickets} breached out of {totalEvaluated} tickets
               </div>
             </div>
@@ -187,7 +187,7 @@ export function ServiceDeskSlaAnalytics({
               <div className="text-2xl font-bold text-black dark:text-white">
                 {responseComplianceRate}%
               </div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {responseMetCount} responded within deadline
               </div>
             </div>
@@ -200,7 +200,7 @@ export function ServiceDeskSlaAnalytics({
               <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                 {warningTickets}
               </div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Approaching breach threshold
               </div>
             </div>
@@ -213,7 +213,7 @@ export function ServiceDeskSlaAnalytics({
               <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                 {pausedTickets}
               </div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Timer stopped (client/parts hold)
               </div>
             </div>
@@ -243,7 +243,7 @@ export function ServiceDeskSlaAnalytics({
                     <span>{avgCsatScore}</span>
                     <span className="text-xs text-slate-400 font-normal">/ 5.0</span>
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                     {totalRated} Rating{totalRated === 1 ? '' : 's'} Recorded
                   </div>
                 </div>
@@ -254,7 +254,7 @@ export function ServiceDeskSlaAnalytics({
               <div className="p-3 bg-white dark:bg-slate-900 dark:bg-slate-850 rounded-lg border border-amber-100 dark:border-amber-900/40 text-xs">
                 <span className="text-slate-500 dark:text-slate-400 block mb-1">Satisfaction Rate (≥ 4★)</span>
                 <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{csatPositivePct}%</span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">{satisfiedCount} satisfied out of {totalRated || 0} reviews</span>
+                <span className="text-[11px] text-slate-400 block mt-0.5">{satisfiedCount} satisfied out of {totalRated || 0} reviews</span>
               </div>
 
               <div className="p-3 bg-white dark:bg-slate-900 dark:bg-slate-850 rounded-lg border border-amber-100 dark:border-amber-900/40 text-xs">
@@ -262,7 +262,7 @@ export function ServiceDeskSlaAnalytics({
                 <span className={`text-lg font-bold ${escalatedFeedbackCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-300'}`}>
                   {escalatedFeedbackCount} Active
                 </span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">Automated ops reviews triggered</span>
+                <span className="text-[11px] text-slate-400 block mt-0.5">Automated ops reviews triggered</span>
               </div>
 
               <div className="p-3 bg-white dark:bg-slate-900 dark:bg-slate-850 rounded-lg border border-amber-100 dark:border-amber-900/40 text-xs">
@@ -270,7 +270,7 @@ export function ServiceDeskSlaAnalytics({
                 <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
                   {resolvedTickets.length > 0 ? Math.round((totalRated / resolvedTickets.length) * 100) : 0}%
                 </span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">Surveys returned on completion</span>
+                <span className="text-[11px] text-slate-400 block mt-0.5">Surveys returned on completion</span>
               </div>
             </div>
           </div>
@@ -308,7 +308,7 @@ export function ServiceDeskSlaAnalytics({
               </div>
             ) : (
               <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-sm">
                   <thead className="bg-white dark:bg-slate-950 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th className="py-3 px-4">Breach ID</th>
@@ -331,14 +331,14 @@ export function ServiceDeskSlaAnalytics({
                             {t ? (
                               <div>
                                 <span className="font-semibold text-black dark:text-white">{t.ticketNumber}</span>
-                                <span className="block text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-xs">{t.title}</span>
+                                <span className="block text-xs text-slate-500 dark:text-slate-400 truncate max-w-xs">{t.title}</span>
                               </div>
                             ) : (
                               b.sourceRecordId
                             )}
                           </td>
                           <td className="py-3 px-4">
-                            <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                            <span className={`px-2 py-0.5 rounded-full font-bold text-[11px] ${
                               b.severity === 'CRITICAL' 
                                 ? 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300' 
                                 : b.severity === 'HIGH'
@@ -354,7 +354,7 @@ export function ServiceDeskSlaAnalytics({
                           <td className="py-3 px-4 font-bold text-red-600 dark:text-red-400">
                             +{Math.round((b.variance || 0) / 60 * 10) / 10}h ({b.variance ?? 0}m)
                           </td>
-                          <td className="py-3 px-4 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                          <td className="py-3 px-4 text-slate-500 dark:text-slate-400 font-mono text-xs">
                             {b.detectedAt ? new Date(b.detectedAt).toLocaleString() : 'N/A'}
                           </td>
                         </tr>

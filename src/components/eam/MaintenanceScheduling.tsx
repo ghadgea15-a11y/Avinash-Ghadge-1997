@@ -211,7 +211,7 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
                           <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:text-slate-400">
                             {asset?.assetCode}
                           </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full uppercase ${
                             isOverdue ? 'bg-red-100 text-red-700' : 
                             isDue ? 'bg-amber-100 text-amber-700' : 
                             occ.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' :
@@ -271,7 +271,7 @@ export function MaintenanceScheduling({ session, companyId, assets, sites, emplo
                       <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
                         <Settings className="w-5 h-5" />
                       </div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full uppercase ${
                         plan.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-900'
                       }`}>
                         {plan.status}

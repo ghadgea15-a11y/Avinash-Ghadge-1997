@@ -189,7 +189,7 @@ export const PremiumHeader: React.FC<PremiumHeaderProps> = ({ onNavigate, onOpen
                 <div key={link.label}>
                   {link.subLinks ? (
                     <div className="py-2">
-                      <div className="font-bold text-slate-300 mb-2 px-2 uppercase text-[11px] tracking-wider text-blue-400">{link.label}</div>
+                      <div className="font-bold text-slate-300 mb-2 px-2 uppercase text-xs tracking-wider text-blue-400">{link.label}</div>
                       <div className="pl-4 flex flex-col gap-1 border-l border-white/10 ml-2">
                         {link.subLinks.map(sub => (
                           <a 
@@ -207,7 +207,7 @@ export const PremiumHeader: React.FC<PremiumHeaderProps> = ({ onNavigate, onOpen
                     <a 
                       href={link.path} 
                       onClick={(e) => handleLinkClick(e, link.path)} 
-                      className="block font-bold text-slate-300 hover:text-white py-3 px-2 uppercase text-[11px] tracking-wider text-blue-400"
+                      className="block font-bold text-slate-300 hover:text-white py-3 px-2 uppercase text-xs tracking-wider text-blue-400"
                     >
                       {link.label}
                     </a>

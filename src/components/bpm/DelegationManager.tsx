@@ -277,7 +277,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
 
     if (status === 'REVOKED') {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-300 dark:border-rose-800 flex items-center gap-1">
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-300 dark:border-rose-800 flex items-center gap-1">
           <XCircle className="w-3 h-3 text-rose-600" />
           <span>Revoked</span>
         </span>
@@ -286,7 +286,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
 
     if (status === 'EXPIRED' || now > endMs) {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-900 dark:text-slate-300 dark:bg-slate-800 dark:text-slate-400 border border-slate-300 dark:border-slate-700 flex items-center gap-1">
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-900 dark:text-slate-300 dark:bg-slate-800 dark:text-slate-400 border border-slate-300 dark:border-slate-700 flex items-center gap-1">
           <Clock className="w-3 h-3 text-slate-500 dark:text-slate-400" />
           <span>Expired</span>
         </span>
@@ -295,7 +295,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
 
     if (now < startMs) {
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-400 border border-sky-300 dark:border-sky-800 flex items-center gap-1">
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-400 border border-sky-300 dark:border-sky-800 flex items-center gap-1">
           <Calendar className="w-3 h-3 text-sky-600" />
           <span>Scheduled</span>
         </span>
@@ -303,7 +303,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
     }
 
     return (
-      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
         <CheckCircle className="w-3 h-3 text-emerald-600" />
         <span>Active Proxy</span>
       </span>
@@ -448,7 +448,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                         {del.delegateName}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-xs text-slate-400">
                       Delegator Role: <span className="font-medium text-slate-600 dark:text-slate-400 dark:text-slate-300">{del.delegatorRole || 'Approver'}</span>
                     </p>
                   </div>
@@ -458,20 +458,20 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
 
                 {/* Scope Badges */}
                 <div className="space-y-1.5">
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block">
+                  <span className="text-[11px] uppercase tracking-wider font-bold text-slate-400 block">
                     Authorized Scope
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {del.scope.modules.map((m, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300 rounded-md text-[11px] font-medium border border-slate-200 dark:border-slate-700"
+                        className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300 rounded-md text-xs font-medium border border-slate-200 dark:border-slate-700"
                       >
                         {m === 'ALL' ? 'All Modules' : m}
                       </span>
                     ))}
                     {del.scope.maxTier && (
-                      <span className="px-2 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded-md text-[11px] font-bold border border-amber-200 dark:border-amber-800">
+                      <span className="px-2 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded-md text-xs font-bold border border-amber-200 dark:border-amber-800">
                         Max Tier {del.scope.maxTier}
                       </span>
                     )}
@@ -493,7 +493,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                   </div>
 
                   {del.reason && (
-                    <p className="text-slate-500 dark:text-slate-400 text-[11px] italic border-t border-slate-200/60 dark:border-slate-800/60 pt-1.5">
+                    <p className="text-slate-500 dark:text-slate-400 text-xs italic border-t border-slate-200/60 dark:border-slate-800/60 pt-1.5">
                       &ldquo;{del.reason}&rdquo;
                     </p>
                   )}
@@ -562,7 +562,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                 <label className="text-xs font-bold text-slate-900 dark:text-slate-300 block">
                   Assign On Behalf Of (Original Approver)
                 </label>
-                <p className="text-[10px] text-amber-600 dark:text-amber-500 mb-2 font-medium">
+                <p className="text-[11px] text-amber-600 dark:text-amber-500 mb-2 font-medium">
                   Administrator bypass enabled. You may configure a proxy for a missing or unavailable employee.
                 </p>
                 <select
@@ -623,7 +623,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                     >
                       <div>
                         <span>{emp.firstName} {emp.lastName}</span>
-                        <span className={`text-[10px] ml-2 ${selectedDelegateId === emp.id ? 'text-indigo-200' : 'text-slate-400'}`}>
+                        <span className={`text-[11px] ml-2 ${selectedDelegateId === emp.id ? 'text-indigo-200' : 'text-slate-400'}`}>
                           ({emp.employeeCode} &bull; {emp.designation || emp.role || 'Staff'})
                         </span>
                       </div>
@@ -864,7 +864,7 @@ export const DelegationManager: React.FC<DelegationManagerProps> = ({ session, o
                 </div>
               )}
               {selectedDetail.revokedAt && (
-                <div className="p-2.5 bg-rose-50 dark:bg-rose-950/60 rounded-xl text-rose-800 dark:text-rose-300 text-[11px]">
+                <div className="p-2.5 bg-rose-50 dark:bg-rose-950/60 rounded-xl text-rose-800 dark:text-rose-300 text-xs">
                   Revoked on {format(new Date(selectedDetail.revokedAt), 'PP p')}. Reason: {selectedDetail.revocationReason || 'N/A'}
                 </div>
               )}

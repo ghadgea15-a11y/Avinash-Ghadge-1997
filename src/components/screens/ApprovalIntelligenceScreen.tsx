@@ -109,7 +109,7 @@ export const ApprovalIntelligenceScreen: React.FC<Props> = ({ session }) => {
                   className={`p-3 rounded-xl cursor-pointer transition-colors ${selectedInstance?.id === instance!.id ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-white border border-transparent'}`}
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">{instance.sourceModule}</span>
+                    <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">{instance.sourceModule}</span>
                     {getStatusBadge(instance)}
                   </div>
                   <h3 className="text-sm font-bold text-black dark:text-white truncate">ID: {instance.sourceRecordId}</h3>
@@ -202,7 +202,7 @@ export const ApprovalIntelligenceScreen: React.FC<Props> = ({ session }) => {
                           <div>
                             <p className="text-sm font-bold text-black dark:text-white">
                               {h.action === 'APPROVE' ? 'Approved' : h.action === 'REJECT' ? 'Rejected' : h.action}
-                              {h.actingProxyName && <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] rounded uppercase">By Proxy</span>}
+                              {h.actingProxyName && <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-[11px] rounded uppercase">By Proxy</span>}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">By: {h.actingProxyName || h.actorId} {h.actingProxyName ? `(for ${h.originalApproverName})` : ''}</p>
                             {h.reason && (

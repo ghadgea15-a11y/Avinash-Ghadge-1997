@@ -176,7 +176,7 @@ export const PrivilegeMatrixViewer: React.FC<PrivilegeMatrixViewerProps> = ({ us
       {/* Permission Table */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto max-h-[600px]">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-sm border-collapse">
             <thead className="bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 sticky top-0 z-10">
               <tr>
                 <th className="p-3 w-12 text-center">Status</th>
@@ -211,7 +211,7 @@ export const PrivilegeMatrixViewer: React.FC<PrivilegeMatrixViewerProps> = ({ us
                       )}
                     </td>
                     <td className="p-3 font-semibold text-slate-900 dark:text-slate-300">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px]">
+                      <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[11px]">
                         {perm.module}
                       </span>
                     </td>
@@ -219,7 +219,7 @@ export const PrivilegeMatrixViewer: React.FC<PrivilegeMatrixViewerProps> = ({ us
                       {perm.submodule}
                     </td>
                     <td className="p-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                         perm.action === 'APPROVE' ? 'bg-amber-100 text-amber-800' :
                         perm.action === 'ADMIN' ? 'bg-purple-100 text-purple-800' :
                         perm.action === 'DELETE' ? 'bg-rose-100 text-rose-800' :
@@ -232,9 +232,9 @@ export const PrivilegeMatrixViewer: React.FC<PrivilegeMatrixViewerProps> = ({ us
                     </td>
                     <td className="p-3">
                       <div className="font-mono text-black dark:text-slate-200 font-semibold">{perm.code}</div>
-                      <div className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">{perm.description}</div>
+                      <div className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">{perm.description}</div>
                       {!isGranted && evalResult.reason && (
-                        <div className="text-rose-600 text-[10px] mt-0.5 flex items-center gap-1 font-sans">
+                        <div className="text-rose-600 text-[11px] mt-0.5 flex items-center gap-1 font-sans">
                           <Lock className="w-3 h-3" /> {evalResult.reason}
                         </div>
                       )}
@@ -243,7 +243,7 @@ export const PrivilegeMatrixViewer: React.FC<PrivilegeMatrixViewerProps> = ({ us
                       {perm.minimumAuthority}
                     </td>
                     <td className="p-3 text-right">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 dark:text-slate-400 font-medium text-[10px]">
+                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 dark:text-slate-400 font-medium text-[11px]">
                         {targetSession.dataScope}
                       </span>
                     </td>

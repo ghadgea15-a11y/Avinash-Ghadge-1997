@@ -180,7 +180,7 @@ export const ThirdPartyRiskScreen: React.FC<Props> = ({ session, activeCompany }
                   <p className="font-bold text-sm text-black dark:text-white">{c.title}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Expires: {format(new Date(c.endDate), 'PP')}</p>
                 </div>
-                <span className={`px-2 py-1 text-[10px] font-bold rounded-lg ${c.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                <span className={`px-2 py-1 text-[11px] font-bold rounded-lg ${c.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                   {c.status}
                 </span>
               </div>
@@ -192,7 +192,7 @@ export const ThirdPartyRiskScreen: React.FC<Props> = ({ session, activeCompany }
                   <p className="font-bold text-sm text-black dark:text-white">{d.docType}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Expires: {format(new Date(d.expiryDate), 'PP')}</p>
                 </div>
-                <span className={`px-2 py-1 text-[10px] font-bold rounded-lg ${d.status === 'VALID' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                <span className={`px-2 py-1 text-[11px] font-bold rounded-lg ${d.status === 'VALID' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                   {d.status}
                 </span>
               </div>

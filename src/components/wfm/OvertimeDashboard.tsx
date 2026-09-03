@@ -406,7 +406,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
         ].map((kpi, i) => (
           <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{kpi.label}</span>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{kpi.label}</span>
               <div className={`w-7 h-7 rounded-xl ${kpi.bg} dark:bg-slate-800 flex items-center justify-center ${kpi.color}`}>
                 <kpi.icon className="w-4 h-4" />
               </div>
@@ -430,7 +430,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
             <TrendingUp className="w-3.5 h-3.5" />
             Overtime Queue
             {stats.pendingOTRequests > 0 && (
-              <span className="px-1.5 py-0.2 text-[10px] bg-amber-500 text-white rounded-full font-bold">
+              <span className="px-1.5 py-0.2 text-[11px] bg-amber-500 text-white rounded-full font-bold">
                 {stats.pendingOTRequests}
               </span>
             )}
@@ -486,7 +486,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                 className="bg-transparent border-none outline-none text-black dark:text-slate-200 text-xs font-medium cursor-pointer"
               />
               {dateFilter && (
-                <button onClick={() => setDateFilter('')} className="text-slate-400 hover:text-slate-600 dark:text-slate-400 text-[10px]">
+                <button onClick={() => setDateFilter('')} className="text-slate-400 hover:text-slate-600 dark:text-slate-400 text-[11px]">
                   Clear
                 </button>
               )}
@@ -569,7 +569,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
           {/* Overtime Queue Table */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 dark:bg-slate-800/50 font-bold text-slate-500 dark:text-slate-400">
                     <th className="py-3 px-4 w-10">
@@ -629,24 +629,24 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                           </td>
                           <td className="py-3 px-4">
                             <div className="font-bold text-black dark:text-white">{req.employeeName}</div>
-                            <div className="text-[10px] text-slate-400">ID: {req.employeeId}</div>
+                            <div className="text-[11px] text-slate-400">ID: {req.employeeId}</div>
                           </td>
                           <td className="py-3 px-4">
                             <div className="font-semibold text-black dark:text-slate-200">{req.workDate}</div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
                               <MapPin className="w-2.5 h-2.5" />
                               {req.siteName || 'Default Site'}
                             </div>
                           </td>
                           <td className="py-3 px-4">
                             <div className="font-semibold text-black dark:text-slate-200">{req.shiftName || 'Standard'}</div>
-                            <div className="text-[10px] text-slate-400">{req.shiftStart} - {req.shiftEnd}</div>
+                            <div className="text-[11px] text-slate-400">{req.shiftStart} - {req.shiftEnd}</div>
                           </td>
                           <td className="py-3 px-4">
-                            <div className="text-[11px] text-slate-900 dark:text-slate-300">
+                            <div className="text-xs text-slate-900 dark:text-slate-300">
                               In: {req.actualCheckIn ? new Date(req.actualCheckIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
                             </div>
-                            <div className="text-[11px] text-slate-900 dark:text-slate-300">
+                            <div className="text-xs text-slate-900 dark:text-slate-300">
                               Out: {req.actualCheckOut ? new Date(req.actualCheckOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
                             </div>
                           </td>
@@ -659,7 +659,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                             <div className="font-black text-indigo-600 dark:text-indigo-400">
                               {AttendanceCalculationEngine.formatDuration(req.roundedOvertimeMinutes)}
                             </div>
-                            <div className="text-[10px] text-slate-400">
+                            <div className="text-[11px] text-slate-400">
                               Raw: {AttendanceCalculationEngine.formatDuration(req.rawOvertimeMinutes)}
                             </div>
                           </td>
@@ -669,7 +669,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                             </span>
                           </td>
                           <td className="py-3 px-4 text-center">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                               req.status === 'APPROVED'
                                 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
                                 : req.status === 'REJECTED'
@@ -771,7 +771,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
           {/* Muster Calculation Table */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 dark:bg-slate-800/50 font-bold text-slate-500 dark:text-slate-400">
                     <th className="py-3 px-4">Employee & Site</th>
@@ -800,11 +800,11 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                       <tr key={att.id} className="hover:bg-white dark:bg-slate-950/70 dark:hover:bg-slate-800/40 transition-colors">
                         <td className="py-3 px-4">
                           <div className="font-bold text-black dark:text-white">{att.employeeName}</div>
-                          <div className="text-[10px] text-slate-400">{att.siteName || 'Site'}</div>
+                          <div className="text-[11px] text-slate-400">{att.siteName || 'Site'}</div>
                         </td>
                         <td className="py-3 px-4 font-semibold">{att.attendanceDate}</td>
                         <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
                             att.status === 'PRESENT'
                               ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
                               : att.status === 'LATE'
@@ -867,7 +867,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                                 </span>
                               ))
                             ) : (
-                              <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+                              <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
                                 <Check className="w-3 h-3" /> Clean
                               </span>
                             )}
@@ -953,7 +953,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                     Grace: {pol.gracePeriodMinutes}m | Rounding: {pol.overtimeRoundingRule} | OT Threshold: {pol.overtimeThresholdMinutes}m
                   </p>
                 </div>
@@ -1102,7 +1102,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                   />
                   <div>
                     <div className="text-xs font-bold text-black dark:text-white">Require Supervisor Approval</div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Overtime requires explicit authorization</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">Overtime requires explicit authorization</div>
                   </div>
                 </label>
 
@@ -1115,7 +1115,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                   />
                   <div>
                     <div className="text-xs font-bold text-black dark:text-white">Overtime Calculation Active</div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Enable automatic overtime computation</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">Enable automatic overtime computation</div>
                   </div>
                 </label>
               </div>
@@ -1159,7 +1159,7 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 dark:bg-slate-800/50 font-bold text-slate-500 dark:text-slate-400">
                     <th className="py-3 px-4">Employee</th>
@@ -1200,10 +1200,10 @@ export const OvertimeDashboard: React.FC<Props> = ({ userSession, activeCompany 
                         </td>
                         <td className="py-3 px-4">
                           <div className="text-black dark:text-slate-200">{adj.reason}</div>
-                          <div className="text-[10px] text-slate-400">By: {adj.requestedByName}</div>
+                          <div className="text-[11px] text-slate-400">By: {adj.requestedByName}</div>
                         </td>
                         <td className="py-3 px-4 text-center">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                             adj.status === 'APPROVED'
                               ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
                               : adj.status === 'REJECTED'

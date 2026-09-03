@@ -191,11 +191,11 @@ export function AssetIncidentHistory({ session, companyId, asset, sites, onClose
                     <span className="font-medium text-sm text-black dark:text-white truncate" title={inc.title}>{inc.title}</span>
                   </div>
                   <div className="flex flex-wrap gap-1 mb-2">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${getStatusColor(inc.status)}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${getStatusColor(inc.status)}`}>
                       {inc.status}
                     </span>
                     {inc.lossDamageType && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-700">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-50 text-red-700">
                         {inc.lossDamageType}
                       </span>
                     )}

@@ -231,6 +231,75 @@
       },
       "required": ["id", "batchNumber", "companyId", "payrollCycleId", "paymentMethod", "totalAmount", "status", "createdAt"]
     },
+    "ClientContract": {
+      "title": "Client Contract & SLA",
+      "description": "Client contract terms, site mappings, and SLA penalty clauses",
+      "type": "object",
+      "properties": {
+        "contractId": { "type": "string" },
+        "companyId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "clientName": { "type": "string" },
+        "contractNumber": { "type": "string" },
+        "title": { "type": "string" },
+        "siteIds": { "type": "array" },
+        "billingCycle": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["contractId", "companyId", "clientId", "contractNumber", "status"]
+    },
+    "RateCard": {
+      "title": "Rate Card",
+      "description": "Versioned billing rates per role, shift, and site",
+      "type": "object",
+      "properties": {
+        "rateCardId": { "type": "string" },
+        "companyId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "contractId": { "type": "string" },
+        "role": { "type": "string" },
+        "shiftType": { "type": "string" },
+        "ratePerShift": { "type": "number" },
+        "effectiveFrom": { "type": "string" },
+        "version": { "type": "number" }
+      },
+      "required": ["rateCardId", "companyId", "contractId", "role", "ratePerShift"]
+    },
+    "ClientInvoice": {
+      "title": "Client Invoice",
+      "description": "Client billing invoice with shift muster units, rate card prices, and SLA penalty deductions",
+      "type": "object",
+      "properties": {
+        "invoiceId": { "type": "string" },
+        "companyId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "contractId": { "type": "string" },
+        "billingPeriodStart": { "type": "string" },
+        "billingPeriodEnd": { "type": "string" },
+        "grossAmount": { "type": "number" },
+        "totalPenaltyDeduction": { "type": "number" },
+        "netAmount": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["invoiceId", "companyId", "clientId", "contractId", "netAmount", "status"]
+    },
+    "SlaBreach": {
+      "title": "SLA Breach Record",
+      "description": "Guard muster shortfall records with auto-calculated penalty deductions",
+      "type": "object",
+      "properties": {
+        "breachId": { "type": "string" },
+        "companyId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "contractId": { "type": "string" },
+        "siteId": { "type": "string" },
+        "date": { "type": "string" },
+        "shortfall": { "type": "number" },
+        "penaltyAmount": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["breachId", "companyId", "contractId", "siteId", "penaltyAmount", "status"]
+    },
     "WorkOrder": {
       "title": "Work Order",
       "description": "Operations workflow dispatch and execution record",
@@ -485,6 +554,22 @@
     "/companies/{companyId}/audit_logs/{logId}": {
       "schema": { "$ref": "#/entities/AuditLog" },
       "description": "Audit log records"
+    },
+    "/companies/{companyId}/contracts/{contractId}": {
+      "schema": { "$ref": "#/entities/ClientContract" },
+      "description": "Client contracts and SLA terms"
+    },
+    "/companies/{companyId}/rateCards/{rateCardId}": {
+      "schema": { "$ref": "#/entities/RateCard" },
+      "description": "Versioned rate cards for billing"
+    },
+    "/companies/{companyId}/clientInvoices/{invoiceId}": {
+      "schema": { "$ref": "#/entities/ClientInvoice" },
+      "description": "Client billing invoices"
+    },
+    "/companies/{companyId}/slaBreaches/{breachId}": {
+      "schema": { "$ref": "#/entities/SlaBreach" },
+      "description": "SLA breach records and penalty deductions"
     }
   }
 }

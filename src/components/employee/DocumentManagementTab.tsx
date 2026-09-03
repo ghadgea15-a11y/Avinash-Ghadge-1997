@@ -153,7 +153,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
       UPLOADED: 'bg-indigo-50 text-indigo-600 border-indigo-100',
       REJECTED: 'bg-slate-100 text-slate-600 border-slate-200'
     };
-    return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${styles[status] || styles.UPLOADED}`}>{status}</span>;
+    return <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${styles[status] || styles.UPLOADED}`}>{status}</span>;
   };
 
   return (
@@ -201,7 +201,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
                       </h4>
                       {getStatusBadge(doc.status)}
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                       <span className="font-mono">#{doc.documentNumber || 'N/A'}</span>
                       {doc.expiryDate && (
                         <span className="flex items-center gap-1">
@@ -296,7 +296,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
               <form onSubmit={handleUpload} className="p-5 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Document Type</label>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Document Type</label>
                     <select 
                       required
                       className="w-full px-3 py-2 bg-white dark:bg-slate-950 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
@@ -311,7 +311,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Document #</label>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Document #</label>
                     <input 
                       type="text" 
                       className="w-full px-3 py-2 bg-white dark:bg-slate-950 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
@@ -322,7 +322,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Expiry Date</label>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Expiry Date</label>
                     <input 
                       type="date" 
                       className="w-full px-3 py-2 bg-white dark:bg-slate-950 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
@@ -333,7 +333,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">File Attachment</label>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">File Attachment</label>
                   <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-xl hover:border-indigo-400 transition-colors relative">
                     <div className="space-y-1 text-center">
                       <Upload className="mx-auto h-8 w-8 text-slate-400" />
@@ -343,7 +343,7 @@ export function DocumentManagementTab({ employee, userSession, onUpdate }: Docum
                           <input type="file" className="sr-only" onChange={handleFileChange} required />
                         </label>
                       </div>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">PDF, JPG, PNG up to 5MB</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">PDF, JPG, PNG up to 5MB</p>
                     </div>
                   </div>
                 </div>

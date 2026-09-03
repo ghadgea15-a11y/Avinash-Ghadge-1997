@@ -204,7 +204,7 @@ export const EscalationTimelineModal: React.FC<EscalationTimelineModalProps> = (
                       </div>
                     )}
 
-                    <div className="text-[11px] text-slate-400 font-mono pt-1">
+                    <div className="text-xs text-slate-400 font-mono pt-1">
                       Event ID: {evt.id}
                     </div>
                   </div>

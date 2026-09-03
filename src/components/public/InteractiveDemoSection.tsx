@@ -95,7 +95,7 @@ export const InteractiveDemoSection: React.FC = () => {
         
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D4D4D8] bg-white dark:bg-slate-900 text-[11px] font-mono font-bold tracking-widest text-black uppercase">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D4D4D8] bg-white dark:bg-slate-900 text-xs font-mono font-bold tracking-widest text-black uppercase">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
             <span>Interactive Application Sandbox</span>
           </div>
@@ -139,7 +139,7 @@ export const InteractiveDemoSection: React.FC = () => {
 
             {/* Demo Watermark & Reset Button */}
             <div className="flex items-center gap-3">
-              <span className="font-mono text-[10px] uppercase font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-500/30">
+              <span className="font-mono text-[11px] uppercase font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-500/30">
                 PRODUCT DEMONSTRATION &bull; DEMO DATA
               </span>
               <button
@@ -180,9 +180,9 @@ export const InteractiveDemoSection: React.FC = () => {
 
                 {/* Interactive Muster Table */}
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
+                  <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-200 text-slate-600 font-mono uppercase text-[10px]">
+                      <tr className="border-b border-slate-200 text-slate-600 font-mono uppercase text-[11px]">
                         <th className="py-2.5 px-3">Employee Name</th>
                         <th className="py-2.5 px-3">Designation</th>
                         <th className="py-2.5 px-3">Scan Time</th>
@@ -196,11 +196,11 @@ export const InteractiveDemoSection: React.FC = () => {
                           <td className="py-3 px-3 font-semibold text-black">{staff.name}</td>
                           <td className="py-3 px-3 text-black">{staff.role}</td>
                           <td className="py-3 px-3 font-mono text-slate-600">{staff.time}</td>
-                          <td className="py-3 px-3 text-emerald-700 font-mono text-[11px]">{staff.geo}</td>
+                          <td className="py-3 px-3 text-emerald-700 font-mono text-xs">{staff.geo}</td>
                           <td className="py-3 px-3 text-right">
                             <button
                               onClick={() => toggleStaffStatus(staff.id)}
-                              className={`px-3 py-1 rounded-full font-mono text-[10px] font-bold transition-all cursor-pointer ${
+                              className={`px-3 py-1 rounded-full font-mono text-[11px] font-bold transition-all cursor-pointer ${
                                 staff.status === 'Present'
                                   ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                                   : staff.status === 'Late'
@@ -247,37 +247,37 @@ export const InteractiveDemoSection: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
-                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Running Hours</span>
+                    <span className="font-mono text-[11px] text-slate-600 uppercase block">Running Hours</span>
                     <input
                       type="text"
                       value={dgRunningHours}
                       onChange={(e) => setDgRunningHours(e.target.value)}
                       className="w-full px-3 py-1.5 rounded-lg border border-[#D4D4D8] font-mono text-sm font-bold text-black"
                     />
-                    <span className="text-[10px] text-slate-600 block">Cumulative meter reading</span>
+                    <span className="text-[11px] text-slate-600 block">Cumulative meter reading</span>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
-                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Diesel Tank Level (L)</span>
+                    <span className="font-mono text-[11px] text-slate-600 uppercase block">Diesel Tank Level (L)</span>
                     <input
                       type="text"
                       value={dgDiesel}
                       onChange={(e) => setDgDiesel(e.target.value)}
                       className="w-full px-3 py-1.5 rounded-lg border border-[#D4D4D8] font-mono text-sm font-bold text-black"
                     />
-                    <span className="text-[10px] text-slate-600 block">Current diesel volume</span>
+                    <span className="text-[11px] text-slate-600 block">Current diesel volume</span>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
-                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Lube Oil Pressure</span>
+                    <span className="font-mono text-[11px] text-slate-600 uppercase block">Lube Oil Pressure</span>
                     <div className="text-sm font-bold font-mono text-emerald-700 pt-1">4.2 bar (Normal)</div>
-                    <span className="text-[10px] text-slate-600 block">Tolerance: 3.5 - 5.0 bar</span>
+                    <span className="text-[11px] text-slate-600 block">Tolerance: 3.5 - 5.0 bar</span>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
-                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Coolant Temp</span>
+                    <span className="font-mono text-[11px] text-slate-600 uppercase block">Coolant Temp</span>
                     <div className="text-sm font-bold font-mono text-emerald-700 pt-1">82°C (Normal)</div>
-                    <span className="text-[10px] text-slate-600 block">Tolerance: 75 - 95°C</span>
+                    <span className="text-[11px] text-slate-600 block">Tolerance: 75 - 95°C</span>
                   </div>
                 </div>
 
@@ -330,7 +330,7 @@ export const InteractiveDemoSection: React.FC = () => {
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-mono text-[11px] font-bold text-black">
+                        <span className="font-mono text-xs font-bold text-black">
                           {cp.id}
                         </span>
                         {cp.scanned ? (
@@ -342,7 +342,7 @@ export const InteractiveDemoSection: React.FC = () => {
                       <strong className="text-xs font-bold text-black block">
                         {cp.name}
                       </strong>
-                      <span className="font-mono text-[11px] text-slate-600 block mt-1">
+                      <span className="font-mono text-xs text-slate-600 block mt-1">
                         {cp.scanned ? `Scanned: ${cp.time}` : 'Pending Scan'}
                       </span>
                     </div>
@@ -374,17 +374,17 @@ export const InteractiveDemoSection: React.FC = () => {
 
                 <div className="p-6 rounded-2xl bg-white border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Asset Tag</span>
+                    <span className="font-mono text-[11px] text-slate-600 uppercase block">Asset Tag</span>
                     <strong className="font-display text-sm font-bold text-black block mt-0.5">LSM-AST-HVAC-009</strong>
                     <span className="text-xs text-black block mt-1">Carrier 150 Ton Water Cooled Chiller</span>
                   </div>
                   <div>
-                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Assigned Custody</span>
+                    <span className="font-mono text-[11px] text-slate-600 uppercase block">Assigned Custody</span>
                     <strong className="text-sm font-bold text-black block mt-0.5">Facility Engineering Dept</strong>
                     <span className="text-xs text-black block mt-1">Building B &bull; Basement 2</span>
                   </div>
                   <div>
-                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Next PM Service</span>
+                    <span className="font-mono text-[11px] text-slate-600 uppercase block">Next PM Service</span>
                     <strong className="font-mono text-sm font-bold text-emerald-700 block mt-0.5">18 August 2026</strong>
                     <span className="text-xs text-emerald-700 block mt-1">Scheduled: Lubrication & Coil Cleaning</span>
                   </div>
@@ -411,19 +411,19 @@ export const InteractiveDemoSection: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="p-4 rounded-2xl bg-white border border-slate-200">
-                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Diesel Stock</span>
+                    <span className="font-mono text-[11px] text-slate-600 uppercase block">Diesel Stock</span>
                     <strong className="font-display text-lg font-bold text-black">1,850 Liters</strong>
-                    <span className="text-[10px] text-emerald-700 block mt-1">Reorder threshold: 500 L</span>
+                    <span className="text-[11px] text-emerald-700 block mt-1">Reorder threshold: 500 L</span>
                   </div>
                   <div className="p-4 rounded-2xl bg-white border border-slate-200">
-                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Security Badges</span>
+                    <span className="font-mono text-[11px] text-slate-600 uppercase block">Security Badges</span>
                     <strong className="font-display text-lg font-bold text-black">340 Units</strong>
-                    <span className="text-[10px] text-emerald-700 block mt-1">Reorder threshold: 100 Units</span>
+                    <span className="text-[11px] text-emerald-700 block mt-1">Reorder threshold: 100 Units</span>
                   </div>
                   <div className="p-4 rounded-2xl bg-white border border-slate-200">
-                    <span className="font-mono text-[10px] text-slate-600 uppercase block">Purchase Order #084</span>
+                    <span className="font-mono text-[11px] text-slate-600 uppercase block">Purchase Order #084</span>
                     <strong className="font-display text-lg font-bold text-emerald-700">GRN Inward Complete</strong>
-                    <span className="text-[10px] text-black block mt-1">Approved by Operations Head</span>
+                    <span className="text-[11px] text-black block mt-1">Approved by Operations Head</span>
                   </div>
                 </div>
               </div>

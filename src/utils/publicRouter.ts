@@ -16,6 +16,12 @@ export const ROUTE_PATH_MAP: Record<string, { screen: PhaseAScreen }> = {
 
 export const navigateToUrl = (url: string) => {
   if (typeof window === 'undefined') return;
-  window.history.pushState({}, '', url);
-  window.dispatchEvent(new PopStateEvent('popstate'));
+  try {
+    window.history.pushState({}, '', url);
+  } catch {
+    // In restricted iframes pushState might be disallowed
+  }
+  try {
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  } catch {}
 };

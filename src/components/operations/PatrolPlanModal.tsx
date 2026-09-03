@@ -286,7 +286,7 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
               </label>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
                   Min Completion Pass %
                 </label>
                 <div className="flex items-center space-x-2">
@@ -348,15 +348,15 @@ export const PatrolPlanModal: React.FC<PatrolPlanModalProps> = ({
                           className="w-4 h-4 text-indigo-600 rounded pointer-events-none"
                         />
                         <div className="flex items-center space-x-2">
-                          <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-900 dark:text-slate-300 text-[11px] font-bold flex items-center justify-center">
+                          <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-900 dark:text-slate-300 text-xs font-bold flex items-center justify-center">
                             {cp.sequenceOrder}
                           </span>
                           <span className="text-xs font-semibold">{cp.checkpointName}</span>
-                          <span className="text-[11px] font-mono text-slate-400">({cp.code})</span>
+                          <span className="text-xs font-mono text-slate-400">({cp.code})</span>
                         </div>
                       </div>
                       {cp.locationDescription && (
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[160px]">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[160px]">
                           {cp.locationDescription}
                         </span>
                       )}

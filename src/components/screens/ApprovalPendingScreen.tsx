@@ -169,7 +169,7 @@ export const ApprovalPendingScreen: React.FC<ApprovalPendingScreenProps> = ({
                 <strong>Reason:</strong> {rejectionReason}
               </div>
             )}
-            <p className="text-[11px] text-rose-400">
+            <p className="text-xs text-rose-400">
               Please contact your company HR or administrator to resolve access requirements.
             </p>
           </div>
@@ -189,11 +189,11 @@ export const ApprovalPendingScreen: React.FC<ApprovalPendingScreenProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-2">
               <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80">
-                <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-mono block">Registered Email</span>
+                <span className="text-slate-500 dark:text-slate-400 text-[11px] uppercase font-mono block">Registered Email</span>
                 <span className="font-semibold text-white font-mono">{session.email}</span>
               </div>
               <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80">
-                <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-mono block">Company Code</span>
+                <span className="text-slate-500 dark:text-slate-400 text-[11px] uppercase font-mono block">Company Code</span>
                 <span className="font-semibold text-white font-mono">{session.companyId}</span>
               </div>
             </div>
@@ -217,7 +217,7 @@ export const ApprovalPendingScreen: React.FC<ApprovalPendingScreenProps> = ({
                 <Mail className="w-5 h-5 shrink-0" />
                 <div>
                   <p className="font-semibold text-xs">Step 1: Email Verification</p>
-                  <p className="text-[11px] opacity-80">
+                  <p className="text-xs opacity-80">
                     {emailVerified 
                       ? 'Your email address has been verified successfully.' 
                       : 'A verification link was sent to your email address.'}
@@ -226,14 +226,14 @@ export const ApprovalPendingScreen: React.FC<ApprovalPendingScreenProps> = ({
               </div>
               <div>
                 {emailVerified ? (
-                  <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold rounded-full flex items-center gap-1">
+                  <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold rounded-full flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> VERIFIED
                   </span>
                 ) : (
                   <button
                     onClick={handleResendVerification}
                     disabled={resendingEmail}
-                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-[11px] rounded-lg flex items-center gap-1 transition"
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs rounded-lg flex items-center gap-1 transition"
                   >
                     {resendingEmail ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                     <span>Resend Link</span>
@@ -252,14 +252,14 @@ export const ApprovalPendingScreen: React.FC<ApprovalPendingScreenProps> = ({
                 <Building2 className="w-5 h-5 shrink-0" />
                 <div>
                   <p className="font-semibold text-xs">Step 2: Company Administrator Review</p>
-                  <p className="text-[11px] opacity-80">
+                  <p className="text-xs opacity-80">
                     {adminApproved 
                       ? 'Company Admin has approved your workstation access.' 
                       : 'Awaiting Company Admin review.'}
                   </p>
                 </div>
               </div>
-              <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full flex items-center gap-1 ${
+              <span className={`px-2.5 py-1 text-[11px] font-bold rounded-full flex items-center gap-1 ${
                 adminApproved 
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
                   : 'bg-slate-800 text-slate-400 border border-slate-700'
@@ -279,14 +279,14 @@ export const ApprovalPendingScreen: React.FC<ApprovalPendingScreenProps> = ({
                 <User className="w-5 h-5 shrink-0" />
                 <div>
                   <p className="font-semibold text-xs">Step 3: HR Approval & Department Role</p>
-                  <p className="text-[11px] opacity-80">
+                  <p className="text-xs opacity-80">
                     {hrApproved 
                       ? 'HR Manager has approved your profile and assigned department.' 
                       : 'Awaiting HR Manager approval.'}
                   </p>
                 </div>
               </div>
-              <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full flex items-center gap-1 ${
+              <span className={`px-2.5 py-1 text-[11px] font-bold rounded-full flex items-center gap-1 ${
                 hrApproved 
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
                   : 'bg-slate-800 text-slate-400 border border-slate-700'
@@ -330,7 +330,7 @@ export const ApprovalPendingScreen: React.FC<ApprovalPendingScreenProps> = ({
         </div>
       </div>
 
-      <div className="text-center pt-8 text-[11px] text-slate-500 dark:text-slate-400">
+      <div className="text-center pt-8 text-xs text-slate-500 dark:text-slate-400">
         Log Sheet Muster Enterprise System • Multi-Tenant Firestore Security
       </div>
     </div>

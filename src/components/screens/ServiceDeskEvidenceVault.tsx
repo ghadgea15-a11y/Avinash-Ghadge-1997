@@ -347,7 +347,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
           <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
             <ImageIcon className="w-4 h-4 text-indigo-500" />
             <div>
-              <span className="text-[10px] text-slate-400 block font-medium">Photos</span>
+              <span className="text-[11px] text-slate-400 block font-medium">Photos</span>
               <span className="font-bold text-black dark:text-slate-200">{photoCount}</span>
             </div>
           </div>
@@ -355,7 +355,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
           <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
             <FileText className="w-4 h-4 text-blue-500" />
             <div>
-              <span className="text-[10px] text-slate-400 block font-medium">Reports & Docs</span>
+              <span className="text-[11px] text-slate-400 block font-medium">Reports & Docs</span>
               <span className="font-bold text-black dark:text-slate-200">{reportCount}</span>
             </div>
           </div>
@@ -363,7 +363,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
           <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
             <FileCheck className="w-4 h-4 text-emerald-500" />
             <div>
-              <span className="text-[10px] text-slate-400 block font-medium">Completion Proof</span>
+              <span className="text-[11px] text-slate-400 block font-medium">Completion Proof</span>
               <span className="font-bold text-black dark:text-slate-200">{completionCount}</span>
             </div>
           </div>
@@ -371,7 +371,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
           <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
             <Unlock className="w-4 h-4 text-emerald-500" />
             <div>
-              <span className="text-[10px] text-slate-400 block font-medium">Client Visible</span>
+              <span className="text-[11px] text-slate-400 block font-medium">Client Visible</span>
               <span className="font-bold text-emerald-600 dark:text-emerald-400">{clientVisibleCount}</span>
             </div>
           </div>
@@ -380,7 +380,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
             <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
               <Lock className="w-4 h-4 text-amber-500" />
               <div>
-                <span className="text-[10px] text-slate-400 block font-medium">Internal Only</span>
+                <span className="text-[11px] text-slate-400 block font-medium">Internal Only</span>
                 <span className="font-bold text-amber-600 dark:text-amber-400">{internalOnlyCount}</span>
               </div>
             </div>
@@ -395,7 +395,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
           <button
             type="button"
             onClick={() => setFilterType('ALL')}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
               filterType === 'ALL'
                 ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
                 : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
@@ -406,7 +406,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
           <button
             type="button"
             onClick={() => setFilterType('PHOTOS')}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
               filterType === 'PHOTOS'
                 ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
                 : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
@@ -417,7 +417,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
           <button
             type="button"
             onClick={() => setFilterType('REPORTS')}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
               filterType === 'REPORTS'
                 ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-xs'
                 : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
@@ -428,7 +428,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
           <button
             type="button"
             onClick={() => setFilterType('CLIENT')}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
               filterType === 'CLIENT'
                 ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-300 shadow-xs'
                 : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
@@ -440,7 +440,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
             <button
               type="button"
               onClick={() => setFilterType('INTERNAL')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${
                 filterType === 'INTERNAL'
                   ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-300 shadow-xs'
                   : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
@@ -497,7 +497,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
         <div className="text-center py-10 border-2 border-dashed rounded-2xl border-slate-200 dark:border-slate-800 p-6">
           <UploadCloud className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 dark:text-slate-400 mb-2" />
           <h4 className="text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">No Evidence Records Found</h4>
-          <p className="text-[11px] text-slate-400 max-w-sm mx-auto mb-4">
+          <p className="text-xs text-slate-400 max-w-sm mx-auto mb-4">
             {searchQuery || filterType !== 'ALL' 
               ? 'No attachments match your current search or filter criteria.' 
               : 'Attach site inspection photos, contractor service reports, and completion sign-offs to this ticket.'}
@@ -547,7 +547,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                       <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 dark:bg-slate-800 shadow-xs border border-slate-200 dark:border-slate-700">
                         {getFileIcon(att.fileName, att.fileType)}
                       </div>
-                      <span className="text-[10px] font-mono uppercase text-slate-400 font-semibold">
+                      <span className="text-[11px] font-mono uppercase text-slate-400 font-semibold">
                         {att.fileName.split('.').pop() || 'FILE'}
                       </span>
                     </div>
@@ -605,13 +605,13 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                     </h5>
                     
                     {att.notes && (
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 italic leading-relaxed">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 italic leading-relaxed">
                         "{att.notes}"
                       </p>
                     )}
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
                     <div className="flex items-center gap-1.5 truncate">
                       <User className="w-3 h-3 text-slate-400 shrink-0" />
                       <span className="truncate">{att.uploadedByName}</span>
@@ -657,8 +657,8 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
         /* LIST VIEW */
         <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-slate-850/80 border-slate-750' : 'bg-white border-slate-200 shadow-2xs'}`}>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className={`border-b text-[10px] font-bold uppercase tracking-wider ${
+            <table className="w-full text-left text-sm">
+              <thead className={`border-b text-[11px] font-bold uppercase tracking-wider ${
                 isDark ? 'border-slate-800 bg-slate-900/60 text-slate-400' : 'border-slate-200 bg-white text-slate-500'
               }`}>
                 <tr>
@@ -694,7 +694,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                               {att.fileName}
                             </span>
                             {att.notes && (
-                              <span className="text-[10px] text-slate-400 block truncate max-w-xs italic">
+                              <span className="text-[11px] text-slate-400 block truncate max-w-xs italic">
                                 {att.notes}
                               </span>
                             )}
@@ -720,10 +720,10 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                       <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400 dark:text-slate-300">
                         {att.uploadedByName}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-400 text-[10px]">
+                      <td className="py-2.5 px-3 text-slate-400 text-[11px]">
                         {new Date(att.createdAt || att.uploadedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px]">
+                      <td className="py-2.5 px-3 text-slate-400 font-mono text-xs">
                         {formatFileSize(att.fileSize)}
                       </td>
                       <td className="py-2.5 px-3 text-right">
@@ -859,13 +859,13 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                       <span className="font-bold text-black dark:text-white dark:text-slate-100 block truncate max-w-xs mx-auto">
                         {selectedFile.name}
                       </span>
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-[11px] text-slate-400">
                         {formatFileSize(selectedFile.size)} • {selectedFile.type || 'Document'}
                       </span>
                     </div>
                     <label
                       htmlFor="evidence-file-input"
-                      className="inline-block px-2.5 py-1 text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                      className="inline-block px-2.5 py-1 text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                     >
                       Choose a different file
                     </label>
@@ -877,7 +877,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                       <span className="font-semibold text-black dark:text-slate-200">
                         Click to browse or drag & drop evidence file
                       </span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">
+                      <span className="text-[11px] text-slate-400 block mt-0.5">
                         Supports Photos (JPG, PNG, WebP), PDFs, Office Docs, Inspection Sheets (Max 15MB)
                       </span>
                     </div>
@@ -887,7 +887,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
 
               {/* Evidence Type */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Evidence Classification *
                 </label>
                 <select
@@ -908,7 +908,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
 
               {/* Visibility Setting */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Audience & Visibility
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -923,7 +923,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                   >
                     <Unlock className="w-4 h-4 text-emerald-500 shrink-0" />
                     <div>
-                      <span className="font-bold text-[11px] block">Client Visible</span>
+                      <span className="font-bold text-xs block">Client Visible</span>
                       <span className="text-[9px] text-slate-400">Accessible in client portal</span>
                     </div>
                   </button>
@@ -940,14 +940,14 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                     >
                       <Lock className="w-4 h-4 text-amber-500 shrink-0" />
                       <div>
-                        <span className="font-bold text-[11px] block">Internal Only</span>
+                        <span className="font-bold text-xs block">Internal Only</span>
                         <span className="text-[9px] text-slate-400">Staff & Ops only</span>
                       </div>
                     </button>
                   ) : (
                     <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 opacity-50 flex items-center gap-2">
                       <Lock className="w-4 h-4 text-slate-400" />
-                      <span className="text-[10px] text-slate-400">Internal restricted to staff</span>
+                      <span className="text-[11px] text-slate-400">Internal restricted to staff</span>
                     </div>
                   )}
                 </div>
@@ -955,7 +955,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
 
               {/* Notes / Caption */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Notes & Captions (Optional)
                 </label>
                 <textarea
@@ -1063,7 +1063,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
                   "{previewAttachment.notes}"
                 </p>
               )}
-              <div className="text-[10px] text-slate-400 flex items-center justify-center gap-3">
+              <div className="text-[11px] text-slate-400 flex items-center justify-center gap-3">
                 <span>By {previewAttachment.uploadedByName}</span>
                 <span>•</span>
                 <span>{new Date(previewAttachment.createdAt || previewAttachment.uploadedAt).toLocaleString()}</span>
@@ -1090,7 +1090,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
 
             <form onSubmit={handleUpdateMetadata} className="p-4 space-y-3.5 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Evidence Classification
                 </label>
                 <select
@@ -1111,7 +1111,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
 
               {isStaff && (
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
+                  <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">
                     Visibility
                   </label>
                   <select
@@ -1128,7 +1128,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
               )}
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Notes & Captions
                 </label>
                 <textarea
@@ -1186,7 +1186,7 @@ export const ServiceDeskEvidenceVault: React.FC<ServiceDeskEvidenceVaultProps> =
               </p>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-900 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-slate-900 dark:text-slate-300 mb-1">
                   Reason for Archival *
                 </label>
                 <input

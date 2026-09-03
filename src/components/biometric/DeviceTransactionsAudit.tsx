@@ -117,7 +117,7 @@ export const DeviceTransactionsAudit: React.FC<DeviceTransactionsAuditProps> = (
           </div>
 
           <div className="border border-slate-800 rounded-xl overflow-hidden">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-sm">
               <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Timestamp</th>
@@ -144,11 +144,11 @@ export const DeviceTransactionsAudit: React.FC<DeviceTransactionsAuditProps> = (
                 ) : (
                   filteredLogs.map(log => (
                     <tr key={log.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="px-4 py-3 text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                      <td className="px-4 py-3 text-slate-400 font-mono text-xs whitespace-nowrap">
                         {formatTimestamp(log.timestamp)}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${
+                        <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${
                           log.action === 'REGISTER' || log.action === 'AUTO_CONNECT' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
                           log.action === 'TIME_SYNC' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' :
                           log.action === 'SYNC_PUNCHES' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
@@ -179,7 +179,7 @@ export const DeviceTransactionsAudit: React.FC<DeviceTransactionsAuditProps> = (
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
                   <span className="text-slate-500 dark:text-slate-400 block text-[10.5px]">Device Clock</span>
-                  <span className="text-white font-mono text-[11px]">
+                  <span className="text-white font-mono text-xs">
                     {formatTimeSafe(d.telemetry?.deviceTimeIso, 'Synced')}
                   </span>
                 </div>
@@ -189,7 +189,7 @@ export const DeviceTransactionsAudit: React.FC<DeviceTransactionsAuditProps> = (
                 </div>
                 <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
                   <span className="text-slate-500 dark:text-slate-400 block text-[10.5px]">Last Heartbeat</span>
-                  <span className="text-slate-300 text-[11px]">
+                  <span className="text-slate-300 text-xs">
                     {formatTimeSafe(d.telemetry?.lastSeenAt, 'Online')}
                   </span>
                 </div>

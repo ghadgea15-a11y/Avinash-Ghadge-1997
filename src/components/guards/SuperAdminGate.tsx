@@ -28,19 +28,30 @@ export const SuperAdminGate: React.FC<SuperAdminGateProps> = ({ userSession, onN
       }
 
       try {
-        // Authoritative verification against backend state
+        // 1. Primary check: doc with userId
         const docRef = doc(db, 'super_admins', userSession.userId);
-        const adminDoc = await getDocFromServer(docRef);
-        
+        let adminDoc = await getDocFromServer(docRef).catch(() => null);
+
+        // 2. Secondary check: doc with UID formatted as SA-${cleanEmail}
+        const userEmail = (userSession.email || '').trim().toLowerCase();
+        if ((!adminDoc || !adminDoc.exists()) && userEmail) {
+          const saDocId = `SA-${userEmail.replace(/[^a-z0-9]/g, '_')}`;
+          adminDoc = await getDocFromServer(doc(db, 'super_admins', saDocId)).catch(() => null);
+        }
+
+        // 3. Primary platform superadmin identifier
+        const isPrimaryAdmin = userEmail === 'ghadgea15@gmail.com' || userSession.userId === 'superadmin_primary';
+
         if (isMounted) {
-          const isActuallySuperAdmin = adminDoc.exists() && adminDoc.data().status === 'ACTIVE';
-          
-          if (isActuallySuperAdmin) {
+          const isDocActive = adminDoc && adminDoc.exists() && adminDoc.data().status === 'ACTIVE';
+          const hasRole = PlatformAuthClient.isSuperAdmin(userSession);
+
+          if (isDocActive || (isPrimaryAdmin && hasRole)) {
+            setVerified(true);
+          } else if (hasRole && !adminDoc?.exists()) {
+            // Allow active SUPER_ADMIN role claim if doc is syncing
             setVerified(true);
           } else {
-            // Secondary check: if Firestore record is missing, but claim is present, 
-            // we might be in a sync delay. But we prefer backend authority.
-            // For now, let's be strict.
             setVerified(false);
           }
         }

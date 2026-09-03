@@ -156,30 +156,30 @@ export const BankBatchDetailModal: React.FC<BankBatchDetailModalProps> = ({
         {/* Top Metric Cards */}
         <div className="p-6 pb-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white dark:bg-slate-900 border-b border-slate-100">
           <div className="p-3.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Disbursement</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Disbursement</span>
             <p className="text-xl font-bold text-black dark:text-white mt-0.5">₹{batch.totalAmount.toLocaleString('en-IN')}</p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">Authoritative Net Pay</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">Authoritative Net Pay</p>
           </div>
           <div className="p-3.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Beneficiaries</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Beneficiaries</span>
             <p className="text-xl font-bold text-black dark:text-white mt-0.5">
               <span className="text-emerald-600">{batch.validBeneficiaryCount}</span> / {batch.beneficiaryCount}
             </p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">Valid accounts</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">Valid accounts</p>
           </div>
           <div className="p-3.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Debit Bank Source</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Debit Bank Source</span>
             <p className="text-sm font-bold text-black dark:text-white mt-0.5 truncate">
               {companyBank?.bankName || batch.companyBankName || 'Company Account'}
             </p>
-            <p className="text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate">
+            <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
               {companyBank?.maskedAccountNumber || batch.companyMaskedAccount || '••••••••1234'}
             </p>
           </div>
           <div className="p-3.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Created By</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Created By</span>
             <p className="text-sm font-bold text-black dark:text-white mt-0.5 truncate">{batch.createdByName || 'Finance Admin'}</p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">{new Date(batch.createdAt).toLocaleDateString('en-IN')}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">{new Date(batch.createdAt).toLocaleDateString('en-IN')}</p>
           </div>
         </div>
 
@@ -198,7 +198,7 @@ export const BankBatchDetailModal: React.FC<BankBatchDetailModalProps> = ({
               </span>
             )}
           </div>
-          <div className="flex items-center space-x-2 text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="flex items-center space-x-2 text-xs text-slate-500 dark:text-slate-400">
             {batch.approvedByName && (
               <span>Approved by <strong className="text-slate-900 dark:text-slate-300">{batch.approvedByName}</strong></span>
             )}
@@ -254,8 +254,8 @@ export const BankBatchDetailModal: React.FC<BankBatchDetailModalProps> = ({
 
           {/* Table */}
           <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-white dark:bg-slate-950 border-b border-slate-200 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-white dark:bg-slate-950 border-b border-slate-200 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
                 <tr>
                   <th className="px-4 py-3">#</th>
                   <th className="px-4 py-3">Employee</th>
@@ -279,11 +279,11 @@ export const BankBatchDetailModal: React.FC<BankBatchDetailModalProps> = ({
                       <td className="px-4 py-3 text-slate-400 font-mono">{idx + 1}</td>
                       <td className="px-4 py-3">
                         <div className="font-semibold text-black dark:text-white">{item.employeeName}</div>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400">{item.employeeCode} • {item.departmentName}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{item.employeeCode} • {item.departmentName}</div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-black dark:text-slate-200 font-medium">{item.bankName}</div>
-                        <div className="font-mono text-slate-500 dark:text-slate-400 text-[11px]">{item.maskedAccountNumber}</div>
+                        <div className="font-mono text-slate-500 dark:text-slate-400 text-xs">{item.maskedAccountNumber}</div>
                       </td>
                       <td className="px-4 py-3 font-mono font-medium text-slate-900 dark:text-slate-300">
                         {item.ifscCode || 'MISSING'}
@@ -292,7 +292,7 @@ export const BankBatchDetailModal: React.FC<BankBatchDetailModalProps> = ({
                         ₹{item.netPay.toLocaleString('en-IN')}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex px-2 py-0.5 rounded-md font-bold text-[10px] ${
+                        <span className={`inline-flex px-2 py-0.5 rounded-md font-bold text-[11px] ${
                           item.paymentMethod === 'RTGS' 
                             ? 'bg-purple-100 text-purple-700' 
                             : 'bg-blue-100 text-blue-700'
@@ -302,16 +302,16 @@ export const BankBatchDetailModal: React.FC<BankBatchDetailModalProps> = ({
                       </td>
                       <td className="px-4 py-3">
                         {item.validationStatus === 'VALID' ? (
-                          <span className="inline-flex items-center text-emerald-600 font-semibold text-[11px]">
+                          <span className="inline-flex items-center text-emerald-600 font-semibold text-xs">
                             <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Eligible
                           </span>
                         ) : (
                           <div>
-                            <span className="inline-flex items-center text-rose-600 font-semibold text-[11px]">
+                            <span className="inline-flex items-center text-rose-600 font-semibold text-xs">
                               <AlertCircle className="w-3.5 h-3.5 mr-1" /> Ineligible
                             </span>
                             {item.validationErrors && item.validationErrors.length > 0 && (
-                              <p className="text-[10px] text-rose-600 font-medium mt-0.5 max-w-xs">
+                              <p className="text-[11px] text-rose-600 font-medium mt-0.5 max-w-xs">
                                 {item.validationErrors.join(' • ')}
                               </p>
                             )}

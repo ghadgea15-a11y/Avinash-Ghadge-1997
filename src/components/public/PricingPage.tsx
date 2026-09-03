@@ -112,14 +112,14 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onNavigate }) => {
             }`}
           >
             {plan.popular && (
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-emerald-500 text-slate-950 font-mono font-bold text-[10px] tracking-widest uppercase shadow-md">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-emerald-500 text-slate-950 font-mono font-bold text-[11px] tracking-widest uppercase shadow-md">
                 RECOMMENDED BY OPERATORS
               </div>
             )}
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className={`text-[11px] font-mono font-bold tracking-wider uppercase px-2.5 py-1 rounded-md ${
+                <span className={`text-xs font-mono font-bold tracking-wider uppercase px-2.5 py-1 rounded-md ${
                   plan.popular ? 'bg-slate-800 text-emerald-400' : 'bg-slate-100 text-slate-900'
                 }`}>
                   {plan.badge}

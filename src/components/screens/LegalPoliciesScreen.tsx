@@ -77,7 +77,7 @@ export const LegalPoliciesScreen: React.FC<LegalPoliciesScreenProps> = ({
         </div>
 
         <div className="flex items-center gap-3 text-xs">
-          <span className="hidden md:inline-block text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+          <span className="hidden md:inline-block text-slate-500 dark:text-slate-400 font-mono text-xs">
             Platform: Log Sheet Muster (LSM)
           </span>
           <button
@@ -99,7 +99,7 @@ export const LegalPoliciesScreen: React.FC<LegalPoliciesScreenProps> = ({
               <Scale className="w-5 h-5" />
               <h2 className="text-sm font-bold tracking-tight">Compliance & Legal Pack</h2>
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-400 leading-relaxed">
               Shourya Enterprises Pvt. Ltd. regulatory compliance framework for Log Sheet Muster enterprise deployment.
             </p>
           </div>
@@ -128,7 +128,7 @@ export const LegalPoliciesScreen: React.FC<LegalPoliciesScreenProps> = ({
                     </div>
                     <div className="truncate">
                       <p className="text-xs truncate">{sec.title}</p>
-                      <p className="text-[10px] text-slate-400 truncate">{sec.subtitle}</p>
+                      <p className="text-[11px] text-slate-400 truncate">{sec.subtitle}</p>
                     </div>
                   </div>
                   <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${isActive ? 'text-indigo-500 translate-x-0.5' : 'text-slate-600 opacity-50'}`} />
@@ -139,12 +139,12 @@ export const LegalPoliciesScreen: React.FC<LegalPoliciesScreenProps> = ({
 
           {/* Company Details Box */}
           <div className={`mt-6 p-4 rounded-2xl border ${isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-100 border-slate-200'} text-xs space-y-2.5`}>
-            <div className="flex items-center gap-2 text-slate-300 font-semibold text-[11px] uppercase tracking-wider font-mono">
+            <div className="flex items-center gap-2 text-slate-300 font-semibold text-xs uppercase tracking-wider font-mono">
               <Building className="w-3.5 h-3.5 text-indigo-400" />
               <span>Service Provider</span>
             </div>
             <p className="font-semibold text-slate-200">Shourya Enterprises Pvt. Ltd.</p>
-            <div className="space-y-1 text-[11px] text-slate-400 font-mono">
+            <div className="space-y-1 text-xs text-slate-400 font-mono">
               <p className="flex items-start gap-1.5">
                 <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-500 dark:text-slate-400 mt-0.5" />
                 <span>Ajanthanagar, Chinchwad, Pune, Maharashtra - 411019, India</span>

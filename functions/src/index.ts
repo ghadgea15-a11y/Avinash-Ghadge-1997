@@ -1405,3 +1405,154 @@ export const sendPushNotification = https.onCall(async (request) => {
   }
 });
 export { calculateMonthlyPayroll } from './payroll';
+
+/**
+ * MODULE 12 / POINT 1.2: Public Career Portal Data Isolation Trigger
+ * Synchronizes approved/open job requisitions to the public-safe root collection `/publicJobPostings`.
+ * Strips all internal metadata, budget/salary ceilings, approver chains, and tenant internal identifiers.
+ */
+export const syncPublicJobPostingTrigger = functionsV1.firestore
+  .document("companies/{companyId}/jobRequisitions/{reqId}")
+  .onWrite(async (change, context) => {
+    const { companyId, reqId } = context.params;
+    const db = admin.firestore();
+
+    if (!change.after.exists) {
+      // Requisition deleted, clean up public posting
+      await db.collection("publicJobPostings").doc(reqId).delete();
+      return null;
+    }
+
+    const data = change.after.data() || {};
+    const status = String(data.status || 'DRAFT').toUpperCase();
+    const isPubliclyAvailable = ['OPEN', 'APPROVED', 'PUBLISHED'].includes(status) && data.isInternalOnly !== true;
+
+    if (isPubliclyAvailable) {
+      // Fetch company display name if available
+      let companyName = data.companyName;
+      if (!companyName) {
+        try {
+          const compSnap = await db.collection("companies").doc(companyId).get();
+          if (compSnap.exists) {
+            companyName = compSnap.data()?.name || compSnap.data()?.displayName || "Facility Partner";
+          }
+        } catch {
+          companyName = "Enterprise Partner";
+        }
+      }
+
+      // Extract ONLY public-safe fields (strictly zero internal requisition metadata or approval logs)
+      const publicSafeRecord = {
+        id: reqId,
+        companyId: companyId,
+        companyName: companyName || "Enterprise Partner",
+        jobTitle: data.title || data.jobTitle || "Open Position",
+        departmentName: data.department || data.departmentName || "Operations",
+        siteName: data.siteName || "",
+        locationCity: data.locationCity || data.location || "On-site",
+        employmentType: data.employmentType || "FULL_TIME",
+        experienceRequired: data.experienceRequired || "1-3 Years",
+        jobDescription: data.jobDescription || data.description || "Exciting opportunity to join our operations workforce.",
+        skills: Array.isArray(data.skills) ? data.skills : [],
+        openPositions: Number(data.openPositions || data.openings) || 1,
+        status: "PUBLISHED",
+        publishedAt: data.publishedAt || data.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        closingDate: data.closingDate || null
+      };
+
+      await db.collection("publicJobPostings").doc(reqId).set(publicSafeRecord, { merge: true });
+    } else {
+      // Non-open requisition (DRAFT, REJECTED, FILLED, CLOSED) -> purge from public visibility
+      await db.collection("publicJobPostings").doc(reqId).delete();
+    }
+
+    return null;
+  });
+
+/**
+ * Public Candidate Application Handler (Callable / REST fallback)
+ * Allows unauthenticated/external public applicants to submit resume and application
+ * securely routed to the specific tenant's candidate pipeline with initial 'REGISTERED' stage.
+ */
+export const submitPublicCandidate = https.onCall(async (request) => {
+  const data = request.data || {};
+  const { companyId, requisitionId, fullName, email, phone, experienceYears, expectedSalary, notes, resumeUrl } = data;
+
+  if (!companyId || typeof companyId !== 'string') {
+    throw new https.HttpsError('invalid-argument', 'Missing companyId.');
+  }
+  if (!requisitionId || typeof requisitionId !== 'string') {
+    throw new https.HttpsError('invalid-argument', 'Missing requisitionId.');
+  }
+  if (!fullName || !email || !phone) {
+    throw new https.HttpsError('invalid-argument', 'Full name, email, and phone are required.');
+  }
+
+  const db = admin.firestore();
+
+  // 1. Verify that the requisition is currently published in /publicJobPostings
+  const publicPostingSnap = await db.collection('publicJobPostings').doc(requisitionId).get();
+  if (!publicPostingSnap.exists) {
+    throw new https.HttpsError('not-found', 'The specified job posting is no longer accepting public applications.');
+  }
+
+  // 2. Check for duplicate application by email in the company's candidate pipeline
+  const dupSnap = await db
+    .collection('companies')
+    .doc(companyId)
+    .collection('candidates')
+    .where('email', '==', String(email).trim().toLowerCase())
+    .limit(1)
+    .get();
+
+  if (!dupSnap.empty) {
+    const existing = dupSnap.docs[0].data();
+    throw new https.HttpsError('already-exists', `An application with this email already exists (Ref: ${existing.candidateCode || 'CAND-EXISTS'}).`);
+  }
+
+  // 3. Assemble and persist Candidate Record in tenant's isolated subcollection
+  const candId = db.collection('companies').doc(companyId).collection('candidates').doc().id;
+  const candidateCode = `CAND-${Date.now().toString().slice(-4)}${Math.floor(10 + Math.random() * 90)}`;
+  const now = new Date().toISOString();
+
+  const candidatePayload = {
+    id: candId,
+    candidateCode,
+    companyId,
+    requisitionId,
+    fullName: String(fullName).trim(),
+    email: String(email).trim().toLowerCase(),
+    phone: String(phone).trim(),
+    phoneNumber: String(phone).trim(),
+    experienceYears: Number(experienceYears) || 0,
+    expectedSalary: expectedSalary || '',
+    resumeUrl: resumeUrl || '',
+    notes: notes || '',
+    stage: 'REGISTERED',
+    source: 'PUBLIC_CAREER_PORTAL',
+    status: 'ACTIVE',
+    appliedDate: now,
+    createdAt: now,
+    updatedAt: now,
+    statusHistory: [
+      {
+        stage: 'REGISTERED',
+        changedBy: 'PUBLIC_PORTAL',
+        changedByName: 'Candidate Self-Service',
+        changedAt: now,
+        sourceEvent: 'Public Career Portal Submission'
+      }
+    ]
+  };
+
+  await db.collection('companies').doc(companyId).collection('candidates').doc(candId).set(candidatePayload);
+
+  return {
+    success: true,
+    candidateId: candId,
+    candidateCode,
+    message: 'Application submitted successfully.'
+  };
+});
+

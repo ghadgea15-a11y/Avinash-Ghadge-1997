@@ -491,7 +491,7 @@ export const MandatoryRefreshersScreen: React.FC<MandatoryRefreshersScreenProps>
                         <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                           <td className="py-3.5 px-4">
                             <div className="font-bold text-slate-900 dark:text-white">{item.employeeName}</div>
-                            <span className="text-[10px] font-mono text-slate-400">{item.employeeId}</span>
+                            <span className="text-[11px] font-mono text-slate-400">{item.employeeId}</span>
                           </td>
                           <td className="py-3.5 px-4 text-xs">
                             <div className="font-medium text-slate-800 dark:text-slate-200">{item.department}</div>
@@ -499,7 +499,7 @@ export const MandatoryRefreshersScreen: React.FC<MandatoryRefreshersScreenProps>
                           </td>
                           <td className="py-3.5 px-4">
                             <div className="font-semibold text-xs text-slate-900 dark:text-white">{item.programName}</div>
-                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-500 font-bold">
+                            <span className="text-[11px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-500 font-bold">
                               {item.category}
                             </span>
                           </td>
@@ -569,7 +569,7 @@ export const MandatoryRefreshersScreen: React.FC<MandatoryRefreshersScreenProps>
                 <div>
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 font-bold">
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 font-bold">
                         {prog.id}
                       </span>
                       <h3 className="text-base font-bold text-slate-900 dark:text-white mt-1">{prog.name}</h3>

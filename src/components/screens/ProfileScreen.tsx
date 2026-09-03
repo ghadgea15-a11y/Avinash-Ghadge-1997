@@ -284,7 +284,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <h2 className="text-lg font-bold">{userSession.fullName}</h2>
-              <span className="text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800">
+              <span className="text-[11px] font-bold font-mono px-2.5 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800">
                 {userSession.role}
               </span>
             </div>
@@ -331,10 +331,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
             <div>
               <h3 className="text-sm font-bold">Two-Factor Authentication (MFA)</h3>
-              <p className="text-[11px] text-slate-400">RFC 6238 Time-based One-Time Password (Google Authenticator, Authy, Microsoft Authenticator)</p>
+              <p className="text-xs text-slate-400">RFC 6238 Time-based One-Time Password (Google Authenticator, Authy, Microsoft Authenticator)</p>
             </div>
           </div>
-          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${
+          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${
             mfaEnabled 
               ? 'bg-emerald-950 text-emerald-400 border-emerald-800' 
               : 'bg-amber-950 text-amber-400 border-amber-800'
@@ -352,7 +352,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 : 'Protect your enterprise account against unauthorized password theft by pairing an authenticator app.'}
             </p>
             {mfaEnabled && existingBackupCodes.length > 0 && (
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                 {existingBackupCodes.length} single-use backup recovery codes active
               </p>
             )}
@@ -392,10 +392,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         {showBackupCodes && existingBackupCodes.length > 0 && (
           <div className={`mt-3 p-3 rounded-2xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Recovery Codes</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Recovery Codes</span>
               <button
                 onClick={() => handleCopy(existingBackupCodes.join('\n'), 'backup')}
-                className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
               >
                 {copiedBackupCodes ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                 <span>{copiedBackupCodes ? 'Copied' : 'Copy All'}</span>
@@ -437,7 +437,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 alt="MFA QR Code"
                 className="w-48 h-48 object-contain"
               />
-              <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono mt-1 font-semibold">
+              <span className="text-[11px] text-slate-600 dark:text-slate-400 font-mono mt-1 font-semibold">
                 RFC 6238 (SHA-1 • 6-Digits • 30s)
               </span>
             </div>
@@ -445,11 +445,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             {/* Manual Secret Key */}
             <div className={`p-3 rounded-2xl border space-y-1.5 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
               <div className="flex items-center justify-between">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Manual Setup Key</label>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Manual Setup Key</label>
                 <button
                   type="button"
                   onClick={() => handleCopy(mfaSetupData.secret, 'secret')}
-                  className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                  className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
                 >
                   {copiedSecret ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                   <span>{copiedSecret ? 'Copied' : 'Copy Key'}</span>
@@ -463,11 +463,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             {/* Emergency Recovery Codes */}
             <div className={`p-3 rounded-2xl border space-y-1.5 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
               <div className="flex items-center justify-between">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">8 Emergency Recovery Codes</label>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">8 Emergency Recovery Codes</label>
                 <button
                   type="button"
                   onClick={() => handleCopy(mfaSetupData.backupCodes.join('\n'), 'backup')}
-                  className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                  className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
                 >
                   {copiedBackupCodes ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                   <span>{copiedBackupCodes ? 'Copied' : 'Copy All'}</span>
@@ -475,7 +475,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 {mfaSetupData.backupCodes.map((code: string, idx: number) => (
-                  <span key={idx} className="font-mono text-[11px] bg-slate-900 p-1 rounded text-center text-slate-300 font-semibold border border-slate-800">
+                  <span key={idx} className="font-mono text-xs bg-slate-900 p-1 rounded text-center text-slate-300 font-semibold border border-slate-800">
                     {code}
                   </span>
                 ))}
@@ -541,7 +541,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <Award className="w-4 h-4 text-amber-400" />
             Security Clearance & PSARA Credentials
           </h3>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1">
+          <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3" />
             {profile.kycStatus}
           </span>
@@ -571,7 +571,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
               Mobile Phone
             </label>
             {isEditing ? (
@@ -589,7 +589,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
               Emergency Contact
             </label>
             {isEditing ? (
@@ -607,7 +607,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1 flex items-center gap-1">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1 flex items-center gap-1">
               <Heart className="w-3 h-3 text-rose-500" />
               Blood Group
             </label>
@@ -626,7 +626,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
               Shift Roster
             </label>
             <p className="font-medium text-indigo-400">{profile.shiftSchedule || 'General Shift (09:00 - 18:00)'}</p>
@@ -634,7 +634,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </div>
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
             Residential Address
           </label>
           {isEditing ? (
@@ -661,7 +661,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
         <div className="grid grid-cols-1 gap-3 text-xs">
           <div className={`p-3 rounded-2xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
-            <span className="text-[10px] text-slate-400 block mb-0.5">Device ID Lock</span>
+            <span className="text-[11px] text-slate-400 block mb-0.5">Device ID Lock</span>
             <span className="font-mono font-bold text-indigo-400">ANDR-SEC-9901-X</span>
           </div>
         </div>

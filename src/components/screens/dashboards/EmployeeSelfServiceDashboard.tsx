@@ -162,9 +162,9 @@ export const EmployeeSelfServiceDashboard: React.FC<DashboardProps> = ({ userSes
                 <div key={task.id} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
                   <div>
                     <h4 className="text-sm font-bold text-black dark:text-white">{task.title}</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}</p>
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-md ${task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>
+                  <span className={`text-[11px] font-bold px-2 py-1 rounded-md ${task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>
                     {task.status.replace('_', ' ')}
                   </span>
                 </div>
@@ -199,7 +199,7 @@ export const EmployeeSelfServiceDashboard: React.FC<DashboardProps> = ({ userSes
               announcements.slice(0, 3).map(ann => (
                 <div key={ann.id} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
                   <h4 className="text-sm font-bold text-black dark:text-white">{ann.title}</h4>
-                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">{ann.content}</p>
+                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">{ann.content}</p>
                 </div>
               ))
             )}

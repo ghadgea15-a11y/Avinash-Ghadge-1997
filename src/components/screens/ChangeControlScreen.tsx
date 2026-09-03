@@ -125,7 +125,7 @@ export const ChangeControlScreen: React.FC<Props> = ({ session }) => {
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-[10px] font-bold uppercase tracking-wider">
+                          <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-[11px] font-bold uppercase tracking-wider">
                             {req.entityType}
                           </span>
                           <span className="text-xs font-mono text-slate-400">{req.id}</span>
@@ -157,7 +157,7 @@ export const ChangeControlScreen: React.FC<Props> = ({ session }) => {
                           <span className="text-xs font-bold text-rose-700 dark:text-rose-400">Current State (Before)</span>
                         </div>
                         <div className="p-3 bg-white dark:bg-slate-900 overflow-x-auto">
-                          <pre className="text-[11px] text-slate-600 dark:text-slate-400 font-mono">
+                          <pre className="text-xs text-slate-600 dark:text-slate-400 font-mono">
                             {JSON.stringify(req.beforeData, null, 2)}
                           </pre>
                         </div>
@@ -167,7 +167,7 @@ export const ChangeControlScreen: React.FC<Props> = ({ session }) => {
                           <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Proposed State (After)</span>
                         </div>
                         <div className="p-3 bg-white dark:bg-slate-900 overflow-x-auto">
-                          <pre className="text-[11px] text-emerald-700 dark:text-emerald-400 font-mono">
+                          <pre className="text-xs text-emerald-700 dark:text-emerald-400 font-mono">
                             {JSON.stringify(req.afterData, null, 2)}
                           </pre>
                         </div>

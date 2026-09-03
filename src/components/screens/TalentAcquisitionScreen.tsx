@@ -211,6 +211,7 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
       };
 
       await setDoc(doc(db, 'companies', companyId, 'jobRequisitions', reqId), payload);
+      await TalentAcquisitionService.syncPublicPosting(companyId, reqId, payload);
       setStatusMessage({ type: 'SUCCESS', text: `Job Requisition "${reqForm.title}" saved successfully.` });
       setShowReqModal(false);
       setSelectedReq(null);
@@ -535,12 +536,12 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                       <div>
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 font-bold">
+                            <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 font-bold">
                               {req.id}
                             </span>
                             <h3 className="text-lg font-bold mt-1 text-slate-900 dark:text-white">{req.title}</h3>
                           </div>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
                             req.status === 'OPEN'
                               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                               : 'bg-slate-500/10 text-slate-400 border-slate-500/30'
@@ -573,7 +574,7 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                         {req.skills && req.skills.length > 0 && (
                           <div className="mt-3 flex flex-wrap gap-1">
                             {req.skills.map((skill, sIdx) => (
-                              <span key={sIdx} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                              <span key={sIdx} className="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
                                 {skill}
                               </span>
                             ))}
@@ -693,7 +694,7 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                         <tr key={cand.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                           <td className="py-3.5 px-4">
                             <div className="font-bold text-slate-900 dark:text-white">{cand.fullName}</div>
-                            <span className="text-[10px] font-mono text-slate-400">{cand.id}</span>
+                            <span className="text-[11px] font-mono text-slate-400">{cand.id}</span>
                           </td>
                           <td className="py-3.5 px-4 text-xs space-y-0.5">
                             <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
@@ -1052,7 +1053,7 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
           <div className={`w-full max-w-xl p-6 rounded-3xl border shadow-2xl ${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
             <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-500">
+                <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-500">
                   AUTOMATED FIT ALGORITHM
                 </span>
                 <h2 className="text-xl font-bold mt-1 text-slate-900 dark:text-white">
@@ -1070,7 +1071,7 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                   : 'bg-rose-500/10 border-rose-500/30 text-rose-500'
               }`}>
                 <div className="text-2xl font-black">{matchScoreModalData.result.overallScore}%</div>
-                <div className="text-[10px] font-bold uppercase tracking-wider">Match Score</div>
+                <div className="text-[11px] font-bold uppercase tracking-wider">Match Score</div>
               </div>
             </div>
 
@@ -1100,7 +1101,7 @@ export const TalentAcquisitionScreen: React.FC<TalentAcquisitionScreenProps> = (
                       style={{ width: `${(crit.scoreAchieved / crit.maxScore) * 100}%` }}
                     />
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">{crit.remarks}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{crit.remarks}</p>
                 </div>
               ))}
             </div>

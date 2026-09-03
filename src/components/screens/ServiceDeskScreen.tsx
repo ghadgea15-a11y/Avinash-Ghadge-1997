@@ -670,7 +670,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
 
     if (isPaused) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
           <PauseCircle className="w-3 h-3" /> Paused ({t.totalPausedDurationMinutes || 0}m)
         </span>
       );
@@ -678,7 +678,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
 
     if (isBreached) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
           <AlertTriangle className="w-3 h-3" /> SLA Breached
         </span>
       );
@@ -686,7 +686,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
 
     if (isWarning) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
           <Clock className="w-3 h-3" /> Near Breach (Warning)
         </span>
       );
@@ -694,14 +694,14 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
 
     if (isMet) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
           <CheckCircle2 className="w-3 h-3" /> SLA Met
         </span>
       );
     }
 
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
         <Clock className="w-3 h-3" /> Active SLA
       </span>
     );
@@ -931,7 +931,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                           </span>
                         </div>
                         {t.slaPolicyName && (
-                          <span className="text-[10px] text-slate-400 block truncate max-w-[150px]">
+                          <span className="text-[11px] text-slate-400 block truncate max-w-[150px]">
                             {t.slaPolicyName}
                           </span>
                         )}
@@ -1075,7 +1075,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                         {selectedTicket.responseSlaStatus || 'PENDING'}
                       </span>
                       {selectedTicket.respondedAt && (
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[11px] text-slate-400">
                           ({new Date(selectedTicket.respondedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
                         </span>
                       )}
@@ -1086,7 +1086,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                     <div className="flex items-center justify-between mb-0.5">
                       <span className="text-slate-500 dark:text-slate-400">Resolution Deadline</span>
                       {selectedTicket.reopenCount && selectedTicket.reopenCount > 0 ? (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300">
+                        <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300">
                           Cycle #{selectedTicket.reopenCount + 1}
                         </span>
                       ) : null}
@@ -1113,7 +1113,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-900 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                           Hold Reason *
                         </label>
                         <select
@@ -1131,7 +1131,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-900 dark:text-slate-300 mb-1">
+                        <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1">
                           Notes / Explanation
                         </label>
                         <input
@@ -1159,17 +1159,17 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                 {/* Pause History Timeline */}
                 {selectedTicket.pauseHistory && selectedTicket.pauseHistory.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-2 flex items-center gap-1">
+                    <span className="text-[11px] uppercase font-bold text-slate-400 block mb-2 flex items-center gap-1">
                       <History className="w-3 h-3" /> SLA Pause History ({selectedTicket.pauseHistory.length} events)
                     </span>
                     <div className="space-y-1.5 max-h-28 overflow-y-auto">
                       {selectedTicket.pauseHistory.map((ph: any) => (
-                        <div key={ph.id} className="text-[11px] p-2 rounded bg-slate-100 dark:bg-slate-800 flex justify-between items-center">
+                        <div key={ph.id} className="text-xs p-2 rounded bg-slate-100 dark:bg-slate-800 flex justify-between items-center">
                           <div>
                             <span className="font-semibold text-purple-700 dark:text-purple-400">[{ph.reason}]</span>
                             <span className="text-slate-600 dark:text-slate-400 dark:text-slate-300 ml-1.5">{ph.notes || 'No notes'}</span>
                           </div>
-                          <span className="text-[10px] text-slate-400 font-mono">
+                          <span className="text-[11px] text-slate-400 font-mono">
                             {ph.pausedDurationMinutes ? `${ph.pausedDurationMinutes}m paused` : 'Active hold'}
                           </span>
                         </div>
@@ -1257,8 +1257,8 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                     <span>Workflow Status Controls</span>
                   </h4>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">Current Status:</span>
-                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Current Status:</span>
+                    <span className={`px-2 py-0.5 text-[11px] font-bold rounded-full border ${
                       ServiceDeskService.STATUS_DEFINITIONS[ServiceDeskService.normalizeStatus(selectedTicket.status)]?.badgeBg || 'bg-slate-100'
                     } ${
                       ServiceDeskService.STATUS_DEFINITIONS[ServiceDeskService.normalizeStatus(selectedTicket.status)]?.badgeText || 'text-black'
@@ -1345,7 +1345,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                 >
                   <MessageSquare className="w-4 h-4" />
                   <span>Activity & Comments</span>
-                  <span className={`px-2 py-0.5 text-[10px] rounded-full font-bold ${
+                  <span className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
                     modalTab === 'COMMENTS'
                       ? 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
@@ -1365,7 +1365,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                 >
                   <Paperclip className="w-4 h-4" />
                   <span>Evidence & Attachments Vault</span>
-                  <span className={`px-2 py-0.5 text-[10px] rounded-full font-bold ${
+                  <span className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
                     modalTab === 'EVIDENCE'
                       ? 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
@@ -1386,7 +1386,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   <History className="w-4 h-4" />
                   <span>Lifecycle & Audit History</span>
                   {selectedTicket.statusHistory && selectedTicket.statusHistory.length > 0 && (
-                    <span className={`px-2 py-0.5 text-[10px] rounded-full font-bold ${
+                    <span className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
                       modalTab === 'STATUS_HISTORY'
                         ? 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300'
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
@@ -1408,12 +1408,12 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   <Award className="w-4 h-4" />
                   <span>Resolution & RCA</span>
                   {selectedTicket.status === 'RESOLVED' || selectedTicket.status === 'CLOSED' ? (
-                    <span className="px-2 py-0.5 text-[10px] rounded-full font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center gap-0.5">
+                    <span className="px-2 py-0.5 text-[11px] rounded-full font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center gap-0.5">
                       <CheckCircle2 className="w-3 h-3" />
                       {selectedTicket.verificationStatus === 'VERIFIED' ? 'Verified' : 'Resolved'}
                     </span>
                   ) : selectedTicket.verificationStatus === 'REJECTED' ? (
-                    <span className="px-2 py-0.5 text-[10px] rounded-full font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300">
+                    <span className="px-2 py-0.5 text-[11px] rounded-full font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300">
                       Rework
                     </span>
                   ) : null}
@@ -1431,7 +1431,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   <Star className="w-4 h-4 fill-current text-amber-500" />
                   <span>Client Feedback</span>
                   {selectedTicket.clientRating ? (
-                    <span className={`px-2 py-0.5 text-[10px] rounded-full font-bold flex items-center gap-1 ${
+                    <span className={`px-2 py-0.5 text-[11px] rounded-full font-bold flex items-center gap-1 ${
                       selectedTicket.hasNegativeFeedback
                         ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300'
                         : 'bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300'
@@ -1439,7 +1439,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       ★ {selectedTicket.clientRating.toFixed(1)}
                     </span>
                   ) : selectedTicket.feedbackStatus === 'REQUESTED' ? (
-                    <span className="px-2 py-0.5 text-[10px] rounded-full font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300">
+                    <span className="px-2 py-0.5 text-[11px] rounded-full font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300">
                       Requested
                     </span>
                   ) : null}
@@ -1492,7 +1492,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       <h4 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                         <MessageSquare className="w-4 h-4 text-indigo-500" /> Activity & Communication Thread
                       </h4>
-                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-300">
+                      <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-300">
                         {comments.length}
                       </span>
                     </div>
@@ -1502,7 +1502,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                     <button
                       type="button"
                       onClick={() => setCommentFilter('ALL')}
-                      className={`px-2.5 py-1 rounded text-[10px] font-semibold transition ${
+                      className={`px-2.5 py-1 rounded text-[11px] font-semibold transition ${
                         commentFilter === 'ALL'
                           ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
                           : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
@@ -1513,7 +1513,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                     <button
                       type="button"
                       onClick={() => setCommentFilter('CLIENT')}
-                      className={`px-2.5 py-1 rounded text-[10px] font-semibold transition ${
+                      className={`px-2.5 py-1 rounded text-[11px] font-semibold transition ${
                         commentFilter === 'CLIENT'
                           ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-300 shadow-xs'
                           : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
@@ -1525,7 +1525,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                       <button
                         type="button"
                         onClick={() => setCommentFilter('INTERNAL')}
-                        className={`px-2.5 py-1 rounded text-[10px] font-semibold flex items-center gap-1 transition ${
+                        className={`px-2.5 py-1 rounded text-[11px] font-semibold flex items-center gap-1 transition ${
                           commentFilter === 'INTERNAL'
                             ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-300 shadow-xs'
                             : 'text-slate-500 hover:text-black dark:hover:text-slate-200'
@@ -1631,7 +1631,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                               </div>
                               
                               <div className="flex items-center gap-2">
-                                <span className="text-slate-400 text-[10px]">
+                                <span className="text-slate-400 text-[11px]">
                                   {new Date(comm.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                                 </span>
                                 {canEdit && (
@@ -1674,7 +1674,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                                     href={url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/50 dark:border-indigo-800/40 text-[11px] font-medium transition"
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/50 dark:border-indigo-800/40 text-xs font-medium transition"
                                   >
                                     <Paperclip className="w-3 h-3" />
                                     <span>Attachment #{idx + 1}</span>
@@ -1692,7 +1692,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                 {/* Quick Canned Response Templates */}
                 {isStaff && (
                   <div className="space-y-1 pt-1">
-                    <span className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1">
+                    <span className="text-[11px] font-bold uppercase text-slate-400 flex items-center gap-1">
                       <Tag className="w-2.5 h-2.5" /> Quick Reply Templates:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
@@ -1706,7 +1706,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                           key={idx}
                           type="button"
                           onClick={() => setNewComment(prev => prev ? `${prev}\n${tmpl}` : tmpl)}
-                          className="px-2 py-1 text-[10px] rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 hover:text-indigo-600 dark:hover:text-indigo-300 border border-slate-200 dark:border-slate-700 transition"
+                          className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 hover:text-indigo-600 dark:hover:text-indigo-300 border border-slate-200 dark:border-slate-700 transition"
                         >
                           + {tmpl.substring(0, 32)}...
                         </button>
@@ -1728,7 +1728,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                         isDark ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-black placeholder-slate-400'
                       }`}
                     />
-                    <span className="absolute bottom-2 right-3 text-[10px] text-slate-400">
+                    <span className="absolute bottom-2 right-3 text-[11px] text-slate-400">
                       {newComment.length} / 4,000
                     </span>
                   </div>
@@ -1785,7 +1785,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                           </span>
                         </label>
                       ) : (
-                        <span className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
                           <Unlock className="w-3 h-3" /> Client Communication
                         </span>
                       )}
@@ -1840,7 +1840,7 @@ export const ServiceDeskScreen: React.FC<ServiceDeskScreenProps> = ({
                   }`}
                 />
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-xs text-slate-400">
                 Editing preserves an immutable version history for compliance audits.
               </p>
               <div className="flex justify-end gap-2 pt-2">

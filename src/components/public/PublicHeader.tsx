@@ -68,7 +68,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
               <span className="font-display font-bold text-base tracking-tight text-black leading-none">
                 LOG SHEET MUSTER
               </span>
-              <span className="text-[10px] font-body font-medium text-slate-600 tracking-wider uppercase mt-1">
+              <span className="text-[11px] font-body font-medium text-slate-600 tracking-wider uppercase mt-1">
                 Enterprise Operations OS
               </span>
             </div>

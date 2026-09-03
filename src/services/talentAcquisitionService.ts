@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, getDoc, getDocs, query, where, updateDoc, runTransaction } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, query, where, updateDoc, runTransaction, deleteDoc, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { 
   CandidateRecord,
@@ -7,6 +7,7 @@ import {
   UserSession,
   AppNotification,
   JobRequisitionRecord,
+  PublicJobPosting,
   CandidateStage,
   CandidateStatusHistory,
   ScreeningRecord,
@@ -485,6 +486,160 @@ export class TalentAcquisitionService {
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message };
+    }
+  }
+
+  // ==========================================================================
+  // PUBLIC CAREER PORTAL DATA SYNCHRONIZATION (MODULE 12 / POINT 1.2)
+  // ==========================================================================
+
+  /**
+   * Synchronizes an approved or open job requisition to the root `/publicJobPostings` collection.
+   * Enforces strict data-minimization: strips internal budget ceilings, approver chains, and internal employee IDs.
+   */
+  public static async syncPublicPosting(
+    companyId: string,
+    reqId: string,
+    requisition: Partial<JobRequisitionRecord>
+  ): Promise<void> {
+    try {
+      // 1. Attempt authoritative server-side synchronization with data-minimization
+      if (typeof fetch !== 'undefined') {
+        const response = await fetch('/api/jobs/sync-public-posting', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ companyId, requisitionId: reqId, requisition })
+        });
+        if (response.ok) {
+          return;
+        }
+      }
+
+      // 2. Client-side fallback if server route is unavailable
+      const status = String(requisition.status || '').toUpperCase();
+      const isPublic = ['OPEN', 'APPROVED', 'PUBLISHED'].includes(status) && requisition.isInternalOnly !== true;
+
+      const publicDocRef = doc(db, 'publicJobPostings', reqId);
+
+      if (isPublic) {
+        let publicSalaryRange: string | undefined = undefined;
+        if (requisition.isSalaryPublic === true) {
+          if (requisition.salaryMin && requisition.salaryMax) {
+            publicSalaryRange = `₹${requisition.salaryMin.toLocaleString('en-IN')} - ₹${requisition.salaryMax.toLocaleString('en-IN')} / ${requisition.salaryFrequency || 'month'}`;
+          } else if (requisition.expectedSalary || requisition.salaryRange) {
+            publicSalaryRange = String(requisition.expectedSalary || requisition.salaryRange);
+          }
+        }
+
+        const publicSafePosting: PublicJobPosting = {
+          id: reqId,
+          companyId,
+          companyName: requisition.companyName || 'Enterprise Partner',
+          jobTitle: requisition.jobTitle || requisition.title || 'Open Position',
+          departmentName: requisition.departmentName || requisition.department || 'Operations',
+          siteName: requisition.siteName || '',
+          locationCity: requisition.locationCity || requisition.location || 'On-site',
+          employmentType: requisition.employmentType || 'FULL_TIME',
+          experienceRequired: requisition.experienceRequired || '1-3 Years',
+          jobDescription: requisition.jobDescription || requisition.description || 'Exciting career opportunity.',
+          skills: Array.isArray(requisition.skills) ? requisition.skills : [],
+          openPositions: Number(requisition.openPositions || requisition.openings) || 1,
+          publicSalaryRange,
+          status: 'PUBLISHED',
+          publishedAt: requisition.publishedAt || requisition.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          closingDate: requisition.closingDate || undefined
+        };
+
+        await setDoc(publicDocRef, publicSafePosting, { merge: true });
+      } else {
+        // Requisition is DRAFT, FILLED, REJECTED, or CLOSED -> Remove from public access
+        await deleteDoc(publicDocRef);
+      }
+    } catch (err) {
+      console.warn('[TalentAcquisitionService] syncPublicPosting warning:', err);
+    }
+  }
+
+  /**
+   * Submits an external candidate application for a published job requisition.
+   * Utilizes the secure server-side endpoint /api/jobs/apply to guarantee isolation
+   * and bypasses direct client writes to tenant subcollections.
+   */
+  public static async submitPublicApplication(applicationData: {
+    requisitionId: string;
+    companyId?: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    experienceYears?: number | string;
+    expectedSalary?: string;
+    resumeUrl?: string;
+    notes?: string;
+  }): Promise<{ success: boolean; candidateCode?: string; error?: string }> {
+    try {
+      if (typeof fetch !== 'undefined') {
+        const response = await fetch('/api/jobs/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(applicationData)
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+          return { success: true, candidateCode: result.candidateCode };
+        } else {
+          throw new Error(result.message || result.error || 'Failed to submit application via server');
+        }
+      }
+      throw new Error('Network environment unavailable');
+    } catch (err: any) {
+      console.error('[TalentAcquisitionService] submitPublicApplication error:', err);
+      return { success: false, error: err.message || 'Application submission failed.' };
+    }
+  }
+
+  /**
+   * Fetches published job postings from the public-safe root collection `/publicJobPostings`.
+   * Unauthenticated public access permitted.
+   */
+  public static async getPublicJobPostings(department?: string): Promise<PublicJobPosting[]> {
+    try {
+      if (typeof fetch !== 'undefined') {
+        const url = department && department !== 'ALL'
+          ? `/api/jobs/public-postings?department=${encodeURIComponent(department)}`
+          : '/api/jobs/public-postings';
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.postings && Array.isArray(data.postings)) {
+              return data.postings;
+            }
+          }
+        } catch {
+          // Fall through to Firestore client SDK query
+        }
+      }
+
+      let q = query(
+        collection(db, 'publicJobPostings'),
+        where('status', '==', 'PUBLISHED')
+      );
+
+      if (department && department !== 'ALL') {
+        q = query(
+          collection(db, 'publicJobPostings'),
+          where('status', '==', 'PUBLISHED'),
+          where('departmentName', '==', department)
+        );
+      }
+
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ ...d.data(), id: d.id } as PublicJobPosting));
+    } catch (err) {
+      console.error('[TalentAcquisitionService] getPublicJobPostings error:', err);
+      return [];
     }
   }
 

@@ -522,7 +522,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{activeInSiteCount}</span>
-            <span className="text-[11px] text-slate-400">Active Passes</span>
+            <span className="text-xs text-slate-400">Active Passes</span>
           </div>
         </div>
 
@@ -533,7 +533,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{visitorLogs.length}</span>
-            <span className="text-[11px] text-slate-400">Gate Passes</span>
+            <span className="text-xs text-slate-400">Gate Passes</span>
           </div>
         </div>
 
@@ -544,7 +544,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-black text-rose-600 dark:text-rose-400">{activeBlacklistCount}</span>
-            <span className="text-[11px] text-slate-400">Blacklisted Individuals</span>
+            <span className="text-xs text-slate-400">Blacklisted Individuals</span>
           </div>
         </div>
 
@@ -555,7 +555,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-black text-amber-600 dark:text-amber-400">{flaggedVisitsCount}</span>
-            <span className="text-[11px] text-slate-400">Audited Overrides</span>
+            <span className="text-xs text-slate-400">Audited Overrides</span>
           </div>
         </div>
       </div>
@@ -626,9 +626,9 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
       {subTab === 'ACTIVE_PASSES' && (
         <div className={`rounded-3xl border ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'} shadow-sm overflow-hidden`}>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${
+                <tr className={`border-b text-[11px] font-bold uppercase tracking-wider ${
                   isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500'
                 }`}>
                   <th className="py-3 px-4">Badge & Visitor</th>
@@ -665,18 +665,18 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[10px] text-slate-500 dark:text-slate-400">{v.visitorCompany || 'Independent Guest'}</div>
+                              <div className="text-[11px] text-slate-500 dark:text-slate-400">{v.visitorCompany || 'Independent Guest'}</div>
                             </div>
                           </div>
                         </td>
 
                         <td className="py-3 px-4">
-                          <div className="text-slate-900 dark:text-slate-200 font-mono text-[11px] flex items-center gap-1">
+                          <div className="text-slate-900 dark:text-slate-200 font-mono text-xs flex items-center gap-1">
                             <Phone className="w-3 h-3 text-slate-400" />
                             <span>{v.visitorPhone || 'N/A'}</span>
                           </div>
                           {v.vehicleNumber && (
-                            <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                            <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
                               <Car className="w-3 h-3 text-slate-400" />
                               <span>{v.vehicleNumber}</span>
                             </div>
@@ -685,21 +685,21 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
 
                         <td className="py-3 px-4">
                           <div className="font-semibold text-slate-800 dark:text-slate-200">{v.hostEmployeeName}</div>
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400">{v.purpose}</div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400">{v.purpose}</div>
                         </td>
 
                         <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
                           {v.siteName || v.siteId}
                         </td>
 
-                        <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-[11px]">
+                        <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs">
                           <div>In: {new Date(v.checkInTime || v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                           {v.checkOutTime ? (
-                            <div className="text-emerald-600 dark:text-emerald-400 text-[10px]">
+                            <div className="text-emerald-600 dark:text-emerald-400 text-[11px]">
                               Out: {new Date(v.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           ) : (
-                            <div className="text-amber-600 dark:text-amber-400 text-[10px] font-bold animate-pulse">
+                            <div className="text-amber-600 dark:text-amber-400 text-[11px] font-bold animate-pulse">
                               On Premise
                             </div>
                           )}
@@ -707,7 +707,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
 
                         <td className="py-3 px-4">
                           <div className="flex flex-col gap-1">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold inline-block text-center ${
+                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-block text-center ${
                               isInSite
                                 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
                                 : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
@@ -728,7 +728,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                             {isInSite && (
                               <button
                                 onClick={() => handleOpenCheckout(v)}
-                                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold shadow transition"
+                                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow transition"
                               >
                                 Check Out
                               </button>
@@ -817,7 +817,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                         <button
                           onClick={() => setRevokingEntry(w)}
                           title="Revoke Blacklist Status"
-                          className="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-slate-200 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950 text-slate-700 dark:text-slate-300 transition"
+                          className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-200 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950 text-slate-700 dark:text-slate-300 transition"
                         >
                           Revoke
                         </button>
@@ -826,21 +826,21 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
 
                     <div className="space-y-1 text-xs">
                       {w.visitorPhone && (
-                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-mono text-[11px]">
+                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-mono text-xs">
                           <Phone className="w-3.5 h-3.5 text-slate-400" />
                           <span>{w.visitorPhone}</span>
                         </div>
                       )}
 
                       {w.vehicleNumber && (
-                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-mono text-[11px]">
+                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-mono text-xs">
                           <Car className="w-3.5 h-3.5 text-slate-400" />
                           <span>{w.vehicleNumber}</span>
                         </div>
                       )}
 
                       {w.idNumber && (
-                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-mono text-[11px]">
+                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-mono text-xs">
                           <BadgeCheck className="w-3.5 h-3.5 text-slate-400" />
                           <span>ID: {w.idNumber}</span>
                         </div>
@@ -852,14 +852,14 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                       <span className="text-slate-600 dark:text-slate-300">{w.reason}</span>
 
                       {w.incidentReportId && (
-                        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800 text-[11px] text-indigo-600 dark:text-indigo-400 flex items-center gap-1 font-semibold">
+                        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800 text-xs text-indigo-600 dark:text-indigo-400 flex items-center gap-1 font-semibold">
                           <FileWarning className="w-3 h-3" />
                           <span>Linked to Incident #{w.incidentReportId} ({w.incidentCategory || 'Breach'})</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="text-[10px] text-slate-400 space-y-0.5 pt-1">
+                    <div className="text-[11px] text-slate-400 space-y-0.5 pt-1">
                       <p>Flagged by: {w.blacklistedByName || 'Security In-Charge'} • {new Date(w.blacklistedAt || w.createdAt).toLocaleDateString()}</p>
                       {w.siteName && <p>Site Scope: {w.siteName}</p>}
                       {!isActive && w.revocationReason && (
@@ -891,7 +891,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Visitor Gate Pass Entry</h3>
-                  <p className="text-[11px] text-slate-500">Live blacklist & incident screening on data entry.</p>
+                  <p className="text-xs text-slate-500">Live blacklist & incident screening on data entry.</p>
                 </div>
               </div>
               <button onClick={() => setIsCheckInModalOpen(false)} className="opacity-60 hover:opacity-100"><X className="w-4 h-4" /></button>
@@ -900,7 +900,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
             <form onSubmit={handleCheckInSubmit} className="space-y-3.5">
               {/* SITE SELECTION */}
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500">Entry Gate / Site *</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500">Entry Gate / Site *</label>
                 <select
                   value={checkInForm.siteId}
                   onChange={(e) => setCheckInForm({ ...checkInForm, siteId: e.target.value })}
@@ -914,7 +914,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
               {/* PHONE NUMBER & VISITOR NAME */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500">Visitor Phone Number *</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500">Visitor Phone Number *</label>
                   <div className="relative mt-1">
                     <Phone className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
@@ -933,7 +933,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500">Visitor Full Name *</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500">Visitor Full Name *</label>
                   <input
                     type="text"
                     value={checkInForm.visitorName}
@@ -952,7 +952,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
               {/* VEHICLE & ID NUMBER */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500">Vehicle Registration No.</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500">Vehicle Registration No.</label>
                   <div className="relative mt-1">
                     <Car className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
@@ -970,7 +970,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500">Govt ID / Aadhaar / PAN (Optional)</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500">Govt ID / Aadhaar / PAN (Optional)</label>
                   <input
                     type="text"
                     value={checkInForm.idNumber}
@@ -997,7 +997,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                           {blacklistResult.severity || 'HIGH'} SEVERITY
                         </span>
                       </div>
-                      <p className="text-[11px] text-rose-800 dark:text-rose-200 mt-1 font-semibold">
+                      <p className="text-xs text-rose-800 dark:text-rose-200 mt-1 font-semibold">
                         Matched Source: {blacklistResult.matchedSource === 'WATCHLIST' ? 'Security Watchlist Directory' : blacklistResult.matchedSource === 'INCIDENT_REPORT' ? 'Past Security Incident Record' : 'Previous Security Violation'} ({blacklistResult.matchedField} Match)
                       </p>
                     </div>
@@ -1006,12 +1006,12 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                   <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-rose-300 dark:border-rose-800 text-xs text-rose-900 dark:text-rose-200 space-y-1">
                     <p><span className="font-bold">Flagged Reason:</span> {blacklistResult.reason}</p>
                     {blacklistResult.incidentReportId && (
-                      <p className="text-[11px] text-rose-700 dark:text-rose-300">
+                      <p className="text-xs text-rose-700 dark:text-rose-300">
                         <span className="font-semibold">Linked Incident:</span> #{blacklistResult.incidentReportId} ({blacklistResult.incidentCategory || 'Breach'}) on {blacklistResult.incidentDate?.substring(0, 10) || 'Past'}
                       </p>
                     )}
                     {blacklistResult.notes && (
-                      <p className="text-[10px] text-slate-500 italic">{blacklistResult.notes}</p>
+                      <p className="text-[11px] text-slate-500 italic">{blacklistResult.notes}</p>
                     )}
                   </div>
 
@@ -1033,7 +1033,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
 
                     {overrideUnlocked && (
                       <div className="mt-3 space-y-2 p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 animate-in fade-in">
-                        <p className="text-[10px] font-bold text-amber-900 dark:text-amber-200 uppercase">
+                        <p className="text-[11px] font-bold text-amber-900 dark:text-amber-200 uppercase">
                           Supervisor Authorization Required for Flagged Visitor
                         </p>
                         <input
@@ -1061,7 +1061,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
               {/* COMPANY, HOST & PURPOSE */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500">Visitor Company / Organization</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500">Visitor Company / Organization</label>
                   <input
                     type="text"
                     value={checkInForm.visitorCompany}
@@ -1072,7 +1072,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500">Host Employee / Officer</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500">Host Employee / Officer</label>
                   <input
                     type="text"
                     value={checkInForm.hostEmployeeName}
@@ -1085,7 +1085,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500">Purpose of Visit</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500">Purpose of Visit</label>
                   <select
                     value={checkInForm.purpose}
                     onChange={(e) => setCheckInForm({ ...checkInForm, purpose: e.target.value })}
@@ -1100,7 +1100,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500">Allocated Badge #</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500">Allocated Badge #</label>
                   <input
                     type="text"
                     value={checkInForm.badgeNumber}
@@ -1150,7 +1150,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Add to Security Blacklist</h3>
-                  <p className="text-[11px] text-slate-500">Prevents unauthorized premise entry across company sites.</p>
+                  <p className="text-xs text-slate-500">Prevents unauthorized premise entry across company sites.</p>
                 </div>
               </div>
               <button onClick={() => setIsWatchlistModalOpen(false)} className="opacity-60 hover:opacity-100"><X className="w-4 h-4" /></button>
@@ -1158,7 +1158,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
 
             <form onSubmit={handleSaveWatchlist} className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500">Visitor Full Name *</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500">Visitor Full Name *</label>
                 <input
                   type="text"
                   value={watchlistForm.visitorName}
@@ -1171,7 +1171,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500">Phone Number</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500">Phone Number</label>
                   <input
                     type="text"
                     value={watchlistForm.visitorPhone}
@@ -1182,7 +1182,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500">Vehicle No.</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500">Vehicle No.</label>
                   <input
                     type="text"
                     value={watchlistForm.vehicleNumber}
@@ -1195,7 +1195,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500">Threat Severity *</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500">Threat Severity *</label>
                   <select
                     value={watchlistForm.severity}
                     onChange={(e) => setWatchlistForm({ ...watchlistForm, severity: e.target.value as any })}
@@ -1210,7 +1210,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-slate-500">Site Scope</label>
+                  <label className="text-[11px] font-bold uppercase text-slate-500">Site Scope</label>
                   <select
                     value={watchlistForm.siteId}
                     onChange={(e) => setWatchlistForm({ ...watchlistForm, siteId: e.target.value })}
@@ -1224,7 +1224,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
 
               {/* LINK TO INCIDENT */}
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500">Link to Past Incident Report (Optional)</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500">Link to Past Incident Report (Optional)</label>
                 <select
                   value={watchlistForm.incidentReportId}
                   onChange={(e) => setWatchlistForm({ ...watchlistForm, incidentReportId: e.target.value })}
@@ -1240,7 +1240,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500">Security Blacklist Reason *</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500">Security Blacklist Reason *</label>
                 <textarea
                   value={watchlistForm.reason}
                   onChange={(e) => setWatchlistForm({ ...watchlistForm, reason: e.target.value })}
@@ -1281,7 +1281,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Visitor Departure & Badge Return</h3>
-                <p className="text-[11px] text-slate-500">Confirm physical visitor badge return before gate exit.</p>
+                <p className="text-xs text-slate-500">Confirm physical visitor badge return before gate exit.</p>
               </div>
               <button onClick={() => { setIsCheckoutModalOpen(false); setSelectedVisitorForCheckout(null); }} className="opacity-60 hover:opacity-100"><X className="w-4 h-4" /></button>
             </div>
@@ -1306,7 +1306,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
               </label>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500">Departure Remarks (Optional)</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500">Departure Remarks (Optional)</label>
                 <input
                   type="text"
                   value={checkoutForm.checkoutNotes}
@@ -1354,7 +1354,7 @@ export const VisitorManagement: React.FC<VisitorManagementProps> = ({
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase text-slate-500">Revocation Justification *</label>
+              <label className="text-[11px] font-bold uppercase text-slate-500">Revocation Justification *</label>
               <textarea
                 value={revocationReason}
                 onChange={(e) => setRevocationReason(e.target.value)}

@@ -271,7 +271,7 @@ export const ComplianceDashboardScreen: React.FC<ComplianceDashboardScreenProps>
                           <h4 className="font-bold text-sm">{r.title}</h4>
                           <p className="text-xs text-slate-500 mt-1 line-clamp-2">{r.description}</p>
                           <div className="mt-3 flex gap-2">
-                            <span className="px-2 py-1 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-[10px] font-bold rounded-lg uppercase">
+                            <span className="px-2 py-1 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-[11px] font-bold rounded-lg uppercase">
                               {r.category}
                             </span>
                           </div>
@@ -298,7 +298,7 @@ export const ComplianceDashboardScreen: React.FC<ComplianceDashboardScreenProps>
                             <h4 className="font-bold text-sm">{c.title}</h4>
                             <p className="text-xs text-slate-500 mt-1">Assigned to: {c.assignee || 'Unassigned'}</p>
                           </div>
-                          <span className="px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[10px] font-bold rounded-lg uppercase">
+                          <span className="px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[11px] font-bold rounded-lg uppercase">
                             {c.status}
                           </span>
                         </div>
@@ -344,7 +344,7 @@ export const ComplianceDashboardScreen: React.FC<ComplianceDashboardScreenProps>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase ${p.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'}`}>
+                        <span className={`px-2 py-1 text-[11px] font-bold rounded-lg uppercase ${p.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'}`}>
                           {p.status}
                         </span>
                         <button onClick={() => { setEditingItem(p); setIsPolicyModalOpen(true); }} className="p-2 text-slate-400 hover:text-indigo-400">
@@ -393,13 +393,13 @@ export const ComplianceDashboardScreen: React.FC<ComplianceDashboardScreenProps>
                         <p className="text-sm text-slate-500 mt-1 max-w-2xl truncate">{r.description}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase ${
+                        <span className={`px-2 py-1 text-[11px] font-bold rounded-lg uppercase ${
                           r.severity === 'CRITICAL' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' : 
                           r.severity === 'HIGH' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'
                         }`}>
                           {r.severity}
                         </span>
-                        <span className="px-2 py-1 text-[10px] font-bold rounded-lg uppercase bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                        <span className="px-2 py-1 text-[11px] font-bold rounded-lg uppercase bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400">
                           {r.status}
                         </span>
                         <button onClick={() => { setEditingItem(r); setIsRiskModalOpen(true); }} className="p-2 text-slate-400 hover:text-indigo-400">
@@ -445,7 +445,7 @@ export const ComplianceDashboardScreen: React.FC<ComplianceDashboardScreenProps>
                         <p className="text-sm text-slate-500 mt-1">Due: {c.dueDate || 'N/A'} | Owner: {c.assignee || 'Unassigned'}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase ${c.status === 'CLOSED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+                        <span className={`px-2 py-1 text-[11px] font-bold rounded-lg uppercase ${c.status === 'CLOSED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
                           {c.status}
                         </span>
                         <button onClick={() => { setEditingItem(c); setIsCapaModalOpen(true); }} className="p-2 text-slate-400 hover:text-indigo-400">

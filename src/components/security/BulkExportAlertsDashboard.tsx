@@ -266,7 +266,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
+          <table className="w-full text-sm text-left">
             <thead className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-100 uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3">Timestamp / Timing</th>
@@ -300,7 +300,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                         <Clock className="w-3.5 h-3.5 text-gray-400" />
                         {formatTimestamp(alert.timestamp).split(',')[1]?.trim() || formatTimestamp(alert.timestamp)}
                       </div>
-                      <div className="text-[10px] text-gray-500 mt-0.5">
+                      <div className="text-[11px] text-gray-500 mt-0.5">
                         {formatDateSafe(alert.timestamp)}
                       </div>
                       {alert.isAfterHours && (
@@ -313,7 +313,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                     {/* User & Role */}
                     <td className="px-4 py-3.5 whitespace-nowrap">
                       <div className="font-semibold text-gray-900">{alert.userName || alert.userId}</div>
-                      <div className="text-[10px] text-indigo-600 font-mono font-medium mt-0.5">
+                      <div className="text-[11px] text-indigo-600 font-mono font-medium mt-0.5">
                         {alert.userRole}
                       </div>
                     </td>
@@ -332,7 +332,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                         )}
                         <span className="font-semibold text-gray-900">{alert.operation}</span>
                       </div>
-                      <div className="text-[10px] text-gray-500 mt-0.5 capitalize">
+                      <div className="text-[11px] text-gray-500 mt-0.5 capitalize">
                         {alert.category.replace(/_/g, ' ').toLowerCase()}
                       </div>
                     </td>
@@ -340,13 +340,13 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                     {/* Module & Target */}
                     <td className="px-4 py-3.5">
                       <div className="font-medium text-gray-800">{alert.module}</div>
-                      <div className="text-[10px] text-gray-500 font-mono mt-0.5">{alert.entityType}</div>
+                      <div className="text-[11px] text-gray-500 font-mono mt-0.5">{alert.entityType}</div>
                     </td>
 
                     {/* Impact / Volume */}
                     <td className="px-4 py-3.5 whitespace-nowrap">
                       <div className="font-bold text-gray-900">
-                        {alert.affectedRecordCount} <span className="text-[10px] font-normal text-gray-500">records</span>
+                        {alert.affectedRecordCount} <span className="text-[11px] font-normal text-gray-500">records</span>
                       </div>
                       {alert.dataClassification && alert.dataClassification !== 'GENERAL' && (
                         <span className="inline-block px-1.5 py-0.5 bg-red-50 text-red-700 text-[9px] font-bold rounded-md mt-0.5 border border-red-100">
@@ -358,10 +358,10 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                     {/* Risk & Severity */}
                     <td className="px-4 py-3.5 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
-                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border ${getSeverityStyle(alert.severity)}`}>
+                        <span className={`px-2 py-0.5 text-[11px] font-bold rounded-md border ${getSeverityStyle(alert.severity)}`}>
                           {alert.severity}
                         </span>
-                        <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded-md border border-gray-200">
+                        <span className="text-[11px] font-bold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded-md border border-gray-200">
                           {alert.riskScore} PTS
                         </span>
                       </div>
@@ -370,7 +370,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                     {/* Status & Action */}
                     <td className="px-4 py-3.5 text-right whitespace-nowrap">
                       <div className="flex flex-col items-end gap-1.5">
-                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border ${getStatusStyle(alert.status)}`}>
+                        <span className={`px-2 py-0.5 text-[11px] font-bold rounded-md border ${getStatusStyle(alert.status)}`}>
                           {alert.status}
                         </span>
                         <button
@@ -421,7 +421,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                       onChange={e => setConfigForm({ ...configForm, businessHoursStart: parseInt(e.target.value) || 0 })}
                       className="w-full border border-gray-200 rounded-xl p-2.5 font-medium bg-gray-50/50"
                     />
-                    <span className="text-[10px] text-gray-400">e.g. 8 for 08:00 AM</span>
+                    <span className="text-[11px] text-gray-400">e.g. 8 for 08:00 AM</span>
                   </div>
 
                   <div>
@@ -434,7 +434,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                       onChange={e => setConfigForm({ ...configForm, businessHoursEnd: parseInt(e.target.value) || 20 })}
                       className="w-full border border-gray-200 rounded-xl p-2.5 font-medium bg-gray-50/50"
                     />
-                    <span className="text-[10px] text-gray-400">e.g. 20 for 08:00 PM</span>
+                    <span className="text-[11px] text-gray-400">e.g. 20 for 08:00 PM</span>
                   </div>
                 </div>
 
@@ -448,7 +448,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                       onChange={e => setConfigForm({ ...configForm, bulkWarningThreshold: parseInt(e.target.value) || 25 })}
                       className="w-full border border-gray-200 rounded-xl p-2.5 font-medium bg-gray-50/50"
                     />
-                    <span className="text-[10px] text-gray-400">Flag bulk updates exceeding count</span>
+                    <span className="text-[11px] text-gray-400">Flag bulk updates exceeding count</span>
                   </div>
 
                   <div>
@@ -460,7 +460,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                       onChange={e => setConfigForm({ ...configForm, exportWarningThreshold: parseInt(e.target.value) || 100 })}
                       className="w-full border border-gray-200 rounded-xl p-2.5 font-medium bg-gray-50/50"
                     />
-                    <span className="text-[10px] text-gray-400">Flag exports exceeding count</span>
+                    <span className="text-[11px] text-gray-400">Flag exports exceeding count</span>
                   </div>
                 </div>
 
@@ -544,25 +544,25 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                 {/* 4-Box Summary */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase">Actor / Role</span>
+                    <span className="text-[11px] text-gray-400 font-bold uppercase">Actor / Role</span>
                     <div className="font-bold text-gray-900 mt-1 truncate">{selectedAlert.userName || selectedAlert.userId}</div>
-                    <div className="text-[10px] text-indigo-600 font-mono">{selectedAlert.userRole}</div>
+                    <div className="text-[11px] text-indigo-600 font-mono">{selectedAlert.userRole}</div>
                   </div>
 
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase">Operation</span>
+                    <span className="text-[11px] text-gray-400 font-bold uppercase">Operation</span>
                     <div className="font-bold text-gray-900 mt-1 truncate">{selectedAlert.operation}</div>
-                    <div className="text-[10px] text-gray-500">{selectedAlert.module}</div>
+                    <div className="text-[11px] text-gray-500">{selectedAlert.module}</div>
                   </div>
 
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase">Impact Volume</span>
+                    <span className="text-[11px] text-gray-400 font-bold uppercase">Impact Volume</span>
                     <div className="font-bold text-gray-900 mt-1">{selectedAlert.affectedRecordCount} Records</div>
-                    <div className="text-[10px] text-gray-500 font-mono">{selectedAlert.exportFormat || selectedAlert.entityType}</div>
+                    <div className="text-[11px] text-gray-500 font-mono">{selectedAlert.exportFormat || selectedAlert.entityType}</div>
                   </div>
 
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase">Risk Score</span>
+                    <span className="text-[11px] text-gray-400 font-bold uppercase">Risk Score</span>
                     <div className="flex items-center gap-1.5 mt-1">
                       <span className="text-base font-black text-gray-900">{selectedAlert.riskScore}</span>
                       <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border ${getSeverityStyle(selectedAlert.severity)}`}>
@@ -580,11 +580,11 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                       Execution Timing & Policy Evaluation
                     </span>
                     {selectedAlert.isAfterHours ? (
-                      <span className="px-2 py-0.5 bg-amber-100 text-amber-800 font-bold rounded-md text-[10px] border border-amber-200">
+                      <span className="px-2 py-0.5 bg-amber-100 text-amber-800 font-bold rounded-md text-[11px] border border-amber-200">
                         Outside Business Hours
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-md text-[10px] border border-emerald-200">
+                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-md text-[11px] border border-emerald-200">
                         Within Business Hours
                       </span>
                     )}
@@ -600,7 +600,7 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                   <div className="bg-slate-900 text-slate-200 p-4 rounded-xl font-mono text-xs border border-slate-800 space-y-2">
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {selectedAlert.rulesTriggered.map((rule: any, idx: number) => (
-                        <span key={idx} className="px-2 py-0.5 bg-red-950/80 text-red-300 rounded-md border border-red-800 text-[10px] font-bold">
+                        <span key={idx} className="px-2 py-0.5 bg-red-950/80 text-red-300 rounded-md border border-red-800 text-[11px] font-bold">
                           {rule}
                         </span>
                       ))}
@@ -650,17 +650,17 @@ export const BulkExportAlertsDashboard: React.FC<BulkExportAlertsDashboardProps>
                           Confirm Anomaly (Escalate)
                         </button>
                       </div>
-                      <p className="text-[10px] text-gray-500 text-center">
+                      <p className="text-[11px] text-gray-500 text-center">
                         Note: Every resolution decision is committed to the Immutable Audit Log. Legitimate administrative exports will not block operations.
                       </p>
                     </div>
                   ) : (
                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border ${getStatusStyle(selectedAlert.status)}`}>
+                        <span className={`px-2 py-0.5 text-[11px] font-bold rounded-md border ${getStatusStyle(selectedAlert.status)}`}>
                           {selectedAlert.status}
                         </span>
-                        <span className="text-[10px] text-gray-500">
+                        <span className="text-[11px] text-gray-500">
                           Reviewed by {selectedAlert.reviewedBy} at {formatTimestamp(selectedAlert.reviewedAt)}
                         </span>
                       </div>

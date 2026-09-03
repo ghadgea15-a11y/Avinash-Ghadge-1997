@@ -39,7 +39,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
 
   useEffect(() => {
     if (!userSession) return;
-    const unsub = FirestoreService.subscribeToNotifications(userSession.companyId, userSession.role, (notifs) => {
+    const unsub = FirestoreService.subscribeToNotifications(userSession, userSession.companyId, (notifs) => {
       setNotifications(notifs);
     });
     return () => unsub();
@@ -177,7 +177,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <h4 className="text-xs font-bold truncate">{item.title}</h4>
-                    <span className="text-[10px] text-slate-400 font-mono shrink-0 flex items-center gap-1">
+                    <span className="text-[11px] text-slate-400 font-mono shrink-0 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {formatTimestamp(item.timestamp)}
                     </span>
@@ -186,7 +186,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
                   <p className="text-xs text-slate-300 leading-relaxed">{item.message}</p>
 
                   {item.siteId && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-mono text-indigo-400 mt-2 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-mono text-indigo-400 mt-2 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800">
                       <MapPin className="w-3 h-3" />
                       {item.siteId}
                     </span>
@@ -195,7 +195,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
                   <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-800/60">
                     <button
                       onClick={() => handleToggleRead(item.id, !!item.isRead)}
-                      className="text-[10px] font-bold text-slate-400 hover:text-indigo-400 transition"
+                      className="text-[11px] font-bold text-slate-400 hover:text-indigo-400 transition"
                     >
                       {item.isRead ? 'Mark Unread' : 'Mark Read'}
                     </button>
@@ -204,7 +204,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
                       {item.actionRoute && (
                         <button
                           onClick={() => onNavigate(item.actionRoute!)}
-                          className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-0.5"
+                          className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-0.5"
                         >
                           <span>Open Module</span>
                           <ChevronRight className="w-3 h-3" />

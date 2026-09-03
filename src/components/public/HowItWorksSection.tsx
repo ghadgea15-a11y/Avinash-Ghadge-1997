@@ -104,7 +104,7 @@ export const HowItWorksSection: React.FC = () => {
                   <strong className={`font-display text-sm font-bold block ${isSelected ? 'text-white' : 'text-black'}`}>
                     {step.title}
                   </strong>
-                  <span className={`font-body text-[11px] block mt-0.5 ${isSelected ? 'text-slate-300' : 'text-slate-600'}`}>
+                  <span className={`font-body text-xs block mt-0.5 ${isSelected ? 'text-slate-300' : 'text-slate-600'}`}>
                     {step.role}
                   </span>
                 </button>

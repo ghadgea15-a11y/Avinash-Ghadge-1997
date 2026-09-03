@@ -52,11 +52,11 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
         </div>
 
         {/* Android Status Bar */}
-        <div className={`transition-colors duration-300 ${isDark ? 'bg-slate-900 text-slate-300' : 'bg-slate-100 text-slate-600 border-b border-slate-200/50'} text-[11px] font-mono px-6 pt-2 pb-1.5 flex justify-between items-center z-40 select-none`}>
+        <div className={`transition-colors duration-300 ${isDark ? 'bg-slate-900 text-slate-300' : 'bg-slate-100 text-slate-600 border-b border-slate-200/50'} text-xs font-mono px-6 pt-2 pb-1.5 flex justify-between items-center z-40 select-none`}>
           <div className="flex items-center gap-2">
             <span className={`font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{timeString || '10:42'}</span>
             {companyName && (
-              <span className="text-[10px] text-indigo-500 font-sans truncate max-w-[120px]">
+              <span className="text-[11px] text-indigo-500 font-sans truncate max-w-[120px]">
                 {companyName}
               </span>
             )}
@@ -64,7 +64,7 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
           <div className="flex items-center gap-2">
             <Wifi className={`w-3.5 h-3.5 ${isDark ? 'text-slate-300' : 'text-slate-500'} ${isOnline ? '' : 'text-amber-500'}`} />
             <Signal className={`w-3.5 h-3.5 ${isDark ? 'text-slate-300' : 'text-slate-500'}`} />
-            <div className="flex items-center gap-1 text-[10px]">
+            <div className="flex items-center gap-1 text-[11px]">
               <span>98%</span>
               <Battery className="w-4 h-4 text-emerald-500 rotate-90" />
             </div>

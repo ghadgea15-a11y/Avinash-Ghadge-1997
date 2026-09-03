@@ -122,21 +122,21 @@ export const BankExportModal: React.FC<BankExportModalProps> = ({
             <div className="p-4 bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80">
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Disbursement</p>
               <p className="text-xl font-bold text-black dark:text-white mt-1">₹{batch.totalAmount.toLocaleString('en-IN')}</p>
-              <p className="text-[11px] text-emerald-600 font-medium mt-0.5 flex items-center">
+              <p className="text-xs text-emerald-600 font-medium mt-0.5 flex items-center">
                 <CheckCircle2 className="w-3 h-3 mr-1 inline" /> Authoritative Net Pay
               </p>
             </div>
             <div className="p-4 bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80">
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Valid Beneficiaries</p>
               <p className="text-xl font-bold text-black dark:text-white mt-1">{batch.validBeneficiaryCount} / {batch.beneficiaryCount}</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Mode: {batch.paymentMethod}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Mode: {batch.paymentMethod}</p>
             </div>
             <div className="p-4 bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80">
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Debit Bank Source</p>
               <p className="text-sm font-bold text-black dark:text-white mt-1 truncate">
                 {companyBank?.bankName || batch.companyBankName || 'Company Account'}
               </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                 {companyBank?.maskedAccountNumber || batch.companyMaskedAccount || '••••••••1234'}
               </p>
             </div>
@@ -173,7 +173,7 @@ export const BankExportModal: React.FC<BankExportModalProps> = ({
                       <CheckCircle2 className="w-4 h-4 text-indigo-600" />
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{fmt.desc}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{fmt.desc}</p>
                 </button>
               ))}
             </div>
@@ -186,7 +186,7 @@ export const BankExportModal: React.FC<BankExportModalProps> = ({
                 <FileSpreadsheet className="w-4 h-4 mr-1.5 text-slate-500 dark:text-slate-400" />
                 Generated File Output Preview
               </span>
-              <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
                 File: {fileResult?.fileName}
               </span>
             </div>
@@ -211,7 +211,7 @@ export const BankExportModal: React.FC<BankExportModalProps> = ({
               <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
               <span>Deterministic Checksum: <span className="font-mono font-bold text-black dark:text-slate-200">{fileResult?.checksum || 'N/A'}</span></span>
             </div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
               Export Version: v{batch.exportVersion || 1} • Total: {fileResult?.recordCount || 0} Records
             </span>
           </div>

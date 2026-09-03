@@ -119,6 +119,27 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    // ============================================================
+    // 2.1 EXTERNAL CLIENT PORTAL USER (OUTSIDE A0-A9 HIERARCHY)
+    // ============================================================
+    function isClientUser() {
+      return signedIn() && 
+        request.auth.token.role == "clientUser" &&
+        request.auth.token.cId != null &&
+        request.auth.token.clientId != null;
+    }
+
+    function isClientUserForCompany(cId) {
+      return isClientUser() && request.auth.token.cId == cId;
+    }
+
+    function clientHasSiteAccess(sId) {
+      return isClientUser() && (
+        request.auth.token.siteIds != null && 
+        (sId in request.auth.token.siteIds)
+      );
+    }
+
 
     // ============================================================
     // 3. GLOBAL ROOT LEVEL COLLECTIONS
@@ -190,6 +211,11 @@ service cloud.firestore {
     }
 
     // C. System Dictionaries & Configurations
+    match /publicJobPostings/{postingId} {
+      allow read: if true; // Fully public, unauthenticated read-only for external job seekers
+      allow write: if false; // Admin SDK / Backend Cloud Functions only (zero client-side writes)
+    }
+
     match /plans/{planId} {
       allow read: if signedIn();
       allow write: if isSuperAdmin();
@@ -311,9 +337,35 @@ service cloud.firestore {
     }
 
     match /notifications/{notificationId} {
-      allow read: if signedIn() && (isSuperAdmin() || (resource.data.companyId == companyId()) || (resource.data.recipientId == request.auth.uid));
+      allow read: if signedIn() && (isSuperAdmin() || resource.data.recipientId == request.auth.uid || resource.data.recipientUid == request.auth.uid || (resource.data.companyId == companyId() && (isOwnerOrExecutive() || isOfficialStaff())));
       allow create: if isSuperAdmin() || (isActiveUser() && (isOwnerOrExecutive() || isOfficialStaff() || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"]));
       allow update, delete: if isSuperAdmin() || (isActiveUser() && isOwnerOrExecutive());
+    }
+
+    match /employeeCertifications/{certId} {
+      allow read: if signedIn() && (
+        isSuperAdmin() || 
+        (isActiveUser() && resource.data.companyId == companyId() && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("OPERATIONS") || 
+          authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] ||
+          isSelfEmployee(resource.data.employeeId)
+        ))
+      );
+      allow create, update: if signedIn() && (
+        isSuperAdmin() || 
+        (isActiveUser() && request.resource.data.companyId == companyId() && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("OPERATIONS") || 
+          authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"]
+        ))
+      );
+      allow delete: if signedIn() && (
+        isSuperAdmin() || 
+        (isActiveUser() && resource.data.companyId == companyId() && (isOwnerOrExecutive() || isOfficialStaffDept("HR")))
+      );
     }
 
 
@@ -358,13 +410,54 @@ service cloud.firestore {
       }
 
       // ----------------------------------------------------------
+      // Subcollection: Client Contracts, Rate Cards & Invoices (Module 1 & 2)
+      // ----------------------------------------------------------
+      match /contracts/{contractId} {
+        allow read: if (sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS")))
+          || (isClientUserForCompany(cId) && resource.data.clientId == request.auth.token.clientId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      match /rateCards/{rateCardId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS"));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      match /clientInvoices/{invoiceId} {
+        allow read: if (sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS")))
+          || (isClientUserForCompany(cId) && resource.data.clientId == request.auth.token.clientId);
+        allow create, update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+        allow delete: if sameCompany(cId) && isOwnerOrExecutive() && resource.data.status == "DRAFT";
+      }
+
+      match /slaBreaches/{breachId} {
+        allow read: if (sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("FINANCE") || 
+          isOfficialStaffDept("OPERATIONS") ||
+          (authorityLevel() == "A5_SITE_IN_CHARGE" && resource.data.siteId == siteId())
+        )) || (isClientUserForCompany(cId) && (resource.data.clientId == request.auth.token.clientId || clientHasSiteAccess(resource.data.siteId)));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("OPERATIONS") || isOfficialStaffDept("FINANCE"));
+      }
+
+      match /complianceDocuments/{docId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("OPERATIONS") ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      // ----------------------------------------------------------
       // Subcollection: Employee Management (HRMS)
       // ----------------------------------------------------------
       match /employees/{employeeId} {
         allow read: if sameCompany(cId) && (
           isOwnerOrExecutive() ||
           isOfficialStaffDept("HR") ||
-          isOfficialStaffDept("FINANCE") || // Finance needs employee master for payroll
+          isOfficialStaffDept("FINANCE") ||
           (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) ||
           isSiteManager(resource.data.assignedSiteId, resource.data.departmentId) ||
           isSelfEmployee(resource.data.employeeId) ||
@@ -382,6 +475,14 @@ service cloud.firestore {
         match /private_security/{docId} {
           allow read, write: if isSuperAdmin();
         }
+        match /documents/{docId} {
+          allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSelfEmployee(employeeId));
+          allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+        }
+        match /lifecycleEvents/{docId} {
+          allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSelfEmployee(employeeId));
+          allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+        }
       }
 
       match /role_assignments/{roleId} {
@@ -392,6 +493,33 @@ service cloud.firestore {
       match /documents/{docId} {
         allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSelfEmployee(resource.data.employeeId));
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS"));
+      }
+
+      
+      // Additional injected collections
+      match /leaves/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSelfEmployee(resource.data.employeeId));
+      }
+      match /attendance_adjustments/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSiteManager(resource.data.siteId, resource.data.departmentId));
+      }
+      match /bank_payment_batches/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+      match /performance_appraisals/{itemId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSiteManager(resource.data.siteId, resource.data.departmentId) || isSelfEmployee(resource.data.employeeId));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSiteManager(resource.data.siteId, resource.data.departmentId));
+      }
+      match /overtime_requests/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSiteManager(resource.data.siteId, resource.data.departmentId));
+      }
+      match /overtime_adjustments/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSiteManager(resource.data.siteId, resource.data.departmentId));
       }
 
       match /leave_requests/{leaveId} {
@@ -422,7 +550,7 @@ service cloud.firestore {
       // Subcollection: Attendance & Supervisor Muster Roll
       // ----------------------------------------------------------
       match /attendance_logs/{attendanceId} {
-        allow read: if sameCompany(cId) && (
+        allow read: if (sameCompany(cId) && (
           isOwnerOrExecutive() ||
           isOfficialStaffDept("HR") ||
           isOfficialStaffDept("FINANCE") ||
@@ -430,7 +558,7 @@ service cloud.firestore {
           (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.assignedRegionId == regionId() || resource.data.assignedRegionId == null)) ||
           isSiteManager(resource.data.siteId, resource.data.departmentId) ||
           isSelfEmployee(resource.data.employeeId)
-        );
+        )) || (isClientUserForCompany(cId) && clientHasSiteAccess(resource.data.siteId));
 
         // Supervisor Muster Creation: Actor (request.auth.token.sId) separates from Subject (request.resource.data.employeeId)
         // Strictly blocks unapproved OUTSIDE_GEOFENCE writes
@@ -462,7 +590,7 @@ service cloud.firestore {
       }
 
       match /attendance/{attendanceId} {
-        allow read: if sameCompany(cId) && (
+        allow read: if (sameCompany(cId) && (
           isOwnerOrExecutive() ||
           isOfficialStaffDept("HR") ||
           isOfficialStaffDept("FINANCE") ||
@@ -470,7 +598,7 @@ service cloud.firestore {
           (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.assignedRegionId == regionId() || resource.data.assignedRegionId == null)) ||
           isSiteManager(resource.data.siteId, resource.data.departmentId) ||
           isSelfEmployee(resource.data.employeeId)
-        );
+        )) || (isClientUserForCompany(cId) && clientHasSiteAccess(resource.data.siteId));
 
         // Blocks employee direct creation if location is flagged OUTSIDE_GEOFENCE without supervisor override
         allow create: if sameCompany(cId) && (
@@ -605,6 +733,367 @@ service cloud.firestore {
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId, request.resource.data.departmentId) || isSiteManager(resource.data.siteId, resource.data.departmentId));
       }
 
+      
+      
+      
+
+
+      
+      match /absenceRegularizations/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /attendance_policies/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /backgroundVerifications/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /badges/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /billing_rate_matrices/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /bpm_delegations/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /bpm_escalation_events/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /bpm_escalation_policies/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /bpm_threshold_rules/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /bpm_workflows/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /bulk_export_alerts/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /candidateDocuments/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /change_requests/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /client_contacts/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /contract_amendments/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /contract_expiry_events/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /contract_scopes/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /contract_sites/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /cost_centres/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /deployments/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /detected_risk_events/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /documentTypes/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /gate_passes/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /goods_receipt_notes/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /grc_capa/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /grc_risks/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /holidays/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /identity_badges/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /inventoryItems/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /inventoryVendors/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /leaveBalances/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /leavePolicies/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /maintenanceOccurrences/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /maintenancePlans/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /orgAssignments/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /overtimePolicies/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /patrol_checkpoints/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /patrol_logs/{itemId} {
+        allow read: if sameCompany(cId) || (isClientUserForCompany(cId) && clientHasSiteAccess(resource.data.siteId));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /patrol_plans/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /patrol_tours/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /priorityConfigs/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /procurement_requisitions/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /refresher_statuses/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /rosters/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /safety_checksheets/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /salaryProfiles/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /salaryStructures/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /security_assurance_runs/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /security_detection_rules/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /security_events/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /security_findings/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /service_sla_policies/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /shift_handovers/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /sla_breaches/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /sla_definitions/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /sla_scorecards/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /sos_alerts/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /statutory_configs/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /stock_ledger/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /suspicious_patrol_scans/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /three_way_matches/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /ticketCategories/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /ticketFeedback/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /transfer_orders/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /transfers/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /warranties/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /warranty_claims/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /workOrders/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
+
+      match /bpm_instances/{instanceId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId);
+        match /bpm_actions/{actionId} {
+          allow read: if sameCompany(cId);
+          allow write: if sameCompany(cId);
+        }
+      }
+
+
+      match /purchase_orders/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS"));
+      }
+
       match /inventory_transactions/{txId} {
         allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) || isSiteManager(resource.data.siteId, resource.data.departmentId));
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(request.resource.data.siteId, request.resource.data.departmentId) || isSiteManager(resource.data.siteId, resource.data.departmentId));
@@ -666,6 +1155,40 @@ service cloud.firestore {
       }
 
       match /billing/{billingId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      // Enterprise General Ledger, Financial Controls & Cost Centers
+      match /chartOfAccounts/{accountId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("HR"));
+        allow create, update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+        allow delete: if sameCompany(cId) && isOwnerOrExecutive() && !resource.data.isSystemAccount;
+      }
+
+      match /journalVouchers/{voucherId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("HR"));
+        allow create: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("HR"));
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+        allow delete: if false; // Strict Immutable Financial Audit Policy
+      }
+
+      match /costCenters/{ccId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS") || authorityLevel() == "A4_REGIONAL_AREA_MANAGER" || authorityLevel() == "A5_SITE_IN_CHARGE");
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      match /clientInvoices/{invoiceId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS") || authorityLevel() == "A4_REGIONAL_AREA_MANAGER");
+        allow create, update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+        allow delete: if sameCompany(cId) && isOwnerOrExecutive() && resource.data.status == "DRAFT";
+      }
+
+      match /budgetPlans/{budgetId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE") || isOfficialStaffDept("OPERATIONS"));
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      match /bankFeeds/{feedId} {
         allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
       }
 
@@ -770,7 +1293,7 @@ service cloud.firestore {
       }
 
       match /notifications/{notificationId} {
-        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || resource.data.recipientUid == request.auth.uid || resource.data.recipientId == request.auth.uid);
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || resource.data.recipientUid == request.auth.uid || resource.data.recipientId == request.auth.uid || (resource.data.roleScope != null && authorityLevel() in resource.data.roleScope) || (resource.data.recipientUid == null && resource.data.recipientId == null && (resource.data.roleScope == null || resource.data.roleScope.size() == 0)));
         allow create: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSystem());
         allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || resource.data.recipientUid == request.auth.uid || resource.data.recipientId == request.auth.uid);
         allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
@@ -850,7 +1373,448 @@ service cloud.firestore {
         allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId, resource.data.departmentId));
         allow delete: if sameCompany(cId) && isOwnerOrExecutive();
       }
+
+      // ----------------------------------------------------------
+      // Subcollection: Module 23 Performance Management System (PMS)
+      // ----------------------------------------------------------
+      match /performanceGoals/{goalId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.regionId == regionId() || resource.data.regionId == null)) ||
+          isSiteManager(resource.data.siteId, resource.data.departmentId) ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isSiteManager(request.resource.data.siteId, request.resource.data.departmentId) ||
+          isSelfEmployee(request.resource.data.employeeId)
+        );
+        allow update: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isSiteManager(resource.data.siteId, resource.data.departmentId) ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      match /appraisalCycles/{cycleId} {
+        allow read: if sameCompany(cId);
+        allow create, update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      match /appraisalReviews/{reviewId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.regionId == regionId() || resource.data.regionId == null)) ||
+          isSiteManager(resource.data.siteId, resource.data.departmentId) ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isSiteManager(request.resource.data.siteId, request.resource.data.departmentId) ||
+          isSelfEmployee(request.resource.data.employeeId)
+        );
+        allow update: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isSiteManager(resource.data.siteId, resource.data.departmentId) ||
+          (isSelfEmployee(resource.data.employeeId) && resource.data.stage == 'SELF')
+        );
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      match /feedbackRequests/{feedbackId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isSelfEmployee(resource.data.reviewerEmployeeId) ||
+          (!resource.data.isAnonymous && isSelfEmployee(resource.data.targetEmployeeId))
+        );
+        allow create: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"]);
+        allow update: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isSelfEmployee(resource.data.reviewerEmployeeId)
+        );
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      match /pipRecords/{pipId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.regionId == regionId() || resource.data.regionId == null)) ||
+          isSiteManager(resource.data.siteId, resource.data.departmentId) ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create, update: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isSiteManager(request.resource.data.siteId, request.resource.data.departmentId) ||
+          isSiteManager(resource.data.siteId, resource.data.departmentId)
+        );
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      // ----------------------------------------------------------
+      // Subcollection: Module 24 Talent Acquisition & ATS
+      // ----------------------------------------------------------
+      match /jobRequisitions/{reqId} {
+        allow read: if sameCompany(cId);
+        allow create, update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE"]);
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      match /candidates/{candidateId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"]);
+        allow create: if (sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"])) ||
+                         (signedIn() && request.resource.data.companyId == cId && request.resource.data.stage == 'REGISTERED');
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"]);
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+
+        match /documents/{docId} {
+          allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"]);
+          allow create: if (sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"])) ||
+                           (signedIn() && request.resource.data.companyId == cId);
+          allow update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"]);
+        }
+      }
+
+      match /screenings/{screeningId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"]);
+      }
+
+      match /interviews/{interviewId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] || resource.data.interviewerId == request.auth.uid);
+        allow create, update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] || resource.data.interviewerId == request.auth.uid);
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      match /selections/{selectionId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      match /bgVerifications/{bgvId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      // ----------------------------------------------------------
+      // Subcollection: Module 25 Learning Management System (LMS) & Training
+      // ----------------------------------------------------------
+      match /trainingPrograms/{progId} {
+        allow read: if sameCompany(cId);
+        allow create, update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("OPERATIONS"));
+      }
+
+      // Alias mapping for courses -> trainingPrograms
+      match /courses/{courseId} {
+        allow read: if sameCompany(cId);
+        allow create, update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("OPERATIONS"));
+      }
+
+      match /trainingSessions/{sessionId} {
+        allow read: if sameCompany(cId);
+        allow create, update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("OPERATIONS") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE"]);
+      }
+
+      // Alias mapping for courseAssignments -> trainingSessions
+      match /courseAssignments/{assignId} {
+        allow read: if sameCompany(cId);
+        allow create, update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("OPERATIONS") || authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE"]);
+      }
+
+      match /trainingEnrollments/{enrId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("OPERATIONS") || 
+          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.regionId == regionId() || resource.data.regionId == null)) ||
+          isSiteManager(resource.data.siteId, resource.data.departmentId) ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create, update: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("OPERATIONS") || 
+          authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] ||
+          (isSelfEmployee(resource.data.employeeId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['antiCheatEvents', 'updatedAt', 'timeSpentSeconds', 'quizAnswers']))
+        );
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      // Alias mapping for courseProgress -> trainingEnrollments
+      match /courseProgress/{progId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("OPERATIONS") || 
+          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.regionId == regionId() || resource.data.regionId == null)) ||
+          isSiteManager(resource.data.siteId, resource.data.departmentId) ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create, update: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("OPERATIONS") || 
+          authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] ||
+          (isSelfEmployee(resource.data.employeeId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['antiCheatEvents', 'updatedAt', 'timeSpentSeconds', 'quizAnswers']))
+        );
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      // Subcollection for quizAttempts & certificates
+      match /quizAttempts/{attemptId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isSiteManager(resource.data.siteId, resource.data.departmentId) || 
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSelfEmployee(request.resource.data.employeeId));
+        allow update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      match /certificates/{certId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isSiteManager(resource.data.siteId, resource.data.departmentId) || 
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create, update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      match /refresher_configs/{configId} {
+        allow read: if sameCompany(cId);
+        allow create, update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("OPERATIONS"));
+      }
+
+      match /mandatoryRefreshers/{refId} {
+        allow read: if sameCompany(cId);
+        allow create, update: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("OPERATIONS") || 
+          authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"]
+        );
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      // ----------------------------------------------------------
+      // Subcollection: Module 26 Enterprise Integration Layer
+      // ----------------------------------------------------------
+      match /apiKeys/{keyId} {
+        // Enforce: only hashed keys stored, only IT/Admin roles can read/write
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("IT") || isSuperAdmin());
+        allow create, update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("IT") || isSuperAdmin()) &&
+          (!('rawKey' in request.resource.data) || request.resource.data.rawKey == null) &&
+          ('keyHash' in request.resource.data || 'hashedKey' in request.resource.data);
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("IT") || isSuperAdmin());
+      }
+
+      match /webhookSubscriptions/{subId} {
+        // Enforce: Webhook secrets readable only by IT/Admin roles
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("IT") || isSuperAdmin());
+      }
+
+      match /webhookDeliveries/{delId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("IT") || isSuperAdmin());
+        allow write: if false; // Server-side append only
+      }
+
+      match /ssoConfigs/{configId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("IT") || isSuperAdmin());
+      }
+
+      match /integrationConnectors/{connId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("IT") || isOfficialStaffDept("FINANCE") || isSuperAdmin());
+      }
+
+      // ----------------------------------------------------------
+      // Subcollection: Module 27 Expense & Travel Management
+      // ----------------------------------------------------------
+      match /expenseClaims/{claimId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("FINANCE") || 
+          isOfficialStaffDept("HR") || 
+          isSiteManager(resource.data.siteId, resource.data.departmentId) || 
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("FINANCE") || 
+          isSelfEmployee(request.resource.data.employeeId) ||
+          authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"]
+        );
+        // Immutability: Once APPROVED/DISBURSED, non-finance roles CANNOT modify
+        allow update: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("FINANCE") || 
+          (
+            isSelfEmployee(resource.data.employeeId) && 
+            resource.data.status == "DRAFT" && 
+            request.resource.data.status in ["DRAFT", "SUBMITTED"]
+          ) ||
+          (
+            isSiteManager(resource.data.siteId, resource.data.departmentId) && 
+            resource.data.status in ["SUBMITTED", "UNDER_REVIEW"] && 
+            request.resource.data.siteId == resource.data.siteId
+          )
+        );
+        allow delete: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          (isSelfEmployee(resource.data.employeeId) && resource.data.status == "DRAFT")
+        );
+      }
+
+      match /travelRequests/{reqId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("FINANCE") || 
+          isOfficialStaffDept("HR") || 
+          isSelfEmployee(resource.data.employeeId) ||
+          authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE"]
+        );
+        allow create, update: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("FINANCE") || 
+          isSelfEmployee(request.resource.data.employeeId) ||
+          authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE"]
+        );
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isSelfEmployee(resource.data.employeeId));
+      }
+
+      match /expensePolicies/{policyId} {
+        allow read: if sameCompany(cId);
+        allow create, update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("FINANCE"));
+      }
+
+      // ----------------------------------------------------------
+      // Phase A-D: Complete Enterprise Talent Management Suite
+      // ----------------------------------------------------------
+      // 1. Competency Skills, Skills Matrix & Succession Planning
+      match /competencySkills/{skillId} {
+        allow read: if sameCompany(cId);
+        allow create, update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      match /skillsMatrix/{matrixId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("OPERATIONS") || 
+          isSiteManager(resource.data.siteId, resource.data.departmentId) || 
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create, update: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE"]
+        );
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      match /successionPlans/{planId} {
+        allow read, write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || authorityLevel() == "A4_REGIONAL_AREA_MANAGER");
+      }
+
+      match /careerTracks/{trackId} {
+        allow read: if sameCompany(cId);
+        allow create, update, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      // 2. Offer Letters & Day-1 Onboarding
+      match /offerLetters/{offerId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("FINANCE") || 
+          isSiteManager(resource.data.siteId, resource.data.departmentId)
+        );
+        allow create, update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+        allow delete: if sameCompany(cId) && isOwnerOrExecutive();
+      }
+
+      match /onboardingChecklists/{onbId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("OPERATIONS") || 
+          isSiteManager(resource.data.siteId, resource.data.departmentId)
+        );
+        allow create, update: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"]
+        );
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      // 3. Master Training Calendar & Kirkpatrick Evaluations
+      match /trainingCalendar/{eventId} {
+        allow read: if sameCompany(cId);
+        allow create, update, delete: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("OPERATIONS") || 
+          authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE"]
+        );
+      }
+
+      match /trainingEvaluations/{evalId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isSiteManager(resource.data.siteId, resource.data.departmentId) || 
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create, update: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          authorityLevel() in ["A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
+
+      // 4. Rewards, Recognition & Points Wallets
+      match /rewardNominations/{nominationId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaff() || 
+          isSiteManager(resource.data.nomineeSiteId, resource.data.nomineeDepartment) || 
+          isSelfEmployee(resource.data.nomineeEmployeeId) || 
+          isSelfEmployee(resource.data.nominatedByEmployeeId)
+        );
+        allow create: if sameCompany(cId) && signedIn();
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("FINANCE"));
+        allow delete: if sameCompany(cId) && isOwnerOrExecutive();
+      }
+
+      match /recognitionBadges/{badgeId} {
+        allow read: if sameCompany(cId);
+        allow create: if sameCompany(cId) && signedIn();
+        allow update, delete: if sameCompany(cId) && isOwnerOrExecutive();
+      }
+
+      match /rewardWallets/{walletId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() || 
+          isOfficialStaffDept("HR") || 
+          isOfficialStaffDept("FINANCE") || 
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create, update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isOfficialStaffDept("FINANCE"));
+        allow delete: if sameCompany(cId) && isOwnerOrExecutive();
+      }
     }
+
 
 
     // ============================================================

@@ -318,28 +318,28 @@ export function ServiceDeskSatisfactionAnalytics({
                       <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
                         {summary.slaCorrelation.slaMetAvgScore}★
                       </div>
-                      <span className="text-[10px] text-slate-400">{summary.slaCorrelation.slaMetResponsesCount} responses</span>
+                      <span className="text-[11px] text-slate-400">{summary.slaCorrelation.slaMetResponsesCount} responses</span>
                     </div>
                     <div className="p-3 bg-white dark:bg-slate-950 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
                       <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">When SLA Breached</span>
                       <div className="text-lg font-bold text-rose-600 dark:text-rose-400">
                         {summary.slaCorrelation.slaBreachedAvgScore}★
                       </div>
-                      <span className="text-[10px] text-slate-400">{summary.slaCorrelation.slaBreachedResponsesCount} responses</span>
+                      <span className="text-[11px] text-slate-400">{summary.slaCorrelation.slaBreachedResponsesCount} responses</span>
                     </div>
                     <div className="p-3 bg-white dark:bg-slate-950 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
                       <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Satisfied Resolution (Avg)</span>
                       <div className="text-lg font-bold text-slate-900 dark:text-slate-300">
                         {summary.slaCorrelation.avgResolutionHoursSatisfied} hrs
                       </div>
-                      <span className="text-[10px] text-slate-400">Time to resolve</span>
+                      <span className="text-[11px] text-slate-400">Time to resolve</span>
                     </div>
                     <div className="p-3 bg-white dark:bg-slate-950 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
                       <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Dissatisfied Resolution (Avg)</span>
                       <div className="text-lg font-bold text-slate-900 dark:text-slate-300">
                         {summary.slaCorrelation.avgResolutionHoursDissatisfied} hrs
                       </div>
-                      <span className="text-[10px] text-slate-400">Time to resolve</span>
+                      <span className="text-[11px] text-slate-400">Time to resolve</span>
                     </div>
                   </div>
                 </div>

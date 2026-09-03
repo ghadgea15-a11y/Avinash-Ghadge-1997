@@ -182,7 +182,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-bold text-black dark:text-white">{shift.shiftName}</h3>
-                    <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{shift.shiftCode}</span>
+                    <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{shift.shiftCode}</span>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={() => handleOpenModal(shift)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400">
@@ -212,7 +212,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
                       <span
                         key={idx}
-                        className={`w-6 h-6 flex items-center justify-center text-[10px] font-bold rounded-full ${
+                        className={`w-6 h-6 flex items-center justify-center text-[11px] font-bold rounded-full ${
                           shift.weeklyOffDays.includes(idx)
                             ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30'
                             : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30'
@@ -222,7 +222,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
                       </span>
                     ))}
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+                  <span className={`text-[11px] font-bold px-2 py-1 rounded-full ${
                     shift.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
                   }`}>
                     {shift.status}

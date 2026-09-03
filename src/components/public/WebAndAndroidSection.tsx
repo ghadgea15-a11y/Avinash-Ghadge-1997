@@ -44,7 +44,7 @@ export const WebAndAndroidSection: React.FC = () => {
                 <Laptop className="w-6 h-6 text-emerald-400" />
               </div>
               <div>
-                <span className="font-mono text-[10px] uppercase font-bold text-emerald-600 tracking-wider block">
+                <span className="font-mono text-[11px] uppercase font-bold text-emerald-600 tracking-wider block">
                   MANAGEMENT CONSOLE
                 </span>
                 <strong className="font-display text-base font-bold text-black block mt-1">
@@ -54,7 +54,7 @@ export const WebAndAndroidSection: React.FC = () => {
               <p className="font-body text-xs text-black leading-relaxed">
                 Designed for HR Directors, Operations Heads, and Finance Managers. Full-screen master configuration, bulk rosters, Form II export, and cross-site analytics.
               </p>
-              <div className="pt-2 border-t border-slate-200 font-mono text-[11px] text-slate-600">
+              <div className="pt-2 border-t border-slate-200 font-mono text-xs text-slate-600">
                 BROWSER-BASED &bull; ZERO INSTALL
               </div>
             </div>
@@ -65,7 +65,7 @@ export const WebAndAndroidSection: React.FC = () => {
                 <Database className="w-6 h-6" />
               </div>
               <div>
-                <span className="font-mono text-[10px] uppercase font-bold text-emerald-400 tracking-wider block">
+                <span className="font-mono text-[11px] uppercase font-bold text-emerald-400 tracking-wider block">
                   SINGLE SOURCE OF TRUTH
                 </span>
                 <strong className="font-display text-base font-bold text-white block mt-1">
@@ -75,7 +75,7 @@ export const WebAndAndroidSection: React.FC = () => {
               <p className="font-body text-xs text-slate-300 leading-relaxed">
                 Real-time multi-tenant database ensuring immediate state synchronization. Every mobile muster entry is instantly visible on the corporate desktop.
               </p>
-              <div className="pt-2 border-t border-[#27272A] font-mono text-[11px] text-emerald-400">
+              <div className="pt-2 border-t border-[#27272A] font-mono text-xs text-emerald-400">
                 TLS 1.3 &bull; REAL-TIME REPLICATION
               </div>
             </div>
@@ -86,7 +86,7 @@ export const WebAndAndroidSection: React.FC = () => {
                 <Smartphone className="w-6 h-6 text-emerald-400" />
               </div>
               <div>
-                <span className="font-mono text-[10px] uppercase font-bold text-emerald-600 tracking-wider block">
+                <span className="font-mono text-[11px] uppercase font-bold text-emerald-600 tracking-wider block">
                   FIELD OPERATIONS APP
                 </span>
                 <strong className="font-display text-base font-bold text-black block mt-1">
@@ -96,7 +96,7 @@ export const WebAndAndroidSection: React.FC = () => {
               <p className="font-body text-xs text-black leading-relaxed">
                 Engineered for Field Supervisors and Security Guards. Fast camera QR scanning, GPS location geofencing, offline muster logging, and instant photo capture.
               </p>
-              <div className="pt-2 border-t border-slate-200 font-mono text-[11px] text-slate-600">
+              <div className="pt-2 border-t border-slate-200 font-mono text-xs text-slate-600">
                 OFFLINE-CAPABLE &bull; ANDROID 8.0+
               </div>
             </div>

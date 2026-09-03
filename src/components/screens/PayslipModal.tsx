@@ -76,6 +76,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({ record, company, onC
   const hra = earnings.hra ?? (calc as any).hra ?? 0;
   const overtimePay = earnings.overtimePay ?? 0;
   const otherAllowances = earnings.otherAllowances ?? (calc as any).allowances ?? 0;
+  const reimbursements = earnings.reimbursements ?? 0;
   const grossPay = calc.totalGross ?? (basic + hra + overtimePay + otherAllowances);
 
   const pf = deductions.pf ?? 0;
@@ -149,7 +150,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({ record, company, onC
                   </div>
                   <div>
                     <h3 className="font-bold text-base leading-tight text-slate-900">{brandName}</h3>
-                    <p className="text-[11px] text-slate-500 font-mono">Code: {companyCode}</p>
+                    <p className="text-xs text-slate-500 font-mono">Code: {companyCode}</p>
                   </div>
                 </div>
               )}
@@ -164,7 +165,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({ record, company, onC
                 </p>
               )}
 
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500 pt-1">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 pt-1">
                 {company?.email && (
                   <span className="flex items-center gap-1">
                     <Mail className="w-3 h-3 text-slate-400" /> {company.email}
@@ -229,11 +230,11 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({ record, company, onC
             <div className="grid grid-cols-2 bg-slate-100 text-slate-700 font-bold uppercase text-xs tracking-wider divide-x divide-slate-200 border-b border-slate-200">
               <div className="p-3.5 flex justify-between items-center">
                 <span>Earnings (A)</span>
-                <span className="text-[10px] text-slate-500">Amount (₹)</span>
+                <span className="text-[11px] text-slate-500">Amount (₹)</span>
               </div>
               <div className="p-3.5 flex justify-between items-center">
                 <span>Deductions (B)</span>
-                <span className="text-[10px] text-slate-500">Amount (₹)</span>
+                <span className="text-[11px] text-slate-500">Amount (₹)</span>
               </div>
             </div>
 
@@ -256,6 +257,12 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({ record, company, onC
                   <span className="text-slate-700">Special & Other Allowances</span>
                   <span className="font-mono font-semibold text-slate-900">₹{otherAllowances.toLocaleString('en-IN')}</span>
                 </div>
+                {reimbursements > 0 && (
+                  <div className="flex justify-between items-center py-1 border-t border-slate-100 mt-2 pt-2">
+                    <span className="text-slate-700 font-medium">Expense Reimbursements (Non-Taxable)</span>
+                    <span className="font-mono font-bold text-indigo-700">₹{reimbursements.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
               </div>
 
               {/* Deductions Column */}
@@ -264,7 +271,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({ record, company, onC
                   <div>
                     <span className="text-slate-700">Provident Fund (PF - 12%)</span>
                     {(calc.isEpsExempt || calc.epsExemptionFlag || deductions.epsExemptionApplied) && (
-                      <span className="block text-[10px] text-amber-700 font-semibold mt-0.5">
+                      <span className="block text-[11px] text-amber-700 font-semibold mt-0.5">
                         {calc.epsExemptionFlag || deductions.epsExemptionNote || 'STAT-AGE-58: EPS Exemption Applied (Age ≥ 58)'}
                       </span>
                     )}
@@ -347,7 +354,7 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({ record, company, onC
           </div>
 
           {/* Footer Note */}
-          <div className="text-center text-[11px] text-slate-400 pt-4 border-t border-slate-100">
+          <div className="text-center text-xs text-slate-400 pt-4 border-t border-slate-100">
             This is a confidential computer-generated salary voucher issued by {legalName}. Valid without physical signature under digital payroll record provisions.
           </div>
 

@@ -300,7 +300,7 @@ export const PayrollCompensationScreen: React.FC<Props> = ({ userSession, active
                       >
                         <span>{st.label}</span>
                         {isConfigured && (
-                          <span className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 px-1.5 py-0.5 rounded font-mono">
+                          <span className="text-[11px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 px-1.5 py-0.5 rounded font-mono">
                             CUSTOM
                           </span>
                         )}
@@ -439,7 +439,7 @@ export const PayrollCompensationScreen: React.FC<Props> = ({ userSession, active
                               onChange={e => setEditingStatutory({ ...editingStatutory, esiWageCeiling: Number(e.target.value) })}
                               className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded"
                             />
-                            <span className="text-[10px] text-slate-400 mt-1 block">Employees with gross pay &gt; ₹21,000 are automatically exempt from ESIC deduction.</span>
+                            <span className="text-[11px] text-slate-400 mt-1 block">Employees with gross pay &gt; ₹21,000 are automatically exempt from ESIC deduction.</span>
                           </div>
                         </div>
                       </div>
@@ -510,7 +510,7 @@ export const PayrollCompensationScreen: React.FC<Props> = ({ userSession, active
 
                         {editingStatutory.ptEnabled && (
                           <div className="overflow-x-auto">
-                            <table className="w-full text-xs text-left">
+                            <table className="w-full text-sm text-left">
                               <thead className="bg-slate-200/50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
                                 <tr>
                                   <th className="p-2.5">Salary From (₹)</th>
@@ -762,7 +762,7 @@ export const PayrollCompensationScreen: React.FC<Props> = ({ userSession, active
                               <td className="p-4 font-medium text-slate-900 dark:text-white flex items-center gap-2">
                                 <span>{record.employeeName}</span>
                                 {record.calculations?.isEpsExempt && (
-                                  <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-300/40 rounded-full" title={record.calculations.epsExemptionFlag || 'STAT-AGE-58: EPS Exemption Applied (Age >= 58)'}>
+                                  <span className="px-2 py-0.5 text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-300/40 rounded-full" title={record.calculations.epsExemptionFlag || 'STAT-AGE-58: EPS Exemption Applied (Age >= 58)'}>
                                     EPS Exempt
                                   </span>
                                 )}

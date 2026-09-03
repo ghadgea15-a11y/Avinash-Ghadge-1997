@@ -11,12 +11,21 @@ export * from './workforceCapacity';
 export * from './platform';
 export * from './complianceControl';
 export * from './scm';
+export * from './pms';
+export * from './talentManagement';
+export * from './financeLedger';
+export * from './clientBilling';
+export * from './multiModePatrol';
+export * from './complianceExpiry';
+export * from './aiScheduling';
+export * from './unifiedSync';
 
 export type UserRole = 
   | 'SUPER_ADMIN'
   | 'COMPANY_ADMIN'
   | 'ADMIN'
   | 'CLIENT_MANAGEMENT'
+  | 'clientUser'
   | 'HR_ADMIN'
   | 'HR'
   | 'GENERAL_MANAGER'
@@ -164,7 +173,7 @@ export interface UserSession {
   assignedSiteId?: string;
   isBiometricEnabled: boolean;
   lastActiveAt: number;
-  loginMode: 'PASSWORD' | 'BIOMETRIC' | 'OTP' | 'PIN' | 'GOOGLE';
+  loginMode: 'PASSWORD' | 'BIOMETRIC' | 'OTP' | 'PIN' | 'GOOGLE' | 'SSO';
   authMode?: string;
   accountStatus: AccountStatus;
   emailVerified: boolean;
@@ -180,6 +189,9 @@ export interface UserSession {
   regionId?: string;
   assignedBranchId?: string;
   assignedSiteIds?: string[];
+  clientId?: string;
+  siteIds?: string[];
+  isClientPortalUser?: boolean;
   lastLoginAt?: number | Timestamp;
   dataScope?: string;
 }
@@ -552,6 +564,8 @@ export interface CostCentreRecord {
   name: string;
   description?: string;
   budgetAllocated?: number;
+  budgetReserved?: number;
+  budgetConsumed?: number;
   status: 'ACTIVE' | 'INACTIVE';
 }
 export interface ApprovalRequestRecord { [key: string]: any; }
@@ -593,6 +607,25 @@ export interface SuspiciousMusterPunch { [key: string]: any; }
 export interface CandidateRecord { [key: string]: any; }
 export interface CandidateRegistrationResult { [key: string]: any; }
 export interface JobRequisitionRecord { [key: string]: any; }
+export interface PublicJobPosting {
+  id: string; // matches requisition id
+  companyId: string;
+  companyName?: string;
+  jobTitle: string;
+  departmentName?: string;
+  siteName?: string;
+  locationCity?: string;
+  employmentType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'SHIFT' | string;
+  experienceRequired?: string;
+  jobDescription: string;
+  skills: string[];
+  openPositions?: number;
+  publicSalaryRange?: string;
+  status: 'PUBLISHED' | 'CLOSED';
+  publishedAt: string;
+  updatedAt: string;
+  closingDate?: string;
+}
 export type CandidateStage = 
   | 'APPLIED' 
   | 'SCREENING' 
@@ -926,7 +959,7 @@ export interface LeaveRequestRecord {
   daysCount: number;
   totalDays?: number;
   reason: string;
-  status: 'PENDING' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'WITHDRAWN';
+  status: 'PENDING' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'WITHDRAWN' | 'ACCEPTED';
   approvedBy?: string;
   rejectionReason?: string;
   appliedOn?: string;
@@ -1047,6 +1080,7 @@ export interface PayrollCalculation {
     hra: number;
     overtimePay: number;
     otherAllowances: number;
+    reimbursements?: number;
     totalGross?: number;
   };
   deductions: {
@@ -1074,3 +1108,5 @@ export interface PayrollRecord {
   createdAt?: string;
 }
 export * from './srm';
+export * from './integration';
+export * from './expense';

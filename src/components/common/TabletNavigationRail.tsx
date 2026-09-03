@@ -52,10 +52,14 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
         'ENTERPRISE_DASHBOARD',
         'EMPLOYEES',
         'ID_BADGES',
+        'TALENT_ACQUISITION',
+        'PERFORMANCE_MANAGEMENT',
+        'TRAINING_LMS',
         'ATTENDANCE_SHIFTS',
         'SHIFT_ROSTER',
         'WORKFORCE_CAPACITY',
         'PAYROLL_COMPENSATION',
+        'EXPENSE_TRAVEL',
         'SITE_OPERATIONS',
         'WORK_ORDERS',
         'ASSET_TRACKING',
@@ -65,6 +69,7 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
         'COMPLIANCE',
         'DOCUMENT_LIFECYCLE',
         'APPROVAL_MANAGEMENT',
+        'ENTERPRISE_INTEGRATIONS',
         'REPORTS_ANALYTICS',
         'OPERATIONAL_INTELLIGENCE',
         'NOTIFICATIONS',
@@ -134,7 +139,7 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] leading-tight font-medium tracking-tight truncate w-full text-center px-1">
+                <span className="text-[11px] leading-tight font-medium tracking-tight truncate w-full text-center px-1">
                   {item.shortLabel || item.label}
                 </span>
               </button>

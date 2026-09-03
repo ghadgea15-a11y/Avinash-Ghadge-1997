@@ -52,7 +52,7 @@ export const SecurityArchitectureSection: React.FC = () => {
         
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-[11px] font-mono font-bold tracking-widest text-emerald-400 uppercase">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-mono font-bold tracking-widest text-emerald-400 uppercase">
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>Zero-Trust Enterprise Guardrails</span>
           </div>

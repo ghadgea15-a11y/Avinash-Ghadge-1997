@@ -101,7 +101,7 @@ export const ResourcesSection: React.FC<ResourcesSectionProps> = ({ onNavigate }
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                       {res.category}
                     </span>
                     <div className={`p-2.5 rounded-xl transition group-hover:scale-110 ${

@@ -120,7 +120,7 @@ export const PlatformOverview: React.FC = () => {
                     <span className="font-mono text-xs font-bold uppercase tracking-wider text-black">
                       DISTRIBUTED TOPOLOGY
                     </span>
-                    <span className="font-mono text-[11px] text-emerald-600 font-semibold flex items-center gap-1.5">
+                    <span className="font-mono text-xs text-emerald-600 font-semibold flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                       LIVE SYNC ACTIVE
                     </span>
@@ -136,10 +136,10 @@ export const PlatformOverview: React.FC = () => {
                         </div>
                         <div>
                           <strong className="text-xs font-bold text-black block">Corporate Headquarters</strong>
-                          <span className="text-[11px] text-slate-600">Executive BI &bull; Consolidated Payroll Auditing</span>
+                          <span className="text-xs text-slate-600">Executive BI &bull; Consolidated Payroll Auditing</span>
                         </div>
                       </div>
-                      <span className="font-mono text-[10px] bg-white px-2 py-1 rounded text-black font-semibold">
+                      <span className="font-mono text-[11px] bg-white px-2 py-1 rounded text-black font-semibold">
                         PRIMARY DESK
                       </span>
                     </div>
@@ -151,10 +151,10 @@ export const PlatformOverview: React.FC = () => {
                         </div>
                         <div>
                           <strong className="text-xs font-bold text-black block">Manufacturing Plant &bull; Pune Zone</strong>
-                          <span className="text-[11px] text-slate-600">DG Log Sheets &bull; Material Gate Passes</span>
+                          <span className="text-xs text-slate-600">DG Log Sheets &bull; Material Gate Passes</span>
                         </div>
                       </div>
-                      <span className="font-mono text-[10px] bg-emerald-50 text-emerald-700 px-2 py-1 rounded font-semibold border border-emerald-200">
+                      <span className="font-mono text-[11px] bg-emerald-50 text-emerald-700 px-2 py-1 rounded font-semibold border border-emerald-200">
                         14 LOGS / HR
                       </span>
                     </div>
@@ -166,10 +166,10 @@ export const PlatformOverview: React.FC = () => {
                         </div>
                         <div>
                           <strong className="text-xs font-bold text-black block">Manned Security Posts (12 Gates)</strong>
-                          <span className="text-[11px] text-slate-600">QR Checkpoint Patrols &bull; Visitor ID Badges</span>
+                          <span className="text-xs text-slate-600">QR Checkpoint Patrols &bull; Visitor ID Badges</span>
                         </div>
                       </div>
-                      <span className="font-mono text-[10px] bg-emerald-50 text-emerald-700 px-2 py-1 rounded font-semibold border border-emerald-200">
+                      <span className="font-mono text-[11px] bg-emerald-50 text-emerald-700 px-2 py-1 rounded font-semibold border border-emerald-200">
                         100% MUSTER
                       </span>
                     </div>
@@ -181,10 +181,10 @@ export const PlatformOverview: React.FC = () => {
                         </div>
                         <div>
                           <strong className="text-xs font-bold text-black block">Field Supervisors &bull; Android Fleet</strong>
-                          <span className="text-[11px] text-slate-600">Mobile Shift Roll-Calls &bull; Offline Sync Queue</span>
+                          <span className="text-xs text-slate-600">Mobile Shift Roll-Calls &bull; Offline Sync Queue</span>
                         </div>
                       </div>
-                      <span className="font-mono text-[10px] bg-white px-2 py-1 rounded text-black font-semibold">
+                      <span className="font-mono text-[11px] bg-white px-2 py-1 rounded text-black font-semibold">
                         NATIVE ANDROID
                       </span>
                     </div>
@@ -226,7 +226,7 @@ export const PlatformOverview: React.FC = () => {
                 <span className="font-display text-sm font-bold tracking-wider">
                   LOG SHEET MUSTER CORE ENGINE
                 </span>
-                <span className="font-mono text-[10px] bg-[#27272A] text-emerald-400 px-2 py-0.5 rounded">
+                <span className="font-mono text-[11px] bg-[#27272A] text-emerald-400 px-2 py-0.5 rounded">
                   v2.5 PROD
                 </span>
               </div>
@@ -247,7 +247,7 @@ export const PlatformOverview: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-mono text-[11px] font-bold text-emerald-600 uppercase">
+                      <span className="font-mono text-xs font-bold text-emerald-600 uppercase">
                         {node.subtitle}
                       </span>
                       <span className="w-1.5 h-1.5 rounded-full bg-black" />

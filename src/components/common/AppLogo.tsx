@@ -28,7 +28,7 @@ export const AppLogo: React.FC<AppLogoProps> = ({
   const dimensions = {
     sm: { container: 'h-8 w-8', text: 'text-sm', badge: 'text-[8px] px-1.5 py-0.5', icon: 'text-xs' },
     md: { container: 'h-10 w-10', text: 'text-base', badge: 'text-[9px] px-2 py-0.5', icon: 'text-sm' },
-    lg: { container: 'h-14 w-14', text: 'text-xl', badge: 'text-[10px] px-2.5 py-1', icon: 'text-lg' },
+    lg: { container: 'h-14 w-14', text: 'text-xl', badge: 'text-[11px] px-2.5 py-1', icon: 'text-lg' },
     xl: { container: 'h-20 w-20', text: 'text-2xl', badge: 'text-xs px-3 py-1', icon: 'text-2xl' }
   }[size];
 
@@ -96,7 +96,7 @@ export const AppLogo: React.FC<AppLogoProps> = ({
             </span>
           </div>
           {showSubtitle && (
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">
               {hasTenant ? company?.tagline : "YOUR WORKFORCE, OUR PRIORITY"}
             </span>
           )}

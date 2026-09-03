@@ -89,10 +89,10 @@ export const AttendanceLogs: React.FC<Props> = ({ userSession, activeCompany }) 
                   </td>
                   <td className="py-3 px-6">
                     <p className="font-bold">{log.userName || 'Unknown'}</p>
-                    <p className="text-[10px] text-slate-400 font-mono">{log.employeeId}</p>
+                    <p className="text-[11px] text-slate-400 font-mono">{log.employeeId}</p>
                   </td>
                   <td className="py-3 px-6">
-                    <span className={`px-2 py-1 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider ${
+                    <span className={`px-2 py-1 rounded-md text-[11px] font-bold font-mono uppercase tracking-wider ${
                       log.action === 'PUNCH_IN' ? 'bg-emerald-100 text-emerald-800' : 
                       log.action === 'PUNCH_OUT' ? 'bg-amber-100 text-amber-800' : 
                       log.action === 'ABSENT' ? 'bg-rose-100 text-rose-800' :

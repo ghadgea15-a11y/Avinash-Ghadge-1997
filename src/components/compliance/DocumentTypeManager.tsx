@@ -108,7 +108,7 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
             <form onSubmit={handleSave} className="space-y-4 bg-white dark:bg-slate-950 dark:bg-slate-900/50 p-5 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Document Name</label>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Document Name</label>
                   <input 
                     required
                     type="text" 
@@ -119,7 +119,7 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Unique Code</label>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Unique Code</label>
                   <input 
                     required
                     type="text" 
@@ -130,7 +130,7 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Alert Thresholds (Days Before Expiry)</label>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Alert Thresholds (Days Before Expiry)</label>
                   <input 
                     type="text" 
                     className="w-full px-3 py-2 bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500"
@@ -180,7 +180,7 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
           )}
 
           <div className="space-y-3">
-            <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Existing Configurations</h5>
+            <h5 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Existing Configurations</h5>
             {loading ? (
               <div className="text-center py-4 text-slate-400 text-xs">Loading...</div>
             ) : types.length === 0 ? (
@@ -198,9 +198,9 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
                         {type.isMandatory && <span className="text-[8px] font-black bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded uppercase">Mandatory</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] font-mono text-slate-400 tracking-tighter">CODE: {type.code}</span>
-                        <span className="text-[10px] text-slate-400">•</span>
-                        <span className="text-[10px] text-slate-400">Thresholds: {type.expiryAlertThresholds.join(', ')} days</span>
+                        <span className="text-[11px] font-mono text-slate-400 tracking-tighter">CODE: {type.code}</span>
+                        <span className="text-[11px] text-slate-400">•</span>
+                        <span className="text-[11px] text-slate-400">Thresholds: {type.expiryAlertThresholds.join(', ')} days</span>
                       </div>
                     </div>
                   </div>
@@ -223,7 +223,7 @@ export const DocumentTypeManager: React.FC<Props> = ({ userSession, onClose, onU
 
         <div className="p-4 bg-white dark:bg-slate-950 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex items-center gap-3">
           <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
             Thresholds define when automated alerts are triggered. For example, [90, 30] will notify stakeholders 90 days and 30 days before the document expires.
           </p>
         </div>

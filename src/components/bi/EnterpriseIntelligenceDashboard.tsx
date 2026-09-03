@@ -342,7 +342,7 @@ export const EnterpriseIntelligenceDashboard: React.FC<DashboardProps> = ({ sess
                             {row.title || row.taskName || row.name || row.type || 'N/A'}
                           </td>
                           <td className="p-3">
-                            <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full">
+                            <span className="px-2 py-1 text-[11px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full">
                               {row.status || row.severity || 'N/A'}
                             </span>
                           </td>

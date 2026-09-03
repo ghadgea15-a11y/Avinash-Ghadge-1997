@@ -1,6 +1,7 @@
 import { db } from '../firebase';
 import { collection, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { OfflineAttendanceConflictEngine } from './offlineAttendanceConflictEngine';
+import { OfflineConflictResolutionEngine } from './offlineConflictResolutionEngine';
 
 export interface OfflineOperation {
   id: string;
@@ -68,13 +69,12 @@ export class OfflineSyncService {
           const docId = op.payload.id || op.id;
           const docRef = doc(collection(db, 'companies', op.companyId, op.collection), docId);
 
-          // If this is an attendance record, check for concurrent supervisor collision
+          // 1. Attendance Conflict Resolution
           if (op.collection === 'attendance' || op.action?.includes('PUNCH') || op.action?.includes('ATTENDANCE')) {
             const existingSnap = await getDoc(docRef);
             if (existingSnap.exists()) {
               const existingData = existingSnap.data() as any;
               
-              // Only resolve if not created by the exact same device/session or timestamp mismatch
               const actionType = op.payload.checkOut && !op.payload.checkIn ? 'PUNCH_OUT' : 'PUNCH_IN';
               const conflictRes = OfflineAttendanceConflictEngine.resolveSupervisorAttendanceConflict(
                 existingData,
@@ -83,14 +83,12 @@ export class OfflineSyncService {
               );
 
               if (conflictRes.conflictDetected) {
-                // Apply winning record to server
                 await setDoc(docRef, {
                   ...conflictRes.winningRecord,
                   syncedAt: serverTimestamp(),
                   isOfflineCreated: true
                 }, { merge: true });
 
-                // Record audit log for the resolved collision
                 if (conflictRes.anomalyAuditPayload) {
                   const anomalyDocRef = doc(
                     collection(db, 'companies', op.companyId, 'suspicious_punches'),
@@ -98,6 +96,92 @@ export class OfflineSyncService {
                   );
                   await setDoc(anomalyDocRef, {
                     ...conflictRes.anomalyAuditPayload,
+                    createdAt: new Date().toISOString()
+                  });
+                }
+
+                op.status = 'COMPLETED';
+                updated = true;
+                continue;
+              }
+            }
+          }
+
+          // 2. LMS Quizzes & Assessment Conflict Resolution
+          if (
+            op.collection === 'trainingEnrollments' ||
+            op.action?.includes('LMS') ||
+            op.action?.includes('QUIZ') ||
+            op.action?.includes('ASSESSMENT')
+          ) {
+            const existingSnap = await getDoc(docRef);
+            if (existingSnap.exists()) {
+              const existingData = existingSnap.data() as any;
+              const conflictRes = OfflineConflictResolutionEngine.resolveLmsQuizConflict(
+                existingData,
+                op.payload
+              );
+
+              if (conflictRes.conflictDetected) {
+                await setDoc(docRef, {
+                  ...conflictRes.winningRecord,
+                  syncedAt: serverTimestamp(),
+                  isOfflineCreated: true
+                }, { merge: true });
+
+                if (conflictRes.anomalyAuditPayload) {
+                  const auditRef = doc(
+                    collection(db, 'companies', op.companyId, 'audit_logs'),
+                    `AUDIT-LMS-${Date.now()}-${op.payload.employeeId || 'EMP'}`
+                  );
+                  await setDoc(auditRef, {
+                    ...conflictRes.anomalyAuditPayload,
+                    companyId: op.companyId,
+                    module: 'LEARNING_MANAGEMENT',
+                    action: 'LMS_CONFLICT_RESOLVED',
+                    createdAt: new Date().toISOString()
+                  });
+                }
+
+                op.status = 'COMPLETED';
+                updated = true;
+                continue;
+              }
+            }
+          }
+
+          // 3. Expense Claims & Attachments Conflict Resolution
+          if (
+            op.collection === 'expenseClaims' ||
+            op.action?.includes('EXPENSE') ||
+            op.action?.includes('CLAIM') ||
+            op.action?.includes('ATTACHMENT')
+          ) {
+            const existingSnap = await getDoc(docRef);
+            if (existingSnap.exists()) {
+              const existingData = existingSnap.data() as any;
+              const conflictRes = OfflineConflictResolutionEngine.resolveExpenseAttachmentConflict(
+                existingData,
+                op.payload
+              );
+
+              if (conflictRes.conflictDetected) {
+                await setDoc(docRef, {
+                  ...conflictRes.winningRecord,
+                  syncedAt: serverTimestamp(),
+                  isOfflineCreated: true
+                }, { merge: true });
+
+                if (conflictRes.anomalyAuditPayload) {
+                  const auditRef = doc(
+                    collection(db, 'companies', op.companyId, 'audit_logs'),
+                    `AUDIT-EXP-${Date.now()}-${op.payload.id || 'CLAIM'}`
+                  );
+                  await setDoc(auditRef, {
+                    ...conflictRes.anomalyAuditPayload,
+                    companyId: op.companyId,
+                    module: 'FINANCE',
+                    action: 'EXPENSE_CONFLICT_RESOLVED',
                     createdAt: new Date().toISOString()
                   });
                 }

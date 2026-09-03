@@ -31,6 +31,12 @@ export const CompanyCodeScreen: React.FC<CompanyCodeScreenProps> = ({
       return;
     }
 
+    // Platform Owner / Global Admin Interception
+    if (code === 'GLOBAL-ADMIN' || code === 'GLOBAL_ADMIN') {
+      onNavigate('PLATFORM_LOGIN');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setVerifiedCompany(null);
@@ -112,7 +118,7 @@ export const CompanyCodeScreen: React.FC<CompanyCodeScreenProps> = ({
                   Company Verified
                 </span>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-900 text-indigo-200 border border-indigo-700">
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-indigo-900 text-indigo-200 border border-indigo-700">
                 {verifiedCompany.licenseTier} TIER
               </span>
             </div>
@@ -121,7 +127,7 @@ export const CompanyCodeScreen: React.FC<CompanyCodeScreenProps> = ({
               <AppLogo size="lg" company={verifiedCompany} layout="vertical" />
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-[11px] pt-2 border-t border-indigo-900/60">
+            <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-indigo-900/60">
               <div>
                 <span className="text-slate-400">Tenant Code:</span>
                 <p className="text-slate-200 font-mono font-medium">{verifiedCompany.companyId}</p>
@@ -138,23 +144,37 @@ export const CompanyCodeScreen: React.FC<CompanyCodeScreenProps> = ({
       {/* Footer Actions */}
       <div className="pt-6 border-t border-slate-900 space-y-3">
         {!verifiedCompany ? (
-          <button
-            onClick={() => handleVerify()}
-            disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition text-sm"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Verifying Company Tenant...</span>
-              </>
-            ) : (
-              <>
-                <span>Verify Company Code</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
+          <>
+            <button
+              onClick={() => handleVerify()}
+              disabled={loading}
+              className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition text-sm"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Verifying Company Tenant...</span>
+                </>
+              ) : (
+                <>
+                  <span>Verify Company Code</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={() => onNavigate('PLATFORM_LOGIN')}
+                className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
+                  isDark ? 'text-amber-400 hover:text-amber-300' : 'text-amber-700 hover:text-amber-800'
+                } transition-colors`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Platform Owner or Global Admin? Access Platform Portal &rarr;
+              </button>
+            </div>
+          </>
         ) : (
           <button
             onClick={handleProceedToLogin}

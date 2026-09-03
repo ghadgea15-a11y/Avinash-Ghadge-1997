@@ -40,7 +40,6 @@ export const SuperAdminSecurityScreen: React.FC<SuperAdminSecurityScreenProps> =
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSeverity, setSelectedSeverity] = useState<string>('ALL');
-  useBackNavigation(!!selectedSeverity, () => setSelectedSeverity(null as any), 'selectedSeverity');
 
   const loadSecurityEvents = async () => {
     setLoading(true);
@@ -189,7 +188,7 @@ export const SuperAdminSecurityScreen: React.FC<SuperAdminSecurityScreenProps> =
           <div className="text-2xl font-bold font-mono text-rose-500">
             {events.filter(e => !e.resolved).length}
           </div>
-          <span className="text-[11px] text-slate-400">Unresolved security alerts</span>
+          <span className="text-xs text-slate-400">Unresolved security alerts</span>
         </div>
 
         <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
@@ -200,7 +199,7 @@ export const SuperAdminSecurityScreen: React.FC<SuperAdminSecurityScreenProps> =
           <div className="text-2xl font-bold font-mono text-emerald-500">
             100% Enforced
           </div>
-          <span className="text-[11px] text-slate-400">Platform & Tenant separation</span>
+          <span className="text-xs text-slate-400">Platform & Tenant separation</span>
         </div>
 
         <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
@@ -211,7 +210,7 @@ export const SuperAdminSecurityScreen: React.FC<SuperAdminSecurityScreenProps> =
           <div className="text-2xl font-bold font-mono text-indigo-500">
             {events.filter(e => e.resolved).length}
           </div>
-          <span className="text-[11px] text-slate-400">Investigated and cleared</span>
+          <span className="text-xs text-slate-400">Investigated and cleared</span>
         </div>
       </div>
 
@@ -253,7 +252,7 @@ export const SuperAdminSecurityScreen: React.FC<SuperAdminSecurityScreenProps> =
       {/* Security Events Table */}
       <div className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-sm">
             <thead className={`border-b ${isDark ? 'bg-slate-950/60 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'} font-semibold uppercase tracking-wider`}>
               <tr>
                 <th className="py-3 px-4">Status</th>
@@ -284,7 +283,7 @@ export const SuperAdminSecurityScreen: React.FC<SuperAdminSecurityScreenProps> =
                 filteredEvents.map((ev) => (
                   <tr key={ev.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
                     <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[11px] font-bold ${
                         ev.resolved 
                           ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                           : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
@@ -293,7 +292,7 @@ export const SuperAdminSecurityScreen: React.FC<SuperAdminSecurityScreenProps> =
                       </span>
                     </td>
                     <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${getSeverityBadge(ev.severity)}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[11px] font-bold ${getSeverityBadge(ev.severity)}`}>
                         {ev.severity}
                       </span>
                     </td>
@@ -303,7 +302,7 @@ export const SuperAdminSecurityScreen: React.FC<SuperAdminSecurityScreenProps> =
                     <td className="py-3.5 px-4 whitespace-nowrap text-slate-400">
                       {ev.userEmail || ev.actorEmail || ev.ipAddress || 'System Event'}
                     </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] text-cyan-500">
+                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs text-cyan-500">
                       {ev.companyId || 'Platform'}
                     </td>
                     <td className="py-3.5 px-4 max-w-[240px] truncate text-slate-400">
@@ -313,7 +312,7 @@ export const SuperAdminSecurityScreen: React.FC<SuperAdminSecurityScreenProps> =
                       {!ev.resolved && (
                         <button
                           onClick={() => handleResolveEvent(ev.id)}
-                          className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition"
+                          className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition"
                         >
                           Resolve
                         </button>

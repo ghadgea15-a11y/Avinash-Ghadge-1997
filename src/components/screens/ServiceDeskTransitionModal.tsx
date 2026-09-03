@@ -170,7 +170,7 @@ export const ServiceDeskTransitionModal: React.FC<ServiceDeskTransitionModalProp
                 <h3 className="text-base font-bold text-black dark:text-white">
                   Transition to {targetDefinition.name}
                 </h3>
-                <span className={`px-2 py-0.5 text-[11px] font-bold rounded-full ${targetDefinition.badgeBg} ${targetDefinition.badgeText}`}>
+                <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${targetDefinition.badgeBg} ${targetDefinition.badgeText}`}>
                   {targetDefinition.code}
                 </span>
               </div>

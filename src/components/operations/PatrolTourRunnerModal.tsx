@@ -298,7 +298,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
                 <Clock className="w-4 h-4 mr-1.5 animate-pulse" />
                 {timeElapsed}
               </div>
-              <span className="text-[11px] text-slate-400">Duration</span>
+              <span className="text-xs text-slate-400">Duration</span>
             </div>
             <button
               onClick={onClose}
@@ -388,7 +388,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
                     #{currentTargetCheckpoint.sequenceOrder}
                   </span>
                   <div>
-                    <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider">
                       Current Target Checkpoint
                     </span>
                     <h4 className="text-lg font-bold text-black dark:text-white">{currentTargetCheckpoint.checkpointName}</h4>
@@ -519,7 +519,7 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
                   >
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center space-x-2">
-                        <span className={`w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                        <span className={`w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center ${
                           isVisited ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-900'
                         }`}>
                           {cp.sequenceOrder}
@@ -530,12 +530,12 @@ export const PatrolTourRunnerModal: React.FC<PatrolTourRunnerModalProps> = ({
                       {isVisited ? (
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                       ) : (
-                        <span className="text-[10px] font-mono text-slate-400">Pending</span>
+                        <span className="text-[11px] font-mono text-slate-400">Pending</span>
                       )}
                     </div>
 
                     {scanData && (
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-between mt-1">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between mt-1">
                         <span>{new Date(scanData.scannedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
                         <span className={scanData.geofenceStatus === 'WITHIN_GEOFENCE' ? 'text-emerald-700 font-semibold' : 'text-amber-700 font-semibold'}>
                           {scanData.geofenceStatus === 'WITHIN_GEOFENCE' ? '✓ In Geofence' : '⚠ Off-site'}

@@ -455,7 +455,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
             <ShieldAlert className="w-3.5 h-3.5" />
             <span>Active Incidents & Alerts</span>
             {summary.criticalIncidentsCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
+              <span className="px-1.5 py-0.2 rounded-full text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
                 {summary.criticalIncidentsCount}
               </span>
             )}
@@ -492,66 +492,66 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 shadow-sm">
               <div className="flex items-center justify-between text-slate-400 mb-1">
-                <span className="text-[11px] font-medium uppercase tracking-wider">Required Staff</span>
+                <span className="text-xs font-medium uppercase tracking-wider">Required Staff</span>
                 <Users className="w-4 h-4 text-blue-400" />
               </div>
               <div className="text-2xl font-bold text-slate-100">{summary.totalRequiredWorkforce}</div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Configured site floor</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Configured site floor</div>
             </div>
 
             <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 shadow-sm">
               <div className="flex items-center justify-between text-slate-400 mb-1">
-                <span className="text-[11px] font-medium uppercase tracking-wider">Scheduled Roster</span>
+                <span className="text-xs font-medium uppercase tracking-wider">Scheduled Roster</span>
                 <Calendar className="w-4 h-4 text-indigo-400" />
               </div>
               <div className="text-2xl font-bold text-indigo-300">{summary.totalScheduledWorkforce}</div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Rostered personnel</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Rostered personnel</div>
             </div>
 
             <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 shadow-sm">
               <div className="flex items-center justify-between text-slate-400 mb-1">
-                <span className="text-[11px] font-medium uppercase tracking-wider">Leaves / Absences</span>
+                <span className="text-xs font-medium uppercase tracking-wider">Leaves / Absences</span>
                 <UserX className="w-4 h-4 text-amber-400" />
               </div>
               <div className="text-2xl font-bold text-amber-400">
                 {summary.totalLeavesCount + summary.totalAbsencesCount}
               </div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {summary.totalLeavesCount} Leaves · {summary.totalAbsencesCount} No-Shows
               </div>
             </div>
 
             <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 shadow-sm">
               <div className="flex items-center justify-between text-slate-400 mb-1">
-                <span className="text-[11px] font-medium uppercase tracking-wider">Available Staff</span>
+                <span className="text-xs font-medium uppercase tracking-wider">Available Staff</span>
                 <UserCheck className="w-4 h-4 text-emerald-400" />
               </div>
               <div className="text-2xl font-bold text-emerald-400">{summary.totalAvailableWorkforce}</div>
-              <div className="text-[11px] text-emerald-500/80 mt-0.5">{summary.siteCoverageRate}% SLA Coverage</div>
+              <div className="text-xs text-emerald-500/80 mt-0.5">{summary.siteCoverageRate}% SLA Coverage</div>
             </div>
 
             <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 shadow-sm">
               <div className="flex items-center justify-between text-slate-400 mb-1">
-                <span className="text-[11px] font-medium uppercase tracking-wider">Net Shortages</span>
+                <span className="text-xs font-medium uppercase tracking-wider">Net Shortages</span>
                 <TrendingDown className="w-4 h-4 text-rose-400" />
               </div>
               <div className={`text-2xl font-bold ${summary.netShortageCount > 0 ? 'text-rose-400' : 'text-slate-400'}`}>
                 {summary.netShortageCount}
               </div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {summary.understaffedShiftsCount} understaffed shifts
               </div>
             </div>
 
             <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 shadow-sm">
               <div className="flex items-center justify-between text-slate-400 mb-1">
-                <span className="text-[11px] font-medium uppercase tracking-wider">Critical Skill Gaps</span>
+                <span className="text-xs font-medium uppercase tracking-wider">Critical Skill Gaps</span>
                 <Award className="w-4 h-4 text-purple-400" />
               </div>
               <div className={`text-2xl font-bold ${summary.skillShortageShiftsCount > 0 ? 'text-purple-400' : 'text-slate-400'}`}>
                 {summary.skillShortageShiftsCount}
               </div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">First Aid / Armed / Fire</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">First Aid / Armed / Fire</div>
             </div>
           </div>
 
@@ -575,77 +575,77 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-11 gap-2 text-center text-xs">
               {/* Step 1 */}
               <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                <div className="text-[10px] font-bold text-blue-400 uppercase">1. Required</div>
+                <div className="text-[11px] font-bold text-blue-400 uppercase">1. Required</div>
                 <div className="text-sm font-bold text-slate-100 mt-0.5">{summary.totalRequiredWorkforce}</div>
                 <div className="text-[9px] text-slate-400">Baseline</div>
               </div>
 
               {/* Step 2 */}
               <div className="p-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-                <div className="text-[10px] font-bold text-indigo-400 uppercase">2. Scheduled</div>
+                <div className="text-[11px] font-bold text-indigo-400 uppercase">2. Scheduled</div>
                 <div className="text-sm font-bold text-slate-100 mt-0.5">{summary.totalScheduledWorkforce}</div>
                 <div className="text-[9px] text-slate-400">Rostered</div>
               </div>
 
               {/* Step 3 */}
               <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <div className="text-[10px] font-bold text-amber-400 uppercase">3. Leave</div>
+                <div className="text-[11px] font-bold text-amber-400 uppercase">3. Leave</div>
                 <div className="text-sm font-bold text-amber-400 mt-0.5">-{summary.totalLeavesCount}</div>
                 <div className="text-[9px] text-slate-400">Approved</div>
               </div>
 
               {/* Step 4 */}
               <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
-                <div className="text-[10px] font-bold text-rose-400 uppercase">4. Absence</div>
+                <div className="text-[11px] font-bold text-rose-400 uppercase">4. Absence</div>
                 <div className="text-sm font-bold text-rose-400 mt-0.5">-{summary.totalAbsencesCount}</div>
                 <div className="text-[9px] text-slate-400">No-Shows</div>
               </div>
 
               {/* Step 5 */}
               <div className="p-2.5 rounded-lg bg-teal-500/10 border border-teal-500/20">
-                <div className="text-[10px] font-bold text-teal-400 uppercase">5. Overtime</div>
+                <div className="text-[11px] font-bold text-teal-400 uppercase">5. Overtime</div>
                 <div className="text-sm font-bold text-teal-400 mt-0.5">+{summary.totalOvertimeCount}</div>
                 <div className="text-[9px] text-slate-400">Relief / OT</div>
               </div>
 
               {/* Step 6 */}
               <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                <div className="text-[10px] font-bold text-emerald-400 uppercase">6. Available</div>
+                <div className="text-[11px] font-bold text-emerald-400 uppercase">6. Available</div>
                 <div className="text-sm font-bold text-emerald-400 mt-0.5">{summary.totalAvailableWorkforce}</div>
                 <div className="text-[9px] text-slate-400">Ready Staff</div>
               </div>
 
               {/* Step 7 */}
               <div className={`p-2.5 rounded-lg border ${summary.netShortageCount > 0 ? 'bg-rose-500/20 border-rose-500/40 text-rose-300' : 'bg-slate-900 border-slate-800 text-slate-400'}`}>
-                <div className="text-[10px] font-bold uppercase">7. Shortage</div>
+                <div className="text-[11px] font-bold uppercase">7. Shortage</div>
                 <div className="text-sm font-bold mt-0.5">{summary.netShortageCount}</div>
                 <div className="text-[9px]">SLA Delta</div>
               </div>
 
               {/* Step 8 */}
               <div className="p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                <div className="text-[10px] font-bold text-purple-400 uppercase">8. Alert</div>
+                <div className="text-[11px] font-bold text-purple-400 uppercase">8. Alert</div>
                 <div className="text-sm font-bold text-purple-400 mt-0.5">{summary.openAlertsCount}</div>
                 <div className="text-[9px] text-slate-400">Supervisor</div>
               </div>
 
               {/* Step 9 */}
               <div className="p-2.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
-                <div className="text-[10px] font-bold text-cyan-400 uppercase">9. Match</div>
+                <div className="text-[11px] font-bold text-cyan-400 uppercase">9. Match</div>
                 <div className="text-sm font-bold text-cyan-400 mt-0.5">Auto</div>
                 <div className="text-[9px] text-slate-400">Skill Engine</div>
               </div>
 
               {/* Step 10 */}
               <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                <div className="text-[10px] font-bold text-blue-400 uppercase">10. Approve</div>
+                <div className="text-[11px] font-bold text-blue-400 uppercase">10. Approve</div>
                 <div className="text-sm font-bold text-blue-400 mt-0.5">RBAC</div>
                 <div className="text-[9px] text-slate-400">Ops Manager</div>
               </div>
 
               {/* Step 11 */}
               <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                <div className="text-[10px] font-bold text-emerald-400 uppercase">11. Resolved</div>
+                <div className="text-[11px] font-bold text-emerald-400 uppercase">11. Resolved</div>
                 <div className="text-sm font-bold text-emerald-400 mt-0.5">{summary.resolvedTodayCount}</div>
                 <div className="text-[9px] text-slate-400">Synced to Roster</div>
               </div>
@@ -781,8 +781,8 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                             <div>
                               <div className="flex items-center gap-2">
                                 <h3 className="text-sm font-bold text-slate-100">{site.name}</h3>
-                                {(site as any).siteCode && <span className="text-[11px] font-mono text-slate-400">({(site as any).siteCode})</span>}
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                {(site as any).siteCode && <span className="text-xs font-mono text-slate-400">({(site as any).siteCode})</span>}
+                                <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase ${
                                   hasCritical ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' :
                                   hasWarning ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
                                   'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
@@ -790,7 +790,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                                   {assessment.overallStatus}
                                 </span>
                               </div>
-                              <p className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                              <p className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
                                 <MapPin className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                                 <span>{site.address || 'Deployment Zone'}</span>
                                 {(site as any).zone && <span>· Zone: {(site as any).zone}</span>}
@@ -800,7 +800,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
 
                           <div className="flex items-center gap-4 text-xs">
                             <div className="text-right">
-                              <div className="text-slate-400 text-[10px] uppercase font-medium">Headcount Required / Available</div>
+                              <div className="text-slate-400 text-[11px] uppercase font-medium">Headcount Required / Available</div>
                               <div className="font-mono font-bold text-slate-200">
                                 <span className="text-blue-400">{assessment.totalRequired} Req</span> · <span className="text-emerald-400">{assessment.totalAvailable} Avail</span>
                                 {assessment.totalShortage > 0 && (
@@ -844,7 +844,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                                     <div>
                                       <div className="flex items-center gap-2">
                                         <h4 className="text-xs font-bold text-slate-200">{shift.shiftName}</h4>
-                                        <span className="text-[10px] font-mono text-slate-400">
+                                        <span className="text-[11px] font-mono text-slate-400">
                                           {shift.startTime} - {shift.endTime}
                                         </span>
                                       </div>
@@ -852,33 +852,33 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                                       {/* Anomaly Tags */}
                                       <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                                         {isUnfilled && (
-                                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">
                                             Unfilled Shift (0 Rostered)
                                           </span>
                                         )}
                                         {isUnderstaffed && (
-                                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
                                             Understaffed (-{breakdown.shortageCount})
                                           </span>
                                         )}
                                         {isSkillMissing && (
-                                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
+                                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
                                             <Flame className="w-2.5 h-2.5" />
                                             Skill Floor Breach ({breakdown.missingSkills.map(m => m.skill).join(', ')})
                                           </span>
                                         )}
                                         {isAbsent && (
-                                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                                             Unexpected Absence ({breakdown.unexpectedAbsences.length})
                                           </span>
                                         )}
                                         {isOverstaffed && (
-                                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
                                             Overstaffed (+{breakdown.surplusCount})
                                           </span>
                                         )}
                                         {anomalies.length === 0 && (
-                                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                             Compliant
                                           </span>
                                         )}
@@ -888,7 +888,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
 
                                   {/* Visual Capacity Bar & Mathematical Breakdown */}
                                   <div className="flex-1 max-w-md">
-                                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1">
+                                    <div className="flex items-center justify-between text-xs font-mono text-slate-400 mb-1">
                                       <span>
                                         Req: <strong className="text-blue-400">{breakdown.requiredCount}</strong> | Sched: {breakdown.scheduledCount} | Leave: -{breakdown.leaveCount} | Abs: -{breakdown.absenceCount}
                                       </span>
@@ -957,11 +957,11 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                                 {/* Rostered Staff Pill Row */}
                                 {breakdown.scheduledStaff.length > 0 && (
                                   <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center gap-2">
-                                    <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Rostered:</span>
+                                    <span className="text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400">Rostered:</span>
                                     {breakdown.scheduledStaff.map(staff => (
                                       <div
                                         key={staff.employeeId}
-                                        className={`px-2 py-0.5 rounded text-[11px] font-medium flex items-center gap-1.5 border ${
+                                        className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1.5 border ${
                                           staff.status === 'PRESENT'
                                             ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
                                             : staff.status === 'ON_LEAVE'
@@ -1025,7 +1025,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase ${
                               incident.severity === 'CRITICAL' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' :
                               incident.severity === 'HIGH' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
                               'bg-blue-500/20 text-blue-300 border border-blue-500/30'
@@ -1045,7 +1045,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
 
                         <div className="flex items-center gap-3">
                           <div className="text-right text-xs">
-                            <div className="text-[10px] text-slate-400 uppercase font-medium">Workflow Stage</div>
+                            <div className="text-[11px] text-slate-400 uppercase font-medium">Workflow Stage</div>
                             <div className="font-bold text-indigo-400">{incident.stage}</div>
                           </div>
 
@@ -1084,7 +1084,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                               Proposed Relief: <strong className="text-slate-200">{incident.replacementProposal.candidateName}</strong> ({incident.replacementProposal.sourceType}) · Match Score: {incident.replacementProposal.skillMatchScore}%
                             </span>
                           </div>
-                          <span className="text-[10px] text-slate-400 font-mono">
+                          <span className="text-[11px] text-slate-400 font-mono">
                             Proposed at: {incident.replacementProposal.proposedAt.slice(11, 16)}
                           </span>
                         </div>
@@ -1140,32 +1140,32 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                   <div key={req.id} className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold text-slate-200">{req.siteName}</h4>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
                         {req.shiftName}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 text-center text-xs py-2 bg-slate-900/50 rounded-lg border border-slate-800/80">
                       <div>
-                        <div className="text-[10px] text-slate-400">Target</div>
+                        <div className="text-[11px] text-slate-400">Target</div>
                         <div className="font-bold text-blue-400 text-sm mt-0.5">{req.requiredHeadcount}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] text-slate-400">Min Floor</div>
+                        <div className="text-[11px] text-slate-400">Min Floor</div>
                         <div className="font-bold text-rose-400 text-sm mt-0.5">{req.minHeadcount}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] text-slate-400">Max Cap</div>
+                        <div className="text-[11px] text-slate-400">Max Cap</div>
                         <div className="font-bold text-emerald-400 text-sm mt-0.5">{req.maxHeadcount}</div>
                       </div>
                     </div>
 
                     {req.requiredSkills && req.requiredSkills.length > 0 && (
                       <div className="space-y-1">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase">Mandatory Skills:</div>
+                        <div className="text-[11px] font-bold text-slate-400 uppercase">Mandatory Skills:</div>
                         <div className="flex flex-wrap gap-1">
                           {req.requiredSkills.map((sk, idx) => (
-                            <span key={idx} className="px-2 py-0.5 bg-purple-500/10 text-purple-300 border border-purple-500/20 rounded text-[10px] font-medium">
+                            <span key={idx} className="px-2 py-0.5 bg-purple-500/10 text-purple-300 border border-purple-500/20 rounded text-[11px] font-medium">
                               {sk.skill} (min {sk.minCount})
                             </span>
                           ))}
@@ -1174,7 +1174,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
                     )}
 
                     <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400">Days: {req.applicableDays.length === 7 ? 'All Week' : `${req.applicableDays.length} Days`}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">Days: {req.applicableDays.length === 7 ? 'All Week' : `${req.applicableDays.length} Days`}</span>
                       <button
                         onClick={() => setConfigModalRequirement(req)}
                         className="text-indigo-400 hover:text-indigo-300 font-semibold"
@@ -1203,7 +1203,7 @@ export const WorkforceCapacityPlanningScreen: React.FC<Props> = ({
 
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 font-mono text-xs text-slate-300 overflow-x-auto space-y-4">
                 <div className="text-indigo-400 font-bold">// 1. Android Kotlin Data Model: WorkforceShortageIncident.kt</div>
-                <pre className="text-[11px] text-slate-300 leading-relaxed bg-slate-900 p-4 rounded-lg border border-slate-800">
+                <pre className="text-xs text-slate-300 leading-relaxed bg-slate-900 p-4 rounded-lg border border-slate-800">
 {`package com.logsheetmuster.android.domain.model.capacity
 
 import androidx.room.Entity
@@ -1247,7 +1247,7 @@ data class WorkforceShortageIncident(
                 </pre>
 
                 <div className="text-indigo-400 font-bold">// 2. Android Kotlin Capacity Assessment Engine: WorkforceCapacityEngine.kt</div>
-                <pre className="text-[11px] text-slate-300 leading-relaxed bg-slate-900 p-4 rounded-lg border border-slate-800">
+                <pre className="text-xs text-slate-300 leading-relaxed bg-slate-900 p-4 rounded-lg border border-slate-800">
 {`package com.logsheetmuster.android.domain.engine
 
 class WorkforceCapacityEngine {
@@ -1422,17 +1422,17 @@ class WorkforceCapacityEngine {
                                 </div>
                                 <div>
                                   <div className="font-bold text-slate-200">{cand.fullName}</div>
-                                  <div className="text-[11px] text-slate-400">
+                                  <div className="text-xs text-slate-400">
                                     {cand.designation} · Base Site: {cand.assignedSiteName}
                                   </div>
                                 </div>
                               </div>
 
                               <div className="text-right">
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                                <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                                   {cand.skillMatchScore}% Match
                                 </span>
-                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                <div className="text-[11px] text-slate-400 mt-0.5">
                                   {cand.restHoursSinceLastShift}h Rest · {cand.weeklyOvertimeHours}h OT
                                 </div>
                               </div>
@@ -1493,7 +1493,7 @@ class WorkforceCapacityEngine {
               </div>
 
               <div className="flex items-center justify-between pt-3 border-t border-slate-800 shrink-0">
-                <span className="text-[11px] text-slate-400">
+                <span className="text-xs text-slate-400">
                   {selectedCandidate ? `Est. Shift Cost: ₹${selectedCandidate.estimatedCostPerShift}` : ''}
                 </span>
                 <div className="flex items-center gap-3">
@@ -1677,12 +1677,12 @@ class WorkforceCapacityEngine {
                       <div className="absolute left-0 top-1 w-4 h-4 rounded-full bg-slate-800 border-2 border-indigo-500 flex items-center justify-center">
                         <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
                       </div>
-                      <div className="flex items-center justify-between text-[11px]">
+                      <div className="flex items-center justify-between text-xs">
                         <span className="font-bold text-slate-200">{entry.stage}</span>
                         <span className="text-slate-500 dark:text-slate-400 font-mono">{entry.timestamp.slice(11, 19)}</span>
                       </div>
                       <p className="text-slate-400">{entry.note}</p>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400">Actor: {entry.actor} ({entry.actorRole || 'USER'})</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">Actor: {entry.actor} ({entry.actorRole || 'USER'})</div>
                     </div>
                   ))}
                 </div>

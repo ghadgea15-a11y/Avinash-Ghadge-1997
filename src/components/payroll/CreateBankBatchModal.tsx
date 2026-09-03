@@ -247,7 +247,7 @@ export const CreateBankBatchModal: React.FC<CreateBankBatchModalProps> = ({
                     <option value="NEFT">NEFT (All amounts)</option>
                     <option value="RTGS">RTGS (High value transfers)</option>
                   </select>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     AUTO routes transfers &gt;= ₹2,00,000 to RTGS, remainder to NEFT.
                   </p>
                 </div>
@@ -271,7 +271,7 @@ export const CreateBankBatchModal: React.FC<CreateBankBatchModalProps> = ({
                       ))
                     )}
                   </select>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1">
                     Source: {selectedBank?.ifscCode ? `IFSC ${selectedBank.ifscCode}` : 'Disbursement Master'}
                   </p>
                 </div>
@@ -295,15 +295,15 @@ export const CreateBankBatchModal: React.FC<CreateBankBatchModalProps> = ({
 
                   <div className="grid grid-cols-3 gap-2">
                     <div className="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200">
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Eligible</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Eligible</span>
                       <p className="text-base font-bold text-emerald-600">{summary.totalValid}</p>
                     </div>
                     <div className="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200">
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Issues / Duplicates</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Issues / Duplicates</span>
                       <p className="text-base font-bold text-rose-600">{summary.totalInvalid}</p>
                     </div>
                     <div className="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200">
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Batch Total</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Batch Total</span>
                       <p className="text-base font-bold text-black dark:text-white">₹{summary.totalAmount.toLocaleString('en-IN')}</p>
                     </div>
                   </div>
@@ -315,7 +315,7 @@ export const CreateBankBatchModal: React.FC<CreateBankBatchModalProps> = ({
                         Ineligible Records ({summary.errors.length}):
                       </p>
                       {summary.errors.map((err: any, i: number) => (
-                        <p key={i} className="text-[11px] text-rose-600">• {err}</p>
+                        <p key={i} className="text-xs text-rose-600">• {err}</p>
                       ))}
                     </div>
                   )}

@@ -151,17 +151,17 @@ export const AbsenceRegularization: React.FC<AbsenceRegularizationProps> = ({
                         </div>
                         <div>
                           <h4 className="text-sm font-black text-black dark:text-white">{new Date(abs.date).toLocaleDateString('default', { dateStyle: 'full' })}</h4>
-                          <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Absence Detected</p>
+                          <p className="text-[11px] font-bold text-rose-500 uppercase tracking-widest">Absence Detected</p>
                         </div>
                       </div>
                     </div>
 
                     <div className="p-3 rounded-2xl bg-white dark:bg-slate-950 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 space-y-1.5 mb-4">
-                      <div className="flex justify-between text-[11px] font-bold">
+                      <div className="flex justify-between text-xs font-bold">
                         <span className="text-slate-400">Shift Name:</span>
                         <span className="text-slate-900 dark:text-slate-300">{abs.roster.shiftName}</span>
                       </div>
-                      <div className="flex justify-between text-[11px] font-bold">
+                      <div className="flex justify-between text-xs font-bold">
                         <span className="text-slate-400">Roster Slot:</span>
                         <span className="text-slate-900 dark:text-slate-300">{abs.roster.date}</span>
                       </div>
@@ -189,7 +189,7 @@ export const AbsenceRegularization: React.FC<AbsenceRegularizationProps> = ({
             <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-black text-black dark:text-white">Regularize Absence</h3>
-                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{selectedAbsence.date}</p>
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{selectedAbsence.date}</p>
               </div>
               <button onClick={() => setSelectedAbsence(null)} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
                 <X className="w-5 h-5" />
@@ -198,12 +198,12 @@ export const AbsenceRegularization: React.FC<AbsenceRegularizationProps> = ({
 
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Request Type</label>
+                <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Request Type</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setRegType('LEAVE')}
-                    className={`py-2 px-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${
+                    className={`py-2 px-3 rounded-xl border text-[11px] font-black uppercase tracking-wider transition-all ${
                       regType === 'LEAVE' 
                         ? 'border-indigo-600 bg-indigo-600 text-white' 
                         : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-300'
@@ -214,7 +214,7 @@ export const AbsenceRegularization: React.FC<AbsenceRegularizationProps> = ({
                   <button
                     type="button"
                     onClick={() => setRegType('PRESENT')}
-                    className={`py-2 px-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${
+                    className={`py-2 px-3 rounded-xl border text-[11px] font-black uppercase tracking-wider transition-all ${
                       regType === 'PRESENT' 
                         ? 'border-indigo-600 bg-indigo-600 text-white' 
                         : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-300'
@@ -227,7 +227,7 @@ export const AbsenceRegularization: React.FC<AbsenceRegularizationProps> = ({
 
               {regType === 'LEAVE' && (
                 <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Select Leave Type</label>
+                  <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Select Leave Type</label>
                   <select
                     value={leaveTypeCode}
                     onChange={(e) => setLeaveTypeCode(e.target.value)}
@@ -243,7 +243,7 @@ export const AbsenceRegularization: React.FC<AbsenceRegularizationProps> = ({
               )}
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Reason / Explanation *</label>
+                <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Reason / Explanation *</label>
                 <textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}

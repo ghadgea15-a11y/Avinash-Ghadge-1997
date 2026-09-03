@@ -154,6 +154,175 @@ class SessionManager @Inject constructor(
         prefs[KEY_USER_SESSION]
     }
 }`
+  },
+  {
+    path: 'ui/screens/expense/ExpenseClaimScreen.kt',
+    label: 'ExpenseClaimScreen.kt',
+    code: `package com.enterprise.logsheetmuster.ui.screens.expense
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.enterprise.logsheetmuster.domain.model.ExpenseClaimRecord
+import com.enterprise.logsheetmuster.domain.model.ExpenseItem
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExpenseClaimScreen(
+    viewModel: ExpenseViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Expense Reimbursements & Travel") },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { viewModel.openNewClaimDialog() }) {
+                Text("+ Claim")
+            }
+        }
+    ) { paddingValues ->
+        if (uiState.isLoading) {
+            Box(Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item {
+                    BudgetReservationCard(
+                        costCenter = uiState.selectedCostCenter,
+                        budgetReserved = uiState.reservedFunds,
+                        budgetRemaining = uiState.remainingBudget
+                    )
+                }
+
+                items(uiState.claims) { claim ->
+                    ExpenseClaimCard(
+                        claim = claim,
+                        onScanReceipt = { viewModel.scanReceiptWithOcr(claim.id) },
+                        onSubmit = { viewModel.submitClaimForApproval(claim) }
+                    )
+                }
+            }
+        }
+    }
+}`
+  },
+  {
+    path: 'ui/screens/lms/TrainingLmsScreen.kt',
+    label: 'TrainingLmsScreen.kt',
+    code: `package com.enterprise.logsheetmuster.ui.screens.lms
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TrainingLmsScreen(
+    viewModel: TrainingLmsViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("PSARA Training & Online LMS") }
+            )
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                Text("Enrolled Compliance Courses", style = MaterialTheme.typography.titleMedium)
+            }
+            items(uiState.enrollments) { enrollment ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(enrollment.programTitle, style = MaterialTheme.typography.titleMedium)
+                        Text("Status: \${enrollment.resultStatus} • Score: \${enrollment.scoreObtained ?: 0}%")
+                        Spacer(Modifier.height(8.dp))
+                        LinearProgressIndicator(
+                            progress = { (enrollment.videoWatchPercentage ?: 0) / 100f },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        }
+    }
+}`
+  },
+  {
+    path: 'ui/screens/integrations/EnterpriseIntegrationScreen.kt',
+    label: 'EnterpriseIntegrationScreen.kt',
+    code: `package com.enterprise.logsheetmuster.ui.screens.integrations
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+
+@Composable
+fun EnterpriseIntegrationScreen(
+    viewModel: IntegrationViewModel = hiltViewModel()
+) {
+    val state by viewModel.uiState.collectAsState()
+
+    Column(Modifier.fillMaxSize().padding(16.dp)) {
+        Text("Enterprise ERP & SSO Connectors", style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.height(16.dp))
+
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp)) {
+                Text("Tally ERP 9 / Prime XML Exporter", style = MaterialTheme.typography.titleMedium)
+                Text("Authoritative payroll batch export with verified NEFT bank transfer format.")
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = { viewModel.exportTallyXml() }) {
+                    Text("Export Tally XML")
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp)) {
+                Text("SAP S/4HANA IDoc Gateway", style = MaterialTheme.typography.titleMedium)
+                Text("Status: Not Implemented (Requires SAP BTP Middleware RFC Connector)")
+            }
+        }
+    }
+}`
   }
 ];
 
@@ -184,7 +353,7 @@ export const KotlinCodeViewer: React.FC<KotlinCodeViewerProps> = ({ onBack }) =>
             <Code2 className="w-5 h-5 text-amber-400" />
             <div>
               <h3 className="text-sm font-bold text-white">Native Kotlin Jetpack Compose Code</h3>
-              <p className="text-[10px] text-slate-400">Phase A Android Source Code Files</p>
+              <p className="text-[11px] text-slate-400">Phase A Android Source Code Files</p>
             </div>
           </div>
 

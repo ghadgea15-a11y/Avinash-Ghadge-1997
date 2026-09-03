@@ -151,14 +151,14 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
     return (
       <div className="flex flex-col items-end gap-1">
         {!isDirect && (
-          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-800 flex items-center gap-1">
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-800 flex items-center gap-1">
             <Share2 className="w-3 h-3 text-indigo-600" />
             <span>Acting as Proxy</span>
           </span>
         )}
 
         {instance.escalationLevel && instance.escalationLevel > 0 ? (
-          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
+          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
             instance.escalationLevel >= 2 
               ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-300 dark:border-rose-800' 
               : 'bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-400 border border-orange-300 dark:border-orange-800'
@@ -167,12 +167,12 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
             <span>Escalation L{instance.escalationLevel}</span>
           </span>
         ) : instance.isOverdue ? (
-          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800 flex items-center gap-1">
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800 flex items-center gap-1">
             <Clock className="w-3 h-3 text-rose-600" />
             <span>Overdue</span>
           </span>
         ) : instance.lastReminderAt ? (
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-400 border border-sky-200 dark:border-sky-800 flex items-center gap-1">
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-400 border border-sky-200 dark:border-sky-800 flex items-center gap-1">
             <Bell className="w-3 h-3 text-sky-600" />
             <span>Reminder Sent</span>
           </span>
@@ -355,11 +355,11 @@ export const ApprovalCenter: React.FC<ApprovalCenterProps> = ({ session }) => {
                             {instance.sourceModule} Request
                           </h4>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                               Tier {instance.currentTier} Approval Step
                             </span>
                             {instance.reassignedFrom && (
-                              <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                              <span className="text-[11px] px-2 py-0.5 rounded font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
                                 Reassigned by Escalation
                               </span>
                             )}

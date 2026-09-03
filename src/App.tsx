@@ -11,7 +11,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ActionFeedbackProvider } from './context/ActionFeedbackContext';
 import { getCurrentPathname, ROUTE_PATH_MAP, navigateToUrl } from './utils/publicRouter';
 import { updatePageSEO } from './utils/seo';
-import { useAppNavigation } from "./hooks/useAppNavigation";
+import { NavigationProvider, useNavigation } from './context/NavigationContext';
 import { NavigationDrawer } from './components/common/NavigationDrawer';
 import { MobileTopHeader } from './components/common/MobileTopHeader';
 import { TabletNavigationRail } from './components/common/TabletNavigationRail';
@@ -24,6 +24,7 @@ import { SessionLockScreen } from './components/screens/SessionLockScreen';
 import { PlatformLoginScreen } from './components/screens/PlatformLoginScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
 import { SettingsScreen } from './components/screens/SettingsScreen';
+import { SetupAuditScreen } from './components/screens/SetupAuditScreen';
 import { NotificationsScreen } from './components/screens/NotificationsScreen';
 import { EmployeeModuleScreen } from './components/screens/EmployeeModuleScreen';
 
@@ -61,7 +62,6 @@ import { SuperAdminCreateCompany } from './components/screens/SuperAdminCreateCo
 import { SuperAdminModulesScreen } from './components/screens/SuperAdminModulesScreen';
 import { SuperAdminCompaniesScreen } from './components/screens/SuperAdminCompaniesScreen';
 import { SuperAdminSubscriptionsScreen } from './components/screens/SuperAdminSubscriptionsScreen';
-import { SuperAdminManagementScreen } from './components/screens/SuperAdminManagementScreen';
 import { SuperAdminLeadsScreen } from './components/screens/SuperAdminLeadsScreen';
 import { SuperAdminAuditScreen } from './components/screens/SuperAdminAuditScreen';
 import { SuperAdminMonitoringScreen } from './components/screens/SuperAdminMonitoringScreen';
@@ -78,9 +78,14 @@ import { ScmModule } from './components/scm/ScmModule';
 import { AssetTrackingScreen } from './components/screens/AssetTrackingScreen';
 import { ServiceDeskScreen } from './components/screens/ServiceDeskScreen';
 import { TalentAcquisitionScreen } from './components/screens/TalentAcquisitionScreen';
+import { PerformanceManagementScreen } from './components/screens/PerformanceManagementScreen';
+import { TalentManagementScreen } from './components/screens/TalentManagementScreen';
 import { TrainingLmsScreen } from './components/screens/TrainingLmsScreen';
 import { MandatoryRefreshersScreen } from './components/screens/MandatoryRefreshersScreen';
 import { CertificationTrackingScreen } from './components/screens/CertificationTrackingScreen';
+import { EnterpriseIntegrationScreen } from './components/screens/EnterpriseIntegrationScreen';
+import { ExpenseTravelScreen } from './components/screens/ExpenseTravelScreen';
+import { FinanceGeneralLedgerScreen } from './components/screens/FinanceGeneralLedgerScreen';
 import { ProcurementSrmScreen } from './components/screens/ProcurementSrmScreen';
 import { VendorDirectoryScreen } from './components/screens/VendorDirectoryScreen';
 import { RfqManagementScreen } from './components/screens/RfqManagementScreen';
@@ -94,6 +99,11 @@ import { ComplianceDashboardScreen } from './components/screens/ComplianceDashbo
 import { MyTasksScreen } from './components/screens/MyTasksScreen';
 
 import { ReportsAnalyticsScreen } from './components/screens/ReportsAnalyticsScreen';
+import { ClientBillingContractScreen } from './components/screens/ClientBillingContractScreen';
+import { ClientPortalScreen } from './components/screens/ClientPortalScreen';
+import { MultiModePatrolScreen } from './components/screens/MultiModePatrolScreen';
+import { ComplianceExpiryScreen } from './components/screens/ComplianceExpiryScreen';
+import { AiSchedulingScreen } from './components/screens/AiSchedulingScreen';
 
 import { ApprovalCenter } from './components/bpm/ApprovalCenter';
 import { FirebaseAuthService } from './services/firebaseAuthService';
@@ -142,15 +152,27 @@ function MainApp() {
       setIsOnline(onlineStatus);
     });
 
-    const savedCompany = SessionManager.getActiveCompany();
-    if (savedCompany) {
-      setActiveCompany(savedCompany);
+    let activeComp = SessionManager.getActiveCompany();
+    if (activeComp) {
+      setActiveCompany(activeComp);
     }
 
     // Check if we have an active session to restore
     const initialSession = SessionManager.getUserSession();
     if (initialSession && initialSession.tokenExpiresAt > Date.now()) {
       setUserSession(initialSession);
+      if (!activeComp && initialSession.companyId) {
+        const fallbackCompany: CompanyTenant = {
+          companyId: initialSession.companyId,
+          companyName: initialSession.companyName || 'Enterprise Operations',
+          companyCode: initialSession.companyCode || 'COMP-01',
+          createdAt: new Date().toISOString(),
+          isActive: true,
+          tier: 'ENTERPRISE'
+        } as any;
+        setActiveCompany(fallbackCompany);
+        SessionManager.setActiveCompany(fallbackCompany);
+      }
       if (['LANDING', 'LOGIN', 'SIGN_UP'].includes(currentScreen)) {
          if (initialSession.accountStatus === 'ACTIVE') {
             if (initialSession.role === 'SUPER_ADMIN') {
@@ -241,7 +263,13 @@ function MainApp() {
 
   // Ensure activeCompany tenant is loaded & consistent with userSession on startup/refresh
   useEffect(() => {
-    if (userSession && userSession.companyId && userSession.companyId !== 'GLOBAL_ADMIN') {
+    if (
+      userSession && 
+      userSession.companyId && 
+      userSession.companyId !== 'GLOBAL_ADMIN' && 
+      userSession.companyId !== 'GLOBAL-ADMIN' && 
+      userSession.role !== 'SUPER_ADMIN'
+    ) {
       if (!activeCompany || activeCompany.companyId !== userSession.companyId) {
         FirebaseAuthService.verifyCompanyCode(userSession.companyId)
           .then((comp) => {
@@ -252,8 +280,13 @@ function MainApp() {
             console.warn('[App] Failed to auto-load company tenant for active session:', err);
           });
       }
+    } else if (userSession?.role === 'SUPER_ADMIN') {
+      if (activeCompany) {
+        setActiveCompany(null);
+        SessionManager.clearActiveCompany();
+      }
     }
-  }, [userSession?.companyId, activeCompany?.companyId]);
+  }, [userSession?.companyId, userSession?.role, activeCompany?.companyId]);
 
   // Auto-detect screen size and set responsive viewport layout dynamically
   useEffect(() => {
@@ -276,7 +309,7 @@ function MainApp() {
   // Realtime notification monitor (authenticated only)
   useEffect(() => {
     if (userSession) {
-      const unsub = FirestoreService.subscribeToNotifications(userSession.companyId, userSession.role, (notifs) => {
+      const unsub = FirestoreService.subscribeToNotifications(userSession, userSession.companyId, (notifs) => {
         setUnreadNotifCount(notifs.filter(n => !n.isRead).length);
       });
       return () => unsub();
@@ -376,34 +409,19 @@ function MainApp() {
     setOfflineQueueCount(OfflineSyncService.getQueue().length);
   };
 
-  const isMainAppScreen = [
-    'ENTERPRISE_DASHBOARD',
-    'EMPLOYEES', 
-    'ATTENDANCE_SHIFTS', 
-    'LEAVE_MANAGEMENT',
-    'APPROVAL_CENTER',
-    'PAYROLL_COMPENSATION',
-    'INVENTORY_STOCK',
-    'ASSET_TRACKING',
-    'SITE_OPERATIONS', 
-    'SAFETY_MANAGEMENT',
-    'WORK_ORDERS',
-    'REPORTS_ANALYTICS',
-    'COMPANY_MANAGEMENT',
-    'COMPANY_BILLING',
-    'PROFILE', 
-    'SETTINGS', 
-    'NOTIFICATIONS',
-    'SUPER_ADMIN_DASHBOARD',
-    'SUPER_ADMIN_COMPANIES',
-    'SUPER_ADMIN_CREATE_COMPANY',
-    'SUPER_ADMIN_MODULES',
-    'SUPER_ADMIN_PENDING_APPROVALS',
-    'SUPER_ADMIN_SUBSCRIPTIONS',
-    'SUPER_ADMIN_MANAGEMENT',
-    'APPROVAL_MANAGEMENT',
-    'BIOMETRIC_DEVICES',
-    'DEVICE_INTEGRATION_HUB'
+  const isMainAppScreen = ![
+    'LANDING',
+    'LOGIN',
+    'PLATFORM_LOGIN',
+    'SIGN_UP',
+    'FORGOT_PASSWORD',
+    'COMPANY_CODE',
+    'SPLASH',
+    'UPDATE_CHECKER',
+    'APPROVAL_PENDING',
+    'SESSION_LOCK',
+    'LEGAL_POLICIES',
+    'KOTLIN_CODE_VIEWER'
   ].includes(currentScreen);
 
   // Security guard: If unauthenticated and attempting to access protected screens, redirect to LANDING
@@ -442,16 +460,23 @@ function MainApp() {
             {currentScreen === 'LOGIN' && (
               <LoginScreen activeCompany={activeCompany as any}
                 onLoginSuccess={(session, company) => {
-                  setActiveCompany(company);
-                  setUserSession(session);
-                  if (session.accountStatus === 'ACTIVE') {
-                    if (session.role === 'SUPER_ADMIN') {
+                  if (session.role === 'SUPER_ADMIN' || session.companyId === 'GLOBAL_ADMIN' || session.companyId === 'GLOBAL-ADMIN') {
+                    setActiveCompany(null);
+                    SessionManager.clearActiveCompany();
+                    setUserSession(session);
+                    if (session.accountStatus === 'ACTIVE') {
                       setCurrentScreen('SUPER_ADMIN_DASHBOARD');
                     } else {
-                      setCurrentScreen('ENTERPRISE_DASHBOARD');
+                      setCurrentScreen('APPROVAL_PENDING');
                     }
                   } else {
-                    setCurrentScreen('APPROVAL_PENDING');
+                    setActiveCompany(company);
+                    setUserSession(session);
+                    if (session.accountStatus === 'ACTIVE') {
+                      setCurrentScreen('ENTERPRISE_DASHBOARD');
+                    } else {
+                      setCurrentScreen('APPROVAL_PENDING');
+                    }
                   }
                 }}
                 onNavigate={(screen: any) => setCurrentScreen(screen)}
@@ -461,6 +486,8 @@ function MainApp() {
             {currentScreen === 'PLATFORM_LOGIN' && (
               <PlatformLoginScreen
                 onLoginSuccess={(session) => {
+                  setActiveCompany(null);
+                  SessionManager.clearActiveCompany();
                   setUserSession(session);
                   if (session.accountStatus === 'ACTIVE') {
                     setCurrentScreen('SUPER_ADMIN_DASHBOARD');
@@ -611,7 +638,7 @@ function MainApp() {
       />
     )}
     {currentScreen === 'SUPER_ADMIN_MANAGEMENT' && (
-      <SuperAdminManagementScreen
+      <SuperAdminAdminsScreen
         currentSession={userSession!}
         onNavigate={(screen: any) => setCurrentScreen(screen)}
       />
@@ -905,6 +932,20 @@ function MainApp() {
                       />
                     )}
 
+                    {currentScreen === 'PERFORMANCE_MANAGEMENT' && (
+                      <PerformanceManagementScreen
+                        userSession={userSession}
+                        currentCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
+                      />
+                    )}
+
+                    {currentScreen === 'TALENT_MANAGEMENT' && (
+                      <TalentManagementScreen
+                        session={userSession}
+                      />
+                    )}
+
                     {currentScreen === 'CERTIFICATION_TRACKING' && (
                       <CertificationTrackingScreen
                         userSession={userSession}
@@ -923,6 +964,29 @@ function MainApp() {
                       <TrainingLmsScreen
                         userSession={userSession}
                         activeCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
+                      />
+                    )}
+
+                    {currentScreen === 'EXPENSE_TRAVEL' && activeCompany && (
+                      <ExpenseTravelScreen
+                        userSession={userSession}
+                        currentCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
+                      />
+                    )}
+
+                    {(currentScreen === 'GENERAL_LEDGER' || currentScreen === 'FINANCE_DASHBOARD') && activeCompany && (
+                      <FinanceGeneralLedgerScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany}
+                      />
+                    )}
+
+                    {currentScreen === 'ENTERPRISE_INTEGRATIONS' && activeCompany && (
+                      <EnterpriseIntegrationScreen
+                        userSession={userSession}
+                        currentCompany={activeCompany as any}
                         onNavigate={(screen: any) => setCurrentScreen(screen)}
                       />
                     )}
@@ -982,6 +1046,43 @@ function MainApp() {
                       />
                     )}
 
+                    {currentScreen === 'CLIENT_BILLING' && activeCompany && (
+                      <ClientBillingContractScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany as any}
+                      />
+                    )}
+
+                    {currentScreen === 'CLIENT_PORTAL' && activeCompany && (
+                      <ClientPortalScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
+                      />
+                    )}
+
+                    {currentScreen === 'MULTI_MODE_PATROL' && activeCompany && (
+                      <MultiModePatrolScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany as any}
+                        isOnline={isOnline}
+                      />
+                    )}
+
+                    {currentScreen === 'COMPLIANCE_EXPIRY' && activeCompany && (
+                      <ComplianceExpiryScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany as any}
+                      />
+                    )}
+
+                    {currentScreen === 'AI_SCHEDULING' && activeCompany && (
+                      <AiSchedulingScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany as any}
+                      />
+                    )}
+
                     {currentScreen === 'WORK_ORDERS' && (
                       <WorkOrdersScreen
                         userSession={userSession}
@@ -1023,6 +1124,13 @@ function MainApp() {
                         }}
                       />
                     )}
+                    {currentScreen === 'ORG_CONTROL' && activeCompany && (
+                      <OrgControlScreen
+                        userSession={userSession}
+                        activeCompany={activeCompany as any}
+                        onNavigate={(screen: any) => setCurrentScreen(screen)}
+                      />
+                    )}
 
                     {currentScreen === 'PROFILE' && (
                       <ProfileScreen
@@ -1039,7 +1147,14 @@ function MainApp() {
                       />
                     )}
 
-                    {currentScreen === 'SETTINGS' && (
+                    {currentScreen === 'SETUP_AUDIT' && (
+                  <SetupAuditScreen
+                    userSession={userSession!}
+                    activeCompany={activeCompany as any}
+                    onClose={() => setCurrentScreen('ENTERPRISE_DASHBOARD')}
+                  />
+                )}
+                {currentScreen === 'SETTINGS' && (
                       <SettingsScreen
                         userSession={userSession}
                         activeCompany={activeCompany as any}
@@ -1075,9 +1190,6 @@ function MainApp() {
     </ThemeProvider>
   );
 }
-
-
-import { NavigationProvider, useNavigation } from './context/NavigationContext';
 
 export function App() {
   const getInitialScreen = (): PhaseAScreen => {

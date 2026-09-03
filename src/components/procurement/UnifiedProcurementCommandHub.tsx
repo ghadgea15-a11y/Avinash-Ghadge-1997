@@ -176,7 +176,7 @@ export const UnifiedProcurementCommandHub: React.FC<UnifiedProcurementHubProps> 
           <div className="flex items-center gap-2 bg-slate-950/60 p-3 rounded-2xl border border-slate-800 shrink-0">
             <Layers className="w-5 h-5 text-indigo-400" />
             <div>
-              <div className="text-[10px] text-slate-400 uppercase font-bold">Smart Sourcing</div>
+              <div className="text-[11px] text-slate-400 uppercase font-bold">Smart Sourcing</div>
               <div className="text-xs font-extrabold text-emerald-400">3 Screens Integrated in 1</div>
             </div>
           </div>
@@ -199,10 +199,10 @@ export const UnifiedProcurementCommandHub: React.FC<UnifiedProcurementHubProps> 
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-amber-400 border border-slate-700">
+                <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-amber-400 border border-slate-700">
                   {item.id}
                 </span>
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                <span className={`text-[11px] font-black px-2 py-0.5 rounded-full ${
                   item.stockStatus === 'CRITICAL_LOW' 
                     ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
                     : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
@@ -232,21 +232,21 @@ export const UnifiedProcurementCommandHub: React.FC<UnifiedProcurementHubProps> 
 
           <div className="space-y-3">
             <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-              <span className="text-[10px] uppercase font-bold text-slate-400">निवडलेली वस्तू (Selected Item)</span>
+              <span className="text-[11px] uppercase font-bold text-slate-400">निवडलेली वस्तू (Selected Item)</span>
               <h3 className="text-base font-extrabold text-white mt-1">{selectedItem.itemName}</h3>
               <span className="inline-block mt-1 text-xs text-indigo-400 font-medium">{selectedItem.category}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20">
-                <span className="text-[10px] uppercase font-bold text-red-400">शिल्लक साठा (Current)</span>
+                <span className="text-[11px] uppercase font-bold text-red-400">शिल्लक साठा (Current)</span>
                 <div className="text-2xl font-black text-red-300 mt-0.5">
                   {selectedItem.currentStock} <span className="text-xs font-normal">{selectedItem.unit}</span>
                 </div>
               </div>
 
               <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-                <span className="text-[10px] uppercase font-bold text-emerald-400">कमीतकमी मर्यादा (Min)</span>
+                <span className="text-[11px] uppercase font-bold text-emerald-400">कमीतकमी मर्यादा (Min)</span>
                 <div className="text-2xl font-black text-emerald-300 mt-0.5">
                   {selectedItem.minReorderLevel} <span className="text-xs font-normal">{selectedItem.unit}</span>
                 </div>
@@ -263,7 +263,7 @@ export const UnifiedProcurementCommandHub: React.FC<UnifiedProcurementHubProps> 
                   {selectedItem.reorderRequiredQty} {selectedItem.unit}
                 </span>
               </div>
-              <p className="text-[11px] text-amber-200/80 leading-relaxed">
+              <p className="text-xs text-amber-200/80 leading-relaxed">
                 शिल्लक साठा री-ऑर्डर लेव्हलपेक्षा कमी आहे. साइटवर तुटवडा टाळण्यासाठी त्वरित PO जारी करण्याची शिफारस केली जाते.
               </p>
             </div>
@@ -341,7 +341,7 @@ export const UnifiedProcurementCommandHub: React.FC<UnifiedProcurementHubProps> 
               <div className="space-y-4">
                 <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded">
+                    <span className="text-[11px] font-black uppercase text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded">
                       L1 Lowest Quotation
                     </span>
                     <span className="text-xs font-bold text-slate-300">GST {l1Vendor.gstRate}% समाविष्ट</span>

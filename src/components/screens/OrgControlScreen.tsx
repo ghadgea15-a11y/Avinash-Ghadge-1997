@@ -273,7 +273,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
             <tab.icon className="w-4 h-4" />
             {tab.label}
             {tab.id === 'CONFLICTS' && conflicts.length > 0 && (
-              <span className="ml-1.5 bg-rose-500 text-white px-2 py-0.5 rounded-full text-[10px]">
+              <span className="ml-1.5 bg-rose-500 text-white px-2 py-0.5 rounded-full text-[11px]">
                 {conflicts.length}
               </span>
             )}
@@ -307,7 +307,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
                           <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                         </div>
                         <div>
-                          <div className="text-[10px] font-bold text-rose-500 tracking-wider uppercase">{c.type} CONFLICT</div>
+                          <div className="text-[11px] font-bold text-rose-500 tracking-wider uppercase">{c.type} CONFLICT</div>
                           <h4 className="text-sm font-bold mt-0.5">{c.entity}</h4>
                           <p className="text-xs text-rose-700 dark:text-rose-300 mt-1">{c.message}</p>
                         </div>
@@ -341,10 +341,10 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
                               {a.status}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                             {a.type} • {a.roleType} → {a.targetType} ({a.targetId})
                           </p>
-                          <div className="text-[10px] text-slate-400 mt-1 font-mono">
+                          <div className="text-[11px] text-slate-400 mt-1 font-mono">
                             Effective: {a.effectiveFrom} {a.effectiveTo ? ` to ${a.effectiveTo}` : ''}
                           </div>
                         </div>
@@ -377,7 +377,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
                         <div className={`p-2.5 rounded-xl ${isDark ? 'bg-indigo-900/30' : 'bg-indigo-50'}`}>
                           <Users className="w-5 h-5 text-indigo-500" />
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold tracking-wider ${
                           g.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-slate-100 text-slate-500'
                         }`}>
                           {g.status}
@@ -436,7 +436,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
                                  return (
                                    <div key={s.id} className="pl-4">
                                      <div className="text-xs font-bold text-slate-900 dark:text-slate-300">{s.name}</div>
-                                     <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                     <div className="text-[11px] text-slate-500 dark:text-slate-400">
                                        Staff: {siteEmp.length} | Mgrs: {mgrs.length > 0 ? mgrs.map(m => m.firstName).join(', ') : <span className="text-rose-500">NONE</span>}
                                      </div>
                                    </div>
@@ -465,7 +465,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
             <div className="space-y-4 text-xs md:text-sm">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Assignment Type</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Assignment Type</label>
                   <select 
                     value={assignForm.type}
                     onChange={(e) => setAssignForm(p => ({ ...p, type: e.target.value as any }))}
@@ -477,7 +477,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Target Role Scope</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Target Role Scope</label>
                   <select 
                     value={assignForm.roleType}
                     onChange={(e) => setAssignForm(p => ({ ...p, roleType: e.target.value as any }))}
@@ -491,7 +491,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Select Employee</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Select Employee</label>
                 <select 
                   value={assignForm.employeeId}
                   onChange={(e) => setAssignForm(p => ({ ...p, employeeId: e.target.value }))}
@@ -504,7 +504,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Target Organization Unit</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Target Organization Unit</label>
                   <select 
                     value={assignForm.targetType}
                     onChange={(e) => setAssignForm(p => ({ ...p, targetType: e.target.value as any }))}
@@ -518,7 +518,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Select Unit</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Select Unit</label>
                   <select 
                     value={assignForm.targetId}
                     onChange={(e) => setAssignForm(p => ({ ...p, targetId: e.target.value }))}
@@ -536,7 +536,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Effective From</label>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Effective From</label>
                   <input 
                     type="date"
                     value={assignForm.effectiveFrom}
@@ -546,7 +546,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
                 </div>
                 {assignForm.type === 'TEMPORARY' && (
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Effective To</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Effective To</label>
                     <input 
                       type="date"
                       value={assignForm.effectiveTo}
@@ -584,7 +584,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
             <h3 className="text-lg font-bold mb-4">{selectedGroup ? 'Edit Group' : 'Create New Group'}</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 mb-1">Group Name</label>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Group Name</label>
                 <input 
                   type="text"
                   value={groupForm.name}
@@ -594,7 +594,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 mb-1">Description</label>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Description</label>
                 <textarea 
                   value={groupForm.description}
                   onChange={e => setGroupForm(p => ({ ...p, description: e.target.value }))}
@@ -633,7 +633,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
                       <div key={m.id} className={`p-3 rounded-xl border flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100 bg-slate-50'}`}>
                         <div>
                           <div className="text-sm font-bold">{emp?.firstName} {emp?.lastName}</div>
-                          <div className="text-[10px] text-slate-500">{emp?.employeeId}</div>
+                          <div className="text-[11px] text-slate-500">{emp?.employeeId}</div>
                         </div>
                         <button 
                           onClick={() => handleRemoveFromGroup(m.employeeId)}
@@ -656,7 +656,7 @@ export function OrgControlScreen({ userSession, activeCompany, onNavigate }: Org
                     <div key={e.id} className={`p-3 rounded-xl border flex items-center justify-between ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100 bg-slate-50'}`}>
                       <div>
                         <div className="text-sm font-bold">{e.firstName} {e.lastName}</div>
-                        <div className="text-[10px] text-slate-500">{e.employeeId} | {e.designation}</div>
+                        <div className="text-[11px] text-slate-500">{e.employeeId} | {e.designation}</div>
                       </div>
                       <button 
                         onClick={() => handleAssignToGroup(e.id)}

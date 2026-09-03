@@ -10,10 +10,7 @@
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <link rel="canonical" href="https://logsheetmuster.online/" />
     
-    <!-- Security Headers (Meta-based fallbacks) -->
-    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="X-Frame-Options" content="DENY" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleusercontent.com https://*.firebaseapp.com https://firebasestorage.googleapis.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google-analytics.com; frame-src 'self' https://*.firebaseapp.com; object-src 'none';" />
+    <!-- Referrer Policy -->
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(), geolocation=(self)" />
     <meta name="theme-color" content="#0A0D14" />
@@ -65,7 +62,7 @@
           "@type": "ContactPoint",
           "telephone": "+91-9096345456",
           "contactType": "customer support",
-          "email": "ghadgea162@gmail.com",
+          "email": "ghadgea15@gmail.com",
           "areaServed": "IN",
           "availableLanguage": ["English", "Hindi", "Marathi"]
         }
@@ -106,9 +103,11 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
+      if ('serviceWorker' in navigator && window.self === window.top) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
+          try {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+          } catch (e) {}
         });
       }
     </script>

@@ -135,7 +135,7 @@ export function WorkOrderDetail({ workOrder, companyId, userSession, onClose }: 
             <p className="text-xs text-rose-900 dark:text-rose-200 mt-1 font-medium">
               {workOrder.safetyHaltReason || 'Critical hazard inspection failed on this site. Work order execution is halted to protect field safety.'}
             </p>
-            <div className="mt-2 text-[11px] text-rose-600 dark:text-rose-400 flex items-center gap-3">
+            <div className="mt-2 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-3">
               <span>Halted By: {workOrder.safetyHaltedBy || 'EHS Safety Engine'}</span>
               <span>•</span>
               <span>Time: {formatDate(workOrder.safetyHaltedAt)}</span>

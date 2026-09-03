@@ -90,10 +90,10 @@ export const ViolationDetailModal: React.FC<Props> = ({
                 <h2 className="text-base font-bold text-black dark:text-white">
                   {violation.policyName}
                 </h2>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getSeverityBadge(violation.severity)}`}>
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${getSeverityBadge(violation.severity)}`}>
                   {violation.severity}
                 </span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getStatusBadge(violation.status)}`}>
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${getStatusBadge(violation.status)}`}>
                   {violation.status}
                 </span>
               </div>

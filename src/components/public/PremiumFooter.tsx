@@ -41,7 +41,8 @@ export const PremiumFooter: React.FC<PremiumFooterProps> = ({ onNavigate, onOpen
               <div>Developed by <strong className="text-white">Shourya Enterprises Pvt. Ltd.</strong></div>
               <div>Founder: <span className="text-white">Avinash Shivaji Ghadge</span></div>
               <div>HQ: <span className="text-white">Ajanthanagar, Chinchwad, Pune, MH 411019</span></div>
-              <div>Email: <a href="mailto:ghadgea162@gmail.com" className="text-blue-400 hover:text-blue-300 transition-colors">ghadgea162@gmail.com</a></div>
+              <div>Email: <a href="mailto:ghadgea15@gmail.com" className="text-blue-400 hover:text-blue-300 transition-colors">ghadgea15@gmail.com</a></div>
+              <div>Support: <a href="mailto:ghadgea162@gmail.com" className="text-slate-300 hover:text-blue-300 transition-colors">ghadgea162@gmail.com</a></div>
               <div>Phone: <a href="tel:+919096345456" className="text-blue-400 hover:text-blue-300 transition-colors">+91-9096345456</a></div>
             </div>
             <button 

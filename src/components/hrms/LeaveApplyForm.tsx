@@ -152,7 +152,7 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
               <Paperclip className="w-5 h-5 text-indigo-600" />
               Apply Leave
             </h3>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Submit new time-off request</p>
+            <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Submit new time-off request</p>
           </div>
           <button 
             onClick={onClose}
@@ -179,7 +179,7 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
           <form id="leave-apply-form" onSubmit={handleSubmit} className="space-y-5">
             {/* Type */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Leave Type</label>
+              <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Leave Type</label>
               <div className="grid grid-cols-2 gap-2">
                 {policies.map(p => {
                   const bal = balance?.balances.find(b => b.leaveCode === p.leaveCode);
@@ -203,7 +203,7 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
                         </span>
                         {isSelected && <Check className="w-3 h-3 text-indigo-600" />}
                       </div>
-                      <span className="text-[10px] font-bold text-slate-400">{available} Available</span>
+                      <span className="text-[11px] font-bold text-slate-400">{available} Available</span>
                     </button>
                   );
                 })}
@@ -213,7 +213,7 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
             {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Start Date</label>
+                <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Start Date</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                   <input
@@ -225,7 +225,7 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">End Date</label>
+                <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">End Date</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                   <input
@@ -262,7 +262,7 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, halfDaySession: 'FIRST' })}
-                  className={`py-2 px-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${
+                  className={`py-2 px-3 rounded-xl border text-[11px] font-black uppercase tracking-wider transition-all ${
                     formData.halfDaySession === 'FIRST' 
                       ? 'border-indigo-600 bg-indigo-600 text-white' 
                       : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-300'
@@ -273,7 +273,7 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, halfDaySession: 'SECOND' })}
-                  className={`py-2 px-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${
+                  className={`py-2 px-3 rounded-xl border text-[11px] font-black uppercase tracking-wider transition-all ${
                     formData.halfDaySession === 'SECOND' 
                       ? 'border-indigo-600 bg-indigo-600 text-white' 
                       : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-300'
@@ -291,18 +291,18 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
                   <Calendar className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-100">Leave Duration</p>
+                  <p className="text-[11px] font-black uppercase tracking-widest text-indigo-100">Leave Duration</p>
                   <p className="text-xl font-black">{calculatedDays} {calculatedDays === 1 ? 'Day' : 'Days'}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-bold text-indigo-100 uppercase italic">Excl. non-working days</p>
+                <p className="text-[11px] font-bold text-indigo-100 uppercase italic">Excl. non-working days</p>
               </div>
             </div>
 
             {/* Reason with Pictograms for Ground Workforce */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">
+              <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">
                 {LanguageService.translate('LEAVE_SICK').split('(')[0]} / Reason for Leave *
               </label>
 
@@ -396,7 +396,7 @@ export const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({
 
             {/* Emergency Contact */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Contact During Leave</label>
+              <label className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Contact During Leave</label>
               <input
                 type="text"
                 value={formData.contactDuringLeave}

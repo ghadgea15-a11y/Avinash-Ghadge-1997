@@ -126,11 +126,11 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
           <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Basic Info */}
             <div className="space-y-5">
-              <h5 className="text-[10px] font-black uppercase tracking-widest text-indigo-600 border-b border-indigo-100 dark:border-indigo-900/30 pb-2">Basic Identification</h5>
+              <h5 className="text-[11px] font-black uppercase tracking-widest text-indigo-600 border-b border-indigo-100 dark:border-indigo-900/30 pb-2">Basic Identification</h5>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Leave Code *</label>
+                  <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Leave Code *</label>
                   <input
                     type="text"
                     required
@@ -141,7 +141,7 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Leave Name *</label>
+                  <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Leave Name *</label>
                   <input
                     type="text"
                     required
@@ -154,7 +154,7 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Description</label>
+                <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Description</label>
                 <textarea
                   rows={2}
                   value={currentPolicy.description}
@@ -187,11 +187,11 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
 
             {/* Entitlement & Accrual */}
             <div className="space-y-5">
-              <h5 className="text-[10px] font-black uppercase tracking-widest text-indigo-600 border-b border-indigo-100 dark:border-indigo-900/30 pb-2">Entitlement & Accrual</h5>
+              <h5 className="text-[11px] font-black uppercase tracking-widest text-indigo-600 border-b border-indigo-100 dark:border-indigo-900/30 pb-2">Entitlement & Accrual</h5>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Annual Entitlement</label>
+                  <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Annual Entitlement</label>
                   <input
                     type="number"
                     value={currentPolicy.annualEntitlement}
@@ -200,7 +200,7 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Accrual Type</label>
+                  <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Accrual Type</label>
                   <select
                     value={currentPolicy.accrualType}
                     onChange={(e) => setCurrentPolicy({...currentPolicy, accrualType: e.target.value as any})}
@@ -222,11 +222,11 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
                     onChange={(e) => setCurrentPolicy({...currentPolicy, carryForwardAllowed: e.target.checked})}
                     className="w-4 h-4 rounded border-slate-300 text-indigo-600"
                   />
-                  <span className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 dark:text-slate-300">Allow Carry Forward</span>
+                  <span className="text-[11px] font-black uppercase text-slate-600 dark:text-slate-400 dark:text-slate-300">Allow Carry Forward</span>
                 </label>
                 {currentPolicy.carryForwardAllowed && (
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Max Carry Forward</label>
+                    <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Max Carry Forward</label>
                     <input
                       type="number"
                       value={currentPolicy.maxCarryForward}
@@ -242,7 +242,7 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <h6 className="text-xs font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-wider">Mid-Year Joining Pro-Rata Accrual</h6>
-                    <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Statutory pro-rata calculation for employees joining mid-year / mid-month</p>
+                    <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Statutory pro-rata calculation for employees joining mid-year / mid-month</p>
                   </div>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -251,14 +251,14 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
                       onChange={(e) => setCurrentPolicy({...currentPolicy, proRataForMidYearJoiners: e.target.checked})}
                       className="w-4 h-4 rounded border-slate-300 text-indigo-600"
                     />
-                    <span className="text-[10px] font-black uppercase text-indigo-700 dark:text-indigo-300">Enabled</span>
+                    <span className="text-[11px] font-black uppercase text-indigo-700 dark:text-indigo-300">Enabled</span>
                   </label>
                 </div>
 
                 {(currentPolicy.proRataForMidYearJoiners ?? true) && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase">Calculation Method</label>
+                      <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase">Calculation Method</label>
                       <select
                         value={currentPolicy.proRataMethod || 'MONTHLY_EXACT'}
                         onChange={(e) => setCurrentPolicy({...currentPolicy, proRataMethod: e.target.value as any})}
@@ -271,7 +271,7 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase">Rounding Rule</label>
+                      <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase">Rounding Rule</label>
                       <select
                         value={currentPolicy.roundingRule || 'NEAREST_HALF_DAY'}
                         onChange={(e) => setCurrentPolicy({...currentPolicy, roundingRule: e.target.value as any})}
@@ -290,11 +290,11 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
 
             {/* Validation Rules */}
             <div className="space-y-5">
-              <h5 className="text-[10px] font-black uppercase tracking-widest text-indigo-600 border-b border-indigo-100 dark:border-indigo-900/30 pb-2">Rules & Restrictions</h5>
+              <h5 className="text-[11px] font-black uppercase tracking-widest text-indigo-600 border-b border-indigo-100 dark:border-indigo-900/30 pb-2">Rules & Restrictions</h5>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Min Notice (Days)</label>
+                  <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Min Notice (Days)</label>
                   <input
                     type="number"
                     value={currentPolicy.minNoticeDays}
@@ -303,7 +303,7 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Max Consecutive</label>
+                  <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Max Consecutive</label>
                   <input
                     type="number"
                     value={currentPolicy.maxConsecutiveDays}
@@ -345,9 +345,9 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
             </div>
 
             <div className="space-y-5">
-               <h5 className="text-[10px] font-black uppercase tracking-widest text-indigo-600 border-b border-indigo-100 dark:border-indigo-900/30 pb-2">Status & Actions</h5>
+               <h5 className="text-[11px] font-black uppercase tracking-widest text-indigo-600 border-b border-indigo-100 dark:border-indigo-900/30 pb-2">Status & Actions</h5>
                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Policy Status</label>
+                  <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase ml-1">Policy Status</label>
                   <select
                     value={currentPolicy.status}
                     onChange={(e) => setCurrentPolicy({...currentPolicy, status: e.target.value as any})}
@@ -390,7 +390,7 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
                     </div>
                     <div>
                       <h4 className="text-base font-black text-black dark:text-white leading-tight">{p.leaveName}</h4>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{p.leaveCode}</p>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{p.leaveCode}</p>
                     </div>
                   </div>
                   <button 
@@ -403,35 +403,35 @@ export const LeavePolicyMaster: React.FC<LeavePolicyMasterProps> = ({
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="p-3 rounded-2xl bg-white dark:bg-slate-950 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
-                    <p className="text-[10px] font-black uppercase text-slate-400 mb-0.5">Entitlement</p>
+                    <p className="text-[11px] font-black uppercase text-slate-400 mb-0.5">Entitlement</p>
                     <p className="text-sm font-black text-black dark:text-slate-200">{p.annualEntitlement} Days</p>
                   </div>
                   <div className="p-3 rounded-2xl bg-white dark:bg-slate-950 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
-                    <p className="text-[10px] font-black uppercase text-slate-400 mb-0.5">Accrual</p>
+                    <p className="text-[11px] font-black uppercase text-slate-400 mb-0.5">Accrual</p>
                     <p className="text-sm font-black text-black dark:text-slate-200 capitalize">{p.accrualType.toLowerCase()}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-bold">
+                  <div className="flex items-center justify-between text-xs font-bold">
                     <span className="text-slate-500 dark:text-slate-400">Paid Leave:</span>
                     <span className={p.isPaid ? 'text-emerald-600' : 'text-slate-400'}>{p.isPaid ? 'YES' : 'NO'}</span>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] font-bold">
+                  <div className="flex items-center justify-between text-xs font-bold">
                     <span className="text-slate-500 dark:text-slate-400">Carry Forward:</span>
                     <span className={p.carryForwardAllowed ? 'text-indigo-600' : 'text-slate-400'}>{p.carryForwardAllowed ? `YES (Max ${p.maxCarryForward})` : 'NO'}</span>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] font-bold">
+                  <div className="flex items-center justify-between text-xs font-bold">
                     <span className="text-slate-500 dark:text-slate-400">Mandatory Doc:</span>
                     <span className={p.requiresDocument ? 'text-amber-600' : 'text-slate-400'}>{p.requiresDocument ? 'YES' : 'NO'}</span>
                   </div>
                 </div>
               </div>
               <div className="px-6 py-3 bg-white dark:bg-slate-950 dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                <span className={`text-[10px] font-black uppercase tracking-widest ${p.status === 'ACTIVE' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                <span className={`text-[11px] font-black uppercase tracking-widest ${p.status === 'ACTIVE' ? 'text-emerald-600' : 'text-slate-400'}`}>
                   {p.status}
                 </span>
-                <span className="text-[10px] font-bold text-slate-400 italic">Last Update: {new Date(p.updatedAt).toLocaleDateString()}</span>
+                <span className="text-[11px] font-bold text-slate-400 italic">Last Update: {new Date(p.updatedAt).toLocaleDateString()}</span>
               </div>
             </div>
           ))}

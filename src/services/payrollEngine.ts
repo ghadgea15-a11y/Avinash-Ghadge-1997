@@ -29,11 +29,14 @@ export class PayrollEngine {
     let lopDays = 0;
     let approvedOvertimeMinutes = 0;
 
+    const empWeeklyOff = (emp as any).weeklyOff || (emp as any).weeklyOffDays || [0];
+
     // Process attendances and leaves for LOP
     for (let d = 1; d <= daysInMonth; d++) {
       const dateObj = new Date(year, month - 1, d);
       const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const isDayOff = isWeekend(dateObj); 
+      
+      const isDayOff = empWeeklyOff.includes(dateObj.getDay());
       
       // Filter holidays applicable to this employee's region
       const isHoliday = holidays.some(h => {
@@ -51,8 +54,8 @@ export class PayrollEngine {
 
       if (!att && !isDayOff && !isHoliday) {
         // Did they have approved leave?
-        if (leave && leave.status === 'APPROVED') {
-          // Paid leave
+        if (leave && (leave.status === 'APPROVED' || leave.status === 'ACCEPTED')) {
+          if (leave.leaveType === 'UNPAID' || leave.leaveType === 'LWP') { lopDays += 1; }
         } else {
           lopDays += 1;
         }
@@ -62,12 +65,20 @@ export class PayrollEngine {
          if (isDayOff || isHoliday) {
            continue; 
          }
-
-         if (att.status === 'ABSENT' && (!leave || leave.status !== 'APPROVED')) {
-           lopDays += 1;
-         } else if (att.status === 'HALFDAY' && (!leave || leave.status !== 'APPROVED')) {
-           lopDays += 0.5;
+         if (att.status === 'ABSENT') {
+           if (!leave || (leave.status !== 'APPROVED' && leave.status !== 'ACCEPTED') || leave.leaveType === 'UNPAID' || leave.leaveType === 'LWP') {
+             lopDays += 1;
+           }
+         } else if (att.status === 'HALFDAY') {
+           if (!leave || (leave.status !== 'APPROVED' && leave.status !== 'ACCEPTED') || leave.leaveType === 'UNPAID' || leave.leaveType === 'LWP') {
+             lopDays += 0.5;
+           }
          }
+      } else if (isDayOff || isHoliday) {
+        // If it is a day off but they applied for unpaid leave (e.g. extended LWP covering weekends)
+        if (leave && (leave.status === 'APPROVED' || leave.status === 'ACCEPTED') && (leave.leaveType === 'UNPAID' || leave.leaveType === 'LWP')) {
+          lopDays += 1;
+        }
       }
     }
 

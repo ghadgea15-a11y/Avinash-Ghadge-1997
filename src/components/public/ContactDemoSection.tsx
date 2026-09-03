@@ -125,8 +125,9 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
                   <Mail className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-mono text-slate-400 block">EMAIL INQUIRIES</span>
-                  <strong className="text-white font-semibold text-xs">ghadgea162@gmail.com</strong>
+                  <span className="text-[11px] uppercase font-mono text-slate-400 block">EMAIL INQUIRIES</span>
+                  <a href="mailto:ghadgea15@gmail.com" className="text-white hover:text-emerald-400 font-semibold text-xs transition-colors block">ghadgea15@gmail.com</a>
+                  <span className="text-[10px] text-slate-400 block">Support: ghadgea162@gmail.com</span>
                 </div>
               </div>
 
@@ -135,7 +136,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
                   <Phone className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-mono text-slate-400 block">DIRECT PHONE</span>
+                  <span className="text-[11px] uppercase font-mono text-slate-400 block">DIRECT PHONE</span>
                   <strong className="text-white font-semibold text-xs">+91 90963 45456</strong>
                 </div>
               </div>
@@ -145,7 +146,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-mono text-slate-400 block">HEADQUARTERS</span>
+                  <span className="text-[11px] uppercase font-mono text-slate-400 block">HEADQUARTERS</span>
                   <strong className="text-white font-semibold text-xs">Ajanthanagar, Chinchwad, Pune 411019</strong>
                 </div>
               </div>
@@ -176,7 +177,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono uppercase text-slate-400 block">Full Name *</label>
+                    <label className="text-xs font-mono uppercase text-slate-400 block">Full Name *</label>
                     <input
                       type="text"
                       required
@@ -188,7 +189,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono uppercase text-slate-400 block">Work Email *</label>
+                    <label className="text-xs font-mono uppercase text-slate-400 block">Work Email *</label>
                     <input
                       type="email"
                       required
@@ -202,7 +203,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono uppercase text-slate-400 block">Phone Number *</label>
+                    <label className="text-xs font-mono uppercase text-slate-400 block">Phone Number *</label>
                     <input
                       type="tel"
                       required
@@ -214,7 +215,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono uppercase text-slate-400 block">Company / Organization *</label>
+                    <label className="text-xs font-mono uppercase text-slate-400 block">Company / Organization *</label>
                     <input
                       type="text"
                       required
@@ -228,7 +229,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono uppercase text-slate-400 block">Operational Site Count</label>
+                    <label className="text-xs font-mono uppercase text-slate-400 block">Operational Site Count</label>
                     <select
                       value={formData.siteCount}
                       onChange={(e) => setFormData({ ...formData, siteCount: e.target.value })}
@@ -242,7 +243,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-mono uppercase text-slate-400 block">Primary Focus Area</label>
+                    <label className="text-xs font-mono uppercase text-slate-400 block">Primary Focus Area</label>
                     <select
                       value={formData.primaryInterest}
                       onChange={(e) => setFormData({ ...formData, primaryInterest: e.target.value })}
@@ -258,7 +259,7 @@ export const ContactDemoSection: React.FC<ContactDemoSectionProps> = ({ onNaviga
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-mono uppercase text-slate-400 block">Specific Operational Requirements (Optional)</label>
+                  <label className="text-xs font-mono uppercase text-slate-400 block">Specific Operational Requirements (Optional)</label>
                   <textarea
                     rows={3}
                     value={formData.message}

@@ -104,15 +104,15 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Expected Manpower</p>
+          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Expected Manpower</p>
           <p className="text-2xl font-black text-black dark:text-white mt-1">{stats.total}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Present On-Site</p>
+          <p className="text-[11px] font-bold text-emerald-500 uppercase tracking-widest">Present On-Site</p>
           <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{stats.present}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Pending / Absent</p>
+          <p className="text-[11px] font-bold text-rose-500 uppercase tracking-widest">Pending / Absent</p>
           <p className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">{stats.absent}</p>
         </div>
       </div>
@@ -134,7 +134,7 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-white dark:bg-slate-950/30 dark:bg-slate-800/30">
+              <tr className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-white dark:bg-slate-950/30 dark:bg-slate-800/30">
                 <th className="p-4">Employee</th>
                 <th className="p-4">Scheduled Shift</th>
                 <th className="p-4">Punch In</th>
@@ -157,13 +157,13 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
                         </div>
                         <div>
                           <p className="font-bold text-black dark:text-white">{roster.employeeName || 'Employee'}</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-tighter">{roster.employeeId}</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-tighter">{roster.employeeId}</p>
                         </div>
                       </div>
                     </td>
                     <td className="p-4">
                       <p className="font-bold text-indigo-600 dark:text-indigo-400">{roster.shiftName}</p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{shift?.startTime} - {shift?.endTime}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">{shift?.startTime} - {shift?.endTime}</p>
                     </td>
                     <td className="p-4">
                       {att?.checkIn ? (
@@ -200,12 +200,12 @@ export const MusterRegister: React.FC<Props> = ({ userSession, activeCompany }) 
                           {att?.status || 'PENDING'}
                         </span>
                         {att?.lateMinutes ? (
-                          <span className="text-[10px] font-bold text-amber-600">
+                          <span className="text-[11px] font-bold text-amber-600">
                             Late: {att.lateMinutes}m
                           </span>
                         ) : null}
                         {att?.overtimeMinutes ? (
-                          <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                          <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
                             OT: {Math.floor(att.overtimeMinutes / 60)}h {att.overtimeMinutes % 60}m
                           </span>
                         ) : null}

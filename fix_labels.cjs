@@ -1,0 +1,71 @@
+const fs = require('fs');
+let content = fs.readFileSync('src/config/navigationArchitecture.ts', 'utf8');
+
+const replacements = {
+  "'Global Overview'": "'Dashboard'",
+  "'Enterprise Dashboard'": "'Dashboard'",
+  "'Broadcast Announcements'": "'Announcements'",
+  "'Tenant Directory'": "'Companies'",
+  "'Provision New Tenant'": "'Add Company'",
+  "'Module Entitlements'": "'Entitlements'",
+  "'Controlled Support Access'": "'Support Access'",
+  "'Subscription & Billing'": "'Billing'",
+  "'Organization Master Setup'": "'Organization'",
+  "'Org Control & Assignments'": "'Assignments'",
+  "'Site & Post Deployment'": "'Sites & Posts'",
+  "'Workforce Staff Directory'": "'Employees'",
+  "'Identity Badge Master'": "'ID Badges'",
+  "'Talent Acquisition & ATS'": "'Recruitment'",
+  "'LMS & Security Training'": "'Training'",
+  "'Mandatory Refreshers'": "'Refreshers'",
+  "'Certifications & Expiry'": "'Certifications'",
+  "'Daily Attendance & Muster'": "'Attendance'",
+  "'Shift Roster Planner'": "'Roster'",
+  "'Workforce Capacity & Shortages'": "'Capacity'",
+  "'Enterprise Conflict Detection'": "'Conflict Checks'",
+  "'Leave Management'": "'Leave'",
+  "'Work Orders & Facility Maintenance'": "'Work Orders'",
+  "'BPM Task Management'": "'Tasks'",
+  "'My Assigned Tasks'": "'My Tasks'",
+  "'Site Operations & Guard Patrol'": "'Operations'",
+  "'Safety Inspections & PPE Checks'": "'Inspections'",
+  "'EAM Asset Lifecycle Management'": "'Assets'",
+  "'SCM Inventory & Stock Control'": "'Inventory'",
+  "'ERP Payroll & Compensation'": "'Payroll'",
+  "'Procurement SRM Hub'": "'Procurement'",
+  "'Approved Vendor Directory'": "'Vendors'",
+  "'RFQ & Quotation Bids'": "'Quotations'",
+  "'Purchase Orders'": "'Purchase Orders'",
+  "'3-Way Match & Invoice Audit'": "'Invoices'",
+  "'CRM Client Accounts & Contracts'": "'Clients'",
+  "'Sales Pipeline & Leads CRM'": "'Sales Pipeline'",
+  "'GRC Compliance Dashboard'": "'Compliance'",
+  "'Document Lifecycle & Expiry Control'": "'Documents'",
+  "'Legal & Privacy Policies'": "'Policies'",
+  "'Approval Inbox & Requests'": "'My Approvals'",
+  "'Multi-Tier BPM Approval Center'": "'Approvals Center'",
+  "'Global Tenant Approvals'": "'Global Approvals'",
+  "'Platform SaaS Analytics & BI'": "'Analytics'",
+  "'CFO/COO Operational Intelligence'": "'Intelligence'",
+  "'BI Reports & Statutory Exports'": "'Reports'",
+  "'Service Desk & SLA Analytics'": "'Service Desk'",
+  "'System Alerts & Notifications'": "'Notifications'",
+  "'Platform Administrators'": "'Admins'",
+  "'Platform Security & Claims'": "'Security'",
+  "'Immutable Platform Audit Log'": "'Audit Log'",
+  "'System Telemetry & Health'": "'Health'",
+  "'Enterprise Historical Traceability'": "'Traceability'",
+  "'Scalability Architecture Assessment'": "'Scalability'",
+  "'User Security & TOTP MFA'": "'MFA Setup'",
+  "'Session Lock & PIN Protection'": "'Lock Session'",
+  "'Platform Global Configuration'": "'Settings'",
+  "'Universal Biometric Hub'": "'Biometrics'",
+  "'Settings & Diagnostics'": "'Settings'"
+};
+
+for (const [oldLabel, newLabel] of Object.entries(replacements)) {
+  content = content.replace(new RegExp(`label:\\s*${oldLabel}`, 'g'), `label: ${newLabel}`);
+}
+
+fs.writeFileSync('src/config/navigationArchitecture.ts', content);
+console.log('Labels updated.');

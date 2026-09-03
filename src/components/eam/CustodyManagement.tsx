@@ -101,7 +101,7 @@ export function CustodyManagement({ session, assets, sites, employees, custodyRe
               <div key={asset.id} className="bg-white dark:bg-slate-900 border border-slate-200 shadow-sm rounded-xl p-4 flex flex-col">
                 <div className="flex justify-between items-start mb-2">
                   <span className="font-bold text-black dark:text-white line-clamp-1">{asset.assetName}</span>
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded">IN CUSTODY</span>
+                  <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[11px] font-bold rounded">IN CUSTODY</span>
                 </div>
                 <p className="font-mono text-xs text-slate-500 dark:text-slate-400">{asset.assetCode}</p>
                 <div className="mt-3 text-xs text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 p-2 rounded">

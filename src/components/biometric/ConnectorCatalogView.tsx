@@ -56,26 +56,26 @@ export const ConnectorCatalogView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-xs font-bold text-white">{c.supportedManufacturer}</h3>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{c.connectorId}</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{c.connectorId}</span>
                 </div>
               </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 text-slate-400 border border-slate-800">
+              <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-900 text-slate-400 border border-slate-800">
                 Port {c.defaultPort}
               </span>
             </div>
 
             <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase font-medium">Supported Protocols</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 block uppercase font-medium">Supported Protocols</span>
               <div className="flex flex-wrap gap-1">
                 {c.supportedProtocols.map(p => (
-                  <span key={p} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-900 text-amber-400/90 border border-slate-800">
+                  <span key={p} className="px-1.5 py-0.5 rounded text-[11px] font-mono bg-slate-900 text-amber-400/90 border border-slate-800">
                     {p}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
+            <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
               <span className="flex items-center gap-1 text-emerald-400">
                 <ShieldCheck className="w-3.5 h-3.5" /> Certified Connector
               </span>

@@ -106,7 +106,7 @@ export function EnterpriseAssetManagement({ session, sites, employees, companyId
               <Icon className="w-4 h-4" />
               {tab.label}
               {tab.id === 'CUSTODY' && custodyRecords.filter(c => c.toCustodianId === session.employeeId && c.acknowledgementStatus === 'PENDING').length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold">
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[11px] font-bold">
                   {custodyRecords.filter(c => c.toCustodianId === session.employeeId && c.acknowledgementStatus === 'PENDING').length}
                 </span>
               )}

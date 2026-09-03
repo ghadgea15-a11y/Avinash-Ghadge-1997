@@ -140,7 +140,7 @@ export const SuperAdminLeadsScreen: React.FC<SuperAdminLeadsScreenProps> = ({
         <div>
           <button 
             onClick={() => onNavigate('SUPER_ADMIN_DASHBOARD')}
-            className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-amber-500 font-bold mb-1 block"
+            className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-amber-500 font-bold mb-1 block"
           >
             ← Back to Dashboard
           </button>
@@ -163,7 +163,7 @@ export const SuperAdminLeadsScreen: React.FC<SuperAdminLeadsScreenProps> = ({
           { label: 'Converted', count: stats.converted, color: 'text-emerald-400' }
         ].map(stat => (
           <div key={stat.label} className={`p-3 rounded-xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'}`}>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">{stat.label}</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">{stat.label}</div>
             <div className={`text-xl font-black ${stat.color}`}>{stat.count}</div>
           </div>
         ))}
@@ -306,17 +306,17 @@ export const SuperAdminLeadsScreen: React.FC<SuperAdminLeadsScreenProps> = ({
                   <div className={`p-3 rounded-xl border text-xs space-y-2 ${isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Workforce Size</span>
+                        <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Workforce Size</span>
                         <span className="font-medium">{selectedLead.workforceSize || 'Not specified'}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Interested In</span>
+                        <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Interested In</span>
                         <span className="font-medium">{selectedLead.interestedModules || 'General'}</span>
                       </div>
                     </div>
                     {selectedLead.message && (
                       <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-                        <span className="text-slate-500 dark:text-slate-400 block text-[10px] mb-1">Message</span>
+                        <span className="text-slate-500 dark:text-slate-400 block text-[11px] mb-1">Message</span>
                         <p className="text-slate-900 dark:text-slate-300 whitespace-pre-wrap">{selectedLead.message}</p>
                       </div>
                     )}

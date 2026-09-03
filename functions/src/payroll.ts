@@ -105,26 +105,42 @@ class PayrollEngine {
     let payableDays = daysInMonth;
     let lopDays = 0;
     let approvedOvertimeMinutes = 0;
+
+    const empWeeklyOff = emp.weeklyOff || emp.weeklyOffDays || [0];
+
     for (let d = 1; d <= daysInMonth; d++) {
       const dateObj = new Date(year, month - 1, d);
       const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const isDayOff = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+      
+      const isDayOff = empWeeklyOff.includes(dateObj.getDay());
+      
       const isHoliday = holidays.some(h => {
         if (h.date !== dateStr) return false;
         if (!h.applicableRegions || h.applicableRegions.length === 0) return true;
         return emp.assignedRegionId && h.applicableRegions.includes(emp.assignedRegionId);
       });
+      
       const att = attendances.find(a => a.attendanceDate === dateStr || a.date === dateStr);
       const leave = leaves.find(l => l.startDate <= dateStr && l.endDate >= dateStr);
+      
       if (att && att.approvedOvertimeMinutes) {
         approvedOvertimeMinutes += att.approvedOvertimeMinutes;
       }
+      
       if (!att && !isDayOff && !isHoliday) {
-        if (leave && leave.status === 'APPROVED') { } else { lopDays += 1; }
+        if (leave && leave.status === 'APPROVED') {
+          if (leave.leaveType === 'UNPAID' || leave.leaveType === 'LWP') { lopDays += 1; }
+        } else { 
+          lopDays += 1; 
+        }
       } else if (att && (att.status === 'ABSENT' || att.status === 'HALFDAY')) {
          if (isDayOff || isHoliday) continue; 
-         if (att.status === 'ABSENT' && (!leave || leave.status !== 'APPROVED')) { lopDays += 1; }
-         else if (att.status === 'HALFDAY' && (!leave || leave.status !== 'APPROVED')) { lopDays += 0.5; }
+         if (att.status === 'ABSENT' && (!leave || leave.status !== 'APPROVED' || leave.leaveType === 'UNPAID' || leave.leaveType === 'LWP')) { lopDays += 1; }
+         else if (att.status === 'HALFDAY' && (!leave || leave.status !== 'APPROVED' || leave.leaveType === 'UNPAID' || leave.leaveType === 'LWP')) { lopDays += 0.5; }
+      } else if (isDayOff || isHoliday) {
+        if (leave && leave.status === 'APPROVED' && (leave.leaveType === 'UNPAID' || leave.leaveType === 'LWP')) {
+          lopDays += 1;
+        }
       }
     }
     payableDays = Math.max(0, daysInMonth - lopDays);

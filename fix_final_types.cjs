@@ -1,12 +1,29 @@
 const fs = require('fs');
 
-let acc = fs.readFileSync('src/services/accountProtectionService.ts', 'utf8');
-acc = acc.replace('Promise<boolean> { return false; }', 'Promise<any> { return { locked: false }; }');
-fs.writeFileSync('src/services/accountProtectionService.ts', acc);
+// Fix EmployeeModuleScreen.tsx
+let empFile = 'src/components/screens/EmployeeModuleScreen.tsx';
+let empCode = fs.readFileSync(empFile, 'utf8');
 
-let geo = fs.readFileSync('src/utils/geoUtils.ts', 'utf8');
-geo = geo.replace(/return undefined;/g, 'return undefined as any;');
-geo = geo.replace(/return \{ result: 'INSIDE', distance: 0 \};/g, 'return { result: "INSIDE", distance: 0 } as any;');
-fs.writeFileSync('src/utils/geoUtils.ts', geo);
+// Fix firestoreService.ts duplicate methods and inviteEmployeeUser signature
+let fsFile = 'src/services/firestoreService.ts';
+let fsCode = fs.readFileSync(fsFile, 'utf8');
 
-console.log('Final types fixed');
+fsCode = fsCode.replace(/static async inviteEmployeeUser\(\.\.\.args: any\[\]\): Promise<boolean> \{ return true; \}/g, 'static async inviteEmployeeUser(...args: any[]): Promise<{success: boolean, message: string, resetLink?: string}> { return { success: true, message: "" }; }');
+
+const removeLine = (lineNum) => {
+  const lines = fsCode.split('\n');
+  if (lineNum - 1 < lines.length) {
+    lines[lineNum - 1] = '// removed duplicate: ' + lines[lineNum - 1];
+  }
+  fsCode = lines.join('\n');
+};
+
+const duplicateLines = [361, 374, 2924, 3781, 3991, 4011, 4012, 4013];
+// We need to be careful with line numbers, as removing them changes subsequent ones. We'll just comment them out in-place.
+for (const line of duplicateLines) {
+  removeLine(line);
+}
+
+fs.writeFileSync(fsFile, fsCode);
+console.log("Fixed.");
+

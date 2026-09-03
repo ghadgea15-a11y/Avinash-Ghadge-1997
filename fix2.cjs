@@ -1,31 +1,19 @@
 const fs = require('fs');
-let content = fs.readFileSync('src/services/firestoreService.ts', 'utf8');
 
-const replacements = [
-  {
-    find: `  static async acknowledgeHandover(companyId: string, handoverId: string, actor: any): Promise<boolean> {\n    const ref = doc(db, 'companies', companyId, 'shift_handovers', handoverId);\n  }\n    return true;\n  }`,
-    replace: `  static async acknowledgeHandover(companyId: string, handoverId: string, actor: any): Promise<boolean> {\n    const ref = doc(db, 'companies', companyId, 'shift_handovers', handoverId);\n    await updateDoc(ref, { acknowledged: true, acknowledgedBy: actor?.userId || actor?.name || 'User', acknowledgedAt: new Date().toISOString() });\n    return true;\n  }`
-  },
-  {
-    find: `  static async cancelPaymentBatch(companyId: string, batchId: string, actorId: string, reason: string): Promise<boolean> {\n    const ref = doc(db, 'companies', companyId, 'payment_batches', batchId);\n  }\n    return true;\n  }`,
-    replace: `  static async cancelPaymentBatch(companyId: string, batchId: string, actorId: string, reason: string): Promise<boolean> {\n    const ref = doc(db, 'companies', companyId, 'payment_batches', batchId);\n    await updateDoc(ref, { status: 'CANCELLED', cancelledById: actorId, cancellationReason: reason, updatedAt: new Date().toISOString() });\n    return true;\n  }`
-  },
-  {
-    find: `  static async recordPaymentBatchExport(companyId: string, batchId: string, format: string, actorId: string): Promise<boolean> {\n    const ref = doc(db, 'companies', companyId, 'payment_batches', batchId);\n  }\n    return true;\n  }`,
-    replace: `  static async recordPaymentBatchExport(companyId: string, batchId: string, format: string, actorId: string): Promise<boolean> {\n    const ref = doc(db, 'companies', companyId, 'payment_batches', batchId);\n    await updateDoc(ref, { lastExportedFormat: format, lastExportedAt: new Date().toISOString(), lastExportedBy: actorId });\n    return true;\n  }`
-  },
-  {
-    find: `  static async calculatePayrollCycle(companyId: string, cycleId: string, actor: any): Promise<boolean> {\n    const ref = doc(db, 'companies', companyId, 'payrollCycles', cycleId);\n  }\n    return true;\n  }`,
-    replace: `  static async calculatePayrollCycle(companyId: string, cycleId: string, actor: any): Promise<boolean> {\n    const ref = doc(db, 'companies', companyId, 'payrollCycles', cycleId);\n    await updateDoc(ref, { status: 'CALCULATED', calculatedBy: actor?.userId || 'SYSTEM', calculatedAt: new Date().toISOString() });\n    return true;\n  }`
-  },
-  {
-    find: `  static async approvePayrollCycle(companyId: string, cycleId: string, actor: any): Promise<boolean> {\n    const ref = doc(db, 'companies', companyId, 'payrollCycles', cycleId);\n  }\n    return true;\n  }`,
-    replace: `  static async approvePayrollCycle(companyId: string, cycleId: string, actor: any): Promise<boolean> {\n    const ref = doc(db, 'companies', companyId, 'payrollCycles', cycleId);\n    await updateDoc(ref, { status: 'APPROVED', approvedBy: actor?.userId || 'SYSTEM', approvedAt: new Date().toISOString() });\n    return true;\n  }`
-  }
-];
+const file = 'src/components/screens/OrgSetupWizardScreen.tsx';
+let content = fs.readFileSync(file, 'utf8');
 
-replacements.forEach(r => {
-  content = content.replace(r.find, r.replace);
-});
+content = content.replace(
+  /icon={<Map className="w-4 h-4"\/>\s*case 3:/s,
+  `icon={<Map className="w-4 h-4" />} />
+    case 3:`
+);
 
-fs.writeFileSync('src/services/firestoreService.ts', content);
+content = content.replace(
+  /icon={<MapPin className="w-4 h-4"\/>\s*case 4:/s,
+  `icon={<MapPin className="w-4 h-4" />} />
+    case 4:`
+);
+
+fs.writeFileSync(file, content);
+console.log('Fixed file');

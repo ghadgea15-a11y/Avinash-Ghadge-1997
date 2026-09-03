@@ -165,7 +165,7 @@ export const CustomReportsView: React.FC<CustomReportsViewProps> = ({ userSessio
                 <p>Configure and run the report to see preview (max 10 rows shown).</p>
               </div>
             ) : (
-              <table className="w-full text-left text-xs whitespace-nowrap">
+              <table className="w-full text-left text-sm whitespace-nowrap">
                 <thead>
                   <tr className={`border-b ${isDark ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'}`}>
                     {Object.keys(previewData[0]).filter(k => typeof previewData[0][k] !== 'object').map(key => (

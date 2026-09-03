@@ -48,6 +48,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [companyCode, setCompanyCode] = useState('');
   const [validatedCompany, setValidatedCompany] = useState<CompanyTenant | null>(null);
   const [validatingCompany, setValidatingCompany] = useState(false);
+  const [ssoConfig, setSsoConfig] = useState<any | null>(null);
 
   const [emailOrId, setEmailOrId] = useState('');
   const [passwordOrPin, setPasswordOrPin] = useState('');
@@ -84,14 +85,22 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     const savedComp = SessionManager.getActiveCompany();
     const saved = SessionManager.getSavedCredentials();
     
-    if (savedComp) {
+    if (savedComp && savedComp.companyId !== 'GLOBAL_ADMIN' && savedComp.companyId !== 'GLOBAL-ADMIN') {
       setValidatedCompany(savedComp);
       setStep('CREDENTIALS');
-    } else if (saved && saved.companyCode) {
+    } else if (saved && saved.companyCode && saved.companyCode !== 'GLOBAL_ADMIN' && saved.companyCode !== 'GLOBAL-ADMIN') {
       // Background validate the saved company code
       setValidatingCompany(true);
       FirebaseAuthService.verifyCompanyCode(saved.companyCode)
-        .then(comp => {
+        .then(async comp => {
+          try {
+            const { IntegrationService } = await import('../../services/integrationService');
+            const sso = await IntegrationService.getSsoConfig(comp.companyId);
+            if (sso && sso.isEnabled) {
+               setSsoConfig(sso);
+            }
+          } catch(e) {}
+
           setValidatedCompany(comp);
           SessionManager.setActiveCompany(comp);
           setStep('CREDENTIALS');
@@ -114,8 +123,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   const handleCompanyCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyCode.trim()) {
+    const cleanCode = companyCode.trim().toUpperCase();
+    if (!cleanCode) {
       setError('Please enter a Company Code.');
+      return;
+    }
+
+    // PLATFORM OWNER / GLOBAL ADMIN INTERCEPTION:
+    // "GLOBAL-ADMIN" and "GLOBAL_ADMIN" are Platform Control Plane identifiers,
+    // not customer tenant codes. Route directly to the Platform Admin Portal.
+    if (cleanCode === 'GLOBAL-ADMIN' || cleanCode === 'GLOBAL_ADMIN') {
+      onNavigate('PLATFORM_LOGIN');
       return;
     }
 
@@ -123,7 +141,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     setValidatingCompany(true);
 
     try {
-      const comp = await FirebaseAuthService.verifyCompanyCode(companyCode.trim());
+      const comp = await FirebaseAuthService.verifyCompanyCode(cleanCode);
+      try {
+        const { IntegrationService } = await import('../../services/integrationService');
+        const sso = await IntegrationService.getSsoConfig(comp.companyId);
+        if (sso && sso.isEnabled) {
+           setSsoConfig(sso);
+        }
+      } catch(e) {}
       setValidatedCompany(comp);
       SessionManager.setActiveCompany(comp);
       setStep('CREDENTIALS');
@@ -164,26 +189,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         isPinMode: !emailOrId.includes('@')
       });
       
+      if (session.role === 'SUPER_ADMIN' || session.companyId === 'GLOBAL_ADMIN' || session.companyId === 'GLOBAL-ADMIN') {
+        SessionManager.clearActiveCompany();
+        SessionManager.setUserSession(session);
+        SessionManager.setSavedCredentials(emailOrId.trim(), '', rememberMe);
+        onLoginSuccess(session, null as any);
+        return;
+      }
+
       let resolvedCompany = validatedCompany;
       if (!resolvedCompany || resolvedCompany.companyId !== session.companyId) {
-        if (session.companyId === 'GLOBAL_ADMIN') {
-          resolvedCompany = {
-            companyId: 'GLOBAL_ADMIN',
-            companyLegalName: 'Super Administration',
-            brandName: 'System Core',
-            status: 'ACTIVE',
-            primaryColorHex: '#4f46e5',
-            secondaryColorHex: '#4338ca',
-            email: session.email,
-            maxEmployeesAllowed: 9999,
-            maxSitesAllowed: 9999,
-            allowedBranches: [],
-            enabledModules: [],
-            licenseTier: 'ENTERPRISE'
-          } as CompanyTenant;
-        } else {
-          resolvedCompany = await FirebaseAuthService.verifyCompanyCode(session.companyId);
-        }
+        resolvedCompany = await FirebaseAuthService.verifyCompanyCode(session.companyId);
         SessionManager.setActiveCompany(resolvedCompany);
       }
 
@@ -240,26 +256,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         emailOrId.trim()
       );
 
+      if (session.role === 'SUPER_ADMIN' || session.companyId === 'GLOBAL_ADMIN' || session.companyId === 'GLOBAL-ADMIN') {
+        SessionManager.clearActiveCompany();
+        SessionManager.setUserSession(session);
+        SessionManager.setSavedCredentials(emailOrId.trim(), '', rememberMe);
+        onLoginSuccess(session, null as any);
+        return;
+      }
+
       let resolvedCompany = validatedCompany;
       if (!resolvedCompany || resolvedCompany.companyId !== session.companyId) {
-        if (session.companyId === 'GLOBAL_ADMIN') {
-          resolvedCompany = {
-            companyId: 'GLOBAL_ADMIN',
-            companyLegalName: 'Super Administration',
-            brandName: 'System Core',
-            status: 'ACTIVE',
-            primaryColorHex: '#4f46e5',
-            secondaryColorHex: '#4338ca',
-            email: session.email,
-            maxEmployeesAllowed: 9999,
-            maxSitesAllowed: 9999,
-            allowedBranches: [],
-            enabledModules: [],
-            licenseTier: 'ENTERPRISE'
-          } as CompanyTenant;
-        } else {
-          resolvedCompany = await FirebaseAuthService.verifyCompanyCode(session.companyId);
-        }
+        resolvedCompany = await FirebaseAuthService.verifyCompanyCode(session.companyId);
         SessionManager.setActiveCompany(resolvedCompany);
       }
 
@@ -278,6 +285,28 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }
   };
 
+  
+  const handleSsoLogin = async () => {
+    if (!validatedCompany || !ssoConfig) return;
+    setGoogleLoading(true);
+    setError(null);
+    try {
+      const res = await FirebaseAuthService.signInWithSso(validatedCompany.companyId, ssoConfig);
+      if (res.userSession) {
+        if (res.userSession.companyId !== validatedCompany.companyId) {
+           throw new Error('SSO Account belongs to a different company.');
+        }
+        SessionManager.setUserSession(res.userSession);
+        onLoginSuccess(res.userSession, validatedCompany);
+      } else if (res.accountStatus === 'PENDING') {
+        throw new Error('SSO Auth successful, but account requires Admin approval.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'SSO Login failed.');
+      setGoogleLoading(false);
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setError(null);
     setGoogleLoading(true);
@@ -286,28 +315,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       if (res.userSession) {
         SessionManager.setUserSession(res.userSession);
         
+        if (res.userSession.role === 'SUPER_ADMIN' || res.userSession.companyId === 'GLOBAL_ADMIN' || res.userSession.companyId === 'GLOBAL-ADMIN') {
+          SessionManager.clearActiveCompany();
+          SessionManager.setUserSession(res.userSession);
+          onLoginSuccess(res.userSession, null as any);
+          return;
+        }
+
         // Ensure company is verified
         let resolvedCompany = validatedCompany;
         if (!resolvedCompany || resolvedCompany.companyId !== res.userSession.companyId) {
-            if (res.userSession.companyId === 'GLOBAL_ADMIN') {
-                 resolvedCompany = {
-                    companyId: 'GLOBAL_ADMIN',
-                    companyLegalName: 'Super Administration',
-                    brandName: 'System Core',
-                    status: 'ACTIVE',
-                    primaryColorHex: '#4f46e5',
-                    secondaryColorHex: '#4338ca',
-                    email: res.userSession.email,
-                    maxEmployeesAllowed: 9999,
-                    maxSitesAllowed: 9999,
-                    allowedBranches: [],
-                    enabledModules: [],
-                    licenseTier: 'ENTERPRISE'
-                  } as CompanyTenant;
-            } else {
-                 resolvedCompany = await FirebaseAuthService.verifyCompanyCode(res.userSession.companyId);
-            }
-            SessionManager.setActiveCompany(resolvedCompany);
+          resolvedCompany = await FirebaseAuthService.verifyCompanyCode(res.userSession.companyId);
+          SessionManager.setActiveCompany(resolvedCompany);
         }
         
         onLoginSuccess(res.userSession, resolvedCompany as CompanyTenant);
@@ -350,15 +369,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
+      if (enrollSession.role === 'SUPER_ADMIN' || enrollSession.companyId === 'GLOBAL_ADMIN' || enrollSession.companyId === 'GLOBAL-ADMIN') {
+        SessionManager.clearActiveCompany();
+        SessionManager.setUserSession(enrollSession);
+        SessionManager.setSavedCredentials(emailOrId.trim(), '', rememberMe);
+        onLoginSuccess(enrollSession, null as any);
+        return;
+      }
+
       let resolvedCompany = validatedCompany;
       if (!resolvedCompany || resolvedCompany.companyId !== enrollSession.companyId) {
-        if (enrollSession.companyId === 'GLOBAL_ADMIN') {
-          resolvedCompany = {
-            companyId: 'GLOBAL_ADMIN',
-            companyLegalName: 'Super Administration',
-            brandName: 'System Core'
-          } as any;
-        }
+        resolvedCompany = await FirebaseAuthService.verifyCompanyCode(enrollSession.companyId);
+        SessionManager.setActiveCompany(resolvedCompany);
       }
       
       SessionManager.setActiveCompany(resolvedCompany as any);
@@ -399,7 +421,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                       <span key={i}>{c}</span>
                    ))}
                 </div>
-                <p className="text-[10px] text-slate-400 mt-2">Save these in a secure place. They will not be shown again.</p>
+                <p className="text-[11px] text-slate-400 mt-2">Save these in a secure place. They will not be shown again.</p>
               </div>
             </div>
           )}
@@ -706,6 +728,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 </>
               )}
             </button>
+
+            <div className="pt-3 text-center border-t border-slate-100 dark:border-slate-800/60 mt-3">
+              <button
+                type="button"
+                onClick={() => onNavigate('PLATFORM_LOGIN')}
+                className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
+                  isDark ? 'text-amber-400 hover:text-amber-300' : 'text-amber-700 hover:text-amber-800'
+                } transition-colors`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Platform Owner or Global Admin? Access Portal &rarr;
+              </button>
+            </div>
           </form>
         ) : (
           <form onSubmit={handleLogin} className="space-y-3">
@@ -763,7 +798,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowKeypadModal(true)}
-                    className="text-[11px] font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 px-2 py-0.5 rounded-lg flex items-center gap-1 transition"
+                    className="text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 px-2 py-0.5 rounded-lg flex items-center gap-1 transition"
                   >
                     <KeyRound className="w-3 h-3" />
                     <span>Touch Keypad</span>
@@ -771,7 +806,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   <button
                     type="button"
                     onClick={() => onNavigate('FORGOT_PASSWORD')}
-                    className="text-[11px] font-semibold text-indigo-500 hover:text-indigo-600"
+                    className="text-xs font-semibold text-indigo-500 hover:text-indigo-600"
                   >
                     Forgot?
                   </button>
@@ -814,7 +849,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
             {/* Terms & Privacy acceptance notice */}
             <div className="pt-1 text-center">
-              <p className="text-[11px] text-slate-400">
+              <p className="text-xs text-slate-400">
                 By signing in, you agree to our{' '}
                 <button
                   type="button"

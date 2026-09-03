@@ -79,7 +79,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
           </div>
           <h2 className="text-xl font-bold text-white">Reset Security PIN / Password</h2>
           <p className="text-xs text-slate-400 mt-1">
-            Instructions will be sent to your registered email or SMS endpoint
+            Instructions will be sent to your registered email or SMS
           </p>
         </div>
 

@@ -393,7 +393,7 @@ export const OneMinuteAutoConnectModal: React.FC<OneMinuteAutoConnectModalProps>
                       }`}
                     >
                       <Icon className={`w-4 h-4 ${isActive ? 'animate-bounce' : ''}`} />
-                      <span className="text-[11px] font-medium leading-none">{st.label}</span>
+                      <span className="text-xs font-medium leading-none">{st.label}</span>
                     </div>
                   );
                 })}
@@ -412,7 +412,7 @@ export const OneMinuteAutoConnectModal: React.FC<OneMinuteAutoConnectModalProps>
                   </div>
                   <div>
                     <span className="text-slate-500 dark:text-slate-400 block">Protocol</span>
-                    <span className="font-semibold text-amber-400 font-mono text-[11px]">{probeResult.detectedProtocol}</span>
+                    <span className="font-semibold text-amber-400 font-mono text-xs">{probeResult.detectedProtocol}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 dark:text-slate-400 block">Round-Trip Latency</span>
@@ -423,7 +423,7 @@ export const OneMinuteAutoConnectModal: React.FC<OneMinuteAutoConnectModalProps>
 
               {/* Probe Logs Console */}
               <div className="bg-slate-950 rounded-xl border border-slate-800/80 p-4 font-mono text-xs text-slate-300 max-h-48 overflow-y-auto space-y-1">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-slate-500 dark:text-slate-400 text-[10px]">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-slate-500 dark:text-slate-400 text-[11px]">
                   <span>LIVE HARDWARE PROBE CONSOLE</span>
                   <span className="animate-pulse flex items-center gap-1 text-emerald-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ACTIVE
@@ -460,19 +460,19 @@ export const OneMinuteAutoConnectModal: React.FC<OneMinuteAutoConnectModalProps>
               {/* Summary Statistics */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Enrolled Users</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block">Enrolled Users</span>
                   <span className="text-lg font-bold text-white">{discoveredUsers.length}</span>
                 </div>
                 <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Auto-Mapped</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block">Auto-Mapped</span>
                   <span className="text-lg font-bold text-emerald-400">{exactMatches}</span>
                 </div>
                 <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Unmapped PINs</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block">Unmapped PINs</span>
                   <span className="text-lg font-bold text-amber-400">{unmappedCount}</span>
                 </div>
                 <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Clock Drift</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block">Clock Drift</span>
                   <span className="text-lg font-bold text-sky-400">0.0s (Synced)</span>
                 </div>
               </div>

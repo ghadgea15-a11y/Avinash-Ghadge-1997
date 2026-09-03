@@ -187,7 +187,7 @@ export const SuperAdminSupportScreen: React.FC<SuperAdminSupportScreenProps> = (
         <ShieldAlert className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
         <div className="space-y-1">
           <p className="font-bold">Principle of Least Privilege & Immutable Audit Contract</p>
-          <p className="text-[11px] opacity-80">
+          <p className="text-xs opacity-80">
             Super Admins are NOT members of any tenant company. When initiating support troubleshooting, an ephemeral session token with explicit reason is cryptographically recorded. Read-only access expires automatically.
           </p>
         </div>
@@ -206,7 +206,7 @@ export const SuperAdminSupportScreen: React.FC<SuperAdminSupportScreenProps> = (
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-sm">
             <thead className={`border-b ${isDark ? 'bg-slate-950/60 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'} font-semibold uppercase tracking-wider`}>
               <tr>
                 <th className="py-3 px-4">Status</th>
@@ -242,7 +242,7 @@ export const SuperAdminSupportScreen: React.FC<SuperAdminSupportScreenProps> = (
                   return (
                     <tr key={session.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[11px] font-bold ${
                           active 
                             ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                             : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
@@ -257,7 +257,7 @@ export const SuperAdminSupportScreen: React.FC<SuperAdminSupportScreenProps> = (
                         </div>
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className={`font-mono text-[11px] font-semibold ${
+                        <span className={`font-mono text-xs font-semibold ${
                           session.scope === 'SUPPORT_MUTATION' ? 'text-amber-500' : 'text-indigo-400'
                         }`}>
                           {session.scope}
@@ -266,10 +266,10 @@ export const SuperAdminSupportScreen: React.FC<SuperAdminSupportScreenProps> = (
                       <td className="py-3.5 px-4 whitespace-nowrap text-slate-400">
                         {session.superAdminEmail}
                       </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] text-slate-400">
+                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs text-slate-400">
                         {session.createdAt ? new Date(session.createdAt).toLocaleTimeString() : '--'}
                       </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] text-slate-400">
+                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs text-slate-400">
                         {session.expiresAt ? new Date(session.expiresAt).toLocaleTimeString() : '--'}
                       </td>
                       <td className="py-3.5 px-4 max-w-[200px] truncate text-slate-400">
@@ -279,7 +279,7 @@ export const SuperAdminSupportScreen: React.FC<SuperAdminSupportScreenProps> = (
                         {active && (
                           <button
                             onClick={() => handleRevokeSession(session.id, session.targetCompanyId)}
-                            className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500 hover:text-white transition"
+                            className="px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500 hover:text-white transition"
                           >
                             Revoke Now
                           </button>
@@ -346,7 +346,7 @@ export const SuperAdminSupportScreen: React.FC<SuperAdminSupportScreenProps> = (
                     <Eye className="w-4 h-4" />
                     <div>
                       <div>Read Only</div>
-                      <div className="text-[10px] font-normal opacity-70">Inspect logs & config</div>
+                      <div className="text-[11px] font-normal opacity-70">Inspect logs & config</div>
                     </div>
                   </button>
 
@@ -362,7 +362,7 @@ export const SuperAdminSupportScreen: React.FC<SuperAdminSupportScreenProps> = (
                     <Edit3 className="w-4 h-4" />
                     <div>
                       <div>Support Mutation</div>
-                      <div className="text-[10px] font-normal opacity-70">Fix corrupted states</div>
+                      <div className="text-[11px] font-normal opacity-70">Fix corrupted states</div>
                     </div>
                   </button>
                 </div>

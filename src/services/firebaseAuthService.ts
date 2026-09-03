@@ -46,19 +46,10 @@ export class FirebaseAuthService {
   static async verifyCompanyCode(companyCode: string): Promise<CompanyTenant> {
     const cleanCode = companyCode.trim().toUpperCase();
     
-    if (cleanCode === 'GLOBAL_ADMIN') {
-      return {
-        companyId: 'GLOBAL_ADMIN',
-        companyLegalName: 'Global Administrator',
-        brandName: 'Global Administrator',
-        licenseTier: 'ENTERPRISE',
-        allowedBranches: ['HQ'],
-        maxEmployeesAllowed: 9999,
-        maxSitesAllowed: 9999,
-        primaryColorHex: '#4f46e5',
-        secondaryColorHex: '#06b6d4',
-        status: 'ACTIVE'
-      };
+    // Explicit architectural separation: Platform Control Plane identifiers
+    // (GLOBAL-ADMIN / GLOBAL_ADMIN) are not customer tenant codes.
+    if (cleanCode === 'GLOBAL_ADMIN' || cleanCode === 'GLOBAL-ADMIN') {
+      throw new Error('GLOBAL-ADMIN is the Platform Control Plane identifier, not a customer tenant code. Please use the Platform Owner login portal.');
     }
 
     if (!cleanCode) {
@@ -458,6 +449,28 @@ export class FirebaseAuthService {
   /**
    * Google Sign-In Authentication Flow
    */
+
+  static async signInWithSso(
+    companyId: string,
+    ssoConfig: any
+  ): Promise<{ fbUser: FirebaseUser; userSession?: UserSession; isNewUser: boolean; accountStatus?: AccountStatus }> {
+    const { SsoAuthService } = await import('./ssoAuthService');
+    const result = await SsoAuthService.executeSsoHandshake(companyId, ssoConfig);
+    if (!result.success) {
+      throw new Error(result.error || 'SSO Authentication failed.');
+    }
+    const currentFbUser = auth.currentUser;
+    if (!currentFbUser) {
+      throw new Error('Authentication session lost during SSO handshake.');
+    }
+    return {
+      fbUser: currentFbUser,
+      userSession: result.userSession,
+      isNewUser: false,
+      accountStatus: (result.accountStatus || 'ACTIVE') as AccountStatus
+    };
+  }
+
   static async signInWithGoogle(): Promise<{
     fbUser: FirebaseUser;
     userSession?: UserSession;
@@ -919,7 +932,7 @@ export class FirebaseAuthService {
 
         let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (trustedCompanyId || companyId || '');
 
-        if (!isUserSuperAdmin && companyId === 'GLOBAL_ADMIN') {
+        if (!isUserSuperAdmin && (companyId === 'GLOBAL_ADMIN' || companyId === 'GLOBAL-ADMIN')) {
           throw new Error('Unauthorized: You are not a Global Administrator.');
         }
 
@@ -1334,7 +1347,7 @@ export class FirebaseAuthService {
 
       let userCompanyId = isUserSuperAdmin ? 'GLOBAL_ADMIN' : (trustedCompanyId || companyId || '');
 
-      if (!isUserSuperAdmin && companyId === 'GLOBAL_ADMIN') {
+      if (!isUserSuperAdmin && (companyId === 'GLOBAL_ADMIN' || companyId === 'GLOBAL-ADMIN')) {
         throw new Error('Unauthorized: You are not a Global Administrator.');
       }
 

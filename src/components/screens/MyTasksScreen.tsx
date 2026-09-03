@@ -68,20 +68,20 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
 
     if (diffHours < 0) {
       return (
-        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 animate-pulse flex items-center gap-1">
+        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 animate-pulse flex items-center gap-1">
           <AlertCircle className="w-3 h-3" /> SLA BREACHED
         </span>
       );
     }
     if (diffHours <= 4) {
       return (
-        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300 flex items-center gap-1">
+        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300 flex items-center gap-1">
           <Clock className="w-3 h-3" /> Due in {Math.ceil(diffHours)}h
         </span>
       );
     }
     return (
-      <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 flex items-center gap-1">
+      <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 flex items-center gap-1">
         <Clock className="w-3 h-3" /> {Math.ceil(diffHours)}h remaining
       </span>
     );
@@ -269,7 +269,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                    <span className={`px-2 py-0.5 text-[11px] font-bold rounded uppercase ${
                       task.priority === 'URGENT' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' :
                       task.priority === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300' :
                       'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
@@ -277,7 +277,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
                       {task.priority || 'MEDIUM'}
                     </span>
 
-                    <span className={`px-2 py-0.5 text-[10px] font-semibold rounded ${
+                    <span className={`px-2 py-0.5 text-[11px] font-semibold rounded ${
                       task.status === 'COMPLETED' || task.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
                       task.status === 'PENDING_VERIFICATION' ? 'bg-amber-100 text-amber-700' :
                       task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
@@ -293,7 +293,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
                   <p className="text-xs text-slate-600 dark:text-slate-400">{task.description}</p>
                 </div>
 
-                <div className="text-right text-[11px] text-slate-400 font-mono">
+                <div className="text-right text-xs text-slate-400 font-mono">
                   {new Date(task.createdAt).toLocaleDateString()}
                 </div>
               </div>
@@ -303,7 +303,7 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
                 <div className="mt-4 pt-3 border-t">
                   <div className="text-xs font-bold mb-2 flex items-center justify-between">
                     <span>Task Checklist Points:</span>
-                    <span className="text-[11px] text-slate-400 font-normal">
+                    <span className="text-xs text-slate-400 font-normal">
                       {task.checklist.filter((c: any) => c.done).length} / {task.checklist.length} Completed
                     </span>
                   </div>
@@ -466,13 +466,13 @@ export const MyTasksScreen: React.FC<Props> = ({ userSession, company, onNavigat
                           alt="Preview" 
                           className="max-h-40 mx-auto rounded-lg object-contain" 
                         />
-                        <p className="text-[11px] text-indigo-600 font-medium">Click to change photo</p>
+                        <p className="text-xs text-indigo-600 font-medium">Click to change photo</p>
                       </div>
                     ) : (
                       <div className="space-y-2 py-2">
                         <Camera className="w-8 h-8 mx-auto text-slate-400" />
                         <p className="text-xs font-semibold text-slate-900 dark:text-slate-300">Tap to Take Photo or Choose File</p>
-                        <p className="text-[10px] text-slate-400">JPEG, PNG up to 10MB</p>
+                        <p className="text-[11px] text-slate-400">JPEG, PNG up to 10MB</p>
                       </div>
                     )}
                   </label>

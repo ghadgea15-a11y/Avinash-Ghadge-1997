@@ -84,7 +84,7 @@ export const ThreeWayMatchScreen: React.FC<ThreeWayMatchScreenProps> = ({
   const getVarianceBadge = (type: string) => {
     if (type === 'NONE') return null;
     return (
-       <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200 ml-2">
+       <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200 ml-2">
           {type.replace(/_/g, ' ')}
        </span>
     );
@@ -167,7 +167,7 @@ export const ThreeWayMatchScreen: React.FC<ThreeWayMatchScreenProps> = ({
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold tracking-wide \${getStatusBadge(record.matchStatus)}`}>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold tracking-wide \${getStatusBadge(record.matchStatus)}`}>
                           {record.matchStatus.replace(/_/g, ' ')}
                         </span>
                       </td>

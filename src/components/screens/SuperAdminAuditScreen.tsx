@@ -41,7 +41,6 @@ export const SuperAdminAuditScreen: React.FC<SuperAdminAuditScreenProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAction, setSelectedAction] = useState<string>('ALL');
-  useBackNavigation(!!selectedAction, () => setSelectedAction(null as any), 'selectedAction');
   const [selectedLog, setSelectedLog] = useState<PlatformAuditLog | null>(null);
   useBackNavigation(!!selectedLog, () => setSelectedLog(null as any), 'selectedLog');
 
@@ -223,7 +222,7 @@ export const SuperAdminAuditScreen: React.FC<SuperAdminAuditScreenProps> = ({
       {/* Audit Log Table */}
       <div className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-sm">
             <thead className={`border-b ${isDark ? 'bg-slate-950/60 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'} font-semibold uppercase tracking-wider`}>
               <tr>
                 <th className="py-3.5 px-4">Timestamp</th>
@@ -259,11 +258,11 @@ export const SuperAdminAuditScreen: React.FC<SuperAdminAuditScreenProps> = ({
                       }`}
                       onClick={() => setSelectedLog(log)}
                     >
-                      <td className="py-3.5 px-4 font-mono text-[11px] whitespace-nowrap text-slate-400">
+                      <td className="py-3.5 px-4 font-mono text-xs whitespace-nowrap text-slate-400">
                         {typeof log.timestamp === 'string' ? log.timestamp.replace('T', ' ').substring(0, 19) : 'N/A'}
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[11px] font-bold ${
                           log.action.includes('SUSPEND') 
                             ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' 
                             : log.action.includes('CREATE') 
@@ -281,7 +280,7 @@ export const SuperAdminAuditScreen: React.FC<SuperAdminAuditScreenProps> = ({
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         {log.targetTenantId ? (
-                          <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                          <div className="flex items-center gap-1.5 font-mono text-xs">
                             <Building2 className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
                             <span className="font-bold text-cyan-600 dark:text-cyan-400">{log.targetTenantId}</span>
                           </div>
@@ -341,45 +340,45 @@ export const SuperAdminAuditScreen: React.FC<SuperAdminAuditScreenProps> = ({
             <div className="space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <span className="text-slate-400 block mb-1 text-[11px]">Action</span>
+                  <span className="text-slate-400 block mb-1 text-xs">Action</span>
                   <span className="font-mono font-bold text-indigo-500">{selectedLog.action}</span>
                 </div>
                 <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <span className="text-slate-400 block mb-1 text-[11px]">Timestamp</span>
+                  <span className="text-slate-400 block mb-1 text-xs">Timestamp</span>
                   <span className="font-mono text-slate-300 dark:text-slate-300">
                     {typeof selectedLog.timestamp === 'string' ? selectedLog.timestamp : 'N/A'}
                   </span>
                 </div>
                 <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <span className="text-slate-400 block mb-1 text-[11px]">Actor</span>
+                  <span className="text-slate-400 block mb-1 text-xs">Actor</span>
                   <span className="font-semibold">{selectedLog.actorEmail}</span>
-                  <span className="block text-[10px] text-slate-400 mt-0.5">UID: {selectedLog.actorUid}</span>
+                  <span className="block text-[11px] text-slate-400 mt-0.5">UID: {selectedLog.actorUid}</span>
                 </div>
                 <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <span className="text-slate-400 block mb-1 text-[11px]">Target Scope</span>
+                  <span className="text-slate-400 block mb-1 text-xs">Target Scope</span>
                   <span className="font-semibold">{selectedLog.targetTenantId ? `Tenant: ${selectedLog.targetTenantId}` : 'Platform Global'}</span>
-                  {selectedLog.targetId && <span className="block text-[10px] text-slate-400 mt-0.5">Target ID: {selectedLog.targetId}</span>}
+                  {selectedLog.targetId && <span className="block text-[11px] text-slate-400 mt-0.5">Target ID: {selectedLog.targetId}</span>}
                 </div>
               </div>
 
               {selectedLog.reason && (
                 <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <span className="text-slate-400 block mb-1 text-[11px]">Justification / Reason</span>
+                  <span className="text-slate-400 block mb-1 text-xs">Justification / Reason</span>
                   <p className="text-slate-300">{selectedLog.reason}</p>
                 </div>
               )}
 
               {selectedLog.correlationId && (
                 <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <span className="text-slate-400 block mb-1 text-[11px]">Correlation ID</span>
+                  <span className="text-slate-400 block mb-1 text-xs">Correlation ID</span>
                   <span className="font-mono text-indigo-400">{selectedLog.correlationId}</span>
                 </div>
               )}
 
               {selectedLog.after && (
                 <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <span className="text-slate-400 block mb-1.5 text-[11px]">Mutation State (After Diff)</span>
-                  <pre className="font-mono text-[11px] p-2.5 rounded-lg bg-black/40 text-emerald-400 overflow-x-auto">
+                  <span className="text-slate-400 block mb-1.5 text-xs">Mutation State (After Diff)</span>
+                  <pre className="font-mono text-xs p-2.5 rounded-lg bg-black/40 text-emerald-400 overflow-x-auto">
                     {JSON.stringify(selectedLog.after, null, 2)}
                   </pre>
                 </div>
@@ -387,8 +386,8 @@ export const SuperAdminAuditScreen: React.FC<SuperAdminAuditScreenProps> = ({
 
               {selectedLog.before && (
                 <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <span className="text-slate-400 block mb-1.5 text-[11px]">Previous State (Before Diff)</span>
-                  <pre className="font-mono text-[11px] p-2.5 rounded-lg bg-black/40 text-amber-400 overflow-x-auto">
+                  <span className="text-slate-400 block mb-1.5 text-xs">Previous State (Before Diff)</span>
+                  <pre className="font-mono text-xs p-2.5 rounded-lg bg-black/40 text-amber-400 overflow-x-auto">
                     {JSON.stringify(selectedLog.before, null, 2)}
                   </pre>
                 </div>

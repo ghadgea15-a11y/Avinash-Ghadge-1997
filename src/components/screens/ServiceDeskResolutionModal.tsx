@@ -195,7 +195,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
                 <h3 className="font-bold text-sm text-black dark:text-white dark:text-slate-100">
                   Submit Ticket Resolution
                 </h3>
-                <span className="px-2 py-0.5 text-[11px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-md border border-indigo-200 dark:border-indigo-800">
+                <span className="px-2 py-0.5 text-xs font-mono font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-md border border-indigo-200 dark:border-indigo-800">
                   {ticket.ticketNumber}
                 </span>
               </div>
@@ -239,7 +239,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
 
             {/* SLA Status Indicator */}
             <div className="shrink-0 flex items-center gap-2">
-              <div className={`px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1.5 border ${
+              <div className={`px-2.5 py-1 rounded-lg font-bold text-xs flex items-center gap-1.5 border ${
                 isPastDue 
                   ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-300 dark:border-rose-800' 
                   : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
@@ -283,7 +283,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
           <div>
             <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1 flex items-center justify-between">
               <span>Root Cause Analysis (RCA) <span className="text-rose-500">*</span></span>
-              <span className="text-[10px] text-slate-400 font-normal">Identify origin/cause of fault</span>
+              <span className="text-[11px] text-slate-400 font-normal">Identify origin/cause of fault</span>
             </label>
             <textarea
               rows={2}
@@ -299,7 +299,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
           <div>
             <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1 flex items-center justify-between">
               <span>Corrective & Preventive Action (CAPA) <span className="text-rose-500">*</span></span>
-              <span className="text-[10px] text-slate-400 font-normal">Actions to fix & prevent recurrence</span>
+              <span className="text-[11px] text-slate-400 font-normal">Actions to fix & prevent recurrence</span>
             </label>
             <textarea
               rows={2}
@@ -315,7 +315,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
           <div>
             <label className="block text-xs font-semibold text-slate-900 dark:text-slate-300 mb-1 flex items-center justify-between">
               <span>Executive Resolution Summary <span className="text-rose-500">*</span></span>
-              <span className="text-[10px] text-slate-400 font-normal">Summary of completed work</span>
+              <span className="text-[11px] text-slate-400 font-normal">Summary of completed work</span>
             </label>
             <textarea
               rows={3}
@@ -336,7 +336,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
             {/* Existing Vault Evidence selector */}
             {existingEvidence.length > 0 && (
               <div className="space-y-1.5 bg-white dark:bg-slate-950 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                   Select existing evidence from Ticket Vault:
                 </p>
                 <div className="max-h-28 overflow-y-auto space-y-1">
@@ -356,9 +356,9 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
                         <div className="flex items-center gap-2 truncate">
                           <Paperclip className="w-3 h-3 shrink-0" />
                           <span className="truncate">{att.fileName}</span>
-                          <span className="text-[10px] text-slate-400">({att.evidenceType})</span>
+                          <span className="text-[11px] text-slate-400">({att.evidenceType})</span>
                         </div>
-                        <span className="text-[10px] font-bold">
+                        <span className="text-[11px] font-bold">
                           {isSelected ? '✓ Selected' : '+ Link'}
                         </span>
                       </button>
@@ -381,7 +381,7 @@ export const ServiceDeskResolutionModal: React.FC<ServiceDeskResolutionModalProp
                 />
               </label>
               {newFiles.length > 0 && (
-                <div className="mt-1 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
+                <div className="mt-1 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
                   {newFiles.length} new file(s) selected to upload upon submission.
                 </div>
               )}

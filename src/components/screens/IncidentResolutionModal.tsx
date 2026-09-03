@@ -165,7 +165,7 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
           {activeTab === 'INVESTIGATE' && (
             <form id="inv-form" onSubmit={handleInvestigate} className="space-y-4">
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Immediate Action Taken *</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Immediate Action Taken *</label>
                 <textarea
                   required
                   value={invForm.immediateAction}
@@ -176,7 +176,7 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Root Cause Analysis (RCA) *</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Root Cause Analysis (RCA) *</label>
                 <textarea
                   required
                   value={invForm.rootCause}
@@ -187,7 +187,7 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Corrective Action *</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Corrective Action *</label>
                 <textarea
                   required
                   value={invForm.correctiveAction}
@@ -199,7 +199,7 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
               </div>
               
               <div className="flex flex-col">
-                 <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">
+                 <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">
                     Evidence Document Link {incident.severity === 'CRITICAL' && <span className="text-rose-500">* Required for CRITICAL</span>}
                  </label>
                  <input 
@@ -219,7 +219,7 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
                   Escalating this incident will notify management and A3/A4 leadership. It will breach the site-level SLA.
                </p>
                <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Escalation Reason *</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Escalation Reason *</label>
                 <textarea
                   value={escReason}
                   onChange={e => setEscReason(e.target.value)}
@@ -243,7 +243,7 @@ export const IncidentResolutionModal: React.FC<IncidentResolutionModalProps> = (
                   By closing this incident, you verify that all corrective actions have been implemented and evidence has been reviewed.
                </p>
                <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Verification & Closure Notes *</label>
+                <label className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1 block">Verification & Closure Notes *</label>
                 <textarea
                   value={closeNotes}
                   onChange={e => setCloseNotes(e.target.value)}

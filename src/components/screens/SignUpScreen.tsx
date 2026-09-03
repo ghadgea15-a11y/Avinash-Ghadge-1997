@@ -286,7 +286,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             <Sparkles className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
             <div>
               <p className="font-bold">Reserved System Identity Detected</p>
-              <p className="text-[11px] text-amber-200 mt-0.5">
+              <p className="text-xs text-amber-200 mt-0.5">
                 You are initializing a Super Administrator identity.
               </p>
             </div>
@@ -307,7 +307,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   setGoogleStepUser(null);
                   setError(null);
                 }}
-                className="text-[11px] text-slate-400 hover:text-white transition underline"
+                className="text-xs text-slate-400 hover:text-white transition underline"
               >
                 Cancel
               </button>
@@ -342,13 +342,13 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               </div>
 
               {verifiedCompany && (
-                <div className="mt-2 text-[11px] text-emerald-400 font-medium flex items-center gap-1">
+                <div className="mt-2 text-xs text-emerald-400 font-medium flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Verified: {verifiedCompany.brandName} ({verifiedCompany.companyLegalName})</span>
                 </div>
               )}
               {codeError && (
-                <div className="mt-2 text-[11px] text-rose-400 font-medium flex items-center gap-1">
+                <div className="mt-2 text-xs text-rose-400 font-medium flex items-center gap-1">
                   <AlertCircle className="w-3.5 h-3.5" />
                   <span>{codeError}</span>
                 </div>
@@ -455,7 +455,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   <AlertCircle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />
                   <div className="flex-1">
                     <p className="font-semibold">{error}</p>
-                    <p className="text-[11px] text-rose-200 mt-0.5">
+                    <p className="text-xs text-rose-200 mt-0.5">
                       You can register directly below using Email & Password.
                     </p>
                   </div>
@@ -465,7 +465,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
 
             <div className="relative flex items-center justify-center">
               <div className="border-t border-slate-700/50 w-full" />
-              <span className={`text-[11px] uppercase font-mono tracking-wider px-3 ${isDark ? 'bg-slate-950 text-slate-500' : 'bg-white text-slate-400'} absolute`}>
+              <span className={`text-xs uppercase font-mono tracking-wider px-3 ${isDark ? 'bg-slate-950 text-slate-500' : 'bg-white text-slate-400'} absolute`}>
                 Or Email & Password
               </span>
             </div>
@@ -508,14 +508,14 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   </div>
 
                   {verifiedCompany && (
-                    <div className="mt-1.5 p-2 bg-emerald-950/60 border border-emerald-800/80 rounded-lg text-[11px] text-emerald-300 flex items-center gap-1.5">
+                    <div className="mt-1.5 p-2 bg-emerald-950/60 border border-emerald-800/80 rounded-lg text-xs text-emerald-300 flex items-center gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       <span>Verified: <strong>{verifiedCompany.brandName}</strong> ({verifiedCompany.companyLegalName})</span>
                     </div>
                   )}
 
                   {codeError && (
-                    <div className="mt-1.5 text-[11px] text-rose-400 font-medium flex items-center gap-1">
+                    <div className="mt-1.5 text-xs text-rose-400 font-medium flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
                       <span>{codeError}</span>
                     </div>

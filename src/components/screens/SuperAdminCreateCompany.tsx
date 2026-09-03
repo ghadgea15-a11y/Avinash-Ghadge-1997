@@ -72,7 +72,6 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
 
   // Module Entitlements (Default all enabled)
   const [selectedModules, setSelectedModules] = useState<string[]>(MASTER_APP_MODULES.map(m => m.key));
-  useBackNavigation(!!selectedModules, () => setSelectedModules(null as any), 'selectedModules');
 
   // State
   const [loading, setLoading] = useState(false);
@@ -292,7 +291,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   <button 
                     type="button" 
                     onClick={handleAutoGenerateCode}
-                    className="text-[10px] text-amber-400 hover:underline flex items-center gap-0.5"
+                    className="text-[11px] text-amber-400 hover:underline flex items-center gap-0.5"
                   >
                     <Sparkles className="w-3 h-3" /> Auto
                   </button>
@@ -455,7 +454,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                       isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
                     } focus:outline-none focus:border-amber-500 font-mono`}
                   />
-                  <span className="absolute right-3 text-[10px] text-slate-400 pointer-events-none">
+                  <span className="absolute right-3 text-[11px] text-slate-400 pointer-events-none">
                     .logsheetmuster.online
                   </span>
                 </div>
@@ -536,7 +535,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                 <p className="text-xs text-slate-400">Select which operational modules this company tenant is allowed to access.</p>
               </div>
 
-              <div className="flex gap-2 text-[10px]">
+              <div className="flex gap-2 text-[11px]">
                 <button
                   type="button"
                   onClick={selectAllModules}
@@ -581,7 +580,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                     </div>
                     <div>
                       <div className="text-xs font-bold leading-tight">{mod.name}</div>
-                      <div className="text-[10px] opacity-75 mt-0.5 line-clamp-2">{mod.description}</div>
+                      <div className="text-[11px] opacity-75 mt-0.5 line-clamp-2">{mod.description}</div>
                       <span className="inline-block mt-1 text-[9px] font-bold px-1.5 py-0.2 rounded uppercase bg-slate-800/60 text-slate-300">
                         {mod.category}
                       </span>

@@ -8,8 +8,12 @@ export interface AppNavState {
 
 export function useAppNavigation(initialScreen: PhaseAScreen) {
   const [navState, setNavState] = useState<AppNavState>(() => {
-    if (typeof window !== 'undefined' && window.history.state && window.history.state.screen) {
-      return window.history.state;
+    try {
+      if (typeof window !== 'undefined' && window.history && window.history.state && window.history.state.screen) {
+        return window.history.state;
+      }
+    } catch {
+      // In sandboxed iframes, accessing window.history.state may throw SecurityError
     }
     return { screen: initialScreen };
   });
@@ -22,36 +26,53 @@ export function useAppNavigation(initialScreen: PhaseAScreen) {
         setNavState({ screen: initialScreen });
       }
     };
-    window.addEventListener('popstate', handlePopState);
+    
+    try {
+      window.addEventListener('popstate', handlePopState);
+    } catch {}
     
     // Initialize if empty
-    if (!window.history.state || !window.history.state.screen) {
-      window.history.replaceState({ screen: initialScreen }, '', `?screen=${initialScreen}`);
+    try {
+      if (typeof window !== 'undefined' && window.history && (!window.history.state || !window.history.state.screen)) {
+        window.history.replaceState({ screen: initialScreen }, '', `?screen=${initialScreen}`);
+      }
+    } catch {
+      // In sandboxed cross-origin iframes, replaceState throws SecurityError; ignore safely
     }
     
-    return () => window.removeEventListener('popstate', handlePopState);
+    return () => {
+      try {
+        window.removeEventListener('popstate', handlePopState);
+      } catch {}
+    };
   }, [initialScreen]);
 
   const navigate = useCallback((screen: PhaseAScreen, payload?: Record<string, any>, replace = false) => {
     const newState = { screen, ...payload };
     setNavState(newState);
     
-    const url = new URL(window.location.href);
-    url.searchParams.set('screen', screen);
-    if (payload) {
-      Object.keys(payload).forEach(key => {
-        if (payload[key]) {
-          url.searchParams.set(key, String(payload[key]));
-        } else {
-          url.searchParams.delete(key);
+    try {
+      if (typeof window !== 'undefined' && window.history) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('screen', screen);
+        if (payload) {
+          Object.keys(payload).forEach(key => {
+            if (payload[key]) {
+              url.searchParams.set(key, String(payload[key]));
+            } else {
+              url.searchParams.delete(key);
+            }
+          });
         }
-      });
-    }
 
-    if (replace) {
-      window.history.replaceState(newState, '', url.pathname + url.search);
-    } else {
-      window.history.pushState(newState, '', url.pathname + url.search);
+        if (replace) {
+          window.history.replaceState(newState, '', url.pathname + url.search);
+        } else {
+          window.history.pushState(newState, '', url.pathname + url.search);
+        }
+      }
+    } catch {
+      // Push/replace state may be blocked in sandboxed iframe; state is still updated in React state
     }
   }, []);
 
@@ -59,26 +80,34 @@ export function useAppNavigation(initialScreen: PhaseAScreen) {
     setNavState(prev => {
       const newState = { ...prev, ...payload };
       
-      const url = new URL(window.location.href);
-      Object.keys(payload).forEach(key => {
-        if (payload[key] !== undefined && payload[key] !== null) {
-          url.searchParams.set(key, String(payload[key]));
-        } else {
-          url.searchParams.delete(key);
+      try {
+        if (typeof window !== 'undefined' && window.history) {
+          const url = new URL(window.location.href);
+          Object.keys(payload).forEach(key => {
+            if (payload[key] !== undefined && payload[key] !== null) {
+              url.searchParams.set(key, String(payload[key]));
+            } else {
+              url.searchParams.delete(key);
+            }
+          });
+          
+          if (replace) {
+            window.history.replaceState(newState, '', url.pathname + url.search);
+          } else {
+            window.history.pushState(newState, '', url.pathname + url.search);
+          }
         }
-      });
-      
-      if (replace) {
-        window.history.replaceState(newState, '', url.pathname + url.search);
-      } else {
-        window.history.pushState(newState, '', url.pathname + url.search);
+      } catch {
+        // Push/replace state may be blocked in sandboxed iframe
       }
       return newState;
     });
   }, []);
 
   const goBack = useCallback(() => {
-    window.history.back();
+    try {
+      window.history.back();
+    } catch {}
   }, []);
 
   return {

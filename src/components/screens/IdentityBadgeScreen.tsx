@@ -333,7 +333,7 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
                         <div>
                           <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-black dark:text-white">{empName}</h3>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-bold uppercase tracking-tighter ${getStatusColor(badge.status)}`}>
+                            <span className={`text-[11px] px-1.5 py-0.5 rounded-full border font-bold uppercase tracking-tighter ${getStatusColor(badge.status)}`}>
                               {badge.status}
                             </span>
                           </div>
@@ -341,7 +341,7 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
                             <span className="flex items-center gap-1">
                               <IdCard size={12} /> {badge.badgeNumber}
                             </span>
-                            <span className="flex items-center gap-1 uppercase tracking-wider font-medium text-[10px]">
+                            <span className="flex items-center gap-1 uppercase tracking-wider font-medium text-[11px]">
                               {badge.badgeType}
                             </span>
                           </div>
@@ -349,7 +349,7 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
                       </div>
                       <div className="text-right flex items-center gap-4">
                         <div className="hidden md:block">
-                          <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Expiry Date</p>
+                          <p className="text-[11px] text-slate-400 uppercase tracking-widest mb-1">Expiry Date</p>
                           <p className={`text-xs font-medium ${new Date(badge.expiryDate).getTime() < Date.now() ? 'text-red-500' : 'text-slate-900'}`}>
                             {new Date(badge.expiryDate).toLocaleDateString()}
                           </p>
@@ -396,7 +396,7 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
                       <IdCard size={28} />
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] text-indigo-100 uppercase tracking-widest font-bold">Identity Card</p>
+                      <p className="text-[11px] text-indigo-100 uppercase tracking-widest font-bold">Identity Card</p>
                       <p className="text-xs font-mono">{activeCompany.companyId}</p>
                     </div>
                   </div>
@@ -426,7 +426,7 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
 
                   <div className="flex justify-between items-end border-t border-white/20 pt-4">
                     <div>
-                      <p className="text-[10px] text-indigo-200 uppercase tracking-wider mb-0.5">Badge Number</p>
+                      <p className="text-[11px] text-indigo-200 uppercase tracking-wider mb-0.5">Badge Number</p>
                       <p className="font-mono text-sm">{selectedBadge.badgeNumber}</p>
                     </div>
                     <div className="w-16 h-16 bg-white rounded-lg p-1 flex items-center justify-center shadow">
@@ -489,7 +489,7 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
                     </div>
                     <div className="flex justify-between text-xs">
                       <span className="text-slate-500 dark:text-slate-400">QR Key</span>
-                      <span className="text-black dark:text-white font-mono text-[10px] bg-slate-100 px-1 rounded">{selectedBadge.qrIdentifier.substring(0, 15)}...</span>
+                      <span className="text-black dark:text-white font-mono text-[11px] bg-slate-100 px-1 rounded">{selectedBadge.qrIdentifier.substring(0, 15)}...</span>
                     </div>
                     <div className="flex justify-between text-xs">
                       <span className="text-slate-500 dark:text-slate-400">Last Updated</span>
@@ -743,11 +743,11 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
                               </p>
                             )}
                             <div className="flex items-center gap-4 mt-3">
-                              <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold uppercase tracking-widest">
                                 <User size={12} />
                                 {event.actorName}
                               </div>
-                              <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold uppercase tracking-widest">
                                 <Clock size={12} />
                                 {new Date(event.timestamp).toLocaleString()}
                               </div>
@@ -797,7 +797,7 @@ export const IdentityBadgeScreen: React.FC<IdentityBadgeScreenProps> = ({
       <div className="hidden print:flex fixed inset-0 w-full h-full bg-white text-black items-center justify-center z-[9999]">
         <div className="w-[54mm] h-[86mm] border border-slate-300 rounded-xl bg-white relative overflow-hidden flex flex-col shadow-sm" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
           <div className="h-14 bg-indigo-600 flex items-center justify-center p-2 text-white text-center">
-             <h1 className="font-bold text-[10px] leading-tight">{activeCompany.brandName || activeCompany.companyLegalName || 'Company Identity'}</h1>
+             <h1 className="font-bold text-[11px] leading-tight">{activeCompany.brandName || activeCompany.companyLegalName || 'Company Identity'}</h1>
           </div>
           <div className="flex justify-center -mt-6 z-10 relative">
             <div className="w-16 h-16 rounded-full border-4 border-white bg-slate-100 flex items-center justify-center overflow-hidden shadow-sm">

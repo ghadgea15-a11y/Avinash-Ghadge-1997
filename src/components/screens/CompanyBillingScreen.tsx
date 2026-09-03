@@ -224,7 +224,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
                   />
                 </div>
                 {usagePercentage >= 90 && (
-                  <p className="text-[11px] text-rose-400 mt-2 flex items-center gap-1 font-medium">
+                  <p className="text-xs text-rose-400 mt-2 flex items-center gap-1 font-medium">
                     <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                     You are approaching your plan seat limit. Consider upgrading for uninterrupted onboarding.
                   </p>
@@ -280,7 +280,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
                       )}
                       <span className="font-semibold text-xs text-black dark:text-slate-200">{ent.moduleId.replace('_', ' ')}</span>
                     </div>
-                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${ent.enabled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400'}`}>
+                    <span className={`text-[11px] uppercase font-bold px-2 py-0.5 rounded-full ${ent.enabled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400'}`}>
                       {ent.enabled ? 'Enabled' : 'Disabled'}
                     </span>
                   </div>
@@ -318,7 +318,7 @@ export function CompanyBillingScreen({ userSession, onNavigate }: Props) {
                           <div className="flex items-center justify-between mb-1">
                             <h4 className="font-bold text-sm text-black dark:text-white">{p.planName}</h4>
                             {isCurrent && (
-                              <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded bg-indigo-600 text-white">Current</span>
+                              <span className="text-[11px] uppercase font-extrabold px-2 py-0.5 rounded bg-indigo-600 text-white">Current</span>
                             )}
                           </div>
                           <div className="text-lg font-black mb-2">

@@ -1,0 +1,2 @@
+src/server/authRoutes.ts(1361,22): error TS2345: Argument of type '{ success: boolean; empId: string; pin: string; employeeName: string; tempId: any; }' is not assignable to parameter of type 'never'.
+src/server/authRoutes.ts(1363,22): error TS2345: Argument of type '{ success: boolean; error: any; tempId: any; }' is not assignable to parameter of type 'never'.

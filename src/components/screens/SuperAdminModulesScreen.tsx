@@ -35,7 +35,6 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
   const [saving, setSaving] = useState(false);
   const [companies, setCompanies] = useState<CompanyTenant[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
-  useBackNavigation(!!selectedCompanyId, () => setSelectedCompanyId(null as any), 'selectedCompanyId');
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const [searchFilter, setSearchFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
@@ -175,7 +174,7 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <p className="text-xs font-bold text-slate-200">{selectedCompany.brandName}</p>
-                <p className="text-[10px] text-slate-400 font-mono">Tier: {selectedCompany.licenseTier}</p>
+                <p className="text-[11px] text-slate-400 font-mono">Tier: {selectedCompany.licenseTier}</p>
               </div>
               <div className="px-3 py-1.5 rounded-xl bg-cyan-950 border border-cyan-800 text-cyan-300 text-xs font-bold font-mono">
                 {enabledModules.length} / {MASTER_APP_MODULES.length} Enabled
@@ -210,13 +209,13 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
         <div className="flex items-center gap-2">
           <button
             onClick={selectAll}
-            className="px-3 py-1 rounded-lg text-[11px] font-semibold bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-800"
+            className="px-3 py-1 rounded-lg text-xs font-semibold bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-800"
           >
             Enable All
           </button>
           <button
             onClick={deselectAll}
-            className="px-3 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+            className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
           >
             Disable All
           </button>
@@ -254,12 +253,12 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
                       {mod.category}
                     </span>
                   </div>
-                  <p className="text-[11px] opacity-80">{mod.description}</p>
+                  <p className="text-xs opacity-80">{mod.description}</p>
                   <p className="text-[9px] font-mono opacity-60">KEY: {mod.key}</p>
                 </div>
 
                 <div className="shrink-0 mt-0.5">
-                  <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${
+                  <span className={`px-2 py-1 rounded-lg text-[11px] font-bold uppercase ${
                     isEnabled 
                       ? 'bg-cyan-500 text-slate-950 shadow-md' 
                       : 'bg-slate-800 text-slate-400'

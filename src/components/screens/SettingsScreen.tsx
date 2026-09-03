@@ -347,11 +347,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/40 border border-slate-800">
             <div className="space-y-0.5">
               <span className="text-xs font-bold block">App Lock PIN</span>
-              <span className="text-[10px] text-slate-400">Used to quickly unlock your session</span>
+              <span className="text-[11px] text-slate-400">Used to quickly unlock your session</span>
             </div>
             <button
               onClick={() => setShowPinSetup(true)}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold transition shadow-lg"
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition shadow-lg"
             >
               Setup / Change PIN
             </button>
@@ -360,7 +360,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <div className="space-y-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800 animate-in slide-in-from-top-2">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold">Set 4-Digit Security PIN</h4>
-              <button onClick={() => setShowPinSetup(false)} className="text-[10px] text-slate-400 hover:text-white">Cancel</button>
+              <button onClick={() => setShowPinSetup(false)} className="text-[11px] text-slate-400 hover:text-white">Cancel</button>
             </div>
 
             <div className="space-y-3">
@@ -395,7 +395,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               />
 
               {pinError && (
-                <div className="flex items-center gap-2 text-rose-400 text-[10px] bg-rose-400/10 p-2 rounded-lg border border-rose-400/20">
+                <div className="flex items-center gap-2 text-rose-400 text-[11px] bg-rose-400/10 p-2 rounded-lg border border-rose-400/20">
                   <AlertCircle size={12} />
                   <span>{pinError}</span>
                 </div>
@@ -428,19 +428,27 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <Bell className="w-5 h-5 text-rose-400" />
               <span>Notification Config</span>
             </button>
-            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
+            <button 
+              onClick={() => onNavigate('COMPANY_MANAGEMENT')}
+              className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
               <Building2 className="w-5 h-5 text-indigo-400" />
               <span>Agency Profile</span>
             </button>
-            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
+            <button 
+              onClick={() => onNavigate('COMPANY_MANAGEMENT')}
+              className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
               <Sliders className="w-5 h-5 text-indigo-400" />
               <span>Branding Setup</span>
             </button>
-            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
+            <button 
+              onClick={() => onNavigate('SETUP_AUDIT')}
+              className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
               <Database className="w-5 h-5 text-indigo-400" />
               <span>Firebase Rules</span>
             </button>
-            <button className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
+            <button 
+              onClick={() => onNavigate('SETUP_AUDIT')}
+              className="w-full p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-2 transition text-slate-900 dark:text-slate-300">
               <FileText className="w-5 h-5 text-indigo-400" />
               <span>Security Audit Log</span>
             </button>
@@ -491,7 +499,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-800/80">
             <div className="space-y-0.5">
               <span className="font-bold block">In-App Notifications</span>
-              <span className="text-[10px] text-slate-400">Receive alerts within the application</span>
+              <span className="text-[11px] text-slate-400">Receive alerts within the application</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -507,7 +515,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-800/80">
             <div className="space-y-0.5">
               <span className="font-bold block">Email Notifications</span>
-              <span className="text-[10px] text-slate-400">Receive summaries and important alerts via email</span>
+              <span className="text-[11px] text-slate-400">Receive summaries and important alerts via email</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -523,7 +531,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-800/80">
             <div className="space-y-0.5">
               <span className="font-bold block">Push Notifications (Mobile)</span>
-              <span className="text-[10px] text-slate-400">Receive native push notifications on devices</span>
+              <span className="text-[11px] text-slate-400">Receive native push notifications on devices</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -562,7 +570,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-800/80">
             <div className="space-y-0.5">
               <span className="text-xs font-bold block">High-Accuracy GPS Location</span>
-              <span className="text-[10px] text-slate-400 font-mono">Real-time geofence validation for attendance</span>
+              <span className="text-[11px] text-slate-400 font-mono">Real-time geofence validation for attendance</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -588,7 +596,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-800/80">
             <div className="space-y-0.5">
               <span className="text-xs font-bold block">Auto-Sync Queue on Network Reconnect</span>
-              <span className="text-[10px] text-slate-400">Automatically upload local offline mutations</span>
+              <span className="text-[11px] text-slate-400">Automatically upload local offline mutations</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -643,7 +651,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </div>
             <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
               {testSuiteReport.results.map((r, idx) => (
-                <div key={idx} className="flex items-center justify-between text-[11px] py-0.5 border-b border-slate-900">
+                <div key={idx} className="flex items-center justify-between text-xs py-0.5 border-b border-slate-900">
                   <span className="text-slate-300">{r.name}</span>
                   <span className={`font-mono font-bold ${r.passed ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {r.passed ? '✓ PASS' : '✗ FAIL'}
@@ -664,12 +672,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
-            <span className="text-[10px] text-slate-400 block">App Version</span>
+            <span className="text-[11px] text-slate-400 block">App Version</span>
             <span className="font-mono font-bold">v1.0.0 (Build 2026.07)</span>
           </div>
 
           <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
-            <span className="text-[10px] text-slate-400 block">License Tier</span>
+            <span className="text-[11px] text-slate-400 block">License Tier</span>
             <span className="font-mono font-bold text-indigo-400">
               {activeCompany?.licenseTier || 'ENTERPRISE'}
             </span>

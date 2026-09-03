@@ -444,7 +444,7 @@ export const ProcurementSrmScreen: React.FC<ProcurementSrmScreenProps> = ({
         >
           <Sparkles className="w-4 h-4 text-amber-400" />
           <span>3-in-1 Procurement Hub (स्टॉक + वेंडर + तुलना)</span>
-          <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+          <span className="px-2 py-0.5 text-[11px] font-black rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
             NEW
           </span>
         </button>
