@@ -19,7 +19,11 @@ vi.mock('firebase/firestore', () => ({
   where: vi.fn(),
   getDocs: vi.fn().mockResolvedValue({ docs: [] }),
   getDoc: vi.fn(),
-  setDoc: vi.fn(), serverTimestamp: vi.fn().mockReturnValue('mock-timestamp'), addDoc: vi.fn().mockResolvedValue({ id: 'mock-id' }),
+  setDoc: vi.fn(),
+  updateDoc: vi.fn().mockResolvedValue(true),
+  deleteDoc: vi.fn().mockResolvedValue(true),
+  serverTimestamp: vi.fn().mockReturnValue('mock-timestamp'),
+  addDoc: vi.fn().mockResolvedValue({ id: 'mock-id' }),
   runTransaction: vi.fn().mockImplementation((db, callback) => callback(mockTransaction))
 }));
 

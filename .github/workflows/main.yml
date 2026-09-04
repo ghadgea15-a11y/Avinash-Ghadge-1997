@@ -25,7 +25,7 @@ jobs:
       run: npm run lint
       
     - name: Security Regression & E2E Tests
-      run: npx vitest run tests/
+      run: npx vitest run
       
     - name: Web Build
       run: npm run build
@@ -43,12 +43,14 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
         
     - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
+      uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: '8.7'
         
+    - name: Ensure Firebase Config
+      run: cp google-services.json android/app/google-services.json || true
+        
     - name: Build Android APK
-      run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
