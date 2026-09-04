@@ -1,3 +1,5 @@
+import { db } from '../../firebase';
+import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
 import React, { useState, useEffect } from 'react';
 import { UserSession, CompanyTenant } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
@@ -24,7 +26,13 @@ export const SupervisorRollCall: React.FC<Props> = ({ userSession, activeCompany
         userSession,
         activeCompany.companyId,
         (data) => {
-          setEmployees(data.filter(e => e.status === 'ACTIVE' || !e.status));
+          
+          let emps = data.filter(e => e.status === 'ACTIVE' || !e.status);
+          if (userSession.role === 'SUPERVISOR' || (userSession.roles && userSession.roles.includes('SUPERVISOR'))) {
+            emps = emps.filter(e => (e.assignedSiteId === userSession.branchId || e.siteId === userSession.branchId) && e.role !== 'SUPERVISOR' && e.role !== 'COMPANY_ADMIN');
+          }
+          setEmployees(emps);
+  
           setLoading(false);
         }
       );
@@ -33,22 +41,36 @@ export const SupervisorRollCall: React.FC<Props> = ({ userSession, activeCompany
     return () => { if (unsubscribe) unsubscribe(); };
   }, [activeCompany.companyId, userSession]);
 
-    const handleMark = async (emp: any, status: 'PRESENT' | 'ABSENT' | 'HALFDAY') => {
+    const handleMark = async (emp: any, status: 'PRESENT' | 'ABSENT' | 'HALFDAY' | 'OVERTIME' | 'LATE' | 'WEEKLY_OFF') => {
     const dismiss = showLoading(`Marking ${emp.firstName} as ${status}...`);
     try {
-      const logId = `ATT-${emp.id}-${Date.now()}`;
-      const success = await FirestoreService.saveAttendance(activeCompany.companyId, {
-        id: logId,
-        logId,
+      const todayStr = new Date().toISOString().split('T')[0];
+      const logId = `ATT-${emp.id}-${todayStr}`;
+      const attQuery = query(collection(db, 'companies', activeCompany.companyId, 'attendance'), where('employeeId', '==', emp.id), where('date', '==', todayStr));
+      const existSnap = await getDocs(attQuery);
+      
+      let existingRecord = existSnap.empty ? null : existSnap.docs[0].data();
+      
+      const payload: any = {
+        id: existSnap.empty ? logId : existSnap.docs[0].id,
         employeeId: emp.id,
         userName: `${emp.firstName} ${emp.lastName}`,
-        action: status === 'PRESENT' ? 'PUNCH_IN' : (status === 'ABSENT' ? 'ABSENT' : 'HALFDAY'),
-        timestamp: new Date().toISOString(),
+        action: (status === 'PRESENT' || status === 'LATE' || status === 'OVERTIME') ? 'PUNCH_IN' : status,
+        date: todayStr,
+        attendanceDate: todayStr,
         siteId: emp.assignedSiteId || 'SITE-DEFAULT',
         locationDetails: 'Marked by Supervisor',
         markedBy: userSession.userId || userSession.uid || '',
         status: status as any
-      } as any);
+      };
+
+      if (!existingRecord || !existingRecord.checkInTime) {
+        payload.checkInTime = (status === 'PRESENT' || status === 'LATE' || status === 'OVERTIME') ? new Date().toISOString() : undefined;
+      }
+      
+      const attRef = doc(db, 'companies', activeCompany.companyId, 'attendance', payload.id);
+      await setDoc(attRef, { ...payload, updatedAt: new Date().toISOString() }, { merge: true });
+      const success = true;
       dismiss();
       if (success) {
         showSuccess(`Marked ${emp.firstName} as ${status}`);
@@ -107,27 +129,48 @@ export const SupervisorRollCall: React.FC<Props> = ({ userSession, activeCompany
                     <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md text-xs font-mono">{emp.designation || 'Staff'}</span>
                   </td>
                   <td className="py-3 px-6 text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-1.5">
                       <button 
                         onClick={() => handleMark(emp, 'PRESENT')}
-                        className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors"
+                        className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded transition-colors text-[10px] font-bold uppercase tracking-wider"
                         title="Mark Present"
                       >
-                        <CheckCircle className="w-5 h-5" />
+                        P
                       </button>
                       <button 
                         onClick={() => handleMark(emp,'HALFDAY')}
-                        className="p-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors"
+                        className="p-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded transition-colors text-[10px] font-bold uppercase tracking-wider"
                         title="Mark Half-Day"
                       >
-                        <AlertCircle className="w-5 h-5" />
+                        HD
                       </button>
                       <button 
                         onClick={() => handleMark(emp, 'ABSENT')}
-                        className="p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-colors"
+                        className="p-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded transition-colors text-[10px] font-bold uppercase tracking-wider"
                         title="Mark Absent"
                       >
-                        <XCircle className="w-5 h-5" />
+                        A
+                      </button>
+                      <button 
+                        onClick={() => handleMark(emp, 'LATE')}
+                        className="p-1.5 bg-orange-50 text-orange-600 hover:bg-orange-100 rounded transition-colors text-[10px] font-bold uppercase tracking-wider"
+                        title="Mark Late"
+                      >
+                        L
+                      </button>
+                      <button 
+                        onClick={() => handleMark(emp, 'OVERTIME')}
+                        className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded transition-colors text-[10px] font-bold uppercase tracking-wider"
+                        title="Mark Overtime"
+                      >
+                        OT
+                      </button>
+                      <button 
+                        onClick={() => handleMark(emp, 'WEEKLY_OFF')}
+                        className="p-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded transition-colors text-[10px] font-bold uppercase tracking-wider"
+                        title="Weekly Off"
+                      >
+                        WO
                       </button>
                     </div>
                   </td>

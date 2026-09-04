@@ -53,7 +53,7 @@ export const CompanyBranchesTab: React.FC<CompanyBranchesTabProps> = ({
         code: editingBranch.code.trim().toUpperCase(),
         city: editingBranch.city?.trim() || 'Mumbai',
         address: editingBranch.address?.trim() || 'Headquarters',
-        status: editingBranch.status || 'ACTIVE',
+        status: editingBranch.status as "ACTIVE" | "INACTIVE" || 'ACTIVE',
         regionId: editingBranch.regionId || 'default-region',
         createdAt: editingBranch.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()

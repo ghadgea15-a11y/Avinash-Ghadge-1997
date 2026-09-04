@@ -562,19 +562,109 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
     setStatusMsg({ type: 'SUCCESS', text: `Patrol Tour ${newTour.tourNumber} started.` });
   };
 
+  const handleBootstrapDefaultCheckpoints = async (targetSiteId?: string) => {
+    if (!companyId) return [];
+    const sId = targetSiteId || (selectedSiteId !== 'ALL' ? selectedSiteId : (sites[0]?.id || 'SITE-01'));
+    const siteObj = sites.find(s => s.id === sId);
+    const siteLat = siteObj?.latitude || 19.0760;
+    const siteLng = siteObj?.longitude || 72.8777;
+
+    const defaultCps: PatrolCheckpointRecord[] = [
+      {
+        id: `CHK-${sId}-01`,
+        companyId,
+        siteId: sId,
+        checkpointName: 'Main Server Room Vault Door',
+        code: 'QR_T-APEX_SERVER_01',
+        qrCode: 'QR_T-APEX_SERVER_01',
+        nfcTagId: '04:A2:8B:1F:90:77',
+        tagUid: '04:A2:8B:1F:90:77',
+        locationDescription: 'Building B, Floor 2, Server Room Ingress',
+        sequenceOrder: 1,
+        geofenceRadius: 30,
+        geofenceRadiusMeters: 30,
+        latitude: siteLat,
+        longitude: siteLng,
+        gpsCoordinates: {
+          latitude: siteLat,
+          longitude: siteLng,
+          accuracy: 10
+        },
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: `CHK-${sId}-02`,
+        companyId,
+        siteId: sId,
+        checkpointName: 'Perimeter Fence Gate East',
+        code: 'QR_EAST_FENCE_12_SEC',
+        qrCode: 'QR_EAST_FENCE_12_SEC',
+        nfcTagId: '04:B5:7C:2E:33:91',
+        tagUid: '04:B5:7C:2E:33:91',
+        locationDescription: 'Outer perimeter boundary marker 12',
+        sequenceOrder: 2,
+        geofenceRadius: 35,
+        geofenceRadiusMeters: 35,
+        latitude: siteLat + 0.0008,
+        longitude: siteLng + 0.0008,
+        gpsCoordinates: {
+          latitude: siteLat + 0.0008,
+          longitude: siteLng + 0.0008,
+          accuracy: 10
+        },
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: `CHK-${sId}-03`,
+        companyId,
+        siteId: sId,
+        checkpointName: 'South Parking Structure Geofence Post',
+        code: 'QR_SOUTH_PARK_03',
+        qrCode: 'QR_SOUTH_PARK_03',
+        nfcTagId: '04:9D:3A:44:81:10',
+        tagUid: '04:9D:3A:44:81:10',
+        locationDescription: 'Multi-level parking basement egress ramp',
+        sequenceOrder: 3,
+        geofenceRadius: 25,
+        geofenceRadiusMeters: 25,
+        latitude: siteLat - 0.0006,
+        longitude: siteLng - 0.0008,
+        gpsCoordinates: {
+          latitude: siteLat - 0.0006,
+          longitude: siteLng - 0.0008,
+          accuracy: 10
+        },
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    ];
+
+    setIsLoading(true);
+    for (const cp of defaultCps) {
+      await FirestoreService.savePatrolCheckpoint(companyId, cp);
+    }
+    setCheckpoints(prev => {
+      const filtered = prev.filter(p => !defaultCps.some(d => d.id === p.id));
+      return [...defaultCps, ...filtered];
+    });
+    setIsLoading(false);
+    setStatusMsg({ type: 'SUCCESS', text: `Initialized 3 standard checkpoints for ${siteObj?.name || 'Site'}.` });
+    return defaultCps;
+  };
+
   const handleStartAdHocTour = async () => {
     if (!companyId) return;
-    const targetSiteId = selectedSiteId !== 'ALL' ? selectedSiteId : (sites[0]?.id || '');
-    if (!targetSiteId) {
-      setStatusMsg({ type: 'ERROR', text: 'Please select a site first.' });
-      return;
-    }
+    const targetSiteId = selectedSiteId !== 'ALL' ? selectedSiteId : (sites[0]?.id || 'SITE-01');
 
     const siteObj = sites.find(s => s.id === targetSiteId);
-    const siteCps = checkpoints.filter(c => c.siteId === targetSiteId);
+    let siteCps = checkpoints.filter(c => c.siteId === targetSiteId);
     if (siteCps.length === 0) {
-      setStatusMsg({ type: 'ERROR', text: 'No checkpoints found for this site. Please add checkpoints first.' });
-      return;
+      siteCps = await handleBootstrapDefaultCheckpoints(targetSiteId);
     }
 
     const newTour: PatrolTourRecord = {
@@ -590,7 +680,7 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
       assignedGuardName: userSession.fullName,
       actualStart: new Date().toISOString(),
       status: 'IN_PROGRESS',
-      totalCheckpoints: siteCps.length,
+      totalCheckpoints: siteCps.length || 1,
       completedCheckpointsCount: 0,
       completionPercentage: 0,
       checkpointScans: [],
@@ -1937,24 +2027,35 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                   <h3 className="text-sm font-bold text-black dark:text-white dark:text-slate-100">Site Checkpoints & Physical QR Tags</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Maintain physical QR code locations, sequence ordering, and geofence coordinates.</p>
                 </div>
-                <button
-                  onClick={() => {
-                    setEditingCheckpoint(null);
-                    setCheckpointForm({
-                      siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""),
-                      checkpointName: '',
-                      code: '',
-                      locationDescription: '',
-                      sequenceOrder: checkpoints.length + 1,
-                      geofenceRadius: 50
-                    });
-                    setIsCheckpointModalOpen(true);
-                  }}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Checkpoint</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleBootstrapDefaultCheckpoints()}
+                    className={`px-3.5 py-2 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 ${
+                      isDark ? 'border-slate-700 hover:bg-slate-800 text-slate-200' : 'border-slate-300 hover:bg-slate-100 text-slate-900'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>⚡ Standard T-APEX Points</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingCheckpoint(null);
+                      setCheckpointForm({
+                        siteId: selectedSiteId !== "ALL" ? selectedSiteId : (sites[0]?.id || ""),
+                        checkpointName: '',
+                        code: '',
+                        locationDescription: '',
+                        sequenceOrder: checkpoints.length + 1,
+                        geofenceRadius: 50
+                      });
+                      setIsCheckpointModalOpen(true);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Checkpoint</span>
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -2037,8 +2138,15 @@ export const SiteOperationsScreen: React.FC<SiteOperationsScreenProps> = ({
                 ))}
 
                 {filteredCheckpoints.length === 0 && (
-                  <div className="col-span-full py-12 text-center text-slate-400 italic">
-                    No checkpoints found. Click "Add Checkpoint" to define site points.
+                  <div className="col-span-full py-12 text-center text-slate-400 space-y-3">
+                    <p className="italic">No checkpoints found for this site.</p>
+                    <button
+                      onClick={() => handleBootstrapDefaultCheckpoints()}
+                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow inline-flex items-center gap-2"
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span>⚡ Initialize Standard T-APEX Checkpoints (3 Points)</span>
+                    </button>
                   </div>
                 )}
               </div>

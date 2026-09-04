@@ -8,6 +8,7 @@ import {
 import { UserSession, PhaseAScreen, SubscriptionPlan, CompanySubscription, CompanyTenant, MASTER_APP_MODULES } from '../../types';
 import { SubscriptionService } from '../../services/subscriptionService';
 import { FirestoreService } from '../../services/firestoreService';
+import { SuperAdminService } from '../../services/superAdminService';
 import { useTheme } from '../../context/ThemeContext';
 import { useFeedback } from '../../context/ActionFeedbackContext';
 
@@ -60,7 +61,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
 
   // New Plan Creation Modal
   const [showCreatePlanModal, setShowCreatePlanModal] = useState(false);
-  useBackNavigation(!!showCreatePlanModal, () => setShowCreatePlanModal(null as any), 'showCreatePlanModal');
+  useBackNavigation(!!showCreatePlanModal, () => setShowCreatePlanModal(false), 'showCreatePlanModal');
   const [newPlan, setNewPlan] = useState<Partial<SubscriptionPlan>>({
     planCode: '',
     planName: '',
@@ -147,7 +148,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
   const createDefaultPlans = async () => {
     try {
       await Promise.all([
-        (FirestoreService as any).saveSubscriptionPlan({
+        SubscriptionService.saveSubscriptionPlan({
           planId: 'PLAN_STARTER',
           planCode: 'STARTER',
           planName: 'Starter',
@@ -167,7 +168,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }),
-        (FirestoreService as any).saveSubscriptionPlan({
+        SubscriptionService.saveSubscriptionPlan({
           planId: 'PLAN_PRO',
           planCode: 'PRO',
           planName: 'Professional',
@@ -187,7 +188,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }),
-        (FirestoreService as any).saveSubscriptionPlan({
+        SubscriptionService.saveSubscriptionPlan({
           planId: 'PLAN_ENTERPRISE',
           planCode: 'ENTERPRISE',
           planName: 'Enterprise Elite',
@@ -284,7 +285,27 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
       }
 
       dismiss();
-      showSuccess(`✓ Successfully Updated SaaS subscription for ${selectedTenant.companyName}`);
+
+      // Record immutable audit event
+      await SuperAdminService.logPlatformAudit(userSession, {
+        action: 'UPDATE_SUBSCRIPTION_PLAN',
+        target: 'CompanyTenant',
+        targetTenantId: selectedTenant.companyId,
+        targetId: selectedTenant.companyId,
+        reason: `Super Admin assigned/updated subscription plan ${targetPlanId} (${billingCycle}) for ${selectedTenant.companyName}`,
+        before: selectedTenant.subscription ? {
+          planId: selectedTenant.subscription.planId,
+          status: selectedTenant.subscription.status,
+          billingCycle: selectedTenant.subscription.billingCycle
+        } : null,
+        after: {
+          planId: targetPlanId,
+          billingCycle,
+          status: subStatus
+        }
+      });
+
+      showSuccess(`✓ Successfully Updated SaaS subscription for ${selectedTenant.companyName} - Logged to Audit Trail`);
       setSelectedTenant(null);
       fetchData();
     } catch (err: any) {
@@ -324,7 +345,7 @@ export const SuperAdminSubscriptionsScreen: React.FC<SuperAdminSubscriptionsScre
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      await (FirestoreService as any).saveSubscriptionPlan(planToSave);
+      await SubscriptionService.saveSubscriptionPlan(planToSave);
       dismiss();
       showSuccess('✅ Subscription Plan Created');
       setShowCreatePlanModal(false);

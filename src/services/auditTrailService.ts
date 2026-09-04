@@ -195,16 +195,50 @@ export class AuditTrailService {
 
   /**
    * Directly records an audit record.
+   * Supports both object signature ({ companyId, actorUid, ... }) and positional args (companyId, userId, action, module, resourceId, metadata)
    */
-  public static async recordEvent(record: any): Promise<void> {
+  public static async recordEvent(
+    recordOrCompanyId: any,
+    userId?: string,
+    action?: string,
+    module?: string,
+    resourceId?: string,
+    metadata?: any
+  ): Promise<void> {
     try {
-      const logEntry = {
-        ...record,
-        timestamp: record.timestamp ? Timestamp.fromDate(new Date(record.timestamp)) : serverTimestamp()
-      };
+      let logEntry: any;
+      if (typeof recordOrCompanyId === 'string') {
+        logEntry = {
+          companyId: recordOrCompanyId,
+          userId: userId || 'SYSTEM',
+          action: action || 'UNKNOWN_ACTION',
+          module: module || 'SYSTEM',
+          resourceId: resourceId || 'N/A',
+          metadata: metadata || {},
+          status: 'SUCCESS',
+          timestamp: serverTimestamp()
+        };
+      } else if (recordOrCompanyId && typeof recordOrCompanyId === 'object') {
+        const rec = recordOrCompanyId;
+        logEntry = {
+          companyId: rec.companyId || 'UNKNOWN',
+          userId: rec.actorUid || rec.userId || 'SYSTEM',
+          userName: rec.actorName || rec.userName || 'System',
+          role: rec.role || 'USER',
+          action: rec.action || `${rec.actionType || 'EVENT'}:${rec.resourceType || 'RESOURCE'}:${rec.resourceId || 'N/A'}`,
+          module: rec.module || 'SYSTEM',
+          resourceId: rec.resourceId || 'N/A',
+          metadata: rec.metadata || rec.details || {},
+          status: rec.status || 'SUCCESS',
+          timestamp: rec.timestamp ? Timestamp.fromDate(new Date(rec.timestamp)) : serverTimestamp()
+        };
+      } else {
+        return;
+      }
+
       await addDoc(collection(db, 'audit_trails'), logEntry);
     } catch (error) {
-      console.error('[AuditTrailService] recordEvent failed:', error);
+      console.warn('[AuditTrailService] recordEvent notice:', error);
     }
   }
 }

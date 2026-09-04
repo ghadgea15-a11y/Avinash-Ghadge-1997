@@ -50,7 +50,7 @@ export const CompanyDepartmentsTab: React.FC<CompanyDepartmentsTabProps> = ({
         name: editingDept.name.trim(),
         code: editingDept.code.trim().toUpperCase(),
         description: editingDept.description?.trim() || '',
-        status: editingDept.status || 'ACTIVE',
+        status: editingDept.status as "ACTIVE" | "INACTIVE" || 'ACTIVE',
         createdAt: editingDept.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };

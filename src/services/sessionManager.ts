@@ -6,8 +6,23 @@ const STORAGE_KEYS = {
   REMEMBER_ME: 'lsm_remember_me_v1',
   BIOMETRIC_BINDING: 'lsm_biometric_binding_v1',
   IDLE_TIMEOUT: 'lsm_idle_timeout_mins_v1',
-  OFFLINE_QUEUE: 'lsm_offline_queue_v1'
+  OFFLINE_QUEUE: 'lsm_offline_queue_v1',
+  SUPPORT_IMPERSONATION: 'lsm_support_impersonation_v1'
 };
+
+export interface SupportImpersonationContext {
+  token: string;
+  sessionId: string;
+  targetCompanyId: string;
+  targetCompanyName: string;
+  superAdminUid: string;
+  superAdminEmail: string;
+  reason: string;
+  scope: 'READ_ONLY' | 'SUPPORT_MUTATION' | 'MUTATION';
+  durationMinutes: number;
+  createdAt: number;
+  expiresAt: number;
+}
 
 // Resilient memory storage fallback if localStorage is unavailable
 const memoryStorage: Map<string, string> = new Map();
@@ -163,5 +178,33 @@ export class SessionManager {
     } else {
       removeItem(STORAGE_KEYS.REMEMBER_ME);
     }
+  }
+
+  static getSupportImpersonation(): SupportImpersonationContext | null {
+    try {
+      const data = getItem(STORAGE_KEYS.SUPPORT_IMPERSONATION);
+      if (!data) return null;
+      const ctx: SupportImpersonationContext = JSON.parse(data);
+      if (Date.now() > ctx.expiresAt) {
+        this.clearSupportImpersonation();
+        return null;
+      }
+      return ctx;
+    } catch {
+      return null;
+    }
+  }
+
+  static setSupportImpersonation(ctx: SupportImpersonationContext): void {
+    setItem(STORAGE_KEYS.SUPPORT_IMPERSONATION, JSON.stringify(ctx));
+  }
+
+  static clearSupportImpersonation(): void {
+    removeItem(STORAGE_KEYS.SUPPORT_IMPERSONATION);
+  }
+
+  static isSupportImpersonationActive(): boolean {
+    const ctx = this.getSupportImpersonation();
+    return !!ctx && Date.now() < ctx.expiresAt;
   }
 }

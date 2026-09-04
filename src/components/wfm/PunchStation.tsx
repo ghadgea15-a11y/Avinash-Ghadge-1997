@@ -28,6 +28,7 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
   const [pendingAction, setPendingAction] = useState<'PUNCH_IN' | 'PUNCH_OUT' | null>(null);
   const [loadingSites, setLoadingSites] = useState(true);
   const [selfie, setSelfie] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
 
   const isSupervisorOrAbove = ['PLATFORM_SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_MANAGER', 'SUPERVISOR', 'SITE_INCHARGE'].includes(userSession.role);
@@ -110,19 +111,34 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
     );
   }
 
-  const handlePunchClick = (action: 'PUNCH_IN' | 'PUNCH_OUT') => {
-    if (action === 'PUNCH_IN' && !selfie) {
-      setIsCameraActive(true);
-      setPendingAction(action);
-      return;
-    }
-
-    if (geofenceEval?.result === 'OUTSIDE_GEOFENCE' && isSupervisorOrAbove) {
+  const handlePunchClick = (action: 'PUNCH_IN' | 'PUNCH_OUT', overrideSelfie?: string) => {
+    const currentSelfie = overrideSelfie || selfie;
+    
+    // 1. Geofence Check
+    if (geofenceEval?.result === 'OUTSIDE_GEOFENCE') {
+      if (!isSupervisorOrAbove) {
+        showError('You must be inside the site geofence to punch.');
+        return;
+      }
+      if (!currentSelfie) {
+        setPendingAction(action);
+        fileInputRef.current?.click();
+        return;
+      }
       setPendingAction(action);
       setShowOverrideModal(true);
       return;
     }
-    executePunch(action, false);
+
+    // 2. Normal Punch Selfie Check
+    if (!currentSelfie) {
+      setPendingAction(action);
+      fileInputRef.current?.click();
+      return;
+    }
+
+    // 3. Normal Execution
+    executePunch(action, false, currentSelfie);
   };
 
   const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,25 +146,27 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setSelfie(reader.result as string);
+        const captured = reader.result as string;
+        setSelfie(captured);
         setIsCameraActive(false);
         if (pendingAction) {
-          handlePunchClick(pendingAction);
+          handlePunchClick(pendingAction, captured);
         }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const executePunch = async (action: 'PUNCH_IN' | 'PUNCH_OUT', isOverride: boolean = false) => {
+  const executePunch = async (action: 'PUNCH_IN' | 'PUNCH_OUT', isOverride: boolean = false, overrideSelfie?: string) => {
+    const activeSelfie = overrideSelfie || selfie;
     if (!gpsLocation) {
       showError('GPS location is required for attendance validation.');
       acquireLocation();
       return;
     }
 
-    if (action === 'PUNCH_IN' && !selfie) {
-      showError('Identity verification photo is required for Punch-In.');
+    if (!activeSelfie) {
+      showError('Identity verification photo is required for Attendance.');
       setIsCameraActive(true);
       return;
     }
@@ -176,19 +194,18 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
           selectedSite?.name || 'Selected Site',
           gpsPayload,
           'Web Terminal / AI Vision Verified',
-          selfie || undefined,
+          activeSelfie || undefined,
           'NOT_REQUIRED',
           isOverride,
           isOverride ? overrideReason : undefined
         );
       } else {
-        const attendanceId = `ATT-${rosterId}`;
+        const attendanceId = `ATT-${userSession.employeeId || userSession.userId}-${todayDate}`;
         res = await FirestoreService.punchOut(
           activeCompany.companyId,
-          attendanceId,
-          selectedShift,
+          rosterId,
+          userSession.employeeId || userSession.userId,
           gpsPayload,
-          'NOT_REQUIRED',
           isOverride,
           isOverride ? overrideReason : undefined
         );
@@ -276,6 +293,7 @@ export const PunchStation: React.FC<Props> = ({ userSession, activeCompany }) =>
                   capture="user" 
                   accept="image/*" 
                   className="hidden" 
+                  ref={fileInputRef}
                   onChange={handleCapture}
                 />
               </label>

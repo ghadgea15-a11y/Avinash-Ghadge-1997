@@ -21,6 +21,8 @@ import { setDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { TotpService } from '../../services/totpService';
 import { CompanyTenant, UserSession, UserRole, PhaseAScreen } from '../../types';
+import { PlatformGlobalConfig } from '../../types/platform';
+import { SuperAdminService } from '../../services/superAdminService';
 import { FirebaseAuthService } from '../../services/firebaseAuthService';
 import { SessionManager } from '../../services/sessionManager';
 import { AppLogo } from '../common/AppLogo';
@@ -67,6 +69,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [mfaResolver, setMfaResolver] = useState<any | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaError, setMfaError] = useState<string | null>(null);
+
+  // Platform Global Config for Maintenance Mode
+  const [globalConfig, setGlobalConfig] = useState<PlatformGlobalConfig | null>(null);
+
+  useEffect(() => {
+    const unsub = SuperAdminService.subscribeToGlobalConfig((cfg) => {
+      setGlobalConfig(cfg);
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     // 1. If activeCompany is already provided via props, use it
@@ -197,6 +209,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         return;
       }
 
+      // Enforce Platform Maintenance Mode for all non-Super-Admin users
+      if (globalConfig?.maintenanceMode) {
+        const customMsg = globalConfig.maintenanceMessage || 
+          globalConfig.maintenanceBannerMessage || 
+          'Platform-wide scheduled maintenance is underway. Workspaces are temporarily placed in read/write lockdown.';
+        setError(`Access Denied: Platform is currently under Maintenance Mode. Super Admin Notice: "${customMsg}"`);
+        setLoading(false);
+        return;
+      }
+
       let resolvedCompany = validatedCompany;
       if (!resolvedCompany || resolvedCompany.companyId !== session.companyId) {
         resolvedCompany = await FirebaseAuthService.verifyCompanyCode(session.companyId);
@@ -264,6 +286,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         return;
       }
 
+      // Enforce Platform Maintenance Mode for all non-Super-Admin users
+      if (globalConfig?.maintenanceMode) {
+        const customMsg = globalConfig.maintenanceMessage || 
+          globalConfig.maintenanceBannerMessage || 
+          'Platform-wide scheduled maintenance is underway. Workspaces are temporarily placed in read/write lockdown.';
+        setMfaError(`Access Denied: Platform is currently under Maintenance Mode. Super Admin Notice: "${customMsg}"`);
+        setLoading(false);
+        return;
+      }
+
       let resolvedCompany = validatedCompany;
       if (!resolvedCompany || resolvedCompany.companyId !== session.companyId) {
         resolvedCompany = await FirebaseAuthService.verifyCompanyCode(session.companyId);
@@ -276,10 +308,41 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       onLoginSuccess(session, resolvedCompany as CompanyTenant);
     } catch (err: unknown) {
       if (err instanceof Error) {
+        if (err.message === 'MFA_ENROLLMENT_REQUIRED' || (err as any).message?.includes('ENROLLMENT')) {
+          try {
+            const userEmail = emailOrId.trim() || 'user';
+            const setup = await TotpService.createMfaSetup({ accountName: userEmail });
+            setMfaSetupData(setup);
+            setEnrollSession(mfaResolver?.tempSession || (err as any).resolver?.tempSession);
+            setStep('MFA_ENROLL');
+            setMfaCode('');
+            setMfaError(null);
+            return;
+          } catch (enrollErr: any) {
+            console.error('Failed to start MFA enrollment:', enrollErr);
+          }
+        }
         setMfaError(err.message);
       } else {
-        setMfaError('MFA Verification failed.');
+        setMfaError('MFA Verification failed. Please check your Authenticator app and try again.');
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSetupNewDevice = async () => {
+    try {
+      setLoading(true);
+      setMfaError(null);
+      const userEmail = emailOrId.trim() || 'user';
+      const setup = await TotpService.createMfaSetup({ accountName: userEmail });
+      setMfaSetupData(setup);
+      setEnrollSession(mfaResolver?.tempSession);
+      setStep('MFA_ENROLL');
+      setMfaCode('');
+    } catch (e: any) {
+      setMfaError('Failed to generate new 2FA setup key. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -343,27 +406,45 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   const handleMfaEnrollSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!mfaCode || mfaCode.length < 6) {
-      setMfaError('Please enter a valid 6-digit code.');
+    const cleanCode = mfaCode.replace(/[^0-9A-Z]/gi, '').toUpperCase();
+    if (!cleanCode || cleanCode.length < 6) {
+      setMfaError('Please enter a valid 6-digit code or 8-character backup code.');
       return;
     }
     setLoading(true);
     setMfaError(null);
     try {
-      const verifyResult = await TotpService.verifyCode(mfaCode, mfaSetupData.secret);
+      const verifyResult = await TotpService.verifyCode(cleanCode, mfaSetupData.secret, 2);
       if (!verifyResult.isValid) {
-        throw new Error(verifyResult.error || 'Invalid code. Please try again.');
+        throw new Error(verifyResult.error || 'Invalid code. Please ensure your device clock is synced and try again.');
       }
       
-      const uid = enrollSession.userId;
+      const uid = enrollSession?.userId || auth.currentUser?.uid;
+      if (!uid) {
+        throw new Error('Session user identification lost. Please log in again.');
+      }
+
+      // Persist to users/{uid}/private/mfa
       await setDoc(doc(db, 'users', uid, 'private', 'mfa'), {
         totpSecret: mfaSetupData.secret,
         backupCodes: mfaSetupData.backupCodes,
-        lastUsedToken: mfaCode,
+        lastUsedToken: cleanCode,
         lastUsedAt: Date.now(),
         updatedAt: new Date().toISOString()
       }, { merge: true });
       
+      // Persist to root totp_secrets/{uid}
+      try {
+        await setDoc(doc(db, 'totp_secrets', uid), {
+          totpSecret: mfaSetupData.secret,
+          backupCodes: mfaSetupData.backupCodes,
+          lastUsedAt: Date.now(),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (totpSecretErr) {
+        console.warn('totp_secrets write notice:', totpSecretErr);
+      }
+
       await setDoc(doc(db, 'users', uid), {
         mfaEnabled: true,
         updatedAt: new Date().toISOString()
@@ -389,7 +470,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       onLoginSuccess(enrollSession, resolvedCompany as any);
 
     } catch (err: any) {
-      setMfaError(err.message || 'Verification failed.');
+      setMfaError(err.message || 'Verification failed. Please check your Authenticator app.');
     } finally {
       setLoading(false);
     }
@@ -530,18 +611,27 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               )}
             </button>
             
-            <button
-              type="button"
-              onClick={() => {
-                setMfaResolver(null);
-                setMfaCode('');
-                setMfaError(null);
-                setStep('CREDENTIALS');
-              }}
-              className="w-full py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-300"
-            >
-              Back to Login
-            </button>
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={handleSetupNewDevice}
+                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                Re-configure Authenticator / Scan QR
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMfaResolver(null);
+                  setMfaCode('');
+                  setMfaError(null);
+                  setStep('CREDENTIALS');
+                }}
+                className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              >
+                Back to Login
+              </button>
+            </div>
           </form>
         </div>
       </div>
@@ -674,6 +764,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         <div className="flex flex-col items-center text-center py-2">
           <AppLogo size="xl" showSubtitle={true} variant="full" layout="vertical" company={validatedCompany} />
         </div>
+
+        {/* Global Maintenance Mode Alert Banner */}
+        {globalConfig?.maintenanceMode && (
+          <div className="p-3.5 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 text-xs shadow-sm">
+            <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-[11px] text-rose-700 dark:text-rose-400 mb-1">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+              </span>
+              <span>Platform Maintenance Mode Active</span>
+            </div>
+            <p className="font-medium text-xs leading-relaxed text-rose-950 dark:text-rose-100">
+              {globalConfig.maintenanceMessage || globalConfig.maintenanceBannerMessage || 'Scheduled system maintenance is currently underway. Tenant workspaces are temporarily locked.'}
+            </p>
+            <div className="mt-2 text-[10px] text-rose-600 dark:text-rose-400 font-mono">
+              * Regular tenant logins are paused. Super Admins may proceed to Platform Admin Console.
+            </div>
+          </div>
+        )}
 
         {step === 'COMPANY_CODE' ? (
           <form onSubmit={handleCompanyCodeSubmit} className="space-y-3">

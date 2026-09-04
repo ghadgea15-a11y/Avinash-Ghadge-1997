@@ -1,15 +1,6 @@
 const fs = require('fs');
+let code = fs.readFileSync('src/components/screens/SuperAdminReportsScreen.tsx', 'utf8');
 
-function patch(file, matcher, replacement) {
-  try {
-    let content = fs.readFileSync(file, 'utf8');
-    content = content.replace(matcher, replacement);
-    fs.writeFileSync(file, content);
-  } catch (e) {
-    console.error(e.message);
-  }
-}
-
-patch('src/components/workorders/WorkOrderDetail.tsx', /await MaintenanceService\.updateWorkOrder as any\(/g, "await (MaintenanceService as any).updateWorkOrder(");
-patch('src/services/firestoreService.ts', /siteId: rosters\[0\]\?\.siteId: siteId \|\| '',/g, "siteId: rosters[0]?.siteId,");
-
+code = code.replace(/<\/div>\s*<\/div>\s*<\/div>\s*\);\s*};$/, '</div></div></div></>)}</div>);};');
+fs.writeFileSync('src/components/screens/SuperAdminReportsScreen.tsx', code);
+console.log('Fixed using regex');

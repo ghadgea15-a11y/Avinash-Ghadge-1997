@@ -36,6 +36,7 @@ import { FirestoreService } from '../../services/firestoreService';
 import { LeaveDashboard } from '../hrms/LeaveDashboard';
 import { LeaveApplyForm } from '../hrms/LeaveApplyForm';
 import { LeavePolicyMaster } from '../hrms/LeavePolicyMaster';
+import { HolidayCalendarMaster } from '../hrms/HolidayCalendarMaster';
 import { AbsenceRegularization } from '../hrms/AbsenceRegularization';
 import { RbacService } from '../../services/rbacService';
 import { WorkflowEngine } from '../../services/workflowEngine';
@@ -55,7 +56,7 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
   onNavigate
 }) => {
   const { showSuccess, showError, showLoading, showCancelled, showValidationFailed, handleError, confirm } = useFeedback();
-  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'ABSENCE' | 'APPROVALS' | 'LEDGER' | 'POLICIES'>('DASHBOARD');
+  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'ABSENCE' | 'APPROVALS' | 'LEDGER' | 'POLICIES' | 'HOLIDAYS'|'DASHBOARD' | 'ABSENCE' | 'APPROVALS' | 'LEDGER' | 'POLICIES' | 'HOLIDAYS'|'DASHBOARD' | 'ABSENCE' | 'APPROVALS' | 'LEDGER' | 'POLICIES' | 'HOLIDAYS'|'DASHBOARD' | 'ABSENCE' | 'APPROVALS' | 'LEDGER' | 'POLICIES' | 'HOLIDAYS'|'DASHBOARD' | 'ABSENCE' | 'APPROVALS' | 'LEDGER' | 'POLICIES' | 'HOLIDAYS'>('DASHBOARD');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [showApplyModal, setShowApplyModal] = useState<boolean>(false);
@@ -382,6 +383,19 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
               Policy Master
             </button>
           )}
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab('HOLIDAYS')}
+              className={`flex items-center gap-2 pb-4 border-b-2 font-bold text-sm transition-colors whitespace-nowrap ${
+                activeTab === 'HOLIDAYS'
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 hover:text-black dark:hover:text-white'
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+              Holiday Calendar
+            </button>
+          )}
         </div>
       </div>
 
@@ -636,6 +650,18 @@ export const LeaveManagementScreen: React.FC<LeaveManagementScreenProps> = ({
                   company={activeCompany!}
                   policies={policies}
                   onSavePolicy={handleSavePolicy}
+                  isLoading={isRefreshing}
+                />
+              )}
+              {activeTab === 'HOLIDAYS' && (
+                <HolidayCalendarMaster
+                  companyId={companyId}
+                  userSession={userSession}
+                  company={activeCompany!}
+                  holidays={holidays}
+                  onHolidaysChange={() => {
+                    FirestoreService.getHolidays(companyId, new Date().getFullYear()).then(setHolidays);
+                  }}
                   isLoading={isRefreshing}
                 />
               )}

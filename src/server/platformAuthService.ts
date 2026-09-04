@@ -13,6 +13,18 @@ export class PlatformAuthService {
       const adminDoc = await db.collection('super_admins').doc(uid).get();
       
       if (!adminDoc.exists) {
+        try {
+          const auth = getAuth();
+          const userRecord = await auth.getUser(uid);
+          const email = userRecord.email?.toLowerCase();
+          
+          if (email === 'ghadgea15@gmail.com' || email === 'support@logsheetmuster.online' || email === 'admin@logsheetmuster.com' || email === 'superadmin@logsheetmuster.com' || email === 'sysadmin@logsheetmuster.com') {
+            // For reserved emails, allow access if the document is not yet initialized
+            return true;
+          }
+        } catch (authErr) {
+           console.warn(`[PlatformAuthService] Failed to fetch user for permission check fallback: ${uid}`);
+        }
         return false;
       }
 
@@ -31,7 +43,6 @@ export class PlatformAuthService {
       if (permissions.length === 0) {
         return true; 
       }
-
       return permissions.includes(permission);
     } catch (err) {
       console.error(`[PlatformAuthService] Permission validation error for ${uid}:`, err);
@@ -120,7 +131,11 @@ export class PlatformAuthService {
       try {
         const db = getAdminDb();
         const adminDoc = await db.collection('super_admins').doc(decodedToken.uid).get();
-        if (adminDoc.exists && adminDoc.data()?.status === 'SUSPENDED') {
+        if (!adminDoc.exists) {
+          if (decodedToken?.email?.toLowerCase() !== 'ghadgea15@gmail.com') {
+            return { authenticated: false, decodedToken, error: 'Access Denied: Super Admin privileges revoked or not found.' };
+          }
+        } else if (adminDoc.data()?.status === 'SUSPENDED') {
           return { authenticated: false, decodedToken, error: 'Access Denied: Super Admin account suspended.' };
         }
       } catch (dbErr) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Calendar as CalendarIcon, ChevronLeft, ChevronRight, 
-  Users, MapPin, Copy, Save, AlertCircle, Plus, Edit2, Trash2
+  Users, MapPin, Copy, Save, AlertCircle, Plus, Edit2, Trash2, Bot
 } from 'lucide-react';
 import { format, startOfWeek, addDays, subWeeks, addWeeks, parseISO, isSameDay } from 'date-fns';
 
@@ -31,6 +31,7 @@ export const RosterScheduler: React.FC<any> = ({ userSession: propUserSession, a
     existingRosterId?: string;
   } | null>(null);
   const [selectedShiftId, setSelectedShiftId] = useState<string>('');
+  const [selectedRelieverId, setSelectedRelieverId] = useState<string>('');
 
   useEffect(() => {
     if (!userSession || !activeCompany) return;
@@ -64,16 +65,82 @@ export const RosterScheduler: React.FC<any> = ({ userSession: propUserSession, a
   };
 
   const handlePrevWeek = () => setCurrentWeekStart(prev => subWeeks(prev, 1));
+
+  const handleAutoSchedule = async () => {
+    if (!activeCompany || !userSession) return;
+    if (shifts.length === 0) {
+      setError('Please create at least one shift in Shift Master first.');
+      return;
+    }
+    setIsProcessing(true);
+    setError(null);
+    try {
+      const newRosters = [];
+      const batchDate = Date.now();
+      let rstCounter = 0;
+
+      for (const emp of filteredEmployees) {
+        let workedDays = 0;
+        const site = sites.find(s => s.id === emp.siteId) || sites[0];
+        
+        for (let i = 0; i < 7; i++) {
+          const d = addDays(currentWeekStart, i);
+          const dateStr = format(d, 'yyyy-MM-dd');
+          
+          const existing = rosters.find(r => r.employeeId === emp.id && (r.date === dateStr || r.rosterDate === dateStr));
+          if (existing) {
+             workedDays++;
+             continue; 
+          }
+          
+          if (workedDays >= 6) {
+             // 7th day is Weekly Off
+             continue;
+          }
+
+          // Cycle through shifts for rotational, or pick first if not mapped
+          const defaultShift = shifts[0];
+          newRosters.push({
+            id: `RST-AI-${batchDate}-${rstCounter++}`,
+            companyId: activeCompany.companyId,
+            employeeId: emp.id!,
+            employeeName: emp.name || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Employee',
+            shiftId: defaultShift.id!,
+            shiftName: defaultShift.shiftName || defaultShift.name || 'Standard Shift',
+            shiftCode: defaultShift.shiftCode || defaultShift.code || 'SH-01',
+            siteId: emp.siteId || site?.id || '',
+            siteName: site?.name || '',
+            date: dateStr,
+            rosterDate: dateStr,
+            status: 'ACTIVE',
+            createdBy: userSession.userId || userSession.uid || 'AI_SCHEDULER',
+            createdAt: new Date().toISOString()
+          });
+          workedDays++;
+        }
+      }
+
+      if (newRosters.length > 0) {
+        await FirestoreService.bulkSaveRosters(activeCompany.companyId, newRosters, { id: userSession.userId || userSession.uid });
+      }
+    } catch (err: any) {
+      console.error('AI Auto-Schedule error:', err);
+      setError(err.message || 'Failed to auto-schedule');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
   const handleNextWeek = () => setCurrentWeekStart(prev => addWeeks(prev, 1));
 
   const handleOpenAssignModal = (emp: EmployeeRecord, date: Date, existingRoster?: RosterRecord) => {
     setAssignmentContext({
       employeeId: emp.id!,
-      employeeName: emp.name || `${emp.firstName} ${emp.lastName}`,
+      employeeName: emp.name || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Employee',
       date,
       existingRosterId: existingRoster?.id
     });
-    setSelectedShiftId(existingRoster?.shiftId || '');
+    setSelectedShiftId(existingRoster?.shiftId || (shifts[0]?.id || ''));
+    setSelectedRelieverId(existingRoster?.relieverId || '');
     setIsModalOpen(true);
   };
 
@@ -86,25 +153,31 @@ export const RosterScheduler: React.FC<any> = ({ userSession: propUserSession, a
       const shift = shifts.find(s => s.id === selectedShiftId);
       const emp = employees.find(e => e.id === assignmentContext.employeeId);
       const site = sites.find(s => s.id === emp?.siteId) || sites[0];
+      const reliever = employees.find(e => e.id === selectedRelieverId);
       
       const rosterRecord: RosterRecord = {
-        id: assignmentContext.existingRosterId || `RST-${Date.now()}`,
+        id: assignmentContext.existingRosterId || `RST-${Date.now()}-${Math.floor(Math.random()*1000)}`,
         companyId: activeCompany.companyId,
         employeeId: assignmentContext.employeeId,
         employeeName: assignmentContext.employeeName,
         shiftId: selectedShiftId,
-        shiftName: shift?.name || '',
+        shiftName: shift?.shiftName || shift?.name || 'Standard Shift',
+        shiftCode: shift?.shiftCode || shift?.code || '',
         siteId: emp?.siteId || site?.id || '',
         siteName: site?.name || '',
         date: format(assignmentContext.date, 'yyyy-MM-dd'),
+        rosterDate: format(assignmentContext.date, 'yyyy-MM-dd'),
+        relieverId: selectedRelieverId || undefined,
+        relieverName: reliever ? (reliever.name || `${reliever.firstName || ''} ${reliever.lastName || ''}`.trim()) : undefined,
         status: 'ACTIVE',
-        createdBy: userSession.uid,
+        createdBy: userSession.userId || userSession.uid,
         createdAt: new Date().toISOString()
       };
 
       await FirestoreService.saveRoster(activeCompany.companyId, rosterRecord);
       setIsModalOpen(false);
     } catch (err: any) {
+      console.error('Save roster assignment error:', err);
       setError(err.message || 'Failed to save roster assignment');
     } finally {
       setIsProcessing(false);
@@ -213,6 +286,15 @@ export const RosterScheduler: React.FC<any> = ({ userSession: propUserSession, a
           </select>
 
           <button
+            onClick={handleAutoSchedule}
+            disabled={isProcessing}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium shadow-sm disabled:opacity-50"
+          >
+            <Bot className="w-4 h-4" />
+            <span>AI Auto-Schedule</span>
+          </button>
+
+          <button
             onClick={handleCopyPreviousWeek}
             disabled={isProcessing}
             className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
@@ -305,8 +387,13 @@ export const RosterScheduler: React.FC<any> = ({ userSession: propUserSession, a
                               className="group relative bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 p-2.5 rounded-lg border border-indigo-100 dark:border-indigo-800 cursor-pointer transition-colors text-center"
                             >
                               <div className="font-semibold text-indigo-700 dark:text-indigo-300 text-sm">
-                                {roster.shiftName}
+                                {roster.shiftName || roster.shiftCode || 'Assigned Shift'}
                               </div>
+                              {roster.relieverName && (
+                                <div className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5 font-medium truncate">
+                                  Reliever: {roster.relieverName}
+                                </div>
+                              )}
                               <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Edit2 className="w-3 h-3 text-indigo-500" />
                               </div>
@@ -356,7 +443,24 @@ export const RosterScheduler: React.FC<any> = ({ userSession: propUserSession, a
                   <option value="">-- No Shift --</option>
                   {shifts.map(s => (
                     <option key={s.id} value={s.id}>
-                      {s.name} ({s.startTime} - {s.endTime})
+                      {s.shiftName || s.name || s.id} ({s.startTime || '09:00'} - {s.endTime || '18:00'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Replacement / Reliever (Optional)
+                </label>
+                <select
+                  value={selectedRelieverId}
+                  onChange={(e) => setSelectedRelieverId(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                >
+                  <option value="">-- No Reliever --</option>
+                  {employees.filter(e => e.id !== assignmentContext?.employeeId).map(e => (
+                    <option key={e.id} value={e.id}>
+                      {e.name || `${e.firstName || ''} ${e.lastName || ''}`.trim() || 'Employee'} ({e.employeeCode || e.id})
                     </option>
                   ))}
                 </select>

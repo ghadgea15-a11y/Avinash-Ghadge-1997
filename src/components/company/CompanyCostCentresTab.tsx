@@ -51,7 +51,7 @@ export const CompanyCostCentresTab: React.FC<CompanyCostCentresTabProps> = ({
         name: editingCostCentre.name.trim(),
         description: editingCostCentre.description?.trim() || '',
         budgetAllocated: editingCostCentre.budgetAllocated !== undefined ? Number(editingCostCentre.budgetAllocated) : 0,
-        status: editingCostCentre.status || 'ACTIVE'
+        status: (editingCostCentre.status || "ACTIVE") as "ACTIVE" | "INACTIVE" || 'ACTIVE'
       };
 
       const success = await FirestoreService.saveCostCentre(companyId, ccRecord);

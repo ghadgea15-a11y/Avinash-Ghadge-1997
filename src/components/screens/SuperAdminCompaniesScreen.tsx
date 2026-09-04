@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { CompanyTenant, UserSession, PhaseAScreen, MASTER_APP_MODULES } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { SuperAdminService } from '../../services/superAdminService';
 import { useTheme } from '../../context/ThemeContext';
 import { useFeedback } from '../../context/ActionFeedbackContext';
 
@@ -157,17 +158,18 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
     const dismiss = showLoading(isActivating ? 'Activating...' : 'Deactivating...');
 
     try {
-      const ok = await FirestoreService.updateCompanyDetails(company.companyId, { status: newStatus });
+      await SuperAdminService.updateTenantStatus(
+        currentSession,
+        company.companyId,
+        newStatus,
+        `Super Admin ${isActivating ? 'reactivated' : 'suspended'} tenant ${company.brandName || company.companyId}`
+      );
       dismiss();
-      if (ok) {
-        setCompanies((prev) => prev.map(c => c.companyId === company.companyId ? { ...c, status: newStatus } : c));
-        if (isActivating) {
-          showSuccess(`✓ Successfully Activated (${company.brandName})`);
-        } else {
-          showSuccess(`✓ Successfully Deactivated (${company.brandName})`);
-        }
+      setCompanies((prev) => prev.map(c => c.companyId === company.companyId ? { ...c, status: newStatus } : c));
+      if (isActivating) {
+        showSuccess(`✓ Successfully Activated (${company.brandName}) - Logged to Audit Trail`);
       } else {
-        showError(`✕ Failed to update status for ${company.brandName}`);
+        showSuccess(`✓ Successfully Deactivated (${company.brandName}) - Logged to Audit Trail`);
       }
     } catch (err: any) {
       dismiss();
@@ -210,6 +212,7 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
     setSaving(true);
     const dismiss = showLoading('Updating...');
     try {
+      const prevComp = companies.find(c => c.companyId === editingCompany.companyId);
       const ok = await FirestoreService.updateCompanyDetails(editingCompany.companyId, {
         brandName: editingCompany.brandName,
         companyLegalName: editingCompany.companyLegalName,
@@ -224,8 +227,21 @@ export const SuperAdminCompaniesScreen: React.FC<SuperAdminCompaniesScreenProps>
       dismiss();
       if (ok) {
         setCompanies((prev) => prev.map(c => c.companyId === editingCompany.companyId ? editingCompany : c));
+        
+        // Log mutation to immutable platform audit trail
+        const isPlanChange = prevComp?.licenseTier !== editingCompany.licenseTier;
+        await SuperAdminService.logPlatformAudit(currentSession, {
+          action: isPlanChange ? 'UPDATE_SUBSCRIPTION_PLAN' : 'UPDATE_TENANT_STATUS',
+          target: 'CompanyTenant',
+          targetTenantId: editingCompany.companyId,
+          targetId: editingCompany.companyId,
+          reason: `Updated tenant configuration for ${editingCompany.brandName} (${editingCompany.companyId}): Tier ${editingCompany.licenseTier}, Status ${editingCompany.status}`,
+          before: prevComp ? { licenseTier: prevComp.licenseTier, status: prevComp.status } : null,
+          after: { licenseTier: editingCompany.licenseTier, status: editingCompany.status, brandName: editingCompany.brandName }
+        });
+
         setEditingCompany(null);
-        showSuccess('✓ Successfully Updated');
+        showSuccess('✓ Successfully Updated & Logged to Audit Trail');
       } else {
         showError('✕ Update Failed');
       }

@@ -12,13 +12,31 @@ import {
   PieChart, 
   Calendar,
   CheckCircle2,
-  FileSpreadsheet
+  FileSpreadsheet,
+  IndianRupee,
+  Activity
 } from 'lucide-react';
 import { UserSession, PhaseAScreen } from '../../types';
 import { TenantData, SubscriptionPlan } from '../../types/platform';
 import { SuperAdminService } from '../../services/superAdminService';
+import { SaaSBiAnalyticsService, SaaSBiMetrics } from '../../services/saasBiAnalyticsService';
 import { useTheme } from '../../context/ThemeContext';
 import { useFeedback } from '../../context/ActionFeedbackContext';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  Cell,
+  PieChart as RechartsPieChart,
+  Pie,
+  Legend
+} from 'recharts';
 
 interface SuperAdminReportsScreenProps {
   currentSession: UserSession;
@@ -34,18 +52,21 @@ export const SuperAdminReportsScreen: React.FC<SuperAdminReportsScreenProps> = (
 
   const [tenants, setTenants] = useState<TenantData[]>([]);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [biMetrics, setBiMetrics] = useState<SaaSBiMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [tenantsData, plansData] = await Promise.all([
+      const [tenantsData, plansData, biData] = await Promise.all([
         SuperAdminService.getAllTenants(),
-        SuperAdminService.getSubscriptionPlans()
+        SuperAdminService.getSubscriptionPlans(),
+        SaaSBiAnalyticsService.getExecutiveAnalytics()
       ]);
       setTenants(tenantsData);
       setPlans(plansData);
+      setBiMetrics(biData);
     } catch (err) {
       console.error('[SuperAdminReportsScreen] Failed to load reports data:', err);
       showError('Failed to load platform SaaS metrics');
@@ -72,18 +93,42 @@ export const SuperAdminReportsScreen: React.FC<SuperAdminReportsScreenProps> = (
   });
 
   const handleExportSummaryCsv = () => {
-    const exportData = tenants.map(t => ({
-      TenantID: t.id,
-      CompanyName: t.name,
-      Status: t.status,
-      Plan: t.subscriptionPlan,
-      EmployeesCount: t.currentEmployeesCount || 0,
-      SitesCount: t.currentSitesCount || 0,
-      CreatedAt: t.createdAt,
-      CompanyCode: t.companyCode || ''
-    }));
-    SuperAdminService.exportToCsv('saas_platform_tenants_summary', exportData);
-    showSuccess('Exported SaaS platform summary report');
+    let exportData: any[] = [];
+    if (biMetrics) {
+      exportData = [
+        { Section: 'SaaS Business Metrics', Metric: 'Total MRR', Value: biMetrics.platformRevenue },
+        { Section: 'SaaS Business Metrics', Metric: 'Total Daily Muster Volume', Value: biMetrics.totalMusterVolume },
+        {},
+        { Section: 'Muster Volume By Plan', Metric: 'Plan', Value: 'Volume' },
+        ...biMetrics.musterVolumeByPlan.map(p => ({ Section: '', Metric: p.plan, Value: p.volume })),
+        {},
+        { Section: 'Tenant Growth (6 Months)', Metric: 'Month', Value: 'New Tenants' },
+        ...biMetrics.tenantGrowth.map(g => ({ Section: '', Metric: g.label, Value: g.count })),
+        {},
+        { Section: 'Tenant Details', Metric: '', Value: '' },
+        ...tenants.map(t => ({
+          Section: t.id,
+          Metric: t.name,
+          Value: t.subscriptionPlan,
+          Status: t.status,
+          Employees: t.currentEmployeesCount || 0
+        }))
+      ];
+    } else {
+      exportData = tenants.map(t => ({
+        TenantID: t.id,
+        CompanyName: t.name,
+        Status: t.status,
+        Plan: t.subscriptionPlan,
+        EmployeesCount: t.currentEmployeesCount || 0,
+        SitesCount: t.currentSitesCount || 0,
+        CreatedAt: t.createdAt,
+        CompanyCode: t.companyCode || ''
+      }));
+    }
+    
+    SuperAdminService.exportToCsv('executive_analytics_bi_report', exportData);
+    showSuccess('Exported SaaS Executive BI report');
   };
 
   return (
@@ -104,11 +149,11 @@ export const SuperAdminReportsScreen: React.FC<SuperAdminReportsScreenProps> = (
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold tracking-tight">Platform SaaS Analytics & Executive BI</h1>
               <span className="bg-indigo-500/10 text-indigo-500 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-indigo-500/20">
-                Cross-Tenant Intelligence
+                Live Data
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              High-level SaaS business metrics, tier adoption, active workforce volume and capacity utilization.
+              High-level SaaS business metrics, tier adoption, and real-time operational capacity.
             </p>
           </div>
         </div>
@@ -138,52 +183,105 @@ export const SuperAdminReportsScreen: React.FC<SuperAdminReportsScreenProps> = (
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-1`}>
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>Total SaaS Tenants</span>
-            <Building2 className="w-4 h-4 text-indigo-500" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-indigo-500">{totalTenants}</div>
-          <span className="text-xs text-emerald-500 font-medium">{activeTenants} active contracts</span>
+      {loading && !refreshing ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
         </div>
+      ) : (
+        <>
+          {/* Executive BI KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-1`}>
+              <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+                <span>Platform Revenue (MRR)</span>
+                <IndianRupee className="w-4 h-4 text-emerald-500" />
+              </div>
+              <div className="text-2xl font-bold font-mono text-emerald-500">
+                ₹{biMetrics?.platformRevenue?.toLocaleString() || 0}
+              </div>
+              <span className="text-xs text-slate-400">Total active subscriptions</span>
+            </div>
 
-        <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-1`}>
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>Managed Workforce</span>
-            <Users className="w-4 h-4 text-cyan-500" />
+            <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-1`}>
+              <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+                <span>Total SaaS Tenants</span>
+                <Building2 className="w-4 h-4 text-indigo-500" />
+              </div>
+              <div className="text-2xl font-bold font-mono text-indigo-500">{totalTenants}</div>
+              <span className="text-xs text-indigo-400/80 font-medium">{activeTenants} active contracts</span>
+            </div>
+
+            <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-1`}>
+              <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+                <span>Daily Muster Volume</span>
+                <Activity className="w-4 h-4 text-amber-500" />
+              </div>
+              <div className="text-2xl font-bold font-mono text-amber-500">{biMetrics?.totalMusterVolume?.toLocaleString() || 0}</div>
+              <span className="text-xs text-slate-400">Live attendance logs today</span>
+            </div>
+
+            <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-1`}>
+              <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+                <span>Managed Workforce</span>
+                <Users className="w-4 h-4 text-cyan-500" />
+              </div>
+              <div className="text-2xl font-bold font-mono text-cyan-500">{totalEmployees.toLocaleString()}</div>
+              <span className="text-xs text-slate-400">Total registered personnel</span>
+            </div>
           </div>
-          <div className="text-2xl font-bold font-mono text-cyan-500">{totalEmployees.toLocaleString()}</div>
-          <span className="text-xs text-slate-400">Total registered personnel</span>
-        </div>
 
-        <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-1`}>
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>Operational Sites / Hubs</span>
-            <Layers className="w-4 h-4 text-amber-500" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-amber-500">{totalSites}</div>
-          <span className="text-xs text-slate-400">Active geofenced locations</span>
-        </div>
+          {/* Charts Section */}
+          {biMetrics && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className={`p-5 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                <h3 className="font-bold text-sm flex items-center gap-2 mb-6">
+                  <TrendingUp className="w-4 h-4 text-indigo-500" />
+                  Tenant Growth (Last 6 Months)
+                </h3>
+                <div className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={biMetrics.tenantGrowth}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#1e293b' : '#e2e8f0'} vertical={false} />
+                      <XAxis dataKey="label" stroke={isDark ? '#64748b' : '#94a3b8'} fontSize={11} tickLine={false} axisLine={false} />
+                      <YAxis stroke={isDark ? '#64748b' : '#94a3b8'} fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <RechartsTooltip 
+                        contentStyle={{ backgroundColor: isDark ? '#0f172a' : '#fff', borderColor: isDark ? '#1e293b' : '#e2e8f0', borderRadius: '8px' }}
+                        itemStyle={{ color: isDark ? '#f8fafc' : '#0f172a' }}
+                      />
+                      <Line type="monotone" dataKey="count" name="New Tenants" stroke="#6366f1" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
 
-        <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-1`}>
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>Active Tier Catalog</span>
-            <TrendingUp className="w-4 h-4 text-emerald-500" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-emerald-500">{plans.length}</div>
-          <span className="text-xs text-slate-400">SaaS subscription packages</span>
-        </div>
+              <div className={`p-5 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                <h3 className="font-bold text-sm flex items-center gap-2 mb-6">
+                  <BarChartIcon className="w-4 h-4 text-amber-500" />
+                  Daily Muster Volume By Tier (T-Series)
+                </h3>
+                <div className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={biMetrics.musterVolumeByPlan}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#1e293b' : '#e2e8f0'} vertical={false} />
+                      <XAxis dataKey="plan" stroke={isDark ? '#64748b' : '#94a3b8'} fontSize={11} tickLine={false} axisLine={false} />
+                      <YAxis stroke={isDark ? '#64748b' : '#94a3b8'} fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <RechartsTooltip 
+                        cursor={{ fill: isDark ? '#1e293b' : '#f1f5f9' }}
+                        contentStyle={{ backgroundColor: isDark ? '#0f172a' : '#fff', borderColor: isDark ? '#1e293b' : '#e2e8f0', borderRadius: '8px' }}
+                      />
+                      <Bar dataKey="volume" name="Attendance Logs" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          )}
 
-      </div>
-
-      {/* Plan Adoption Breakdown & Top Tenants */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Plan Breakdown */}
-        <div className={`p-5 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-4`}>
+          {/* Plan Adoption Breakdown & Top Tenants */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Plan Breakdown */}
+            <div className={`p-5 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-4`}>
           <h3 className="font-bold text-sm flex items-center gap-2">
             <PieChart className="w-4 h-4 text-indigo-500" />
             Subscription Tier Distribution
@@ -255,6 +353,8 @@ export const SuperAdminReportsScreen: React.FC<SuperAdminReportsScreenProps> = (
 
       </div>
 
+      </>
+      )}
     </div>
   );
 };

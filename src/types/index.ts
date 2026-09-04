@@ -13,7 +13,6 @@ export * from './complianceControl';
 export * from './scm';
 export * from './pms';
 export * from './talentManagement';
-export * from './financeLedger';
 export * from './clientBilling';
 export * from './multiModePatrol';
 export * from './complianceExpiry';
@@ -515,23 +514,64 @@ export interface EmployeeRecord {
   id: string;
   companyId: string;
   employeeId: string; // unique public code
+  employeeCode?: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
   email?: string;
   phone?: string;
+  contactNumber?: string;
+  dateOfBirth?: string;
+  bloodGroup?: string;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
+  emergencyContact?: {
+    name: string;
+    relation: string;
+    phone: string;
+  };
+  address?: string;
+
+  // Professional
   role: UserRole;
   designation?: string;
   departmentId?: string;
   assignedRegionId?: string;
+  assignedBranchId?: string;
   assignedSiteId?: string;
+  supervisorId?: string;
+  reportingManagerId?: string;
+  shiftId?: string;
+  employmentType?: 'PERMANENT' | 'CONTRACT' | 'TEMPORARY' | 'PROBATION';
+  weeklyOff?: number[];
+  joinedDate?: string;
   groupId?: string; // Current primary group
+
+  // Statutory
+  panNumber?: string;
+  aadharNumber?: string;
+  uanNumber?: string;
+  pfNumber?: string;
+  esicNumber?: string;
+
+  // Bank Details
+  bankDetailsRef?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankIfsc?: string;
+
   status: 'ACTIVE' | 'INACTIVE' | 'TERMINATED' | 'SUSPENDED' | 'PENDING_VERIFICATION' | 'DEACTIVATED';
+  lifecycleStatus?: string;
   profilePhotoUrl?: string;
+  profilePictureUrl?: string;
+  documents?: any[];
   onboardingStatus?: string;
+  hasSystemAccess?: boolean;
   fcmTokens?: string[];
   joinedAt?: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
   [key: string]: any;
 }
 
@@ -571,6 +611,12 @@ export interface CostCentreRecord {
 export interface ApprovalRequestRecord { [key: string]: any; }
 
 export interface MASTER_APP_MODULE {
+  key: string;
+  name: string;
+  label: string;
+  category: 'CORE' | 'HRMS' | 'SECURITY' | 'FINANCE' | 'SYSTEM' | string;
+  description: string;
+  icon?: string;
   [key: string]: any;
 }
 export interface AppModule {
@@ -759,7 +805,42 @@ export interface StatutoryConfigRecord {
   updatedBy?: string;
 }
 export interface ShiftHandoverRecord { [key: string]: any; }
-export interface LeadRecord { [key: string]: any; }
+export type LeadStatus = 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'DEMO' | 'CONVERTED' | 'LOST' | string;
+
+export interface LeadActivity {
+  id: string;
+  action: 'LEAD_CREATED' | 'STATUS_CHANGE' | 'NOTE_ADDED' | 'FOLLOW_UP_SCHEDULED' | 'CONVERTED_TO_TENANT' | string;
+  notes: string;
+  timestamp: string;
+  actorId?: string;
+  actorName?: string;
+}
+
+export interface LeadRecord {
+  id: string;
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  designation?: string;
+  city?: string;
+  workforceSize?: string;
+  interestedModules?: string;
+  message?: string;
+  source?: 'WEBSITE_DEMO' | 'CONTACT_SALES' | 'COLD_OUTREACH' | 'REFERRAL' | 'SUPER_ADMIN_MANUAL' | string;
+  status: LeadStatus;
+  notes?: string;
+  followUpDate?: string;
+  followUpNotes?: string;
+  convertedCompanyId?: string;
+  convertedAt?: string;
+  activityHistory?: LeadActivity[];
+  budget?: string;
+  estimatedEmployees?: number;
+  createdAt: string;
+  updatedAt: string;
+  [key: string]: any;
+}
 export interface PromotionRequest { [key: string]: any; }
 export interface ExitRequest { [key: string]: any; }
 export interface IdentityBadgeRecord { [key: string]: any; }
@@ -861,11 +942,48 @@ export type WorkOrderPriority = string;
 export interface SecurityAnomalyRecord { [key: string]: any; }
 
 export const MASTER_APP_MODULES: MASTER_APP_MODULE[] = [
-  { key: 'HCM', label: 'HCM' },
-  { key: 'WFM', label: 'WFM' },
-  { key: 'PAYROLL', label: 'Payroll' },
-  { key: 'INVENTORY', label: 'Inventory' },
-  { key: 'ASSETS', label: 'Assets' }
+  // HRMS & Workforce
+  { key: 'HCM', name: 'Human Capital Management', label: 'Human Capital Management', category: 'HRMS', description: 'Core personnel profiles, organizational hierarchies, and designation ladders.' },
+  { key: 'WFM', name: 'Workforce Management', label: 'Workforce Management', category: 'HRMS', description: 'Deployment planning, staff capacity scheduling, and post allocations.' },
+  { key: 'EMPLOYEES', name: 'Employee Directory', label: 'Employee Directory', category: 'HRMS', description: 'Comprehensive staff records, onboarding verifications, and status tracking.' },
+  { key: 'ATTENDANCE', name: 'Time & Attendance Muster', label: 'Time & Attendance Muster', category: 'HRMS', description: 'Live biometric sync, GPS geotagged muster, and daily punch audit logs.' },
+  { key: 'SHIFTS', name: 'Shift Configurations', label: 'Shift Configurations', category: 'HRMS', description: 'Custom rotational shifts, grace periods, and break rules.' },
+  { key: 'SHIFT_ROSTER', name: 'Duty Roster', label: 'Duty Roster', category: 'HRMS', description: 'Monthly operational shift schedules, guard assignments, and reliever duty.' },
+  { key: 'LEAVE', name: 'Leave Management', label: 'Leave Management', category: 'HRMS', description: 'Leave accrual rules, requests, balance ledgers, and approval workflows.' },
+  { key: 'ID_BADGES', name: 'Digital ID Badges', label: 'Digital ID Badges', category: 'HRMS', description: 'NFC & QR digital employee identity cards and verification credentials.' },
+
+  // Operations & Assets (Core)
+  { key: 'INVENTORY', name: 'Uniforms & Equipment', label: 'Uniforms & Equipment', category: 'CORE', description: 'Store inventories, uniform issuing, batch management, and requisitions.' },
+  { key: 'ASSETS', name: 'Asset Management', label: 'Asset Management', category: 'CORE', description: 'Physical equipment tracking, barcode scanning, and maintenance lifecycle.' },
+  { key: 'SITE_OPERATIONS', name: 'Site Operations', label: 'Site Operations', category: 'CORE', description: 'Multi-site post deployment, geo-fence perimeters, and site logbooks.' },
+  { key: 'CLIENTS', name: 'Client Accounts', label: 'Client Accounts', category: 'CORE', description: 'Client profiles, deployed site contracts, SLAs, and service agreements.' },
+  { key: 'CLIENT', name: 'Client Portal', label: 'Client Portal', category: 'CORE', description: 'External client dashboard, service requests, and SLA performance reports.' },
+  { key: 'VENDOR', name: 'Vendor Procurement', label: 'Vendor Procurement', category: 'CORE', description: 'Vendor registry, RFQs, purchase orders, and supplier risk scores.' },
+  { key: 'CRM', name: 'Business Development', label: 'Business Development', category: 'CORE', description: 'Sales pipeline, lead qualification, quotation builders, and proposals.' },
+
+  // Security & Compliance
+  { key: 'GUARD_PATROL', name: 'Guard Tour Patrol', label: 'Guard Tour Patrol', category: 'SECURITY', description: 'NFC/QR checkpoint tours, live patrol tracks, and missed checkpoint alerts.' },
+  { key: 'VISITORS', name: 'Visitor Management', label: 'Visitor Management', category: 'SECURITY', description: 'Digital gate passes, visitor check-in, photo capture, and host approvals.' },
+  { key: 'SECURITY_INCIDENTS', name: 'Incident Dispatch', label: 'Incident Dispatch', category: 'SECURITY', description: 'SOS alarms, site incident reports, dispatch escalations, and root-cause logs.' },
+  { key: 'SECURITY', name: 'Security Assurance', label: 'Security Assurance', category: 'SECURITY', description: 'Security audit logs, anomaly detection, device attestation, and interlocks.' },
+  { key: 'COMPLIANCE', name: 'Statutory Compliance', label: 'Statutory Compliance', category: 'SECURITY', description: 'PF, ESI, Minimum Wages Act audits, labor registers, and statutory returns.' },
+
+  // Finance & Billing
+  { key: 'PAYROLL', name: 'Payroll Engine', label: 'Payroll Engine', category: 'FINANCE', description: 'Automated wage calculation, attendance-based deductions, and payslips.' },
+  { key: 'COMPANY_BILLING', name: 'Tenant Subscriptions', label: 'Tenant Subscriptions', category: 'FINANCE', description: 'Tenant SaaS subscriptions, license tiers, and automated billing invoices.' },
+  { key: 'BILLING', name: 'Client Invoicing', label: 'Client Invoicing', category: 'FINANCE', description: 'Contract rate cards, billable shift muster, GST invoices, and collections.' },
+
+  // Platform & System Governance
+  { key: 'ESS', name: 'Employee Self-Service', label: 'Employee Self-Service', category: 'SYSTEM', description: 'Mobile self-service for punches, payslips, leaves, and uniform requests.' },
+  { key: 'NOTIFICATIONS', name: 'Notification Hub', label: 'Notification Hub', category: 'SYSTEM', description: 'Real-time push, in-app alerts, email triggers, and SMS operational dispatches.' },
+  { key: 'ANALYTICS', name: 'Operational Intelligence', label: 'Operational Intelligence', category: 'SYSTEM', description: 'Real-time KPI widgets, attendance heatmap, muster deficits, and analytics.' },
+  { key: 'REPORTS', name: 'Operational Reports', label: 'Operational Reports', category: 'SYSTEM', description: 'Exportable muster books, wage registers, SLA compliance, and patrol logs.' },
+  { key: 'WORKFLOW', name: 'BPM Workflow Engine', label: 'BPM Workflow Engine', category: 'SYSTEM', description: 'Dynamic process approval chains, step transitions, and escalations.' },
+  { key: 'APPROVALS', name: 'Approval Inbox', label: 'Approval Inbox', category: 'SYSTEM', description: 'Unified multi-tier pending approvals for leaves, requisitions, and muster.' },
+  { key: 'APPROVAL_MANAGEMENT', name: 'Approval Governance', label: 'Approval Governance', category: 'SYSTEM', description: 'Delegation matrix, multi-level signature rules, and audit signoffs.' },
+  { key: 'AI', name: 'AI Intelligence Suite', label: 'AI Intelligence Suite', category: 'SYSTEM', description: 'Document OCR muster parsing, automated shift matching, and anomaly alerts.' },
+  { key: 'BPM', name: 'Process Escalations', label: 'Process Escalations', category: 'SYSTEM', description: 'Breach notifications, auto-reassignments, and SLA countdowns.' },
+  { key: 'COMPANY_MANAGEMENT', name: 'Tenant Hierarchy', label: 'Tenant Hierarchy', category: 'SYSTEM', description: 'Multi-branch corporate structure, region divisions, and global policies.' }
 ];
 
 export * from './platform';
@@ -886,8 +1004,6 @@ export interface RfqRequest { [key: string]: any; }
 export interface RfqBid { [key: string]: any; }
 export type ServiceTicketCategory = string;
 export interface InitStep { [key: string]: any; }
-export type LeadStatus = string;
-export interface LeadActivity { [key: string]: any; }
 export type InventoryCategory = string;
 export type InventoryUnit = string;
 export type StockTransactionType = string;

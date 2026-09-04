@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { CompanyTenant, UserSession, PhaseAScreen, MASTER_APP_MODULES, AppModule } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { SuperAdminService } from '../../services/superAdminService';
 import { useTheme } from '../../context/ThemeContext';
 import { useFeedback } from '../../context/ActionFeedbackContext';
 
@@ -46,10 +47,53 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
   const [legalName, setLegalName] = useState('');
   const [brandName, setBrandName] = useState('');
   const [licenseTier, setLicenseTier] = useState<'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE'>('ENTERPRISE');
+  const [trialDays, setTrialDays] = useState<number>(14);
+  const [globalDefaultTrial, setGlobalDefaultTrial] = useState<number>(14);
   const [primaryColor, setPrimaryColor] = useState('#4f46e5');
   const [secondaryColor, setSecondaryColor] = useState('#06b6d4');
   const [maxEmployees, setMaxEmployees] = useState('1000');
   const [maxSites, setMaxSites] = useState('50');
+  const [sourceLead, setSourceLead] = useState<any | null>(null);
+
+  // Load Platform Global Config default trial days & Check for pending converted lead
+  useEffect(() => {
+    SuperAdminService.getPlatformGlobalConfig().then(cfg => {
+      if (cfg && typeof cfg.defaultTrialDays === 'number' && cfg.defaultTrialDays > 0) {
+        setTrialDays(cfg.defaultTrialDays);
+        setGlobalDefaultTrial(cfg.defaultTrialDays);
+      }
+    }).catch(err => {
+      console.warn('[SuperAdminCreateCompany] Error loading default trial days:', err);
+    });
+
+    // Check if opened from CRM "Convert Lead" shortcut
+    try {
+      const rawLead = sessionStorage.getItem('pending_convert_lead');
+      if (rawLead) {
+        const lead = JSON.parse(rawLead);
+        setSourceLead(lead);
+        if (lead.company) {
+          setLegalName(lead.company);
+          setBrandName(lead.company);
+          const clean = lead.company.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6);
+          setCompanyCode(`${clean}-${Math.floor(100 + Math.random() * 900)}`);
+        }
+        if (lead.name) setAdminFullName(lead.name);
+        if (lead.email) {
+          setEmail(lead.email);
+          setAdminEmail(lead.email);
+        }
+        if (lead.phone) {
+          setPhone(lead.phone);
+          setAdminPhone(lead.phone);
+        }
+        if (lead.city) setCity(lead.city);
+        sessionStorage.removeItem('pending_convert_lead');
+      }
+    } catch (_e) {
+      // ignore
+    }
+  }, []);
 
   // Contact & Address
   const [email, setEmail] = useState('');
@@ -140,12 +184,15 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
     const dismiss = showLoading('Creating company and provisioning administrator...');
 
     try {
-      const companyPayload: CompanyTenant = {
+      const companyPayload: any = {
         companyId: cleanCode,
         companyLegalName: legalName.trim() || brandName.trim(),
         brandName: brandName.trim(),
         licenseTier,
         status: 'ACTIVE',
+        trialDays: Number(trialDays) || globalDefaultTrial,
+        trialPeriodDays: Number(trialDays) || globalDefaultTrial,
+        subscriptionStatus: 'TRIAL',
         primaryColorHex: primaryColor,
         secondaryColorHex: secondaryColor,
         allowedBranches: ['MAIN', 'NORTH', 'SOUTH'],
@@ -187,6 +234,47 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
 
       showSuccess(`✓ Successfully Created: Company ${cleanCode}`);
       setSuccessMsg(result.message);
+
+      // Record immutable audit event
+      await SuperAdminService.logPlatformAudit(currentSession, {
+        action: 'CREATE_TENANT',
+        target: 'CompanyTenant',
+        targetTenantId: cleanCode,
+        targetId: cleanCode,
+        reason: `Super Admin provisioned new company ${companyPayload.brandName} (${cleanCode}) with tier ${companyPayload.licenseTier}`,
+        after: {
+          companyId: cleanCode,
+          brandName: companyPayload.brandName,
+          licenseTier: companyPayload.licenseTier,
+          adminEmail: companyPayload.adminEmail,
+          enabledModulesCount: selectedModules.length
+        }
+      });
+
+      if (sourceLead?.id) {
+        try {
+          const timestamp = new Date().toISOString();
+          await FirestoreService.updateLead(sourceLead.id, {
+            status: 'CONVERTED',
+            convertedCompanyId: cleanCode,
+            convertedAt: timestamp,
+            activityHistory: [
+              ...(sourceLead.activityHistory || []),
+              {
+                id: `act_${Date.now()}`,
+                action: 'CONVERTED_TO_TENANT',
+                notes: `Converted to live Tenant Company: ${cleanCode} (${brandName}) by ${currentSession.fullName}`,
+                timestamp,
+                actorId: currentSession.userId,
+                actorName: currentSession.fullName
+              }
+            ]
+          });
+        } catch (leadUpdateErr) {
+          console.warn('[SuperAdminCreateCompany] Could not update source lead:', leadUpdateErr);
+        }
+      }
+
       if (result.emailDelivery) {
         setEmailDeliveryInfo(result.emailDelivery);
       }
@@ -225,6 +313,27 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
           </div>
         </div>
       </div>
+
+      {sourceLead && (
+        <div className={`p-4 rounded-xl border flex items-center justify-between gap-3 ${
+          isDark ? 'bg-indigo-950/40 border-indigo-800/60 text-indigo-200' : 'bg-indigo-50 border-indigo-200 text-indigo-900'
+        }`}>
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-5 h-5 text-indigo-400 shrink-0" />
+            <div>
+              <div className="text-xs font-bold">Converting Inbound Lead: {sourceLead.company || sourceLead.name}</div>
+              <div className="text-[11px] opacity-80">Form prefilled from Sales CRM. Creating this company will automatically mark lead as CONVERTED.</div>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            onClick={() => setSourceLead(null)}
+            className="text-[11px] underline opacity-75 hover:opacity-100"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {successMsg ? (
         <div className={`p-6 rounded-2xl border ${isDark ? 'bg-emerald-950/60 border-emerald-800' : 'bg-emerald-50 border-emerald-200'} space-y-4 animate-in fade-in`}>
@@ -334,7 +443,7 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 pt-2">
               <div>
                 <label className="text-xs font-medium text-slate-300 block mb-1">License Tier</label>
                 <select
@@ -348,6 +457,24 @@ export const SuperAdminCreateCompany: React.FC<SuperAdminCreateCompanyProps> = (
                   <option value="PROFESSIONAL">Professional Tier</option>
                   <option value="ENTERPRISE">Enterprise Tier (Unrestricted)</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-300 block mb-1 flex items-center justify-between">
+                  <span>Trial Period (Days)</span>
+                  <span className="text-[10px] text-amber-500 font-mono">Def: {globalDefaultTrial}d</span>
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={trialDays}
+                  onChange={(e) => setTrialDays(parseInt(e.target.value) || 0)}
+                  placeholder={`Default: ${globalDefaultTrial}`}
+                  className={`w-full px-3 py-2 text-xs rounded-xl border ${
+                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white border-slate-200 text-black'
+                  } focus:outline-none focus:border-amber-500 font-mono`}
+                />
               </div>
 
               <div>

@@ -1,0 +1,17 @@
+[
+  {
+    "Role": "SUPER_ADMIN",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "COMPANY_ADMIN",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "SITE_MANAGER",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  }
+]

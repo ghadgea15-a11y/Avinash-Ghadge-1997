@@ -124,18 +124,30 @@ export const PlatformLoginScreen: React.FC<PlatformLoginScreenProps> = ({
     setLoading(true);
     setMfaError(null);
     try {
-      const verifyResult = await TotpService.verifyCode(mfaCode, mfaSetupData.secret);
-      if (!verifyResult.isValid) throw new Error('Invalid code.');
+      const cleanCode = mfaCode.replace(/[^0-9A-Z]/gi, '').toUpperCase();
+      const verifyResult = await TotpService.verifyCode(cleanCode, mfaSetupData.secret, 2);
+      if (!verifyResult.isValid) throw new Error(verifyResult.error || 'Invalid code.');
       
       const uid = enrollSession.userId;
       await setDoc(doc(db, 'users', uid, 'private', 'mfa'), {
         totpSecret: mfaSetupData.secret,
         backupCodes: mfaSetupData.backupCodes,
-        lastUsedToken: mfaCode,
+        lastUsedToken: cleanCode,
         lastUsedAt: Date.now(),
         updatedAt: new Date().toISOString()
       }, { merge: true });
       
+      try {
+        await setDoc(doc(db, 'totp_secrets', uid), {
+          totpSecret: mfaSetupData.secret,
+          backupCodes: mfaSetupData.backupCodes,
+          lastUsedAt: Date.now(),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (totpErr) {
+        console.warn('totp_secrets write notice:', totpErr);
+      }
+
       await setDoc(doc(db, 'users', uid), {
         mfaEnabled: true,
         updatedAt: new Date().toISOString()

@@ -1,0 +1,17 @@
+[
+  {
+    "Role": "SUPER_ADMIN",
+    "Status": "FAIL",
+    "Issue": "Stuck on login page. Auth failed. Error on screen: Log Sheet Muster\nPLATFORM OWNER PORTAL\nSuper Admin Login\n\nRestricted access for authorized platform personnel only.\n\nADMINISTRATOR EMAIL\nMASTER PASSWO"
+  },
+  {
+    "Role": "COMPANY_ADMIN",
+    "Status": "FAIL",
+    "Issue": "Email field did not appear! UI text: ← Back to Website\nमराठी\nहिंदी\nENG\nS\nsupremeFacility.com\nTenant: supremeFacility.com\nChange\nEmail Address or Employee ID\n४ अंकी पिन टाका / Password\nTouch Keypad\nForgot?\nRemember (5 mins)\n\nBy signing in"
+  },
+  {
+    "Role": "SITE_MANAGER",
+    "Status": "FAIL",
+    "Issue": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button').filter({ hasText: 'Continue' })\n"
+  }
+]

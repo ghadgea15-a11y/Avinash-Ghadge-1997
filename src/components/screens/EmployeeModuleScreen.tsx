@@ -209,6 +209,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
     panNumber: '',
     address: '',
     bankDetailsRef: '',
+    bankName: '',
+    bankAccountNumber: '',
+    bankIfsc: '',
+    uanNumber: '',
+    pfNumber: '',
+    esicNumber: '',
     weeklyOff: [0] as number[]
   });
 
@@ -457,6 +463,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       panNumber: emp.panNumber || '',
       address: emp.address || '',
       bankDetailsRef: emp.bankDetailsRef || '',
+      bankName: emp.bankName || '',
+      bankAccountNumber: emp.bankAccountNumber || '',
+      bankIfsc: emp.bankIfsc || '',
+      uanNumber: emp.uanNumber || '',
+      pfNumber: emp.pfNumber || '',
+      esicNumber: emp.esicNumber || '',
       weeklyOff: emp.weeklyOff || [0]
     });
 
@@ -835,6 +847,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       address: formData.address.trim() || undefined,
       panNumber: formData.panNumber.trim() || undefined,
       bankDetailsRef: formData.bankDetailsRef.trim() || undefined,
+      bankName: formData.bankName.trim() || undefined,
+      bankAccountNumber: formData.bankAccountNumber.trim() || undefined,
+      bankIfsc: formData.bankIfsc.trim() || undefined,
+      uanNumber: formData.uanNumber.trim() || undefined,
+      pfNumber: formData.pfNumber.trim() || undefined,
+      esicNumber: formData.esicNumber.trim() || undefined,
       status: editingEmployeeId 
         ? (employees.find(e => e.id === empId)?.status || 'ACTIVE')
         : 'PENDING_VERIFICATION',
@@ -930,6 +948,12 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
       panNumber: '',
       address: '',
       bankDetailsRef: '',
+      bankName: '',
+      bankAccountNumber: '',
+      bankIfsc: '',
+      uanNumber: '',
+      pfNumber: '',
+      esicNumber: '',
       weeklyOff: [0]
     });
     setFormErrors({});
@@ -2061,6 +2085,95 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
             </div>
           </div>
 
+          <h4 className="text-xs font-bold text-slate-300 mt-4 border-b border-slate-800 pb-2">Statutory & Bank Details</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">PAN Number</label>
+              <input
+                type="text"
+                value={formData.panNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, panNumber: e.target.value.toUpperCase() }))}
+                placeholder="ABCDE1234F"
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Aadhar Number</label>
+              <input
+                type="text"
+                value={formData.aadharNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, aadharNumber: e.target.value.replace(/\D/g, '') }))}
+                placeholder="123456789012"
+                maxLength={12}
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">UAN Number (PF)</label>
+              <input
+                type="text"
+                value={formData.uanNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, uanNumber: e.target.value }))}
+                placeholder="UAN"
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">ESIC Number</label>
+              <input
+                type="text"
+                value={formData.esicNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, esicNumber: e.target.value }))}
+                placeholder="ESIC"
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Bank Name</label>
+              <input
+                type="text"
+                value={formData.bankName}
+                onChange={(e) => setFormData(prev => ({ ...prev, bankName: e.target.value }))}
+                placeholder="Bank Name"
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Bank Account Number</label>
+              <input
+                type="text"
+                value={formData.bankAccountNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, bankAccountNumber: e.target.value }))}
+                placeholder="Account Number"
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Bank IFSC</label>
+              <input
+                type="text"
+                value={formData.bankIfsc}
+                onChange={(e) => setFormData(prev => ({ ...prev, bankIfsc: e.target.value.toUpperCase() }))}
+                placeholder="IFSC Code"
+                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }`}
+              />
+            </div>
+          </div>
+
           {/* System Access & RBAC Credentials Card */}
           <div className={`p-4 rounded-2xl border transition-all ${
             formData.hasSystemAccess
@@ -2559,17 +2672,27 @@ export const EmployeeModuleScreen: React.FC<EmployeeModuleScreenProps> = ({
                 )}
 
                 {canApproveOnboarding && (
-                  <button
-                    onClick={() => handleApproveStatus(
-                      selectedEmployee.id, 
-                      selectedEmployee.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
+                  <>
+                    <button
+                      onClick={() => handleApproveStatus(
+                        selectedEmployee.id, 
+                        selectedEmployee.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
+                      )}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow ${
+                        selectedEmployee.status === 'ACTIVE' ? 'bg-amber-600 hover:bg-amber-500' : 'bg-emerald-600 hover:bg-emerald-500'
+                      }`}
+                    >
+                      {selectedEmployee.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+                    </button>
+                    {selectedEmployee.status === 'ACTIVE' && (
+                      <button
+                        onClick={() => handleApproveStatus(selectedEmployee.id, 'TERMINATED')}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow bg-rose-600 hover:bg-rose-500"
+                      >
+                        Terminate
+                      </button>
                     )}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow ${
-                      selectedEmployee.status === 'ACTIVE' ? 'bg-rose-600 hover:bg-rose-500' : 'bg-emerald-600 hover:bg-emerald-500'
-                    }`}
-                  >
-                    {selectedEmployee.status === 'ACTIVE' ? 'Suspend Employee' : 'Activate Employee'}
-                  </button>
+                  </>
                 )}
 
                 {isCompanyAdmin && (

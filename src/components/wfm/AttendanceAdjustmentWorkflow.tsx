@@ -32,7 +32,11 @@ export const AttendanceAdjustmentWorkflow: React.FC<Props> = ({ userSession, com
     );
     
     const unsub = onSnapshot(q, (snap) => {
-      const records = snap.docs.map(d => d.data() as AttendanceRecord);
+      let records = snap.docs.map(d => d.data() as AttendanceRecord);
+      
+      if (userSession.role === 'SUPERVISOR' || (userSession.roles && userSession.roles.includes('SUPERVISOR'))) {
+        records = records.filter(r => r.siteId === userSession.branchId || r.siteId === userSession.assignedSiteId);
+      }
       // Sort by date desc
       records.sort((a, b) => new Date(b.attendanceDate).getTime() - new Date(a.attendanceDate).getTime());
       setExceptions(records);
@@ -41,10 +45,20 @@ export const AttendanceAdjustmentWorkflow: React.FC<Props> = ({ userSession, com
     return () => unsub();
   }, [companyId]);
 
+  const getLocalTime = (isoString?: string) => {
+    if (!isoString) return '';
+    try {
+      const d = new Date(isoString);
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      return `${hh}:${mm}`;
+    } catch(e) { return ''; }
+  };
+
   const handleOpenModal = (att: AttendanceRecord) => {
     setSelectedAtt(att);
-    setNewCheckIn(att.checkIn ? att.checkIn.substring(11, 16) : '');
-    setNewCheckOut(att.checkOut ? att.checkOut.substring(11, 16) : '');
+    setNewCheckIn(getLocalTime(att.checkInTime));
+    setNewCheckOut(getLocalTime(att.checkOutTime));
     setApprovedOt(att.approvedOvertimeMinutes || 0);
     setNewStatus(att.status);
     setReason('');
@@ -65,8 +79,8 @@ export const AttendanceAdjustmentWorkflow: React.FC<Props> = ({ userSession, com
           attendanceId: selectedAtt.id,
           employeeId: selectedAtt.employeeId,
           requestedStatus: newStatus as any,
-          requestedCheckIn: newCheckIn ? `${selectedAtt.attendanceDate}T${newCheckIn}:00Z` : undefined,
-          requestedCheckOut: newCheckOut ? `${selectedAtt.attendanceDate}T${newCheckOut}:00Z` : undefined,
+          requestedCheckInTime: newCheckIn ? new Date(`${selectedAtt.date || selectedAtt.attendanceDate}T${newCheckIn}:00`).toISOString() : undefined,
+          requestedCheckOutTime: newCheckOut ? new Date(`${selectedAtt.date || selectedAtt.attendanceDate}T${newCheckOut}:00`).toISOString() : undefined,
           approvedOvertimeMinutes: approvedOt,
           reason
         },
@@ -109,10 +123,10 @@ export const AttendanceAdjustmentWorkflow: React.FC<Props> = ({ userSession, com
             <tbody className="divide-y divide-slate-200">
               {exceptions.map(att => (
                 <tr key={att.id} className="hover:bg-white dark:bg-slate-950">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{att.attendanceDate}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{(att.date || att.attendanceDate)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{att.employeeName}</td>
                   <td className="px-6 py-4 text-sm text-amber-600">
-                    {att.exceptions?.join(', ') || 'Requires Review'}
+                    {att.regularizationReason ? `Reason: ${att.regularizationReason}` : (att.exceptions?.join(', ') || 'Requires Review')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <span className="px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-900 dark:text-slate-300">

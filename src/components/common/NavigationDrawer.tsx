@@ -52,10 +52,10 @@ export function NavigationDrawer({
 
   const isSuperAdmin = userSession?.role === 'SUPER_ADMIN';
 
-  // Get grouped navigation items based on current user's role
+  // Get grouped navigation items based on current user's role and company enabled modules
   const groupedNavigation = useMemo(() => {
-    return getGroupedNavForRole(userSession?.role, isSuperAdmin);
-  }, [userSession?.role, isSuperAdmin]);
+    return getGroupedNavForRole(userSession?.role, isSuperAdmin, activeCompany?.enabledModules);
+  }, [userSession?.role, isSuperAdmin, activeCompany?.enabledModules]);
 
   // Filter items if searching
   const filteredNavigation = useMemo(() => {

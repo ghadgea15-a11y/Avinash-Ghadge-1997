@@ -66,6 +66,34 @@ export class SubscriptionService {
     await setDoc(docRef, plan);
   }
 
+  static async saveSubscriptionPlan(plan: Partial<SubscriptionPlan> & { planId?: string; id?: string }): Promise<void> {
+    const planId = plan.planId || plan.id || `PLAN_${Date.now()}`;
+    const docRef = doc(db, PLANS_COLLECTION, planId);
+    const fullPlan: SubscriptionPlan = {
+      planId,
+      id: planId,
+      planCode: plan.planCode || planId,
+      planName: plan.planName || plan.name || 'Custom Plan',
+      name: plan.name || plan.planName || 'Custom Plan',
+      description: plan.description || '',
+      status: plan.status || 'ACTIVE',
+      billingCycle: plan.billingCycle || 'MONTHLY',
+      monthlyPrice: Number(plan.monthlyPrice) || 0,
+      yearlyPrice: Number(plan.yearlyPrice) || 0,
+      currency: plan.currency || 'INR',
+      employeeLimit: Number(plan.employeeLimit) || 100,
+      userLimit: Number(plan.userLimit) || 5,
+      storageLimitMB: Number(plan.storageLimitMB) || 2048,
+      enabledModules: plan.enabledModules || ['EMPLOYEES', 'ATTENDANCE'],
+      trialEligible: plan.trialEligible ?? true,
+      trialDays: Number(plan.trialDays) || 14,
+      createdAt: plan.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ...plan
+    };
+    await setDoc(docRef, fullPlan, { merge: true });
+  }
+
   static async updatePlan(planId: string, updates: Partial<SubscriptionPlan>): Promise<void> {
     const docRef = doc(db, PLANS_COLLECTION, planId);
     await updateDoc(docRef, updates);

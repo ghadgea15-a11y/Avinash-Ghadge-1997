@@ -23,6 +23,7 @@ import { triggerWebhookHandler, processWebhookRetriesHandler } from './src/serve
 import { generateInvoiceApi, calculateProfitabilityApi, detectSlaBreachesApi } from './src/server/clientBillingApi';
 import { apiKeyRoutes } from './src/server/apiKeyRoutes';
 import { publicJobRoutes } from './src/server/publicJobRoutes';
+import { HealthService } from './src/server/healthService';
 
 async function startServer() {
   const app = express();
@@ -52,15 +53,32 @@ async function startServer() {
   app.use('/api/jobs', publicJobRoutes);
 
   // ============================================================
-  // HEALTH & STATUS ENDPOINTS
+  // HEALTH & STATUS ENDPOINTS (Live Telemetry & Health Checks)
   // ============================================================
-  app.get('/api/health', (_req: Request, res: Response) => {
+  app.get('/api/health', async (_req: Request, res: Response) => {
+    try {
+      const telemetry = await HealthService.getLiveTelemetry();
+      const statusCode = telemetry.status === 'error' ? 503 : 200;
+      res.status(statusCode).json({
+        ...telemetry,
+        effectiveMode: effectiveProd ? 'PRODUCTION' : 'DEVELOPMENT'
+      });
+    } catch (err: any) {
+      console.error('[Health Endpoint Error]', err);
+      res.status(500).json({
+        status: 'error',
+        error: err?.message || 'Failed to collect health telemetry',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  app.get('/api/health/ping', async (_req: Request, res: Response) => {
+    const dbPing = await HealthService.pingDatabase();
     res.json({
-      status: 'ok',
-      service: 'Log Sheet Muster Backend Service',
-      environment: NODE_ENV,
-      effectiveMode: effectiveProd ? 'PRODUCTION' : 'DEVELOPMENT',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.floor(process.uptime()),
+      database: dbPing
     });
   });
 

@@ -15,27 +15,94 @@ import { PremiumHeader } from './PremiumHeader';
 import { PremiumFooter } from './PremiumFooter';
 import { FirestoreService } from '../../services/firestoreService';
 import { RequestDemoModal } from './RequestDemoModal';
+import { LandingPageConfig, DEFAULT_LANDING_PAGE_CONFIG } from '../../types/landingPageEditor';
+import { LandingPageEditorService } from '../../services/landingPageEditorService';
 
-export const PremiumLandingPage: React.FC<{ onNavigate: (screen: PhaseAScreen) => void }> = ({ onNavigate }) => {
+interface PremiumLandingPageProps {
+  onNavigate: (screen: PhaseAScreen) => void;
+  config?: LandingPageConfig; // Used for live preview in the editor
+}
+
+export const PremiumLandingPage: React.FC<PremiumLandingPageProps> = ({ onNavigate, config: propConfig }) => {
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+  const [liveConfig, setLiveConfig] = useState<LandingPageConfig>(DEFAULT_LANDING_PAGE_CONFIG);
+  const [isLoading, setIsLoading] = useState(!propConfig);
+
+  useEffect(() => {
+    if (propConfig) {
+      setLiveConfig(propConfig);
+      setIsLoading(false);
+      return;
+    }
+
+    // Subscribe to published config if not in editor preview
+    const unsubscribe = LandingPageEditorService.subscribeToPublishedConfig((newConfig) => {
+      setLiveConfig(newConfig);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [propConfig]);
+
+  useEffect(() => {
+    if (liveConfig.seo) {
+      document.title = liveConfig.seo.metaTitle || 'Log Sheet Muster';
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute('content', liveConfig.seo.metaDescription || '');
+      } else {
+        const meta = document.createElement('meta');
+        meta.name = 'description';
+        meta.content = liveConfig.seo.metaDescription || '';
+        document.head.appendChild(meta);
+      }
+    }
+  }, [liveConfig.seo]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#060B19] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  const { theme, sections, sectionOrder = DEFAULT_LANDING_PAGE_CONFIG.sectionOrder } = liveConfig;
+
+  // Map component references dynamically
+  const renderSection = (key: string) => {
+    if (!sections[key as keyof typeof sections]) return null;
+    
+    switch (key) {
+      case 'hero': return <HeroSection key="hero" onNavigate={onNavigate} onOpenDemo={() => setIsDemoModalOpen(true)} config={liveConfig} />;
+      case 'statsStrip': return <EnterpriseCapabilityStrip key="statsStrip" config={liveConfig} />;
+      case 'productShowcase': return <InteractiveProductShowcase key="productShowcase" onNavigate={onNavigate} onOpenDemo={() => setIsDemoModalOpen(true)} config={liveConfig} />;
+      case 'modules': return <ModulesSection key="modules" config={liveConfig} />;
+      case 'industrySolutions': return <IndustrySolutionsSection key="industrySolutions" onNavigate={onNavigate} onOpenDemo={() => setIsDemoModalOpen(true)} config={liveConfig} />;
+      case 'demoSection': return <DemoSection key="demoSection" onNavigate={onNavigate} config={liveConfig} />;
+      case 'aboutUs': return <AboutUsSection key="aboutUs" config={liveConfig} />;
+      case 'securitySection': return <SecuritySection key="securitySection" config={liveConfig} />;
+      case 'faqSection': return <FaqSection key="faqSection" onOpenDemo={() => setIsDemoModalOpen(true)} config={liveConfig} />;
+      default: return null;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#060B19] text-slate-50 font-sans selection:bg-blue-500/30 selection:text-blue-200 overflow-x-hidden">
-      <PremiumHeader onNavigate={onNavigate} onOpenDemo={() => setIsDemoModalOpen(true)} />
+    <div 
+      className="min-h-screen text-slate-50 font-sans selection:bg-blue-500/30 selection:text-blue-200 overflow-x-hidden"
+      style={{ backgroundColor: theme.backgroundColor, fontFamily: theme.fontFamily }}
+    >
+      {sections.header && (
+        <PremiumHeader onNavigate={onNavigate} onOpenDemo={() => setIsDemoModalOpen(true)} config={liveConfig} />
+      )}
       
       <main>
-        <HeroSection onNavigate={onNavigate} onOpenDemo={() => setIsDemoModalOpen(true)} />
-        <EnterpriseCapabilityStrip />
-        <InteractiveProductShowcase onNavigate={onNavigate} onOpenDemo={() => setIsDemoModalOpen(true)} />
-        <ModulesSection />
-        <IndustrySolutionsSection onNavigate={onNavigate} onOpenDemo={() => setIsDemoModalOpen(true)} />
-        <DemoSection onNavigate={onNavigate} />
-        <AboutUsSection />
-        <SecuritySection />
-        <FaqSection onOpenDemo={() => setIsDemoModalOpen(true)} />
+        {sectionOrder.map((key) => renderSection(key))}
       </main>
 
-      <PremiumFooter onNavigate={onNavigate} onOpenDemo={() => setIsDemoModalOpen(true)} />
+      {sections.footer && (
+        <PremiumFooter onNavigate={onNavigate} onOpenDemo={() => setIsDemoModalOpen(true)} />
+      )}
       
       <RequestDemoModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />
     </div>
@@ -43,7 +110,9 @@ export const PremiumLandingPage: React.FC<{ onNavigate: (screen: PhaseAScreen) =
 };
 
 // --- HERO SECTION ---
-const HeroSection: React.FC<{ onNavigate: (screen: PhaseAScreen) => void; onOpenDemo: () => void }> = ({ onNavigate, onOpenDemo }) => {
+const HeroSection: React.FC<{ onNavigate: (screen: PhaseAScreen) => void; onOpenDemo: () => void; config: LandingPageConfig }> = ({ onNavigate, onOpenDemo, config }) => {
+  const { hero, theme } = config;
+  
   return (
     <section className="relative pt-32 pb-20 lg:pt-44 lg:pb-32 overflow-hidden">
       {/* Dynamic Ambient Background Glows */}
@@ -58,28 +127,35 @@ const HeroSection: React.FC<{ onNavigate: (screen: PhaseAScreen) => void; onOpen
           
           {/* Left: Content (7 cols on lg) */}
           <div className="lg:col-span-7 flex flex-col items-start text-left">
-            <motion.div 
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-blue-950/60 border border-blue-700/40 text-blue-300 font-semibold text-xs mb-6 backdrop-blur-md shadow-sm"
-            >
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-              </span>
-              <span>Enterprise Workforce, Facility Operations &amp; Statutory Muster Platform</span>
-            </motion.div>
+            {hero.badgeEnabled && (
+              <motion.div 
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-blue-950/60 border border-blue-700/40 text-blue-300 font-semibold text-xs mb-6 backdrop-blur-md shadow-sm"
+              >
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                <span>{hero.badgeText}</span>
+              </motion.div>
+            )}
 
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-[1.12] mb-6"
+              className={`font-black tracking-tight text-white leading-[1.12] mb-6 ${
+                theme.heroFontSize === 'sm' ? 'text-3xl sm:text-4xl md:text-5xl' :
+                theme.heroFontSize === 'lg' ? 'text-5xl sm:text-6xl md:text-7xl' :
+                theme.heroFontSize === 'xl' ? 'text-6xl sm:text-7xl md:text-8xl' :
+                'text-4xl sm:text-5xl md:text-6xl'
+              }`}
             >
-              Command Your Workforce. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-cyan-300">
-                Guarantee Every Operation.
+              {hero.headlineMain} <br />
+              <span className="text-transparent bg-clip-text" style={{ backgroundImage: `linear-gradient(to right, ${theme.primaryColor}, ${theme.accentColor})` }}>
+                {hero.headlineHighlight}
               </span>
             </motion.h1>
             
@@ -89,13 +165,8 @@ const HeroSection: React.FC<{ onNavigate: (screen: PhaseAScreen) => void; onOpen
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-base sm:text-lg text-slate-300 max-w-2xl font-normal leading-relaxed mb-8"
             >
-              Built by <strong className="text-white font-semibold">Shourya Enterprises Pvt. Ltd.</strong>, 
-              Log Sheet Muster replaces fragmented paper logbooks and manual punch cards with a unified 
-              platform for <span className="text-blue-300 font-medium">Form II statutory attendance</span>, 
-              <span className="text-blue-300 font-medium"> QR guard patrols</span>, 
-              <span className="text-blue-300 font-medium"> equipment log sheets</span>, 
-              <span className="text-blue-300 font-medium"> EAM asset maintenance</span>, and 
-              <span className="text-blue-300 font-medium"> automated PF/ESI payroll</span>.
+              Built by <strong className="text-white font-semibold">{hero.companyHighlightName}</strong>, 
+              {hero.subheadline.split(hero.companyHighlightName)[1] || hero.subheadline}
             </motion.p>
             
             <motion.div 
@@ -106,16 +177,17 @@ const HeroSection: React.FC<{ onNavigate: (screen: PhaseAScreen) => void; onOpen
             >
               <button 
                 onClick={onOpenDemo}
-                className="px-8 py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold text-base transition-all shadow-[0_0_25px_rgba(79,70,229,0.45)] flex items-center justify-center gap-2 cursor-pointer"
+                className="px-8 py-4 text-white rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+                style={{ backgroundImage: `linear-gradient(to right, ${theme.primaryColor}, ${theme.secondaryColor})` }}
               >
-                <span>Get 3 Months Free Demo</span>
+                <span>{hero.primaryButtonText}</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
               <button 
                 onClick={() => onNavigate('LOGIN')}
                 className="px-8 py-4 bg-slate-900/80 hover:bg-slate-800/90 text-white border border-slate-700/80 hover:border-slate-600 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2 cursor-pointer backdrop-blur-md"
               >
-                <span>Login to Web App</span>
+                <span>{hero.secondaryButtonText}</span>
                 <ArrowUpRight className="w-5 h-5 text-slate-400" />
               </button>
             </motion.div>

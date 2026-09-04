@@ -48,5 +48,11 @@ service firebase.storage {
     match /{allPaths=**} {
       allow read, write: if isSuperAdmin();
     }
+    
+    // Public landing page assets
+    match /public/landing_page/{allPaths=**} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
   }
 }

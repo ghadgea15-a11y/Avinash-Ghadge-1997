@@ -42,7 +42,8 @@ export type WorkforceAnomalyType =
   | 'OVERSTAFFING'
   | 'UNFILLED_SHIFTS'
   | 'CRITICAL_SKILL_SHORTAGE'
-  | 'UNEXPECTED_ABSENCE';
+  | 'UNEXPECTED_ABSENCE'
+  | 'UNCONFIGURED_REQUIREMENT';
 
 export type ShortageSeverity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -91,6 +92,7 @@ export interface UnexpectedAbsenceDetail {
 }
 
 export interface ShiftWorkforceBreakdown {
+  isRequirementConfigured?: boolean;
   requiredCount: number;
   scheduledCount: number;
   leaveCount: number;
@@ -103,6 +105,16 @@ export interface ShiftWorkforceBreakdown {
   missingSkills: SkillGapDetail[];
   unexpectedAbsences: UnexpectedAbsenceDetail[];
   approvedLeaves: { employeeId: string; name: string; leaveType: string }[];
+}
+
+export interface HistoricalAbsenteeismStat {
+  dayOfWeek: number; // 0=Sun, 1=Mon, ..., 6=Sat
+  dayName: string;
+  totalHistoricalShifts: number;
+  totalPresentShifts: number;
+  totalAbsentShifts: number;
+  historicalAbsenteeismRate: number; // 0.0 to 1.0
+  historicalShowUpRate: number; // 0.0 to 1.0
 }
 
 export interface ReplacementProposal {

@@ -9,8 +9,8 @@ export interface AttendanceAdjustmentRequest {
   attendanceId: string;
   employeeId: string;
   requestedStatus?: AttendanceStatus;
-  requestedCheckIn?: string;
-  requestedCheckOut?: string;
+  requestedCheckInTime?: string;
+  requestedCheckOutTime?: string;
   approvedOvertimeMinutes?: number;
   reason: string;
 }
@@ -47,7 +47,7 @@ export class PayrollWorkflowService {
       // Store before values for audit
       const beforeState = {
         status: att.status,
-        checkIn: att.checkIn,
+        checkIn: att.checkInTime,
         checkOut: att.checkOut,
         approvedOvertimeMinutes: att.approvedOvertimeMinutes
       };
@@ -59,14 +59,14 @@ export class PayrollWorkflowService {
       };
       
       if (adjustment.requestedStatus) updates.status = adjustment.requestedStatus;
-      if (adjustment.requestedCheckIn) updates.checkIn = adjustment.requestedCheckIn;
-      if (adjustment.requestedCheckOut) updates.checkOut = adjustment.requestedCheckOut;
+      if (adjustment.requestedCheckInTime) updates.checkInTime = adjustment.requestedCheckInTime;
+      if (adjustment.requestedCheckOutTime) updates.checkOut = adjustment.requestedCheckOutTime;
       if (adjustment.approvedOvertimeMinutes !== undefined) updates.approvedOvertimeMinutes = adjustment.approvedOvertimeMinutes;
 
       // Ensure idempotency (if no change, skip)
       if (
         updates.status === beforeState.status && 
-        updates.checkIn === beforeState.checkIn && 
+        updates.checkInTime === beforeState.checkInTime && 
         updates.checkOut === beforeState.checkOut && 
         updates.approvedOvertimeMinutes === beforeState.approvedOvertimeMinutes
       ) {

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { CompanyTenant, UserSession, PhaseAScreen, MASTER_APP_MODULES, AppModule } from '../../types';
 import { FirestoreService } from '../../services/firestoreService';
+import { SuperAdminService } from '../../services/superAdminService';
 import { useTheme } from '../../context/ThemeContext';
 import { useFeedback } from '../../context/ActionFeedbackContext';
 
@@ -85,15 +86,11 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
     const dismiss = showLoading('Saving module entitlements...');
 
     try {
-      const ok = await FirestoreService.updateCompanyModules(selectedCompanyId, enabledModules);
+      await SuperAdminService.updateModuleEntitlements(currentSession, selectedCompanyId, enabledModules);
       dismiss();
-      if (ok) {
-        // Update local state list
-        setCompanies(companies.map(c => c.companyId === selectedCompanyId ? { ...c, enabledModules } : c));
-        showSuccess(`✓ Successfully Saved module entitlements for tenant ${selectedCompanyId}`);
-      } else {
-        showError('✕ Save Failed: Could not update company module entitlements');
-      }
+      // Update local state list
+      setCompanies(companies.map(c => c.companyId === selectedCompanyId ? { ...c, enabledModules } : c));
+      showSuccess(`✓ Successfully Saved module entitlements for tenant ${selectedCompanyId} - Logged to Audit Trail`);
     } catch (err: any) {
       dismiss();
       handleError(err, '✕ Save Failed');
@@ -106,12 +103,15 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
 
   const categories = ['ALL', 'CORE', 'HRMS', 'SECURITY', 'FINANCE', 'SYSTEM'];
 
-  const filteredModules = MASTER_APP_MODULES.filter(m => {
-    const matchesCategory = categoryFilter === 'ALL' || m.category === categoryFilter;
-    const matchesSearch = m.name.toLowerCase().includes(searchFilter.toLowerCase()) || 
-                          m.key.toLowerCase().includes(searchFilter.toLowerCase()) ||
-                          m.description.toLowerCase().includes(searchFilter.toLowerCase());
-    return matchesCategory && matchesSearch;
+  const filteredModules = (MASTER_APP_MODULES || []).filter(m => {
+    if (!m) return false;
+    const matchesCategory = categoryFilter === 'ALL' || (m.category && m.category === categoryFilter);
+    const searchLower = (searchFilter || '').toLowerCase().trim();
+    if (!searchLower) return matchesCategory;
+    const nameStr = (m.name || m.label || m.key || '').toLowerCase();
+    const keyStr = (m.key || '').toLowerCase();
+    const descStr = (m.description || '').toLowerCase();
+    return matchesCategory && (nameStr.includes(searchLower) || keyStr.includes(searchLower) || descStr.includes(searchLower));
   });
 
   return (
@@ -185,24 +185,39 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
       </div>
 
       {/* Filters & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Category Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                categoryFilter === cat
-                  ? 'bg-cyan-600 text-white shadow-md'
-                  : isDark
-                    ? 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-                    : 'bg-white text-slate-600 hover:text-black border border-slate-200'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Search & Category Tabs */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search modules..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              className={`pl-8 pr-3 py-1.5 rounded-lg text-xs border ${
+                isDark ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-500' : 'bg-white border-slate-200 text-black placeholder-slate-400'
+              } focus:outline-none focus:border-cyan-500`}
+            />
+          </div>
+
+          <div className="flex items-center gap-1 overflow-x-auto pb-1">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategoryFilter(cat)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 ${
+                  categoryFilter === cat
+                    ? 'bg-cyan-600 text-white shadow-md'
+                    : isDark
+                      ? 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      : 'bg-white text-slate-600 hover:text-black border border-slate-200'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Quick Select Buttons */}
@@ -248,12 +263,12 @@ export const SuperAdminModulesScreen: React.FC<SuperAdminModulesScreenProps> = (
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold">{mod.name}</span>
+                    <span className="text-xs font-bold">{mod.name || mod.label || mod.key}</span>
                     <span className="text-[9px] font-bold px-1.5 py-0.2 rounded uppercase bg-slate-800 text-slate-300 font-mono">
-                      {mod.category}
+                      {mod.category || 'CORE'}
                     </span>
                   </div>
-                  <p className="text-xs opacity-80">{mod.description}</p>
+                  <p className="text-xs opacity-80">{mod.description || ''}</p>
                   <p className="text-[9px] font-mono opacity-60">KEY: {mod.key}</p>
                 </div>
 

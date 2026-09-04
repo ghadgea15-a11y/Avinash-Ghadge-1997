@@ -1,74 +1,100 @@
 const fs = require('fs');
-let file = fs.readFileSync('src/components/screens/ReportsAnalyticsScreen.tsx', 'utf8');
-const search = `                  {filteredEmployees.slice(0, 30).map((emp, idx) => {
-                    let present = 0;
-                    let absent = 0;
-                    let weeklyOff = 4;
-                    const dayCols = daysArray.map(day => {
-                      const log = monthlyAttendanceMap.get(\`\${emp.id}_\${day}\`);
-                      if (log) {
-                        if (log.status === 'PRESENT') { present++; return 'P'; }
-                        if (log.status === 'HALFDAY' || (log.status as string) === 'HALF_DAY') { present += 0.5; return 'HD'; }
-                        if (log.status === 'ABSENT') { absent++; return 'A'; }
-                        if (log.status === 'ON_LEAVE') return 'L';
-                      }
-                      const dayOfWeek = new Date(selectedYear, selectedMonth - 1, day).getDay();
-                      if (dayOfWeek === 0) return 'WO';
-                      present++;
-                      return 'P';
-                    });
-                    const payDays = Math.min(daysInSelectedMonth, present + weeklyOff);
-                    const gross = payDays * 650;
-                    const net = Math.round(gross * 0.88);`;
+let code = fs.readFileSync('src/components/screens/EmployeeModuleScreen.tsx', 'utf8');
 
-const replace = `                  {filteredEmployees.slice(0, 30).map((emp, idx) => {
-                    let present = 0;
-                    let absent = 0;
-                    let weeklyOff = 0;
-                    let paidLeaves = 0;
-                    
-                    const empWeeklyOff = (emp as any).weeklyOff || (emp as any).weeklyOffDays || [0];
-                    
-                    const dayCols = daysArray.map(day => {
-                      const dateStr = \`\${selectedYear}-\${String(selectedMonth).padStart(2, '0')}-\${String(day).padStart(2, '0')}\`;
-                      const dayOfWeek = new Date(selectedYear, selectedMonth - 1, day).getDay();
-                      const isDayOff = empWeeklyOff.includes(dayOfWeek);
-                      
-                      const log = monthlyAttendanceMap.get(\`\${emp.id}_\${day}\`);
-                      const leave = leaves.find(l => l.employeeId === emp.id && l.status === 'APPROVED' && l.startDate <= dateStr && l.endDate >= dateStr);
-                      
-                      if (log) {
-                        if (log.status === 'PRESENT') { present++; return 'P'; }
-                        if (log.status === 'HALFDAY' || (log.status as string) === 'HALF_DAY') { present += 0.5; return 'HD'; }
-                        if (log.status === 'ON_LEAVE') { paidLeaves++; return 'L'; }
-                        if (log.status === 'ABSENT') { 
-                          if (leave && leave.leaveType !== 'UNPAID' && leave.leaveType !== 'LWP') { paidLeaves++; return 'L'; }
-                          absent++; return 'A'; 
-                        }
-                      }
-                      
-                      if (isDayOff) {
-                        weeklyOff++;
-                        return 'WO';
-                      }
-                      
-                      if (leave && leave.leaveType !== 'UNPAID' && leave.leaveType !== 'LWP') {
-                        paidLeaves++;
-                        return 'L';
-                      }
-                      
-                      absent++;
-                      return '-';
-                    });
-                    
-                    const payDays = Math.min(daysInSelectedMonth, present + paidLeaves + weeklyOff);
-                    const gross = payDays * 650;
-                    const net = Math.round(gross * 0.88);`;
+const injectionPoint = "          </div>\n\n          {/* System Access & RBAC Credentials Card */}";
+const newFields = `          </div>
 
-if (file.includes(search)) {
-  file = file.replace(search, replace);
-  fs.writeFileSync('src/components/screens/ReportsAnalyticsScreen.tsx', file);
-  console.log('Patched');
-} else {
-  console.log('Not found');
-}
+          <h4 className="text-xs font-bold text-slate-300 mt-4 border-b border-slate-800 pb-2">Statutory & Bank Details</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">PAN Number</label>
+              <input
+                type="text"
+                value={formData.panNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, panNumber: e.target.value.toUpperCase() }))}
+                placeholder="ABCDE1234F"
+                className={\`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none \${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }\`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Aadhar Number</label>
+              <input
+                type="text"
+                value={formData.aadharNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, aadharNumber: e.target.value.replace(/\\D/g, '') }))}
+                placeholder="123456789012"
+                maxLength={12}
+                className={\`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none \${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }\`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">UAN Number (PF)</label>
+              <input
+                type="text"
+                value={formData.uanNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, uanNumber: e.target.value }))}
+                placeholder="UAN"
+                className={\`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none \${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }\`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">ESIC Number</label>
+              <input
+                type="text"
+                value={formData.esicNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, esicNumber: e.target.value }))}
+                placeholder="ESIC"
+                className={\`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none \${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }\`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Bank Name</label>
+              <input
+                type="text"
+                value={formData.bankName}
+                onChange={(e) => setFormData(prev => ({ ...prev, bankName: e.target.value }))}
+                placeholder="Bank Name"
+                className={\`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none \${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }\`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Bank Account Number</label>
+              <input
+                type="text"
+                value={formData.bankAccountNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, bankAccountNumber: e.target.value }))}
+                placeholder="Account Number"
+                className={\`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none \${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }\`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Bank IFSC</label>
+              <input
+                type="text"
+                value={formData.bankIfsc}
+                onChange={(e) => setFormData(prev => ({ ...prev, bankIfsc: e.target.value.toUpperCase() }))}
+                placeholder="IFSC Code"
+                className={\`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none \${
+                  isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }\`}
+              />
+            </div>
+          </div>
+
+          {/* System Access & RBAC Credentials Card */}`;
+
+code = code.replace(injectionPoint, newFields);
+fs.writeFileSync('src/components/screens/EmployeeModuleScreen.tsx', code);
+console.log('patched UI');

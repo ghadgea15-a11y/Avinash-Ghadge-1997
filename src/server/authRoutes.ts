@@ -4,6 +4,7 @@ import { PlatformAuthService } from './platformAuthService';
 import { PlatformPermission } from '../types';
 import { Router, Request, Response } from 'express';
 import { TotpService } from '../services/totpService';
+import { SeedTestDataService } from './seedTestDataService';
 import fs from 'fs';
 import path from 'path';
 
@@ -140,13 +141,23 @@ authRoutes.post('/totp/setup', verifyToken, async (req: Request, res: Response) 
 
     const mfaSetupData = await TotpService.createMfaSetup({ accountName: email });
 
-    // Mandate persistence to Firestore for enterprise-grade consistency
+    // Mandate persistence to Firestore for enterprise-grade consistency across all locations
     const db = getAdminDb();
-    await db.collection('totp_secrets').doc(uid).set({
+    const batch = db.batch();
+
+    batch.set(db.collection('totp_secrets').doc(uid), {
       pendingTotpSecret: mfaSetupData.secret,
       pendingBackupCodes: mfaSetupData.backupCodes,
       updatedAt: new Date().toISOString()
     }, { merge: true });
+
+    batch.set(db.collection('users').doc(uid).collection('private').doc('mfa'), {
+      pendingTotpSecret: mfaSetupData.secret,
+      pendingBackupCodes: mfaSetupData.backupCodes,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    await batch.commit();
 
     return res.json({
       success: true,
@@ -170,30 +181,51 @@ authRoutes.post('/totp/verify-setup', verifyToken, async (req: Request, res: Res
     }
 
     const db = getAdminDb();
+    let pendingTotpSecret: string | null = null;
+    let pendingBackupCodes: string[] = [];
+
     const docSnap = await db.collection('totp_secrets').doc(uid).get();
+    if (docSnap.exists && docSnap.data()?.pendingTotpSecret) {
+      pendingTotpSecret = docSnap.data()?.pendingTotpSecret;
+      pendingBackupCodes = docSnap.data()?.pendingBackupCodes || [];
+    } else {
+      const privateMfaSnap = await db.collection('users').doc(uid).collection('private').doc('mfa').get();
+      if (privateMfaSnap.exists && privateMfaSnap.data()?.pendingTotpSecret) {
+        pendingTotpSecret = privateMfaSnap.data()?.pendingTotpSecret;
+        pendingBackupCodes = privateMfaSnap.data()?.pendingBackupCodes || [];
+      }
+    }
     
-    if (!docSnap.exists || !docSnap.data()?.pendingTotpSecret) {
+    if (!pendingTotpSecret) {
       return res.status(400).json({ error: 'No pending 2FA setup found. Please initiate setup first.' });
     }
 
-    const pendingTotpSecret = docSnap.data()?.pendingTotpSecret;
-    const pendingBackupCodes = docSnap.data()?.pendingBackupCodes || [];
-
-    const verifyResult = await TotpService.verifyCode(token, pendingTotpSecret);
+    const cleanToken = (token || '').replace(/[^0-9A-Z]/gi, '').toUpperCase();
+    const verifyResult = await TotpService.verifyCode(cleanToken, pendingTotpSecret, 2);
     if (!verifyResult.isValid) {
       recordFailedAttempt(uid);
-      return res.status(400).json({ error: verifyResult.error || 'Invalid code.' });
+      return res.status(400).json({ error: verifyResult.error || 'Invalid code. Please try again.' });
     }
 
     resetAttempts(uid);
 
-    // Atomic update in Firestore
+    // Atomic update in Firestore across both root collection and user subcollection
     const batch = db.batch();
     batch.set(db.collection('totp_secrets').doc(uid), {
       totpSecret: pendingTotpSecret,
       backupCodes: pendingBackupCodes,
       pendingTotpSecret: null,
       pendingBackupCodes: null,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    batch.set(db.collection('users').doc(uid).collection('private').doc('mfa'), {
+      totpSecret: pendingTotpSecret,
+      backupCodes: pendingBackupCodes,
+      pendingTotpSecret: null,
+      pendingBackupCodes: null,
+      lastUsedToken: cleanToken,
+      lastUsedAt: Date.now(),
       updatedAt: new Date().toISOString()
     }, { merge: true });
 
@@ -230,42 +262,109 @@ authRoutes.post('/totp/verify-login', verifyToken, async (req: Request, res: Res
     const uid = (req as any).user.uid;
     const { token } = req.body;
 
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ error: 'Verification code is required.' });
+    }
+
     if (!checkRateLimit(uid)) {
       return res.status(429).json({ error: 'Too many failed attempts. Please wait 5 minutes.' });
     }
 
+    const cleanToken = token.replace(/[^0-9A-Z]/gi, '').toUpperCase();
     const db = getAdminDb();
-    const docSnap = await db.collection('totp_secrets').doc(uid).get();
     
-    if (!docSnap.exists || !docSnap.data()?.totpSecret) {
-      return res.status(400).json({ error: '2FA is not enrolled for this account.' });
+    // Look for TOTP secret across all persistent locations
+    let totpSecret: string | null = null;
+    let backupCodes: string[] = [];
+
+    // 1. Root totp_secrets collection
+    const docSnap = await db.collection('totp_secrets').doc(uid).get();
+    if (docSnap.exists && docSnap.data()?.totpSecret) {
+      totpSecret = docSnap.data()?.totpSecret;
+      backupCodes = docSnap.data()?.backupCodes || [];
     }
 
-    const totpSecret = docSnap.data()?.totpSecret;
-    const backupCodes = docSnap.data()?.backupCodes || [];
+    // 2. Subcollection users/{uid}/private/mfa
+    if (!totpSecret) {
+      const privateMfaSnap = await db.collection('users').doc(uid).collection('private').doc('mfa').get();
+      if (privateMfaSnap.exists && privateMfaSnap.data()?.totpSecret) {
+        totpSecret = privateMfaSnap.data()?.totpSecret;
+        backupCodes = privateMfaSnap.data()?.backupCodes || [];
+      }
+    }
+
+    // 3. Root users/{uid} document
+    if (!totpSecret) {
+      const userSnap = await db.collection('users').doc(uid).get();
+      if (userSnap.exists && (userSnap.data()?.totpSecret || userSnap.data()?.mfaSecret)) {
+        totpSecret = userSnap.data()?.totpSecret || userSnap.data()?.mfaSecret;
+        backupCodes = userSnap.data()?.backupCodes || [];
+      }
+    }
+
+    // 4. super_admins/{uid} document (if Super Admin)
+    if (!totpSecret) {
+      const saSnap = await db.collection('super_admins').doc(uid).get();
+      if (saSnap.exists && (saSnap.data()?.totpSecret || saSnap.data()?.mfaSecret)) {
+        totpSecret = saSnap.data()?.totpSecret || saSnap.data()?.mfaSecret;
+        backupCodes = saSnap.data()?.backupCodes || [];
+      }
+    }
+    
+    if (!totpSecret) {
+      return res.status(400).json({
+        error: '2FA is not enrolled for this account.',
+        requiresEnrollment: true
+      });
+    }
 
     let isValid = false;
     let isBackupCode = false;
 
-    const verifyResult = await TotpService.verifyCode(token, totpSecret);
+    // Verify 6-digit TOTP code with ±60s clock skew tolerance (windowSteps = 2)
+    const verifyResult = await TotpService.verifyCode(cleanToken, totpSecret, 2);
     if (verifyResult.isValid) {
       isValid = true;
-    } else if (backupCodes.includes(token)) {
-      isValid = true;
-      isBackupCode = true;
+    } else {
+      // Check backup codes
+      const normalizedBackupCodes = backupCodes.map((c: string) => c.replace(/[^0-9A-Z]/gi, '').toUpperCase());
+      if (normalizedBackupCodes.includes(cleanToken)) {
+        isValid = true;
+        isBackupCode = true;
+      }
     }
 
     if (!isValid) {
       recordFailedAttempt(uid);
-      return res.status(400).json({ error: 'Invalid code.' });
+      return res.status(400).json({ error: 'Invalid verification code or code has expired. Please try again.' });
     }
 
     resetAttempts(uid);
 
+    // If backup code was used, remove it from list
     if (isBackupCode) {
-      const remainingCodes = backupCodes.filter((c: string) => c !== token);
+      const remainingCodes = backupCodes.filter((c: string) => c.replace(/[^0-9A-Z]/gi, '').toUpperCase() !== cleanToken);
       await db.collection('totp_secrets').doc(uid).set({
         backupCodes: remainingCodes,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      await db.collection('users').doc(uid).collection('private').doc('mfa').set({
+        backupCodes: remainingCodes,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } else {
+      // Self-healing: Ensure totp_secrets and users/{uid}/private/mfa are synced
+      await db.collection('totp_secrets').doc(uid).set({
+        totpSecret,
+        backupCodes,
+        lastUsedAt: Date.now(),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      await db.collection('users').doc(uid).collection('private').doc('mfa').set({
+        totpSecret,
+        backupCodes,
+        lastUsedToken: cleanToken,
+        lastUsedAt: Date.now(),
         updatedAt: new Date().toISOString()
       }, { merge: true });
     }
@@ -295,6 +394,7 @@ authRoutes.post('/totp/disable', verifyToken, async (req: Request, res: Response
     
     const batch = db.batch();
     batch.delete(db.collection('totp_secrets').doc(uid));
+    batch.delete(db.collection('users').doc(uid).collection('private').doc('mfa'));
     batch.set(db.collection('users').doc(uid), {
       mfaEnabled: false,
       updatedAt: new Date().toISOString()
@@ -495,6 +595,26 @@ authRoutes.post('/admin/create-company', verifySuperAdminMiddleware, async (req:
       console.warn('[Admin API] Email delivery warning:', emailDeliveryError);
     }
 
+    // 4.9. Fetch Platform Global Config to get dynamic default trial days if not provided
+    let globalDefaultTrialDays = 14;
+    try {
+      const configDoc = await db.collection('system_config').doc('global_config').get();
+      if (configDoc.exists) {
+        const cData = configDoc.data();
+        if (typeof cData?.defaultTrialDays === 'number' && cData.defaultTrialDays > 0) {
+          globalDefaultTrialDays = cData.defaultTrialDays;
+        }
+      }
+    } catch (cfgErr) {
+      console.warn('[Admin API] Error fetching defaultTrialDays from global_config:', cfgErr);
+    }
+
+    const effectiveTrialDays = (company?.trialDays && Number(company.trialDays) > 0)
+      ? Number(company.trialDays)
+      : globalDefaultTrialDays;
+    const trialStartDate = timestamp;
+    const trialEndDate = new Date(Date.now() + effectiveTrialDays * 86400000).toISOString();
+
     // 5. Atomic Provisioning Batch in Firestore
     const batch = db.batch();
 
@@ -508,6 +628,12 @@ authRoutes.post('/admin/create-company', verifySuperAdminMiddleware, async (req:
       brandName,
       licenseTier: company?.licenseTier || 'ENTERPRISE',
       status: 'ACTIVE',
+      trialDays: effectiveTrialDays,
+      trialPeriodDays: effectiveTrialDays,
+      trialStartDate,
+      trialEndDate,
+      isTrialActive: true,
+      subscriptionStatus: company?.subscriptionStatus || 'TRIAL',
       adminName: adminFullName,
       adminEmail,
       adminUid: adminAuthUid,
@@ -539,6 +665,26 @@ authRoutes.post('/admin/create-company', verifySuperAdminMiddleware, async (req:
     // USE CREATE INSTEAD OF SET TO PREVENT OVERWRITE RACE CONDITIONS
     // .create() fails if the document already exists, providing atomic uniqueness.
     batch.create(companyRef, companyData);
+
+    // Primary Subscription document in company's subscriptions subcollection
+    const subRef = db.collection('companies').doc(companyCode).collection('subscriptions').doc('PRIMARY');
+    batch.set(subRef, {
+      subscriptionId: 'PRIMARY',
+      companyId: companyCode,
+      planId: company?.licenseTier || 'ENTERPRISE',
+      planName: `${company?.licenseTier || 'Enterprise'} Trial Workspace`,
+      status: 'TRIAL',
+      billingCycle: 'MONTHLY',
+      trialDays: effectiveTrialDays,
+      startDate: timestamp,
+      currentPeriodStart: timestamp,
+      currentPeriodEnd: trialEndDate,
+      trialEndDate,
+      employeeLimit: Number(company?.maxEmployeesAllowed) || 1000,
+      userLimit: Number(company?.maxEmployeesAllowed) || 1000,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    });
 
     // (b) Fast Lookup Indices
     const codeRef = db.collection('company_codes').doc(companyCode);
@@ -739,6 +885,155 @@ authRoutes.post('/admin/create-company', verifySuperAdminMiddleware, async (req:
 // ============================================================
 // RESEND COMPANY ADMIN ACTIVATION EMAIL ENDPOINT
 // ============================================================
+
+authRoutes.post('/admin/create-super-admin', verifySuperAdminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const callerUid = (req as any).user.uid;
+    const { email, name, role, mfaEnabled } = req.body;
+    
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ success: false, error: 'Valid email is required.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const db = getAdminDb();
+    
+    // Check if user already exists
+    let userRecord: any;
+    try {
+      userRecord = await getAuth().getUserByEmail(cleanEmail);
+    } catch (e: any) {
+      if (e.code === 'auth/user-not-found') {
+        userRecord = await getAuth().createUser({
+          email: cleanEmail,
+          displayName: name || cleanEmail.split('@')[0],
+          emailVerified: true
+        });
+        
+        // Trigger password reset for them to set a password
+        await triggerFirebaseActionEmail(cleanEmail, 'PASSWORD_RESET');
+      } else {
+        throw e;
+      }
+    }
+
+    const adminUid = userRecord.uid;
+    const timestamp = new Date().toISOString();
+
+    // Set Custom User Claims for Super Admin
+    await getAuth().setCustomUserClaims(adminUid, {
+      role: 'SUPER_ADMIN',
+      platformRole: role || 'SUPER_ADMIN',
+      isPlatformAdmin: true,
+      aLvl: 'SUPER_ADMIN',
+      status: 'ACTIVE'
+    });
+
+    const record = {
+      uid: adminUid,
+      email: cleanEmail,
+      name: name || cleanEmail.split('@')[0],
+      role: role || 'SUPER_ADMIN',
+      status: 'ACTIVE',
+      mfaEnabled: mfaEnabled ?? true,
+      createdBy: callerUid,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+
+    const batch = db.batch();
+    batch.set(db.collection('super_admins').doc(adminUid), record, { merge: true });
+    batch.set(db.collection('users').doc(adminUid), {
+      uid: adminUid,
+      email: cleanEmail,
+      fullName: record.name,
+      role: 'SUPER_ADMIN',
+      companyId: 'GLOBAL_ADMIN',
+      companyCode: 'GLOBAL_ADMIN',
+      authorityLevel: 'SUPER_ADMIN',
+      status: 'ACTIVE',
+      accountStatus: 'ACTIVE',
+      createdAt: timestamp,
+      updatedAt: timestamp
+    }, { merge: true });
+    
+    await batch.commit();
+
+    await PlatformAuthService.logAudit({
+      actorUid: callerUid,
+      actorEmail: (req as any).user.email,
+      actorRole: 'SUPER_ADMIN',
+      action: 'ADD_SUPER_ADMIN',
+      targetResourceId: adminUid,
+      targetCompanyId: 'GLOBAL_ADMIN',
+      success: true,
+      details: 'Provisioned new super admin: ' + cleanEmail
+    });
+
+    return res.status(200).json({ success: true, uid: adminUid, message: 'Super admin created successfully.' });
+  } catch (err: any) {
+    console.error('Error creating super admin:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+authRoutes.post('/admin/remove-super-admin', verifySuperAdminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const callerUid = (req as any).user.uid;
+    const { uid } = req.body;
+    
+    if (!uid) {
+      return res.status(400).json({ success: false, error: 'UID is required.' });
+    }
+
+    if (callerUid === uid) {
+      return res.status(400).json({ success: false, error: 'Cannot revoke your own active platform administrator account.' });
+    }
+
+    const db = getAdminDb();
+    const targetDoc = await db.collection('super_admins').doc(uid).get();
+    if (targetDoc.exists && targetDoc.data()?.email?.toLowerCase() === 'ghadgea15@gmail.com') {
+      return res.status(403).json({ success: false, error: 'Cannot revoke primary Platform Owner.' });
+    }
+    const batch = db.batch();
+    
+    batch.delete(db.collection('super_admins').doc(uid));
+    batch.update(db.collection('users').doc(uid), {
+      status: 'SUSPENDED',
+      accountStatus: 'SUSPENDED',
+      role: 'USER', // Downgrade
+      updatedAt: new Date().toISOString()
+    });
+
+    await batch.commit();
+    
+    // Remove custom claims
+    await getAuth().setCustomUserClaims(uid, {
+      role: 'USER',
+      status: 'SUSPENDED'
+    });
+    
+    // Revoke sessions
+    await getAuth().revokeRefreshTokens(uid);
+
+    await PlatformAuthService.logAudit({
+      actorUid: callerUid,
+      actorEmail: (req as any).user.email,
+      actorRole: 'SUPER_ADMIN',
+      action: 'REMOVE_SUPER_ADMIN',
+      targetResourceId: uid,
+      targetCompanyId: 'GLOBAL_ADMIN',
+      success: true,
+      details: 'Revoked super admin access for UID: ' + uid
+    });
+
+    return res.status(200).json({ success: true, message: 'Super admin revoked successfully.' });
+  } catch (err: any) {
+    console.error('Error removing super admin:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 authRoutes.post('/admin/resend-admin-activation', verifySuperAdminMiddleware, async (req: Request, res: Response) => {
   try {
     const callerUid = (req as any).user.uid;
@@ -1177,11 +1472,51 @@ authRoutes.delete('/admin/companies/:companyId', verifySuperAdminMiddleware, asy
       }
     }
 
-    // 4. Delete company document
-    console.log(`[Admin API] Deleting company document: ${targetCompanyId}`);
-    await companyRef.delete();
+    // 4. Clean up root approval requests for this company
+    try {
+      const rootAppQuery = await db.collection('approval_requests').where('companyId', '==', targetCompanyId).get();
+      for (const appDoc of rootAppQuery.docs) {
+        await appDoc.ref.delete();
+      }
+      
+      const legacyCodeQuery = await db.collection('companyCodes').where('companyId', '==', targetCompanyId).get();
+      for (const lDoc of legacyCodeQuery.docs) {
+        await lDoc.ref.delete();
+      }
+    } catch (cleanErr) {
+      console.warn('[Admin API] Root index cleanup notice:', cleanErr);
+    }
 
-    // 5. Record audit entry (Centralized)
+    // 5. Delete company document and all nested subcollections recursively
+    console.log(`[Admin API] Recursively deleting company document and subcollections: ${targetCompanyId}`);
+    try {
+      if (typeof (db as any).recursiveDelete === 'function') {
+        await (db as any).recursiveDelete(companyRef);
+      } else {
+        // Fallback: Delete known subcollections manually
+        const knownSubcollections = [
+          'employees', 'branches', 'approval_requests', 'vendors', 
+          'notifications', 'patrol_logs', 'attendance', 'incidents', 
+          'visitors', 'sites', 'shifts', 'tasks', 'memberships'
+        ];
+        for (const sub of knownSubcollections) {
+          try {
+            const subSnap = await companyRef.collection(sub).get();
+            for (const doc of subSnap.docs) {
+              await doc.ref.delete();
+            }
+          } catch (subErr) {
+            console.warn(`[Admin API] Error cleaning subcollection ${sub}:`, subErr);
+          }
+        }
+        await companyRef.delete();
+      }
+    } catch (recErr) {
+      console.warn('[Admin API] Recursive delete fallback to standard doc delete:', recErr);
+      await companyRef.delete();
+    }
+
+    // 6. Record audit entry (Centralized)
     await PlatformAuthService.logAudit({
       actorUid: callerUid,
       actorEmail: callerEmail,
@@ -1229,6 +1564,60 @@ authRoutes.post('/attendance/punch', AttendanceAdminService.handlePunch);
 // ============================================================
 // ORG SETUP WIZARD: CREATE EMPLOYEE
 // ============================================================
+
+// UPDATE EMPLOYEE STATUS & DISABLE/ENABLE AUTH
+authRoutes.post('/admin/update-employee-status', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const { companyId, employeeId, status } = req.body;
+    const db = getAdminDb();
+    const callerClaims = (req as any).user;
+
+    if (callerClaims.cId !== companyId && callerClaims.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: "Company mismatch" });
+    }
+
+    const empRef = db.collection('companies').doc(companyId).collection('employees').doc(employeeId);
+    const empSnap = await empRef.get();
+    if (!empSnap.exists) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    const empData = empSnap.data();
+
+    // 1. Update Employee record
+    await empRef.update({ 
+      status, 
+      updatedAt: new Date().toISOString(),
+      updatedBy: callerClaims.uid || 'SYSTEM'
+    });
+
+    // 2. If employee has an auth account (authUid), update it
+    let authUpdated = false;
+    if (empData.authUid) {
+      if (status === 'SUSPENDED' || status === 'TERMINATED' || status === 'DEACTIVATED') {
+        await getAuth().updateUser(empData.authUid, { disabled: true });
+        
+        // Update root user record to ensure Firestore rules block read/write immediately
+        const userRef = db.collection('users').doc(empData.authUid);
+        await userRef.set({ accountStatus: status }, { merge: true });
+        
+      } else if (status === 'ACTIVE') {
+        await getAuth().updateUser(empData.authUid, { disabled: false });
+        
+        // Reactivate in root user record
+        const userRef = db.collection('users').doc(empData.authUid);
+        await userRef.set({ accountStatus: 'ACTIVE' }, { merge: true });
+      }
+      authUpdated = true;
+    }
+
+    return res.json({ success: true, authUpdated });
+  } catch (err: any) {
+    console.error('[Auth API] Error updating employee status:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 authRoutes.post('/admin/setup-employee', verifyToken, async (req: Request, res: Response) => {
   try {
     const { companyId, employeeData } = req.body;
@@ -1240,6 +1629,10 @@ authRoutes.post('/admin/setup-employee', verifyToken, async (req: Request, res: 
     }
 
     const { firstName, lastName, contactNumber, email, role, aLvl, assignedRegionId, assignedSiteId, departmentId, supervisorId, designation } = employeeData;
+
+    if (role === 'SUPER_ADMIN' || aLvl === 'SUPER_ADMIN') {
+      return res.status(403).json({ error: "Privilege Escalation Detected: Cannot create a SUPER_ADMIN account." });
+    }
 
     const pin = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit PIN
     const empId = `EMP-${Date.now()}-${Math.floor(Math.random()*1000)}`;
@@ -1314,6 +1707,12 @@ authRoutes.post('/admin/setup-employee-bulk', verifyToken, async (req: Request, 
     for (const emp of employees) {
       try {
         const { firstName, lastName, contactNumber, role, aLvl, assignedRegionId, assignedSiteId, departmentId, supervisorId, designation } = emp;
+
+        if (role === 'SUPER_ADMIN' || aLvl === 'SUPER_ADMIN') {
+          results.push({ success: false, name: `${firstName} ${lastName}`, error: 'Privilege Escalation Detected' });
+          continue;
+        }
+
         const pin = Math.floor(100000 + Math.random() * 900000).toString();
         const empId = `EMP-${Date.now()}-${Math.floor(Math.random()*1000)}`;
         const authEmail = `${empId}@${companyId}.local`.toLowerCase();
@@ -1597,3 +1996,151 @@ authRoutes.get('/admin/audit/:companyId', verifyToken, async (req: Request, res:
     res.status(500).json({ error: err.message });
   }
 });
+
+// ============================================================
+// TEST DATA SEED & CREDENTIAL ACCESS ENDPOINTS
+// ============================================================
+
+authRoutes.post('/admin/seed-test-data', async (req: Request, res: Response) => {
+  try {
+    console.log('[Auth API] Executing test data seed for 3 companies + 150 employees each...');
+    const result = await SeedTestDataService.executeFullSeed();
+
+    // Also persist CSV and JSON locally for immediate downloads
+    const csvContent = SeedTestDataService.generateCredentialsCsv(result.allCredentials);
+    const csvPath = path.resolve(process.cwd(), 'test-credentials.csv');
+    fs.writeFileSync(csvPath, csvContent, 'utf8');
+
+    const jsonPath = path.resolve(process.cwd(), 'test-credentials.json');
+    fs.writeFileSync(jsonPath, JSON.stringify({
+      timestamp: new Date().toISOString(),
+      totalCompanies: result.companiesCreated,
+      totalEmployees: result.employeesCreated,
+      summary: result.summary,
+      credentials: result.allCredentials
+    }, null, 2), 'utf8');
+
+    return res.json({
+      success: true,
+      message: `Successfully created ${result.companiesCreated} tenant companies and ${result.employeesCreated} employees with Firebase Auth records and verified claims.`,
+      result
+    });
+  } catch (err: any) {
+    console.error('[Auth API] Test data seed error:', err);
+    return res.status(500).json({
+      success: false,
+      error: err?.message || 'Failed to seed test data'
+    });
+  }
+});
+
+authRoutes.get('/admin/test-credentials', async (req: Request, res: Response) => {
+  try {
+    const jsonPath = path.resolve(process.cwd(), 'test-credentials.json');
+    if (fs.existsSync(jsonPath)) {
+      const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      return res.json({ success: true, ...data });
+    }
+
+    // Generate in-memory if file not created yet
+    const { SEED_COMPANIES } = await import('./seedTestDataService');
+    const allCredentials = SEED_COMPANIES.flatMap(comp => SeedTestDataService.generateCompanyEmployees(comp));
+    return res.json({
+      success: true,
+      totalCompanies: SEED_COMPANIES.length,
+      totalEmployees: allCredentials.length,
+      credentials: allCredentials
+    });
+  } catch (err: any) {
+    console.error('[Auth API] Get test credentials error:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to fetch test credentials' });
+  }
+});
+
+authRoutes.get('/admin/test-credentials/csv', async (req: Request, res: Response) => {
+  try {
+    const csvPath = path.resolve(process.cwd(), 'test-credentials.csv');
+    if (fs.existsSync(csvPath)) {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="test-credentials.csv"');
+      return res.sendFile(csvPath);
+    }
+
+    const { SEED_COMPANIES } = await import('./seedTestDataService');
+    const allCredentials = SEED_COMPANIES.flatMap(comp => SeedTestDataService.generateCompanyEmployees(comp));
+    const csvContent = SeedTestDataService.generateCredentialsCsv(allCredentials);
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="test-credentials.csv"');
+    return res.send(csvContent);
+  } catch (err: any) {
+    console.error('[Auth API] CSV export error:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to export CSV' });
+  }
+});
+
+/**
+ * Platform Security & Anomaly Detection Endpoints
+ */
+authRoutes.post('/security/failed-login', async (req: Request, res: Response) => {
+  try {
+    const { companyId, identifier, ipAddress } = req.body;
+    if (!identifier) {
+      return res.status(400).json({ success: false, error: 'Identifier is required' });
+    }
+
+    const { AccountProtectionService } = await import('../services/accountProtectionService');
+    const result = await AccountProtectionService.recordFailedLogin(companyId || 'GLOBAL', identifier, ipAddress);
+    return res.json({ success: true, ...result });
+  } catch (err: any) {
+    console.error('[Auth API] Failed login recording error:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to record security event' });
+  }
+});
+
+authRoutes.get('/security/lock-status', async (req: Request, res: Response) => {
+  try {
+    const companyId = req.query.companyId as string || 'GLOBAL';
+    const identifier = req.query.identifier as string;
+    if (!identifier) {
+      return res.status(400).json({ success: false, error: 'Identifier is required' });
+    }
+
+    const { AccountProtectionService } = await import('../services/accountProtectionService');
+    const result = await AccountProtectionService.isAccountLocked(companyId, identifier);
+    return res.json({ success: true, ...result });
+  } catch (err: any) {
+    console.error('[Auth API] Lock status error:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to check lock status' });
+  }
+});
+
+authRoutes.post('/security/unlock', async (req: Request, res: Response) => {
+  try {
+    const { companyId, identifier, unlockedBy } = req.body;
+    if (!identifier) {
+      return res.status(400).json({ success: false, error: 'Identifier is required' });
+    }
+
+    const { AccountProtectionService } = await import('../services/accountProtectionService');
+    const result = await AccountProtectionService.unlockAccount(companyId || 'GLOBAL', identifier, unlockedBy || 'SUPER_ADMIN');
+    return res.json({ success: true, unlocked: result });
+  } catch (err: any) {
+    console.error('[Auth API] Unlock account error:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to unlock account' });
+  }
+});
+
+authRoutes.get('/security/locked-accounts', async (req: Request, res: Response) => {
+  try {
+    const companyId = req.query.companyId as string;
+    const { AccountProtectionService } = await import('../services/accountProtectionService');
+    const lockedList = await AccountProtectionService.getLockedAccounts(companyId);
+    return res.json({ success: true, count: lockedList.length, accounts: lockedList });
+  } catch (err: any) {
+    console.error('[Auth API] Get locked accounts error:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to get locked accounts' });
+  }
+});
+
+

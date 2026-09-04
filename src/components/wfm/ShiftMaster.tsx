@@ -68,7 +68,9 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSaving) return;
-    if (!form.shiftName?.trim() || !form.shiftCode?.trim()) {
+    const name = form.shiftName?.trim() || form.name?.trim();
+    const code = form.shiftCode?.trim() || form.code?.trim();
+    if (!name || !code) {
       showValidationFailed('Please provide both shift name and shift code.');
       return;
     }
@@ -76,11 +78,22 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
     const shiftData: ShiftRecord = {
       ...(form as ShiftRecord),
       id: editingShift?.id || `SHIFT-${Date.now()}`,
+      name: name,
+      shiftName: name,
+      code: code,
+      shiftCode: code,
+      startTime: form.startTime || '09:00',
+      endTime: form.endTime || '18:00',
+      gracePeriodMinutes: Number(form.gracePeriodMinutes ?? 15),
+      breakDurationMinutes: Number(form.breakDurationMinutes ?? 60),
+      minWorkMinutes: Number(form.minWorkMinutes ?? 480),
+      weeklyOffDays: form.weeklyOffDays || [0],
+      status: form.status || 'ACTIVE',
       companyId: activeCompany.companyId,
       createdAt: editingShift?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      createdBy: editingShift?.createdBy || userSession.userId,
-      updatedBy: userSession.userId,
+      createdBy: editingShift?.createdBy || userSession.userId || userSession.uid,
+      updatedBy: userSession.userId || userSession.uid,
     };
 
     setIsSaving(true);
@@ -106,7 +119,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
     const shift = shifts.find(s => s.id === shiftId);
     const confirmed = await confirm({
       title: 'Delete Shift',
-      message: `Are you sure you want to delete shift "${shift?.shiftName || shiftId}"?`,
+      message: `Are you sure you want to delete shift "${shift?.shiftName || shift?.name || shiftId}"?`,
       confirmLabel: 'Delete Shift',
       cancelLabel: 'Cancel',
       isDestructive: true
@@ -121,7 +134,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
     try {
       await FirestoreService.deleteShift(activeCompany.companyId, shiftId);
       dismiss();
-      showSuccess(`✓ Successfully Deleted: Shift "${shift?.shiftName || shiftId}"`);
+      showSuccess(`✓ Successfully Deleted: Shift "${shift?.shiftName || shift?.name || shiftId}"`);
     } catch (err: any) {
       dismiss();
       handleError(err, '✕ Delete Shift Failed');
@@ -129,8 +142,8 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
   };
 
   const filteredShifts = shifts.filter(s => 
-    s.shiftName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.shiftCode.toLowerCase().includes(searchTerm.toLowerCase())
+    (s.shiftName || s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.shiftCode || s.code || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -181,8 +194,8 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="font-bold text-black dark:text-white">{shift.shiftName}</h3>
-                    <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{shift.shiftCode}</span>
+                    <h3 className="font-bold text-black dark:text-white">{shift.shiftName || shift.name}</h3>
+                    <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{shift.shiftCode || shift.code}</span>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={() => handleOpenModal(shift)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400">
@@ -213,7 +226,7 @@ export const ShiftMaster: React.FC<Props> = ({ userSession, activeCompany }) => 
                       <span
                         key={idx}
                         className={`w-6 h-6 flex items-center justify-center text-[11px] font-bold rounded-full ${
-                          shift.weeklyOffDays.includes(idx)
+                          (shift.weeklyOffDays || [0]).includes(idx)
                             ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30'
                             : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30'
                         }`}

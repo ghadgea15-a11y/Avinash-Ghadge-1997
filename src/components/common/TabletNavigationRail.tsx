@@ -33,7 +33,7 @@ export const TabletNavigationRail: React.FC<TabletNavigationRailProps> = ({
   const isSuperAdmin = userSession?.role === 'SUPER_ADMIN';
 
   // Get primary top rail destinations for quick access
-  const allRoleItems = getNavItemsForRole(userSession?.role, isSuperAdmin);
+  const allRoleItems = getNavItemsForRole(userSession?.role, isSuperAdmin, activeCompany?.enabledModules);
 
   // Pick primary high-frequency items for the rail
   const primaryRailScreens: PhaseAScreen[] = isSuperAdmin

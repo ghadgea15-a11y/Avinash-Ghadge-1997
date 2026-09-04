@@ -1,18 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ChevronDown, MonitorSmartphone } from 'lucide-react';
+import { Menu, X, ChevronDown, MonitorSmartphone, Shield, Building2, Layers, Monitor } from 'lucide-react';
 import { PhaseAScreen } from '../../types';
 import { navigateToUrl } from '../../utils/publicRouter';
+import { LandingPageConfig, DEFAULT_LANDING_PAGE_CONFIG } from '../../types/landingPageEditor';
 
 interface PremiumHeaderProps {
   onNavigate: (screen: PhaseAScreen) => void;
   onOpenDemo: () => void;
+  config?: LandingPageConfig;
 }
 
-export const PremiumHeader: React.FC<PremiumHeaderProps> = ({ onNavigate, onOpenDemo }) => {
+export const PremiumHeader: React.FC<PremiumHeaderProps> = ({ onNavigate, onOpenDemo, config = DEFAULT_LANDING_PAGE_CONFIG }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  const headerCfg = config.header;
+  const themeCfg = config.theme;
+
+  const getIcon = () => {
+    switch(headerCfg.logoIconType) {
+      case 'shield': return <Shield className="w-5 h-5 text-white" />;
+      case 'building': return <Building2 className="w-5 h-5 text-white" />;
+      case 'layers': return <Layers className="w-5 h-5 text-white" />;
+      case 'monitor':
+      default: return <MonitorSmartphone className="w-5 h-5 text-white" />;
+    }
+  };
+
+  const headerBgClass = () => {
+    if (isScrolled) return 'bg-[#060B19]/80 backdrop-blur-xl border-b border-white/5 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.1)]';
+    switch (themeCfg.headerBackground) {
+      case 'solid-dark': return 'bg-[#060B19] py-5 border-b border-slate-800';
+      case 'transparent': return 'bg-transparent py-5 border-transparent';
+      case 'blur-dark':
+      default: return 'bg-[#060B19]/90 backdrop-blur-md py-5 border-b border-slate-800/60';
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -81,19 +106,23 @@ export const PremiumHeader: React.FC<PremiumHeaderProps> = ({ onNavigate, onOpen
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${isScrolled ? 'bg-[#060B19]/80 backdrop-blur-xl border-b border-white/5 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.1)]' : 'bg-transparent py-5'}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${headerBgClass()}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           <a href="/" onClick={(e) => handleLinkClick(e, '/')} className="flex items-center gap-3 cursor-pointer group focus:outline-none">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)] group-hover:scale-105 transition-transform">
-              <MonitorSmartphone className="w-5 h-5" />
-            </div>
+            {headerCfg.customLogoUrl ? (
+              <img src={headerCfg.customLogoUrl} alt="Logo" className="h-10 object-contain" />
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)] group-hover:scale-105 transition-transform" style={{ backgroundImage: `linear-gradient(to bottom right, ${themeCfg.primaryColor}, ${themeCfg.secondaryColor})` }}>
+                {getIcon()}
+              </div>
+            )}
             <div className="flex flex-col">
               <span className="font-black text-lg tracking-tight text-white leading-tight">
-                LOG SHEET
+                {headerCfg.logoTitle}
               </span>
-              <span className="font-bold text-sm tracking-widest text-blue-400 leading-tight">
-                MUSTER
+              <span className="font-bold text-sm tracking-widest text-blue-400 leading-tight" style={{ color: themeCfg.accentColor }}>
+                {headerCfg.logoSubtitle}
               </span>
             </div>
           </a>
@@ -158,13 +187,14 @@ export const PremiumHeader: React.FC<PremiumHeaderProps> = ({ onNavigate, onOpen
               onClick={() => onNavigate('LOGIN')}
               className="text-[13px] font-bold text-slate-300 hover:text-white transition-colors px-4 py-2 border border-slate-700 hover:border-slate-500 rounded-lg hover:bg-white/5"
             >
-              Login
+              {headerCfg.loginButtonText}
             </button>
             <button 
               onClick={onOpenDemo}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-[13px] font-bold px-5 py-2.5 rounded-lg transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)]"
+              style={{ backgroundImage: `linear-gradient(to right, ${themeCfg.primaryColor}, ${themeCfg.secondaryColor})` }}
             >
-              Get 3 Month Demo
+              {headerCfg.ctaButtonText}
             </button>
           </div>
 
@@ -221,13 +251,14 @@ export const PremiumHeader: React.FC<PremiumHeaderProps> = ({ onNavigate, onOpen
                 onClick={() => { setMobileMenuOpen(false); onNavigate('LOGIN'); }} 
                 className="text-center font-bold text-white px-2 py-3 border border-slate-700 rounded-lg bg-white/5"
               >
-                Login to Workstation
+                {headerCfg.loginButtonText}
               </button>
               <button 
                 onClick={() => { setMobileMenuOpen(false); onOpenDemo(); }} 
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center font-bold px-6 py-3.5 rounded-lg w-full mt-2 shadow-[0_0_20px_rgba(79,70,229,0.3)]"
+                style={{ backgroundImage: `linear-gradient(to right, ${themeCfg.primaryColor}, ${themeCfg.secondaryColor})` }}
               >
-                Get 3 Month Demo
+                {headerCfg.ctaButtonText}
               </button>
             </div>
           </motion.div>

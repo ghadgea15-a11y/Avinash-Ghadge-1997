@@ -301,15 +301,15 @@ export class LeaveService {
    * Calculates available balance using the standard formula:
    * Available = Opening + Accrued + Carry Forward + Adjustments - Consumed - Encashment
    */
-  static calculateAvailableBalance(detail: LeaveBalanceDetail): number {
-    return Number((
-      (detail.openingBalance ?? 0) +
-      (detail.accrued ?? 0) +
-      (detail.carriedForward ?? 0) +
-      (detail.adjusted ?? 0) -
-      (detail.used ?? 0) -
-      (detail.encashed ?? 0)
-    ).toFixed(2));
+  static calculateAvailableBalance(detail: any): number {
+    const opening = detail.openingBalance ?? detail.allocated ?? 0;
+    const accrued = detail.accrued ?? 0;
+    const carried = detail.carriedForward ?? detail.carriedOver ?? 0;
+    const adjusted = detail.adjusted ?? 0;
+    const used = detail.used ?? 0;
+    const encashed = detail.encashed ?? 0;
+
+    return Number((opening + accrued + carried + adjusted - used - encashed).toFixed(2));
   }
 
   /**

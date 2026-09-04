@@ -31,13 +31,87 @@ export class BpmIntegrationService {
   /**
    * Called when a BPM workflow reaches the final APPROVED state.
    */
+    private static async handleLeaveApproval(instance: BpmApprovalInstance, reviewerId: string, transaction: any) {
+    const now = new Date().toISOString();
+    const reqRef = doc(db, 'companies', instance.companyId, 'leaveRequests', instance.sourceRecordId);
+    let reqData: any = null;
+
+    if (transaction) {
+      const snap = await transaction.get(reqRef);
+      if (snap.exists()) reqData = snap.data();
+    } else {
+      const snap = await getDoc(reqRef);
+      if (snap.exists()) reqData = snap.data();
+    }
+
+    if (!reqData) throw new Error('Leave request not found');
+
+    // Update status
+    await this.performWrite(reqRef, { status: 'APPROVED', approvedBy: reviewerId, approvedAt: now, updatedAt: now }, transaction);
+
+    // Deduct balance
+    const employeeId = reqData.employeeId;
+    const leaveCode = reqData.leaveTypeCode || reqData.leaveCode || reqData.leaveType;
+    const daysCount = reqData.daysCount || 0;
+    const startDate = new Date(reqData.startDate || now);
+    const year = startDate.getFullYear();
+
+    const balanceRef = doc(db, 'companies', instance.companyId, 'leaveBalances', employeeId);
+    let balanceData: any = null;
+
+    if (transaction) {
+      const bSnap = await transaction.get(balanceRef);
+      if (bSnap.exists()) balanceData = bSnap.data();
+    } else {
+      const bSnap = await getDoc(balanceRef);
+      if (bSnap.exists()) balanceData = bSnap.data();
+    }
+
+    if (balanceData && balanceData.balances) {
+      const balances = [...balanceData.balances];
+      const idx = balances.findIndex((b) => b.leaveCode === leaveCode);
+      let balanceBefore = 0;
+      let balanceAfter = 0;
+
+      if (idx !== -1) {
+        balanceBefore = balances[idx].availableBalance || 0;
+        balances[idx].used = (balances[idx].used || 0) + daysCount;
+        balances[idx].availableBalance = (balances[idx].allocated || 0) + (balances[idx].accrued || 0) + (balances[idx].carriedOver || 0) - balances[idx].used - (balances[idx].pending || 0);
+        balanceAfter = balances[idx].availableBalance;
+      }
+      await this.performWrite(balanceRef, { balances, updatedAt: now }, transaction, 'SET');
+
+      // Create Ledger Entry
+      const ledgerRef = doc(collection(db, 'companies', instance.companyId, 'leaveLedger'));
+      const ledgerEntry = {
+        id: ledgerRef.id,
+        companyId: instance.companyId,
+        employeeId: employeeId,
+        employeeName: reqData.employeeName || '',
+        leaveCode: leaveCode,
+        year: year,
+        transactionType: 'LEAVE_DEBIT',
+        transactionDate: now,
+        creditDays: 0,
+        debitDays: daysCount,
+        balanceBefore: balanceBefore,
+        balanceAfter: balanceAfter,
+        reason: reqData.reason || 'Leave Approved',
+        referenceId: instance.sourceRecordId,
+        createdBy: reviewerId,
+        createdAt: now
+      };
+      await this.performWrite(ledgerRef, ledgerEntry, transaction, 'SET');
+    }
+  }
+
   static async onWorkflowApproved(instance: BpmApprovalInstance, reviewerId: string, reviewerName: string, transaction?: any): Promise<void> {
     const now = new Date().toISOString();
     const commonUpdate = { approvedBy: reviewerId, approvedAt: now, updatedAt: now };
 
     switch (instance.sourceModule) {
       case 'LEAVE':
-        await this.performWrite(doc(db, 'companies', instance.companyId, 'leaveRequests', instance.sourceRecordId), { status: 'APPROVED' }, transaction);
+        await this.handleLeaveApproval(instance, reviewerId, transaction);
         break;
       case 'OVERTIME':
         if (instance.transactionType === 'OVERTIME_REQUEST') {
@@ -267,7 +341,7 @@ export class BpmIntegrationService {
         }
         break;
       case 'LEAVE':
-        await this.performWrite(doc(db, 'companies', instance.companyId, 'leaveRequests', instance.sourceRecordId), { status: 'REJECTED', rejectedBy: reviewerId, rejectionReason: reason, updatedAt: now }, transaction);
+        await this.handleLeaveApproval(instance, reviewerId, transaction);
         break;
       case 'OVERTIME':
         if (instance.transactionType === 'OVERTIME_REQUEST') {

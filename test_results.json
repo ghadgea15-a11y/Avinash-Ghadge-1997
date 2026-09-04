@@ -1,0 +1,202 @@
+[
+  {
+    "Role": "SUPER_ADMIN",
+    "Name": "Test SUPER_ADMIN",
+    "Email": "ghadgea162@gmail.com",
+    "Password": "Pass@123",
+    "Company": "GLOBAL_ADMIN",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "COMPANY_ADMIN",
+    "Name": "Test COMPANY_ADMIN",
+    "Email": "test_company_admin@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "ADMIN",
+    "Name": "Test ADMIN",
+    "Email": "test_admin@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "CLIENT_MANAGEMENT",
+    "Name": "Test CLIENT_MANAGEMENT",
+    "Email": "test_client_management@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "clientUser",
+    "Name": "Test clientUser",
+    "Email": "test_clientuser@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "HR_ADMIN",
+    "Name": "Test HR_ADMIN",
+    "Email": "test_hr_admin@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "HR",
+    "Name": "Test HR",
+    "Email": "test_hr@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "GENERAL_MANAGER",
+    "Name": "Test GENERAL_MANAGER",
+    "Email": "test_general_manager@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "DIRECTOR_CEO",
+    "Name": "Test DIRECTOR_CEO",
+    "Email": "test_director_ceo@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "OWNER_PROMOTER",
+    "Name": "Test OWNER_PROMOTER",
+    "Email": "test_owner_promoter@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "OPS_MANAGER",
+    "Name": "Test OPS_MANAGER",
+    "Email": "test_ops_manager@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "OPERATIONS_MANAGER",
+    "Name": "Test OPERATIONS_MANAGER",
+    "Email": "test_operations_manager@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "FINANCE_MANAGER",
+    "Name": "Test FINANCE_MANAGER",
+    "Email": "test_finance_manager@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "MANAGER",
+    "Name": "Test MANAGER",
+    "Email": "test_manager@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "SITE_MANAGER",
+    "Name": "Test SITE_MANAGER",
+    "Email": "test_site_manager@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "SITE_1",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "SITE_IN_CHARGE",
+    "Name": "Test SITE_IN_CHARGE",
+    "Email": "test_site_in_charge@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "SITE_1",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "SUPERVISOR",
+    "Name": "Test SUPERVISOR",
+    "Email": "test_supervisor@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "SITE_SUPERVISOR",
+    "Name": "Test SITE_SUPERVISOR",
+    "Email": "test_site_supervisor@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "SITE_1",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "EMPLOYEE",
+    "Name": "Test EMPLOYEE",
+    "Email": "test_employee@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  },
+  {
+    "Role": "GUARD",
+    "Name": "Test GUARD",
+    "Email": "test_guard@supremefacility.com",
+    "Password": "Pass@123",
+    "Company": "Supreme Facility",
+    "Site": "N/A",
+    "Status": "FAIL",
+    "Issue": "page.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[type=\"email\"]')\n"
+  }
+]

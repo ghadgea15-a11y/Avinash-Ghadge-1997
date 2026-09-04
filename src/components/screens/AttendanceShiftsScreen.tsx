@@ -40,45 +40,7 @@ export const AttendanceShiftsScreen: React.FC<Props> = ({
       {/* Header & Tabs */}
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 shrink-0 z-10">
         <div className="max-w-7xl mx-auto flex items-center gap-8 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('PUNCH')}
-            className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 whitespace-nowrap transition-all ${
-              activeTab === 'PUNCH'
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-slate-500 hover:text-black dark:hover:text-slate-300'
-            }`}
-          >
-            <MapPin className="w-4 h-4" />
-            Punch Station
-          </button>
-
-          {isSupervisor && (
-            <button
-              onClick={() => setActiveTab('ROLL_CALL')}
-              className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 whitespace-nowrap transition-all ${
-                activeTab === 'ROLL_CALL'
-                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 hover:text-black dark:hover:text-slate-300'
-              }`}
-            >
-              <UserCheck className="w-4 h-4" />
-              Supervisor Roll-Call
-            </button>
-          )}
-
-          <button
-            onClick={() => setActiveTab('LOGS')}
-            className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 whitespace-nowrap transition-all ${
-              activeTab === 'LOGS'
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-slate-500 hover:text-black dark:hover:text-slate-300'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            Attendance Logs
-          </button>
-
-          <button
+          {(isSupervisor || isAdminOrHR) && (<button
             onClick={() => setActiveTab('REGULARIZATION')}
             className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 whitespace-nowrap transition-all ${
               activeTab === 'REGULARIZATION'
@@ -88,7 +50,7 @@ export const AttendanceShiftsScreen: React.FC<Props> = ({
           >
             <CheckCircle2 className="w-4 h-4" />
             Regularization
-          </button>
+          </button>)}
 
           {isAdminOrHR && (
             <button
@@ -118,7 +80,7 @@ export const AttendanceShiftsScreen: React.FC<Props> = ({
           {activeTab === 'LOGS' && (
             <AttendanceLogs userSession={userSession} activeCompany={activeCompany} />
           )}
-          {activeTab === 'REGULARIZATION' && (
+          {activeTab === 'REGULARIZATION' && (isSupervisor || isAdminOrHR) && (
             <AttendanceAdjustmentWorkflow userSession={userSession} companyId={activeCompany.companyId} />
           )}
           {activeTab === 'RULES' && isAdminOrHR && (

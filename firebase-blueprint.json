@@ -388,10 +388,10 @@
         "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] }
       },
       "required": ["id", "companyId", "siteId", "checkpointName", "code", "qrCode", "sequenceOrder", "status"]
-    }
+    },
     "Lead": {
       "title": "Sales Lead",
-      "description": "A lead submitted from public forms",
+      "description": "A lead submitted from public forms or entered by Super Admin",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -405,9 +405,14 @@
         "interestedModules": { "type": "string" },
         "message": { "type": "string" },
         "utmSource": { "type": "string" },
+        "source": { "type": "string" },
         "landingPage": { "type": "string" },
         "status": { "type": "string", "enum": ["NEW", "CONTACTED", "QUALIFIED", "DEMO", "CONVERTED", "LOST"] },
         "notes": { "type": "string" },
+        "followUpDate": { "type": "string" },
+        "followUpNotes": { "type": "string" },
+        "convertedCompanyId": { "type": "string" },
+        "convertedAt": { "type": "string" },
         "activityHistory": { "type": "array" },
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" }
@@ -453,9 +458,53 @@
         "createdAt": { "type": "string" }
       },
       "required": ["maintenanceOccurrenceId", "maintenancePlanId", "companyId", "assetId", "dueDate", "status", "createdAt"]
+    },
+    "LandingPageConfig": {
+      "title": "Landing Page Configuration",
+      "description": "Visual layout, styling, text, hero, and theme configurations for the public landing page",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "theme": { "type": "object" },
+        "header": { "type": "object" },
+        "hero": { "type": "object" },
+        "stats": { "type": "object" },
+        "sections": { "type": "object" },
+        "showcase": { "type": "object" },
+        "demo": { "type": "object" },
+        "about": { "type": "object" },
+        "footer": { "type": "object" },
+        "status": { "type": "string", "enum": ["DRAFT", "PUBLISHED"] },
+        "version": { "type": "number" },
+        "updatedAt": { "type": "string" },
+        "updatedBy": { "type": "object" }
+      },
+      "required": ["id", "theme", "header", "hero", "status", "updatedAt"]
+    },
+    "LandingPageVersion": {
+      "title": "Landing Page Version Snapshot",
+      "description": "Immutable version snapshot of published landing page configuration for audit and rollback",
+      "type": "object",
+      "properties": {
+        "versionId": { "type": "string" },
+        "versionNumber": { "type": "number" },
+        "publishedAt": { "type": "string" },
+        "publishedBy": { "type": "object" },
+        "notes": { "type": "string" },
+        "configSnapshot": { "type": "object" }
+      },
+      "required": ["versionId", "versionNumber", "publishedAt", "configSnapshot"]
     }
   },
   "firestore": {
+    "/landing_page_config/{configId}": {
+      "schema": { "$ref": "#/entities/LandingPageConfig" },
+      "description": "Landing page published and draft configurations"
+    },
+    "/landing_page_versions/{versionId}": {
+      "schema": { "$ref": "#/entities/LandingPageVersion" },
+      "description": "Historical snapshots of published landing page configurations"
+    },
     "/leads/{leadId}": {
       "schema": { "$ref": "#/entities/Lead" },
       "description": "Sales leads generated from public website forms"

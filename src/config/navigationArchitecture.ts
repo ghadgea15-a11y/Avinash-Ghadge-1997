@@ -73,6 +73,7 @@ export interface NavigationItemDef {
   dataType: 'MASTER_DATA' | 'TRANSACTION' | 'SYSTEM' | 'ANALYTICS';
   rolesAllowed?: UserRole[]; // If undefined, accessible to all authenticated roles
   isSuperAdminOnly?: boolean;
+  moduleKey?: string;
   badgeKey?: string;
 }
 
@@ -328,6 +329,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Users,
     category: 'PEOPLE_WORKFORCE',
     dataType: 'MASTER_DATA',
+    moduleKey: 'EMPLOYEES',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 'HR', 'GENERAL_MANAGER', 'ADMIN'],
   },
   {
@@ -338,6 +340,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: IdCard,
     category: 'PEOPLE_WORKFORCE',
     dataType: 'MASTER_DATA',
+    moduleKey: 'ID_BADGES',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'ADMIN', 'SAFETY_OFFICER'],
   },
   {
@@ -348,6 +351,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: UserCheck,
     category: 'PEOPLE_WORKFORCE',
     dataType: 'TRANSACTION',
+    moduleKey: 'HCM',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'HR'],
   },
   {
@@ -358,6 +362,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Target,
     category: 'PEOPLE_WORKFORCE',
     dataType: 'TRANSACTION',
+    moduleKey: 'HCM',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 'HR', 'GENERAL_MANAGER', 'ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO', 'SUPERVISOR', 'SITE_IN_CHARGE', 'REGIONAL_MANAGER', 'AREA_MANAGER', 'EMPLOYEE', 'GUARD', 'WORKER'],
   },
   {
@@ -368,34 +373,18 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Award,
     category: 'PEOPLE_WORKFORCE',
     dataType: 'TRANSACTION',
+    moduleKey: 'HCM',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 'HR', 'GENERAL_MANAGER', 'ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO', 'SUPERVISOR', 'SITE_IN_CHARGE', 'REGIONAL_MANAGER', 'AREA_MANAGER'],
   },
   {
     screen: 'TRAINING_LMS',
-    label: 'Training',
+    label: 'Training & Refreshers',
     shortLabel: 'LMS Training',
-    description: 'PSARA compliance curriculum, training modules, quizzes and tracking',
+    description: 'PSARA compliance curriculum, training modules, fire drills and mandatory refreshers',
     icon: GraduationCap,
     category: 'PEOPLE_WORKFORCE',
     dataType: 'MASTER_DATA',
-  },
-  {
-    screen: 'MANDATORY_REFRESHERS',
-    label: 'Refreshers',
-    shortLabel: 'Refreshers',
-    description: 'Mandatory annual safety, fire drill and SOP refreshers schedule',
-    icon: ShieldAlert,
-    category: 'PEOPLE_WORKFORCE',
-    dataType: 'TRANSACTION',
-  },
-  {
-    screen: 'CERTIFICATION_TRACKING',
-    label: 'Certifications',
-    shortLabel: 'Certifications',
-    description: 'PSARA licenses, First Aid, Fire Safety certificates and renewal alerts',
-    icon: Award,
-    category: 'PEOPLE_WORKFORCE',
-    dataType: 'MASTER_DATA',
+    moduleKey: 'HCM',
   },
 
   // 5. OPERATIONS
@@ -407,36 +396,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Clock,
     category: 'OPERATIONS',
     dataType: 'TRANSACTION',
-  },
-  {
-    screen: 'SHIFT_ROSTER',
-    label: 'Roster',
-    shortLabel: 'Shift Roster',
-    description: 'Monthly and weekly shift scheduling matrix, rotations and swaps',
-    icon: Calendar,
-    category: 'OPERATIONS',
-    dataType: 'MASTER_DATA',
-    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'OPS_MANAGER', 'HR_ADMIN', 'SUPERVISOR', 'SITE_IN_CHARGE'],
-  },
-  {
-    screen: 'WORKFORCE_CAPACITY',
-    label: 'Capacity',
-    shortLabel: 'Capacity Planning',
-    description: 'Predictive shortage detection, skill floors, supervisor alerts & replacement approval workflow',
-    icon: Network,
-    category: 'OPERATIONS',
-    dataType: 'ANALYTICS',
-    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'OPS_MANAGER', 'HR_ADMIN', 'SUPERVISOR', 'SITE_IN_CHARGE', 'GENERAL_MANAGER', 'REGIONAL_MANAGER', 'AREA_MANAGER'],
-  },
-  {
-    screen: 'CONFLICT_DETECTION',
-    label: 'Conflict Checks',
-    shortLabel: 'Conflict Engine',
-    description: 'Deterministic prevention of overlapping shifts, multi-site collisions, SoD violations & controlled overrides',
-    icon: ShieldAlert,
-    category: 'OPERATIONS',
-    dataType: 'TRANSACTION',
-    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'OPS_MANAGER', 'HR_ADMIN', 'SUPERVISOR', 'SITE_IN_CHARGE', 'GENERAL_MANAGER', 'REGIONAL_MANAGER', 'AREA_MANAGER'],
+    moduleKey: 'ATTENDANCE',
   },
   {
     screen: 'LEAVE_MANAGEMENT',
@@ -446,6 +406,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Calendar,
     category: 'OPERATIONS',
     dataType: 'TRANSACTION',
+    moduleKey: 'LEAVE',
   },
   {
     screen: 'WORK_ORDERS',
@@ -455,42 +416,27 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: ListTodo,
     category: 'OPERATIONS',
     dataType: 'TRANSACTION',
+    moduleKey: 'WFM',
   },
   {
     screen: 'TASK_MANAGEMENT',
-    label: 'Tasks',
-    shortLabel: 'Tasks',
-    description: 'Organizational task allocation, Kanban boards and status milestones',
+    label: 'Task Management',
+    shortLabel: 'Tasks Hub',
+    description: 'Unified task inbox for all organizational assignments and personal duties',
     icon: CheckSquare,
     category: 'OPERATIONS',
     dataType: 'TRANSACTION',
-  },
-  {
-    screen: 'MY_TASKS',
-    label: 'My Tasks',
-    shortLabel: 'My Tasks',
-    description: 'Individual employee task checklist, checklists and daily activities',
-    icon: CheckSquare,
-    category: 'OPERATIONS',
-    dataType: 'TRANSACTION',
+    moduleKey: 'WFM',
   },
   {
     screen: 'SITE_OPERATIONS',
-    label: 'Operations',
-    shortLabel: 'Site Ops',
-    description: 'QR checkpoint patrols, Incident reporting, Visitor gate pass & Material muster',
+    label: 'Operations Hub',
+    shortLabel: 'Ops Command',
+    description: 'Unified command center for live patrols, incident SOS, gate passes, daily logs and safety checks',
     icon: ShieldCheck,
     category: 'OPERATIONS',
     dataType: 'TRANSACTION',
-  },
-  {
-    screen: 'SAFETY_MANAGEMENT',
-    label: 'Inspections',
-    shortLabel: 'Safety Checks',
-    description: 'EHS hazard inspections, equipment checks and safety protocol audits',
-    icon: ShieldAlert,
-    category: 'OPERATIONS',
-    dataType: 'TRANSACTION',
+    moduleKey: 'SITE_OPERATIONS',
   },
   {
     screen: 'CLIENT_PORTAL',
@@ -500,24 +446,18 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Building2,
     category: 'OPERATIONS',
     dataType: 'TRANSACTION',
+    moduleKey: 'CLIENT',
   },
   {
-    screen: 'MULTI_MODE_PATROL',
-    label: 'Multi-Mode Patrols',
-    shortLabel: 'NFC/QR Patrols',
-    description: 'Hardware NFC UID, dynamic QR tokens & GPS geofencing with cryptographic HMAC proof-of-presence',
-    icon: ShieldCheck,
+    screen: 'SHIFT_ROSTER',
+    label: 'Duty Roster',
+    shortLabel: 'Scheduling Hub',
+    description: 'Smart AI scheduling, capacity planning, roster conflicts and shift assignments',
+    icon: Calendar,
     category: 'OPERATIONS',
-    dataType: 'TRANSACTION',
-  },
-  {
-    screen: 'AI_SCHEDULING',
-    label: 'AI Scheduling & Relievers',
-    shortLabel: 'AI Relievers',
-    description: 'Transparent rule-based scoring (fatigue index, transit distance, absenteeism) and auto-reliever dispatch',
-    icon: Activity,
-    category: 'OPERATIONS',
-    dataType: 'TRANSACTION',
+    dataType: 'MASTER_DATA',
+    moduleKey: 'SHIFT_ROSTER',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'OPS_MANAGER', 'HR_ADMIN', 'SUPERVISOR', 'SITE_IN_CHARGE'],
   },
 
   // 6. ASSETS & INVENTORY
@@ -529,6 +469,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: QrCode,
     category: 'ASSETS_INVENTORY',
     dataType: 'MASTER_DATA',
+    moduleKey: 'ASSETS',
   },
   {
     screen: 'INVENTORY_STOCK',
@@ -538,6 +479,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Boxes,
     category: 'ASSETS_INVENTORY',
     dataType: 'TRANSACTION',
+    moduleKey: 'INVENTORY',
   },
 
   // 7. FINANCE
@@ -549,6 +491,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: DollarSign,
     category: 'FINANCE',
     dataType: 'TRANSACTION',
+    moduleKey: 'PAYROLL',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'FINANCE_MANAGER', 'FINANCE', 'OWNER_PROMOTER'],
   },
   {
@@ -559,6 +502,8 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Receipt,
     category: 'FINANCE',
     dataType: 'TRANSACTION',
+    moduleKey: 'FINANCE',
+    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'FINANCE_MANAGER', 'FINANCE', 'OWNER_PROMOTER', 'DIRECTOR_CEO', 'GENERAL_MANAGER', 'REGIONAL_MANAGER', 'AREA_MANAGER', 'SITE_IN_CHARGE'],
   },
   {
     screen: 'CLIENT_BILLING',
@@ -568,6 +513,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: FileText,
     category: 'FINANCE',
     dataType: 'TRANSACTION',
+    moduleKey: 'BILLING',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'FINANCE_MANAGER', 'FINANCE', 'OWNER_PROMOTER'],
   },
 
@@ -581,6 +527,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: ShoppingCart,
     category: 'PROCUREMENT',
     dataType: 'ANALYTICS',
+    moduleKey: 'VENDOR',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'PROCUREMENT', 'FINANCE_MANAGER', 'FINANCE', 'ADMIN'],
   },
   {
@@ -591,6 +538,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Building2,
     category: 'PROCUREMENT',
     dataType: 'MASTER_DATA',
+    moduleKey: 'VENDOR',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'PROCUREMENT', 'ADMIN', 'FINANCE'],
   },
   {
@@ -601,6 +549,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: FileSignature,
     category: 'PROCUREMENT',
     dataType: 'TRANSACTION',
+    moduleKey: 'VENDOR',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'PROCUREMENT', 'ADMIN'],
   },
   {
@@ -611,6 +560,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: ShoppingCart,
     category: 'PROCUREMENT',
     dataType: 'TRANSACTION',
+    moduleKey: 'VENDOR',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'PROCUREMENT', 'FINANCE_MANAGER', 'ADMIN'],
   },
   {
@@ -621,6 +571,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Receipt,
     category: 'PROCUREMENT',
     dataType: 'TRANSACTION',
+    moduleKey: 'VENDOR',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'PROCUREMENT', 'FINANCE_MANAGER', 'FINANCE'],
   },
 
@@ -633,6 +584,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Briefcase,
     category: 'CRM',
     dataType: 'MASTER_DATA',
+    moduleKey: 'CLIENTS',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'CLIENT_MANAGEMENT', 'COMMERCIAL', 'OPS_MANAGER', 'OWNER_PROMOTER'],
   },
   {
@@ -655,6 +607,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: Scale,
     category: 'COMPLIANCE_RISK',
     dataType: 'ANALYTICS',
+    moduleKey: 'COMPLIANCE',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'EHS', 'QUALITY', 'ADMIN'],
   },
   {
@@ -665,16 +618,18 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: FileSpreadsheet,
     category: 'COMPLIANCE_RISK',
     dataType: 'TRANSACTION',
+    moduleKey: 'COMPLIANCE',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'FINANCE_MANAGER', 'QUALITY', 'ADMIN', 'OWNER_PROMOTER', 'DIRECTOR_CEO'],
   },
   {
     screen: 'COMPLIANCE_EXPIRY',
-    label: 'Licensing & Expiries',
-    shortLabel: 'PSARA & Expiry',
-    description: 'Statutory guard licensing (PSARA, Arms, Police Verification) with 30/15/7-day alerts and shift blocking',
+    label: 'Guard Compliance',
+    shortLabel: 'Licenses',
+    description: 'Track PSARA, medical, police verification and certifications with 30/15/7 day alerts',
     icon: Shield,
     category: 'COMPLIANCE_RISK',
     dataType: 'TRANSACTION',
+    moduleKey: 'COMPLIANCE',
   },
   {
     screen: 'LEGAL_POLICIES',
@@ -689,23 +644,14 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
   // 11. APPROVALS & WORKFLOWS
   {
     screen: 'APPROVAL_MANAGEMENT',
-    label: 'My Approvals',
-    shortLabel: 'Approvals Inbox',
-    description: 'Centralized workflow approval queue for leaves, expenses, overtime and onboarding',
+    label: 'Approvals Hub',
+    shortLabel: 'Approvals',
+    description: 'Unified center for pending requests, approval rules, delegation and escalations',
     icon: CheckSquare,
     category: 'APPROVALS_WORKFLOWS',
     dataType: 'TRANSACTION',
+    moduleKey: 'APPROVAL_MANAGEMENT',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'HR_ADMIN', 'OPS_MANAGER', 'FINANCE_MANAGER', 'SUPERVISOR', 'OWNER_PROMOTER', 'GENERAL_MANAGER', 'SITE_IN_CHARGE'],
-  },
-  {
-    screen: 'APPROVAL_CENTER',
-    label: 'Approvals Center',
-    shortLabel: 'BPM Rules',
-    description: 'Configurable multi-level approval hierarchies, delegation and escalations',
-    icon: Award,
-    category: 'APPROVALS_WORKFLOWS',
-    dataType: 'SYSTEM',
-    rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'OWNER_PROMOTER', 'ADMIN'],
   },
   {
     screen: 'SUPER_ADMIN_PENDING_APPROVALS',
@@ -737,6 +683,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: BarChart3,
     category: 'REPORTS_ANALYTICS',
     dataType: 'ANALYTICS',
+    moduleKey: 'ANALYTICS',
     rolesAllowed: ['SUPER_ADMIN', 'COMPANY_ADMIN', 'FINANCE_MANAGER', 'OPS_MANAGER', 'OWNER_PROMOTER', 'DIRECTOR_CEO', 'GENERAL_MANAGER', 'REGIONAL_MANAGER', 'AREA_MANAGER'],
   },
   {
@@ -747,6 +694,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: BarChart3,
     category: 'REPORTS_ANALYTICS',
     dataType: 'ANALYTICS',
+    moduleKey: 'REPORTS',
   },
   {
     screen: 'SERVICE_DESK',
@@ -756,6 +704,7 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
     icon: LifeBuoy,
     category: 'REPORTS_ANALYTICS',
     dataType: 'TRANSACTION',
+    moduleKey: 'BPM',
   },
 
   // 13. NOTIFICATIONS
@@ -903,17 +852,22 @@ export const ENTERPRISE_NAV_ITEMS: NavigationItemDef[] = [
 ];
 
 /**
- * Filter navigation items based on the active user role and whether user is Super Admin
+ * Filter navigation items based on the active user role, super admin flag, and tenant enabled modules
  */
 export function getNavItemsForRole(
   role: UserRole | string | undefined,
-  isSuperAdmin: boolean
+  isSuperAdmin: boolean,
+  enabledModules?: string[]
 ): NavigationItemDef[] {
   return ENTERPRISE_NAV_ITEMS.filter((item) => {
     if (isSuperAdmin) {
       return item.isSuperAdminOnly === true || item.screen === 'SETTINGS' || item.screen === 'PROFILE' || item.screen === 'SESSION_LOCK';
     }
     if (item.isSuperAdminOnly) {
+      return false;
+    }
+    // Check if the tenant has disabled this module
+    if (enabledModules && item.moduleKey && !enabledModules.includes(item.moduleKey)) {
       return false;
     }
     if (item.rolesAllowed && role) {
@@ -928,12 +882,35 @@ export function getNavItemsForRole(
  */
 export function getGroupedNavForRole(
   role: UserRole | string | undefined,
-  isSuperAdmin: boolean
+  isSuperAdmin: boolean,
+  enabledModules?: string[]
 ): { category: NavigationCategoryDef; items: NavigationItemDef[] }[] {
-  const allowedItems = getNavItemsForRole(role, isSuperAdmin);
+  const allowedItems = getNavItemsForRole(role, isSuperAdmin, enabledModules);
 
   return ENTERPRISE_NAV_CATEGORIES.map((cat) => {
     const items = allowedItems.filter((item) => item.category === cat.id);
     return { category: cat, items };
   }).filter((group) => group.items.length > 0);
+}
+
+/**
+ * Check if a particular screen is allowed for a company based on enabledModules
+ */
+export function isScreenAllowedForCompany(
+  screen: PhaseAScreen,
+  company?: import('../types').CompanyTenant | null
+): { allowed: boolean; moduleKey?: string; label?: string } {
+  if (!company || !company.enabledModules) {
+    return { allowed: true };
+  }
+  const navItem = ENTERPRISE_NAV_ITEMS.find((item) => item.screen === screen);
+  if (!navItem || !navItem.moduleKey) {
+    return { allowed: true };
+  }
+  const allowed = company.enabledModules.includes(navItem.moduleKey);
+  return {
+    allowed,
+    moduleKey: navItem.moduleKey,
+    label: navItem.label,
+  };
 }

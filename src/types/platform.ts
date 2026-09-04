@@ -70,10 +70,16 @@ export type PlatformAuditAction =
   | 'TOGGLE_ADMIN_STATUS'
   | 'CREATE_SUPPORT_SESSION'
   | 'REVOKE_SUPPORT_SESSION'
+  | 'START_IMPERSONATION'
+  | 'END_IMPERSONATION'
+  | 'EXPIRE_SUPPORT_SESSION'
   | 'UPDATE_GLOBAL_CONFIG'
   | 'BROADCAST_NOTIFICATION'
   | 'EXPORT_PLATFORM_DATA'
-  | 'SECURITY_EVENT_FLAGGED';
+  | 'SECURITY_EVENT_FLAGGED'
+  | 'SAVE_LANDING_DRAFT'
+  | 'PUBLISH_LANDING_PAGE'
+  | 'ROLLBACK_LANDING_PAGE';
 
 export interface PlatformAuditLog {
   id: string;
@@ -120,19 +126,64 @@ export interface PlatformSecurityEvent {
 export interface SupportAccessSessionRecord {
   id: string;
   sessionId: string;
+  token?: string;
   superAdminUid: string;
   superAdminEmail: string;
   targetCompanyId: string;
   targetCompanyName?: string;
   reason: string;
   scope: 'READ_ONLY' | 'MUTATION' | 'SUPPORT_MUTATION';
-  status?: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
+  status?: 'ACTIVE' | 'REVOKED' | 'EXPIRED' | 'COMPLETED';
   isActive: boolean;
+  durationMinutes?: number;
   createdAt: number | string;
   expiresAt: number | string;
   revokedAt?: number | string | null;
   revokedBy?: string | null;
   auditLogId?: string;
+}
+
+export interface ServerHealthTelemetry {
+  status: 'ok' | 'degraded' | 'error';
+  service: string;
+  environment: string;
+  timestamp: string;
+  uptimeSeconds: number;
+  uptimeFormatted: string;
+  networkLatencyMs?: number; // Measured client-side round-trip
+  database: {
+    connected: boolean;
+    status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
+    latencyMs: number;
+    error?: string;
+  };
+  memory: {
+    heapUsedMB: number;
+    heapTotalMB: number;
+    rssMB: number;
+    externalMB: number;
+    systemTotalMB: number;
+    systemFreeMB: number;
+    heapUsagePercentage: number;
+    systemUsagePercentage: number;
+  };
+  cpu: {
+    cores: number;
+    model: string;
+    loadAverage1m: number;
+    loadAverage5m: number;
+    loadAverage15m: number;
+    processCpuUsage: {
+      userMs: number;
+      systemMs: number;
+    };
+    estimatedCpuUsagePercent: number;
+  };
+  processInfo: {
+    nodeVersion: string;
+    pid: number;
+    platform: string;
+  };
 }
 
 export interface PlatformMonitoringMetrics {
@@ -156,6 +207,7 @@ export interface PlatformMonitoringMetrics {
   errorRatePercentage?: number;
   syncQueuePending: number;
   activeSupportSessionsCount?: number;
+  serverTelemetry?: ServerHealthTelemetry;
 }
 
 export interface PlatformGlobalConfig {

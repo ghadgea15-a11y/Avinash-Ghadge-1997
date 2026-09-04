@@ -38,6 +38,22 @@ export const AttendanceLogs: React.FC<Props> = ({ userSession, activeCompany }) 
     (l.action && l.action.toLowerCase().includes(search.toLowerCase()))
   );
 
+  
+  const handleRequestRegularization = async (log: AttendanceRecord) => {
+    const reason = prompt("Enter reason for regularizing this punch:");
+    if (!reason) return;
+    try {
+      await FirestoreService.saveAttendance(activeCompany.companyId, {
+        ...log,
+        requiresReview: true,
+        regularizationReason: reason
+      });
+      alert('Regularization request submitted and sent for review.');
+    } catch(err) {
+      alert('Failed to submit request.');
+    }
+  };
+
   const handleExport = () => {
     const csvContent = "data:text/csv;charset=utf-8,Timestamp,Employee,Action,Location\n" + filtered.map(e => `${toDateSafe(e.timestamp)?.toISOString() || ''},${e.userName},${e.action},"${e.locationDetails || ''}"`).join("\n"); const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", `Attendance_Logs_${activeCompany.companyId}.csv`); document.body.appendChild(link); link.click(); link.remove();
   };
@@ -78,26 +94,20 @@ export const AttendanceLogs: React.FC<Props> = ({ userSession, activeCompany }) 
                 <th className="py-3 px-6 font-bold text-slate-500">Employee</th>
                 <th className="py-3 px-6 font-bold text-slate-500">Action/Status</th>
                 <th className="py-3 px-6 font-bold text-slate-500">Location Details</th>
+                <th className="py-3 px-6 font-bold text-slate-500 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
               {filtered.map(log => (
                 <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td className="py-3 px-6">
-                    <p className="font-bold">{formatDateSafe(log.timestamp)}</p>
-                    <p className="text-xs text-slate-500 font-mono">{formatTimeSafe(log.timestamp)}</p>
+                  <td className="py-3 px-6 font-medium">
+                    {formatDateSafe(log.timestamp)} {formatTimeSafe(log.timestamp)}
                   </td>
                   <td className="py-3 px-6">
-                    <p className="font-bold">{log.userName || 'Unknown'}</p>
-                    <p className="text-[11px] text-slate-400 font-mono">{log.employeeId}</p>
+                    {log.userName}
                   </td>
                   <td className="py-3 px-6">
-                    <span className={`px-2 py-1 rounded-md text-[11px] font-bold font-mono uppercase tracking-wider ${
-                      log.action === 'PUNCH_IN' ? 'bg-emerald-100 text-emerald-800' : 
-                      log.action === 'PUNCH_OUT' ? 'bg-amber-100 text-amber-800' : 
-                      log.action === 'ABSENT' ? 'bg-rose-100 text-rose-800' :
-                      'bg-indigo-100 text-indigo-800'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${log.action === 'PUNCH_IN' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                       {log.action}
                     </span>
                   </td>
@@ -106,6 +116,14 @@ export const AttendanceLogs: React.FC<Props> = ({ userSession, activeCompany }) 
                       <MapPin className="w-3.5 h-3.5" />
                       {log.locationDetails || 'N/A'}
                     </div>
+                  </td>
+                  <td className="py-3 px-6 text-right">
+                    <button 
+                      onClick={() => handleRequestRegularization(log)}
+                      className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-md text-xs font-bold transition-colors"
+                    >
+                      Request Regularization
+                    </button>
                   </td>
                 </tr>
               ))}

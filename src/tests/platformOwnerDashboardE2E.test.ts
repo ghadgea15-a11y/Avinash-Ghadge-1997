@@ -291,4 +291,81 @@ describe('Platform Owner Dashboard & Sub-Screens End-to-End Audit Suite', () => 
       expect(colRefArg.path).toBe('companies/COMP_123/approval_requests');
     });
   });
+
+  describe('8. Master App Modules & Subscription Plans Integrity', () => {
+    it('verifies all MASTER_APP_MODULES have valid key, name, label, category, and description', async () => {
+      const { MASTER_APP_MODULES } = await import('../types');
+      expect(MASTER_APP_MODULES.length).toBeGreaterThan(20);
+
+      MASTER_APP_MODULES.forEach((mod) => {
+        expect(mod.key).toBeDefined();
+        expect(typeof mod.key).toBe('string');
+        expect(mod.name).toBeDefined();
+        expect(typeof mod.name).toBe('string');
+        expect(mod.name.length).toBeGreaterThan(0);
+        expect(mod.category).toBeDefined();
+        expect(['CORE', 'HRMS', 'SECURITY', 'FINANCE', 'SYSTEM']).toContain(mod.category);
+        expect(mod.description).toBeDefined();
+        expect(typeof mod.description).toBe('string');
+        expect(mod.description.length).toBeGreaterThan(0);
+      });
+    });
+
+    it('SubscriptionService.saveSubscriptionPlan persists to plans collection with merge', async () => {
+      mockSetDoc.mockResolvedValueOnce(undefined);
+
+      await SubscriptionService.saveSubscriptionPlan({
+        planId: 'PLAN_TEST_101',
+        planName: 'Enterprise Test Plan',
+        monthlyPrice: 4999,
+        enabledModules: ['EMPLOYEES', 'ATTENDANCE', 'PAYROLL']
+      });
+
+      expect(mockSetDoc).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'plans/PLAN_TEST_101' }),
+        expect.objectContaining({
+          planId: 'PLAN_TEST_101',
+          planName: 'Enterprise Test Plan',
+          monthlyPrice: 4999
+        }),
+        { merge: true }
+      );
+    });
+
+    it('FirestoreService.saveSubscriptionPlan delegates correctly to plans collection', async () => {
+      mockSetDoc.mockResolvedValueOnce(undefined);
+
+      await FirestoreService.saveSubscriptionPlan({
+        planId: 'PLAN_TEST_102',
+        planName: 'Starter Plus',
+        monthlyPrice: 1499
+      });
+
+      expect(mockSetDoc).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'plans/PLAN_TEST_102' }),
+        expect.objectContaining({
+          planId: 'PLAN_TEST_102',
+          planName: 'Starter Plus'
+        }),
+        { merge: true }
+      );
+    });
+
+    it('subscribeToNotifications registers listeners with error callbacks and without composite index requirements', () => {
+      const mockUnsub = vi.fn();
+      mockOnSnapshot.mockReturnValue(mockUnsub);
+
+      const unsub = FirestoreService.subscribeToNotifications(
+        tenantAdminSession,
+        'COMP_TEST',
+        () => {}
+      );
+
+      expect(mockOnSnapshot).toHaveBeenCalled();
+      // Should have passed an error handler as second or third argument
+      const call = mockOnSnapshot.mock.calls[0];
+      expect(typeof call[1] === 'function' || typeof call[2] === 'function').toBe(true);
+      expect(typeof unsub).toBe('function');
+    });
+  });
 });

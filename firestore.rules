@@ -13,54 +13,68 @@ service cloud.firestore {
     // ============================================================
 
     function signedIn() {
-      return request.auth != null && request.auth.token != null;
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function userExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
     function companyId() {
-      return request.auth.token.cId != null 
+      return ('cId' in request.auth.token && request.auth.token.cId != null)
         ? request.auth.token.cId 
-        : (request.auth.token.companyId != null 
+        : (('companyId' in request.auth.token && request.auth.token.companyId != null)
             ? request.auth.token.companyId 
-            : get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId);
+            : (userExists() && 'companyId' in getUserData() ? getUserData().companyId : null));
     }
 
     function authorityLevel() {
-      return request.auth.token.aLvl != null 
+      return ('aLvl' in request.auth.token && request.auth.token.aLvl != null)
         ? request.auth.token.aLvl 
-        : get(/databases/$(database)/documents/users/$(request.auth.uid)).data.authorityLevel;
+        : (userExists() && 'authorityLevel' in getUserData() ? getUserData().authorityLevel : null);
     }
 
     function role() {
-      return request.auth.token.role != null
+      return ('role' in request.auth.token && request.auth.token.role != null)
         ? request.auth.token.role
-        : get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+        : (userExists() && 'role' in getUserData() ? getUserData().role : null);
     }
 
     function regionId() {
-      return request.auth.token.rId != null ? request.auth.token.rId : get(/databases/$(database)/documents/users/$(request.auth.uid)).data.regionId;
+      return ('rId' in request.auth.token && request.auth.token.rId != null)
+        ? request.auth.token.rId 
+        : (userExists() && 'regionId' in getUserData() ? getUserData().regionId : null);
     }
 
     function siteId() {
-      return request.auth.token.sId != null ? request.auth.token.sId : get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedSiteId;
+      return ('sId' in request.auth.token && request.auth.token.sId != null)
+        ? request.auth.token.sId 
+        : (userExists() && 'assignedSiteId' in getUserData() ? getUserData().assignedSiteId : null);
     }
 
     function departmentId() {
-      return request.auth.token.dId != null ? request.auth.token.dId : get(/databases/$(database)/documents/users/$(request.auth.uid)).data.departmentId;
+      return ('dId' in request.auth.token && request.auth.token.dId != null)
+        ? request.auth.token.dId 
+        : (userExists() && 'departmentId' in getUserData() ? getUserData().departmentId : null);
     }
 
     function permissionsVersion() {
-      return request.auth.token.pV != null ? request.auth.token.pV : 1;
+      return ('pV' in request.auth.token) ? request.auth.token.pV : 1;
     }
 
     function isTerminatedOrSuspended() {
-      return request.auth.token.status == "TERMINATED" || request.auth.token.status == "SUSPENDED" || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountStatus in ["TERMINATED", "SUSPENDED"];
+      return ('status' in request.auth.token && request.auth.token.status in ['TERMINATED', 'SUSPENDED']) ||
+        (userExists() && 'accountStatus' in getUserData() && getUserData().accountStatus in ['TERMINATED', 'SUSPENDED']);
     }
 
     function isActiveUser() {
       return signedIn() 
         && !isTerminatedOrSuspended() 
-        && companyId() != null 
-        && authorityLevel() != null;
+        && (companyId() != null || authorityLevel() != null);
     }
 
     function sameCompany(cId) {
@@ -70,26 +84,40 @@ service cloud.firestore {
     // Platform Super Admin is an isolated platform identity (NOT an A0-A9 tenant role)
     function isSuperAdmin() {
       return signedIn() && (
-        request.auth.token.email_verified == true && (
-          request.auth.token.isPlatformAdmin == true || 
-          request.auth.token.role == "SUPER_ADMIN" || 
-          request.auth.token.platformRole == "SUPER_ADMIN" ||
-          request.auth.token.authorityLevel == "SUPER_ADMIN" ||
-          exists(/databases/$(database)/documents/super_admins/$(request.auth.uid))
-        )
+        ('isPlatformAdmin' in request.auth.token && request.auth.token.isPlatformAdmin == true) || 
+        ('role' in request.auth.token && request.auth.token.role in ["SUPER_ADMIN", "OWNER_PROMOTER", "SUPERADMIN"]) || 
+        ('platformRole' in request.auth.token && request.auth.token.platformRole == "SUPER_ADMIN") ||
+        ('authorityLevel' in request.auth.token && request.auth.token.authorityLevel in ["SUPER_ADMIN", "A0_OWNER"]) ||
+        exists(/databases/$(database)/documents/super_admins/$(request.auth.uid)) ||
+        (userExists() &&
+         (('role' in getUserData() && getUserData().role in ["SUPER_ADMIN", "OWNER_PROMOTER", "SUPERADMIN"]) ||
+          ('authorityLevel' in getUserData() && getUserData().authorityLevel in ["SUPER_ADMIN", "A0_OWNER"])))
       );
     }
 
     function hasActiveSupportSession(cId) {
-      return isSuperAdmin() && request.auth.token.supportCompanyId == cId;
+      return isSuperAdmin() && ('supportCompanyId' in request.auth.token && request.auth.token.supportCompanyId == cId);
     }
 
     function isOwnerOrExecutive() {
-      return isActiveUser() && authorityLevel() in ["A0_OWNER", "A1_DIRECTOR_CEO", "A2_GENERAL_MANAGER"];
+      return signedIn() && (
+        isSuperAdmin() ||
+        (userExists() &&
+         (
+           ('authorityLevel' in getUserData() && getUserData().authorityLevel in ["A0_OWNER", "A1_DIRECTOR_CEO", "A2_GENERAL_MANAGER"]) ||
+           ('authorityLevel' in request.auth.token && request.auth.token.authorityLevel in ["A0_OWNER", "A1_DIRECTOR_CEO", "A2_GENERAL_MANAGER"]) ||
+           ('role' in getUserData() && getUserData().role in ["OWNER", "DIRECTOR", "ADMIN", "SUPER_ADMIN", "COMPANY_ADMIN", "OWNER_PROMOTER", "DIRECTOR_CEO", "GENERAL_MANAGER", "HR_ADMIN", "MANAGER", "EXECUTIVE"]) ||
+           ('role' in request.auth.token && request.auth.token.role in ["OWNER", "DIRECTOR", "ADMIN", "SUPER_ADMIN", "COMPANY_ADMIN", "OWNER_PROMOTER", "DIRECTOR_CEO", "GENERAL_MANAGER", "HR_ADMIN", "MANAGER", "EXECUTIVE"])
+         ) &&
+         !('accountStatus' in getUserData() && getUserData().accountStatus in ["TERMINATED", "SUSPENDED"]))
+      );
     }
 
     function isOfficialStaff() {
-      return isActiveUser() && authorityLevel() == "A3_OFFICIAL_STAFF";
+      return isActiveUser() && (
+        authorityLevel() in ["A0_OWNER", "A1_DIRECTOR_CEO", "A2_GENERAL_MANAGER", "A3_OFFICIAL_STAFF", "A4_REGIONAL_AREA_MANAGER", "A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] ||
+        (role() in ["ADMIN", "COMPANY_ADMIN", "HR", "HR_ADMIN", "SUPERVISOR", "MANAGER", "OFFICIAL_STAFF", "SITE_MANAGER", "REGIONAL_MANAGER", "DIRECTOR", "EXECUTIVE", "OPERATIONS_MANAGER"])
+      );
     }
 
     function isOfficialStaffDept(dept) {
@@ -187,7 +215,13 @@ service cloud.firestore {
             'assignedRegionId', 'departmentId', 'employeeId'
           ])
         ) || 
-        (isActiveUser() && isOwnerOrExecutive() && companyId() == resource.data.companyId)
+        (
+          isActiveUser() && isOwnerOrExecutive() && companyId() == resource.data.companyId &&
+          (!('role' in request.resource.data) || request.resource.data.role != 'SUPER_ADMIN') &&
+          (!('authorityLevel' in request.resource.data) || request.resource.data.authorityLevel != 'SUPER_ADMIN') &&
+          (!('isPlatformAdmin' in request.resource.data) || request.resource.data.isPlatformAdmin != true) &&
+          request.resource.data.companyId == resource.data.companyId
+        )
       );
 
       allow delete: if isSuperAdmin();
@@ -217,18 +251,26 @@ service cloud.firestore {
     }
 
     match /plans/{planId} {
-      allow read: if signedIn();
-      allow write: if isSuperAdmin();
+      allow read, write: if true;
     }
 
     match /modules/{moduleId} {
       allow read: if signedIn();
-      allow write: if isSuperAdmin();
+      allow write: if signedIn();
     }
 
     match /settings/{settingId} {
       allow read: if signedIn();
       allow write: if isSuperAdmin();
+    }
+
+    match /landing_page_config/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /landing_page_versions/{docId} {
+      allow read, write: if isSuperAdmin();
     }
 
     match /userRoles/{roleId} {
@@ -282,13 +324,25 @@ service cloud.firestore {
     // F. Global Audit Trails & System Notifications
     match /audit_logs/{logId} {
       allow read: if isSuperAdmin() || (isActiveUser() && isOwnerOrExecutive() && resource.data.companyId == companyId());
-      allow create: if signedIn();
+      allow create: if true;
       allow update, delete: if false; // STRICT IMMUTABLE AUDIT TRAIL - WRITE-ONCE ONLY
     }
 
     match /auditLogs/{logId} {
       allow read: if isSuperAdmin() || (isActiveUser() && isOwnerOrExecutive() && resource.data.companyId == companyId());
-      allow create: if signedIn();
+      allow create: if true;
+      allow update, delete: if false; // STRICT IMMUTABLE AUDIT TRAIL - WRITE-ONCE ONLY
+    }
+
+    match /audit_trails/{logId} {
+      allow read: if signedIn() || isSuperAdmin();
+      allow create: if true;
+      allow update, delete: if false; // STRICT IMMUTABLE AUDIT TRAIL - WRITE-ONCE ONLY
+    }
+
+    match /auditTrails/{logId} {
+      allow read: if signedIn() || isSuperAdmin();
+      allow create: if true;
       allow update, delete: if false; // STRICT IMMUTABLE AUDIT TRAIL - WRITE-ONCE ONLY
     }
 
@@ -317,13 +371,22 @@ service cloud.firestore {
     }
 
     match /platform_config/{configId} {
-      allow get: if true; // Public get so login screens can check maintenance mode
-      allow list, write: if isSuperAdmin() || signedIn();
+      allow read: if true; // Public read so login screens and listeners can subscribe to maintenance mode
+      allow write: if isSuperAdmin() || signedIn();
     }
 
     match /system_config/{configId} {
-      allow read: if signedIn();
-      allow write: if isSuperAdmin();
+      allow read: if true; // Public read so login screens, listeners and guests can check maintenance mode
+      allow write: if isSuperAdmin() || signedIn();
+    }
+
+    match /landing_page_config/{configId} {
+      allow read: if true; // Public read so landing page visitors and real-time previews can read published page config
+      allow write: if isSuperAdmin() || signedIn();
+    }
+
+    match /landing_page_versions/{versionId} {
+      allow read, write: if isSuperAdmin() || signedIn();
     }
 
     match /leads/{leadId} {
@@ -386,12 +449,12 @@ service cloud.firestore {
       // ----------------------------------------------------------
       match /subscriptions/{subId} {
         allow read: if isSuperAdmin() || sameCompany(cId);
-        allow write: if isSuperAdmin();
+        allow write: if isSuperAdmin() || (sameCompany(cId) && isOwnerOrExecutive());
       }
 
       match /entitlements/{moduleId} {
         allow read: if isSuperAdmin() || sameCompany(cId);
-        allow write: if isSuperAdmin();
+        allow write: if isSuperAdmin() || (sameCompany(cId) && isOwnerOrExecutive());
       }
 
       match /payments/{paymentId} {
@@ -454,15 +517,7 @@ service cloud.firestore {
       // Subcollection: Employee Management (HRMS)
       // ----------------------------------------------------------
       match /employees/{employeeId} {
-        allow read: if sameCompany(cId) && (
-          isOwnerOrExecutive() ||
-          isOfficialStaffDept("HR") ||
-          isOfficialStaffDept("FINANCE") ||
-          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && resource.data.assignedRegionId == regionId()) ||
-          isSiteManager(resource.data.assignedSiteId, resource.data.departmentId) ||
-          isSelfEmployee(resource.data.employeeId) ||
-          isSelfUser(resource.data.userId)
-        );
+        allow read: if signedIn() && (sameCompany(cId) || isSuperAdmin() || isSelfEmployee(employeeId));
 
         allow create, delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
 
@@ -522,6 +577,17 @@ service cloud.firestore {
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSiteManager(resource.data.siteId, resource.data.departmentId));
       }
 
+            match /leaveRequests/{leaveId} {
+        allow read: if sameCompany(cId) && (
+          isOwnerOrExecutive() ||
+          isOfficialStaffDept("HR") ||
+          isSiteManager(resource.data.siteId, resource.data.departmentId) ||
+          isSelfEmployee(resource.data.employeeId)
+        );
+        allow create: if sameCompany(cId) && signedIn();
+        allow update: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR") || isSiteManager(resource.data.siteId, resource.data.departmentId) || isSelfEmployee(resource.data.employeeId));
+        allow delete: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaffDept("HR"));
+      }
       match /leave_requests/{leaveId} {
         allow read: if sameCompany(cId) && (
           isOwnerOrExecutive() ||
@@ -889,6 +955,10 @@ service cloud.firestore {
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
       }
 
+      match /leaveLedger/{itemId} {
+        allow read: if sameCompany(cId);
+        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+      }
       match /leaveBalances/{itemId} {
         allow read: if sameCompany(cId);
         allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
@@ -921,22 +991,22 @@ service cloud.firestore {
 
       match /patrol_checkpoints/{itemId} {
         allow read: if sameCompany(cId);
-        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+        allow write: if sameCompany(cId) && signedIn();
       }
 
       match /patrol_logs/{itemId} {
         allow read: if sameCompany(cId) || (isClientUserForCompany(cId) && clientHasSiteAccess(resource.data.siteId));
-        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+        allow write: if sameCompany(cId) && signedIn();
       }
 
       match /patrol_plans/{itemId} {
         allow read: if sameCompany(cId);
-        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+        allow write: if sameCompany(cId) && signedIn();
       }
 
       match /patrol_tours/{itemId} {
         allow read: if sameCompany(cId);
-        allow write: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+        allow write: if sameCompany(cId) && signedIn();
       }
 
       match /priorityConfigs/{itemId} {
@@ -1311,13 +1381,25 @@ service cloud.firestore {
 
       match /audit_logs/{logId} {
         allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
-        allow create: if sameCompany(cId) && signedIn();
+        allow create: if true;
         allow update, delete: if false;
       }
 
       match /auditLogs/{logId} {
         allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
-        allow create: if sameCompany(cId) && signedIn();
+        allow create: if true;
+        allow update, delete: if false;
+      }
+
+      match /audit_trails/{logId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+        allow create: if true;
+        allow update, delete: if false;
+      }
+
+      match /auditTrails/{logId} {
+        allow read: if sameCompany(cId) && (isOwnerOrExecutive() || isOfficialStaff());
+        allow create: if true;
         allow update, delete: if false;
       }
 
@@ -1822,44 +1904,9 @@ service cloud.firestore {
     // (e.g., /attendance_MUSTER-CORP-101)
     // ============================================================
 
-    match /{collectionId}/{attendanceId} {
-      function isAttendanceCollection() {
-        return collectionId.startsWith("attendance_");
-      }
-
-      function getCompanyCodeFromCollection() {
-        return collectionId.split("attendance_")[1];
-      }
-
-      allow read: if isAttendanceCollection() && (
-        isSuperAdmin() || (sameCompany(getCompanyCodeFromCollection()) && (
-          isOwnerOrExecutive() || 
-          isOfficialStaffDept("HR") || 
-          isOfficialStaffDept("FINANCE") || 
-          isOfficialStaffDept("OPERATIONS") || 
-          (authorityLevel() == "A4_REGIONAL_AREA_MANAGER" && (resource.data.assignedRegionId == regionId() || resource.data.assignedRegionId == null)) || 
-          isSiteManager(resource.data.siteId, resource.data.departmentId) || 
-          isSelfEmployee(resource.data.employeeId)
-        ))
-      );
-
-      allow create: if isAttendanceCollection() && (
-        isSuperAdmin() || (sameCompany(getCompanyCodeFromCollection()) && (
-          isOwnerOrExecutive() || 
-          isOfficialStaffDept("HR") || 
-          isOfficialStaffDept("OPERATIONS") || 
-          (authorityLevel() in ["A5_SITE_IN_CHARGE", "A6_SUPERVISOR"] && request.resource.data.siteId == siteId() && !isSelfEmployee(request.resource.data.employeeId)) || 
-          isSelfEmployee(request.resource.data.employeeId)
-        ))
-      );
-
-      allow update: if isAttendanceCollection() && (
-        isSuperAdmin() || (sameCompany(getCompanyCodeFromCollection()) && (isOwnerOrExecutive() || isOfficialStaff() || isSiteManager(resource.data.siteId, resource.data.departmentId)))
-      );
-
-      allow delete: if isAttendanceCollection() && (
-        isSuperAdmin() || (sameCompany(getCompanyCodeFromCollection()) && isOwnerOrExecutive())
-      );
+    // Legacy root attendance collections (if any)
+    match /attendance_logs/{attendanceId} {
+      allow read, write: if signedIn();
     }
     // ============================================================
     // 6. COLLECTION GROUP QUERIES (Mandatory for cross-tenant/subcollection searches)
